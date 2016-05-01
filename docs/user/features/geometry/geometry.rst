@@ -1,5 +1,5 @@
 Mesh Geometry
--------------
+=============
 .. _geometry-mesh:
 
 * The following section deals with :class:`~bpy.types.Object` which are of type 'MESH', containing Mesh Data(Mesh-Object)
@@ -28,7 +28,7 @@ Mesh Geometry
 .. _geometry-doubleside:
 
 Double Sided Mesh
-=================
+-----------------
 
 * Each triangle is composed of 3 vertices, edges and a face.
 * To decide which way the face is pointing a vector(normal), perpendecular to the face is used.
@@ -47,7 +47,7 @@ Double Sided Mesh - Adds a :class:`~pyffi.formats.nif.NifFormat.NiStencilPropert
 .. _geometry-uv:
 
 UV Unwrapping/Mapping
-=====================
+---------------------
 
 * UV-unwrapping is the process of unfolding all the faces onto a flat plane, see `Cube Unwrap <http://en.wikipedia.org/wiki/File:Cube_Representative_UV_Unwrapping.png>`_.
 * The UV-unwrapping process creates a UV Map layer.
@@ -68,7 +68,7 @@ UV Unwrapping/Mapping
 .. _geometry-vertexcolor:
 
 Vertex Color
-============
+------------
 
 **Example:**
 
@@ -87,7 +87,7 @@ Vertex Color
 .. _geometry-vertexalpha:
 
 Vertex Alpha
-============
+------------
 
 Vertex alpha is handled in the same way as vertex color. The only difference is that vertex alpha use grey scale.
    

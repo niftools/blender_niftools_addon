@@ -1,7 +1,6 @@
-.. _user-features:
-
 Features
 ========
+.. _user-features:
 
 .. 
    todo::

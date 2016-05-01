@@ -1,7 +1,7 @@
-.. _user-workflow:
-
 Workflow
 ========
+
+.. _user-workflow:
 
 This section will explain the general workflow used to import/export .nif files to/from blender.
 
