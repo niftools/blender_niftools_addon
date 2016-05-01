@@ -1,7 +1,10 @@
-:tocdepth: 1
-
+############
 Contributing
-++++++++++++
+############
+.. _contrib:
+.. toctree::
+   :maxdepth: 1
+
 
 .. include:: /../CONTRIBUTING.rst
 

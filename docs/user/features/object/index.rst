@@ -1,16 +1,16 @@
 Object Settings
 ===============
-.. _object-common:
+.. _user-feature-object:
 
 This section will take you through the base settings required for your model.
 
 .. add something more here
 .. May break up the common by type; armature, mesh, common etc?
 
-.. _object-common-bsx:
 
 BSX
 ---
+.. _user-feature-object-bsx:
 
 **BSX** is a flagging variable that determines how havok will interact with the object:
 
@@ -29,7 +29,7 @@ BSX
    * The value is equal to the sum of all items that are enabled.
    
    
-.. _object-mesh-bsinvmarker:
+.. _user-feature-object-mesh-bsinvmarker:
 
 BS Inventory Marker
 -------------------
@@ -80,10 +80,10 @@ Niftools uses the following values as default for this item.:
    * Inactive = 0
    * Display_Proxy = <None>
 
-.. _object-common-settings:
 
 Settings
 --------
+.. _user-feature-object-settings:
 
 First we complete the object panel:
 

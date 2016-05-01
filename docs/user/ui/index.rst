@@ -1,8 +1,6 @@
-
-.. _user-ui:
-
 User Interface
 ==============
+.. _user-ui:
 
 The Blender Nif Plugin both integrates and expands Blender's UI.
 This section of the documentation outlines which sections of the default options are used.
