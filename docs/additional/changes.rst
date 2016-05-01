@@ -1,7 +1,9 @@
-:tocdepth: 1
-
+#######
 Changes
-+++++++
+#######
+.. _changes:
+.. toctree::
+   :maxdepth: 1
 
 .. include:: /../CHANGELOG.rst
 
