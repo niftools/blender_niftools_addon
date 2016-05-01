@@ -1,6 +1,5 @@
 Textures
---------
-
+========
 .. _textures:
 
 | A texture refers to a generic image.
@@ -25,7 +24,7 @@ Adding textures requires the following:
 
 
 Creating a Texture Slot
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 Create a Texture slot to hold a texture.
 
