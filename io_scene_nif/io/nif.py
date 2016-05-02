@@ -53,7 +53,7 @@ class NifFile():
         # open file for binary reading
         with open(file_path, "rb") as niffile:
             # check if nif file is valid
-            cls.data.inspect(niffile)
+            cls.data.inspect_version_only(niffile)
             if cls.data.version >= 0:
                 # it is valid, so read the file
                 NifLog.info("NIF file version: {0}".format(cls.data.version, "x"))
