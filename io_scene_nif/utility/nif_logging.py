@@ -73,3 +73,14 @@ class NifLog():
         """
         cls.op.report({'ERROR'}, message)
         return {'FINISHED'}
+    
+    
+    @classmethod
+    def setMockReporter(cls):
+        NifLog.op = cls._MockOperator()
+    
+    class _MockOperator():
+        
+        def report(self, level, message):
+            print(str(level) + ": " + message)
+        
