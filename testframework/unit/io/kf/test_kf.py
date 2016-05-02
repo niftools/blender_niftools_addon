@@ -6,7 +6,7 @@ import os
 from io_scene_nif.io.nif import NifFile
 from io_scene_nif.utility.nif_logging import NifLog
 
-class Test_Nif_IO:
+class Test_KF_IO:
  
     @classmethod
     def setup_class(cls):
