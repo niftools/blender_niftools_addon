@@ -1,5 +1,6 @@
+##################
 User Documentation
-==================
+##################
 
 .. warning::
 
@@ -11,5 +12,7 @@ Contents:
    :maxdepth: 1
 
    install
+   workflow
+   ui/index
    features/index
    support

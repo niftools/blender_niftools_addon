@@ -1,5 +1,5 @@
 Geometry
---------
+========
 
 .. toctree::
    :maxdepth: 2

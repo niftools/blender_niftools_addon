@@ -1,5 +1,5 @@
 Armature
---------
+========
 
 .. toctree::
    :maxdepth: 1

@@ -1,10 +1,12 @@
+**************
 Test Framework
-==============
+**************
 
 .. _development-testframework:
 
 The test framework is a series of tools to automate the verification process of the Blender Nif Plugin
-It aims to unify the various levels of testing that should be performed to release the plugin 
+It aims to unify the various levels of testing that should be performed to release the plugin
+
  * Unit
  * Functional
  * Integration

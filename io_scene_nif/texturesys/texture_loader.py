@@ -43,10 +43,9 @@ import os.path
 
 import bpy
 from pyffi.formats.nif import NifFormat
+from io_scene_nif.utility.nif_logging import NifLog
 
 class TextureLoader():
-    
-    
     
     def __init__(self, parent):
         self.nif_import = parent
@@ -98,12 +97,8 @@ class TextureLoader():
         
         b_text_name = os.path.basename(fn)
         if not b_image:
-            self.nif_import.warning(
-                "Texture '%s' not found or not supported"
-                " and no alternate available"
-                % fn)
-            b_image = bpy.data.images.new(
-                name=b_text_name, width=1, height=1, alpha=False)
+            NifLog.warn("Texture '{0}' not found or not supported and no alternate available".format(fn))
+            b_image = bpy.data.images.new(name=b_text_name, width=1, height=1, alpha=False)
             b_image.filepath = fn
         
         # create a texture
@@ -132,7 +127,7 @@ class TextureLoader():
             # save embedded texture as dds file
             stream = open(tex, "wb")
             try:
-                self.nif_import.info("Saving embedded texture as %s" % tex)
+                NifLog.info("Saving embedded texture as {0}".format(tex))
                 source.pixel_data.save_as_dds(stream)
             except ValueError:
                 # value error means that the pixel format is not supported
@@ -211,7 +206,7 @@ class TextureLoader():
                     tex = os.path.join( texdir, texfn )
                 # "ignore case" on linux
                 tex = bpy.path.resolve_ncase(tex)
-                self.nif_import.debug("Searching %s" % tex)
+                NifLog.debug("Searching {0}".format(tex))
                 if os.path.exists(tex):
                     # tries to load the file
                     b_image = bpy.data.images.load(tex)
@@ -225,7 +220,7 @@ class TextureLoader():
                         b_image = None # not supported, delete image object
                     else:
                         # file format is supported
-                        self.nif_import.debug("Found '%s' at %s" % (fn, tex))
+                        NifLog.debug("Found '{0}' at {1}".format(fn, tex))
                         break
             if b_image:
                 return [tex, b_image]
