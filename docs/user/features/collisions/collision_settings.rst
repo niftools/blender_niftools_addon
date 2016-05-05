@@ -1,8 +1,6 @@
-
-.. _collisonsettings:
-
 Collision Settings
 ------------------
+.. _collisonsettings:
 
 The following section details the setting which need to be applied to the collision body to react appropriately in the collision simulation.
 A lot of these setting are havok specific; where possible we have mapped them to blender's collision simulation.

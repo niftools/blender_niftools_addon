@@ -46,6 +46,7 @@ import operator
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 from io_scene_nif.objectsys.object_import import Object
+from io_scene_nif.utility.nif_logging import NifLog
 
 
 class bhkshape_import():
@@ -104,8 +105,7 @@ class bhkshape_import():
             return reduce(operator.add, ( self.import_bhk_shape(subshape)
                                           for subshape in bhkshape.sub_shapes ))
 
-        self.nif_import.warning("Unsupported bhk shape %s"
-                            % bhkshape.__class__.__name__)
+        NifLog.warn("Unsupported bhk shape {0}".format(bhkshape.__class__.__name__))
         return []
 
 
@@ -355,9 +355,7 @@ class bhkshape_import():
             normal = (bhkshape.first_point - bhkshape.second_point) / length
             normal = mathutils.Vector((normal.x, normal.y, normal.z))
         else:
-            self.nif_import.warning(
-                "bhkCapsuleShape with identical points:"
-                " using arbitrary axis")
+            NifLog.warn("BhkCapsuleShape with identical points: using arbitrary axis")
             normal = mathutils.Vector((0, 0, 1))
         minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
         orthvec = mathutils.Vector([(1 if i == minindex else 0)

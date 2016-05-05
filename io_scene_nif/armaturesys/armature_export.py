@@ -37,11 +37,10 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import os
-
 import bpy
 import mathutils
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 from pyffi.formats.nif import NifFormat
 
@@ -75,17 +74,15 @@ class Armature():
                 quat = matrix.to_3x3().to_quaternion()
                 if sum(sum(abs(x) for x in vec)
                        for vec in matrix.to_3x3() - quat.to_matrix()) > 0.01:
-                    self.nif_export.warning(
-                        "Bad bone extra matrix for bone %s. \n"
-                        "Attempting to fix... but bone transform \n"
-                        "may be incompatible with existing animations." % b)
-                    self.nif_export.warning("old invalid matrix:\n%s" % matrix)
+                    NifLog.warn("Bad bone extra matrix for bone {0}.\n"
+                                   "Attempting to fix... but bone transform may be incompatible with existing animations.".format(b))
+                    NifLog.debug("Old invalid matrix:\n{0}".format(str(matrix)))
                     trans = matrix.to_translation()
                     matrix = quat.to_matrix().resize_4x4()
                     matrix[0][3] = trans[0]
                     matrix[1][3] = trans[1]
                     matrix[2][3] = trans[2]
-                    self.nif_export.warning("new valid matrix:\n%s" % matrix)
+                    NifLog.debug("New valid matrix:\n{0}".format(matrix))
                 # Matrices are stored inverted for easier math later on.
                 matrix.invert()
                 self.set_bone_extra_matrix_inv(b, matrix)
@@ -195,7 +192,7 @@ class Armature():
         for bone in list(bones.values()):
             # link the bone's children to the bone
             if bone.children:
-                self.nif_export.debug("Linking children of bone %s" % bone.name)
+                NifLog.debug("Linking children of bone {0}".format(bone.name))
                 for child in bone.children:
                     # bone.children returns also grandchildren etc.
                     # we only want immediate children, so do a parent check
