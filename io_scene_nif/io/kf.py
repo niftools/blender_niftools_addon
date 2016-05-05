@@ -44,7 +44,7 @@ from io_scene_nif.utility.nif_utils import NifError
 
 class KFFile():
     
-    data = NifFormat.Data()
+    nif_file = NifFormat.Data()
     
     @classmethod
     def load_kf(cls, file_path):
@@ -53,16 +53,16 @@ class KFFile():
         # open keyframe file for binary reading
         with open(file_path, "rb") as kffile:
             # check if nif file is valid
-            cls.data.inspect_version_only(kffile)
-            if cls.data.version >= 0:
+            cls.nif_file.inspect_version_only(kffile)
+            if cls.nif_file.version >= 0:
                 # it is valid, so read the file
-                NifLog.info("KF file version: {0}".format(cls.data.version, "x"))
+                NifLog.info("KF file version: {0}".format(cls.nif_file.version, "x"))
                 NifLog.info("Reading keyframe file")
-                cls.data.read(kffile)
-            elif cls.data.version == -1:
+                cls.nif_file.read(kffile)
+            elif cls.nif_file.version == -1:
                 raise NifError("Unsupported KF version.")
             else:                    
                 raise NifError("Not a KF file.")
             
-        return cls.data    
+        return cls.nif_file    
     

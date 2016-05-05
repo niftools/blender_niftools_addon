@@ -18,13 +18,13 @@ class NifInspector:
         cls.input_filename = 'test'
         cls.output_dir = ''
         cls.output_filename = cls.input_filename + "_out"
-        cls.data = NifFormat.Data()
+        cls.nif_file = NifFormat.Data()
         print("setup class")
         
     @istest
     def Runner(self):
         print("Test running")
-        #self.read_file()
+        self.read_file()
         # self.write_file()
         pass
      
@@ -34,21 +34,21 @@ class NifInspector:
         path = self.output_dir + os.sep + self.output_filename + ".nif"
         print("Writing to: " + path)
         with open(path, 'wb') as stream:
-            self.data.write(stream)
+            self.nif_file.write(stream)
          
     def read_file(self):
         path = self.input_dir + os.sep + self.input_filename + ".nif"
         print("Reading : " + path)
         stream = open(path, 'rb')
-        self.data.read(stream)
+        self.nif_file.read(stream)
         self.check_data()
          
     def create_data(self):
-        print("creating data")
+        print("creating nif_file")
 
             
     def check_data(self):
-        print("Checking data")
+        print("Checking nif_file")
 
         
     
