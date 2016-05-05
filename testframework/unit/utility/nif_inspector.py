@@ -24,7 +24,7 @@ class NifInspector:
     @istest
     def Runner(self):
         print("Test running")
-        self.read_file()
+        # self.read_file()
         # self.write_file()
         pass
      
