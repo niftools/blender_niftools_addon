@@ -1,5 +1,6 @@
+#######################
 Developer Documentation
-=======================
+#######################
 
 .. _development:
 
@@ -13,6 +14,7 @@ Contents:
    api/index
    testframework/index
    testframework/ci_server
+   docs
 
    
 Indices and tables

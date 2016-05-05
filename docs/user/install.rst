@@ -13,7 +13,7 @@ and follow the instructions.
 * Ensure that the version of Blender being installed is supported by the Blender Nif Plugin.
 
 Fedora
-``````
+^^^^^^
 
 For Fedora 16 and up, Blender 2.7x is available via yum::
 
@@ -24,7 +24,7 @@ Install and Register the Addon
 ------------------------------
 
 #. Download the `blender nif plugin .zip release
-   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_.
+   <https://github.com/niftools/blender_nif_plugin/releases>`_.
 
 #. Start blender.
 

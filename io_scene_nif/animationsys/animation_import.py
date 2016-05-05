@@ -40,6 +40,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class AnimationHelper():
     
@@ -56,7 +57,7 @@ class AnimationHelper():
         *** Note: this function will eventually move to PyFFI. ***
         """
 
-        self.info("Merging kf tree into nif tree")
+        NifLog.info("Merging kf tree into nif tree")
 
         # check that this is an Oblivion style kf file
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
@@ -73,24 +74,16 @@ class AnimationHelper():
             # match from nif tree?
             node = root.find(block_name = nodename)
             if not node:
-                self.info(
-                    "Animation for %s but no such node found in nif tree"
-                    % nodename)
+                NifLog.info("Animation for {0} but no such node found in nif tree".format(nodename))
                 continue
             # node found, now find the controller
             controllertype = controlledblock.get_controller_type()
             if not controllertype:
-                self.info(
-                    "Animation for %s without controller type, so skipping"
-                    % nodename)
+                NifLog.info("Animation for {0} without controller type, so skipping".format(nodename))
                 continue
             controller = nif_utils.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
-                self.info(
-                    "Animation for %s with %s controller,"
-                    " but no such controller type found"
-                    " in corresponding node, so creating one"
-                    % (nodename, controllertype))
+                NifLog.info("No {1} Controller found in corresponding animation node {0}, creating one".format(controllertype, nodename))
                 controller = getattr(NifFormat, controllertype)()
                 # TODO:set all the fields of this controller
                 node.add_controller(controller)
@@ -122,7 +115,7 @@ class AnimationHelper():
                 # copy translation
                 if kfi.translation.x < -1000000:
                     # invalid, happens in fallout 3, e.g. h2haim.kf
-                    self.nif_import.warning("ignored NaN in interpolator translation")
+                    NifLog.warn("Ignored NaN in interpolator translation")
                 else:
                     kfd.translations.num_keys = 1
                     kfd.translations.keys.update_size()
@@ -211,7 +204,7 @@ class AnimationHelper():
             if diff < lowest_diff:
                 lowest_diff = diff
                 fps = test_fps
-        self.nif_import.info("Animation estimated at %i frames per second." % fps)
+        NifLog.info("Animation estimated at %i frames per second." % fps)
         return fps
 
     def store_animation_data(self, rootBlock):
@@ -261,8 +254,8 @@ class AnimationHelper():
             return
 
         # denote progress
-        self.nif_import.info("Animation")
-        self.nif_import.info("Importing animation data for %s" % b_obj.name)
+        NifLog.info("Animation")
+        NifLog.info("Importing animation data for {0}".format(b_obj.name))
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
         b_ipo = ObjectAnimation.get_object_ipo(b_obj)
@@ -270,7 +263,7 @@ class AnimationHelper():
         translations = kfd.translations
         scales = kfd.scales
         # add the keys
-        self.nif_import.debug('Scale keys...')
+        NifLog.debug('Scale keys...')
         for key in scales.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
@@ -286,7 +279,7 @@ class AnimationHelper():
             xkeys = kfd.xyz_rotations[0].keys
             ykeys = kfd.xyz_rotations[1].keys
             zkeys = kfd.xyz_rotations[2].keys
-            self.nif_import.debug('Rotation keys...(euler)')
+            NifLog.debug('Rotation keys...(euler)')
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
@@ -299,7 +292,7 @@ class AnimationHelper():
         else:
             # uses quaternions
             if kfd.quaternion_keys:
-                self.nif_import.debug('Rotation keys...(quaternions)')
+                NifLog.debug('Rotation keys...(quaternions)')
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
@@ -311,7 +304,7 @@ class AnimationHelper():
                 b_obj.insertIpoKey(Blender.Object.ROT)
 
         if translations.keys:
-            self.nif_import.debug('Translation keys...')
+            NifLog.debug('Translation keys...')
         for key in translations.keys:
             frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
@@ -341,7 +334,7 @@ class ObjectAnimation():
         n_vis_ctrl = nif_utils.find_controller(n_node, NifFormat.NiVisController)
         if not(n_vis_ctrl and n_vis_ctrl.data):
             return
-        self.info("importing vis controller")
+        NifLog.info("Importing vis controller")
         b_channel = "Layer"
         b_ipo = self.get_object_ipo(b_object)
         b_curve = b_ipo.addCurve(b_channel)
@@ -388,7 +381,7 @@ class MaterialAnimation():
                                            NifFormat.NiAlphaController)
         if not(n_alphactrl and n_alphactrl.data):
             return
-        self.nif_import.info("importing alpha controller")
+        NifLog.info("Importing alpha controller")
         b_channel = "Alpha"
         b_ipo = self.get_material_ipo(b_material)
         b_curve = b_ipo.addCurve(b_channel)
@@ -411,10 +404,7 @@ class MaterialAnimation():
                     break
         else:
             return
-        self.info(
-            "importing material color controller for target color %s"
-            " into blender channels %s"
-            % (n_target_color, b_channels))
+        NifLog.info("Importing material color controller for target color {0} into blender channels {0}".format(n_target_color, b_channels))
         # import data as curves
         b_ipo = self.get_material_ipo(b_material)
         for i, b_channel in enumerate(b_channels):
@@ -432,7 +422,7 @@ class MaterialAnimation():
                                       NifFormat.NiUVController)
         if not(n_ctrl and n_ctrl.data):
             return
-        self.info("importing UV controller")
+        NifLog.info("Importing UV controller")
         b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
         for b_channel, n_uvgroup in zip(b_channels,
                                         n_ctrl.data.uv_groups):
@@ -471,10 +461,10 @@ class ArmatureAnimation():
         bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
         # go through all armature pose bones
         # see http://www.elysiun.com/forum/viewtopic.php?t=58693
-        self.nif_import.info('Importing Animations')
+        NifLog.info('Importing Animations')
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
-            self.nif_import.debug('Importing animation for bone %s' % bone_name)
+            NifLog.debug('Importing animation for bone %s'.format(bone_name))
             niBone = self.nif_import.dict_blocks[bone_name]
 
             # get bind matrix (NIF format stores full transformations in keyframes,
@@ -561,8 +551,7 @@ class ArmatureAnimation():
 
                 # rotations
                 if rotations:
-                    self.nif_import.debug(
-                        'Rotation keys...(bspline quaternions)')
+                    NifLog.debug('Rotation keys...(bspline quaternions)')
                     for time, quat in zip(times, rotations):
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
                         quat = mathutils.Quaternion(
@@ -581,7 +570,7 @@ class ArmatureAnimation():
 
                 # translations
                 if translations:
-                    self.nif_import.debug('Translation keys...(bspline)')
+                    NifLog.debug('Translation keys...(bspline)')
                     for time, translation in zip(times, translations):
                         # time 0.0 is frame 1
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
@@ -645,7 +634,7 @@ class ArmatureAnimation():
 
                 # Scaling
                 if scales.keys:
-                    self.nif_import.debug('Scale keys...')
+                    NifLog.debug('Scale keys...')
                 for scaleKey in scales.keys:
                     # time 0.0 is frame 1
                     frame = 1 + int(scaleKey.time * self.nif_import.fps + 0.5)
@@ -664,7 +653,7 @@ class ArmatureAnimation():
                 if rotation_type == 4:
                     # uses xyz rotation
                     if kfd.xyz_rotations[0].keys:
-                        self.nif_import.debug('Rotation keys...(euler)')
+                        NifLog.debug('Rotation keys...(euler)')
                     for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
                                                  kfd.xyz_rotations[1].keys,
                                                  kfd.xyz_rotations[2].keys):
@@ -673,9 +662,7 @@ class ArmatureAnimation():
                         # XXX same times!!!
                         if (abs(xkey.time - ykey.time) > self.properties.epsilon
                             or abs(xkey.time - zkey.time) > self.properties.epsilon):
-                            self.nif_import.warning(
-                                "xyz key times do not correspond, "
-                                "animation may not be correctly imported")
+                            NifLog.warn("XYZ key times do not correspond, animation may not be correctly imported")
                         frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
                         euler = mathutils.Euler(
                             [xkey.value * 180.0 / math.pi,
@@ -698,7 +685,7 @@ class ArmatureAnimation():
                 else:
                     # TODO:take rotation type into account for interpolation
                     if kfd.quaternion_keys:
-                        self.nif_import.debug('Rotation keys...(quaternions)')
+                        NifLog.debug('Rotation keys...(quaternions)')
                     quaternion_keys = kfd.quaternion_keys
                     for key in quaternion_keys:
                         frame = 1 + int(key.time * self.nif_import.fps + 0.5)
@@ -722,7 +709,7 @@ class ArmatureAnimation():
     
                 # Translations
                 if translations.keys:
-                    self.nif_import.debug('Translation keys...')
+                    NifLog.debug('Translation keys...')
                 for key in translations.keys:
                     # time 0.0 is frame 1
                     frame = 1 + int(key.time * self.nif_import.fps + 0.5)

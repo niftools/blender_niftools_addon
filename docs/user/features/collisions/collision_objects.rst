@@ -1,7 +1,6 @@
-.. _collisionobject:
-
 Collision Object
 ----------------
+.. _collisionobject:
 
 
 .. warning::

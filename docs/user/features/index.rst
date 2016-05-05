@@ -1,5 +1,6 @@
 Features
 ========
+.. _user-features:
 
 .. 
    todo::
@@ -11,7 +12,7 @@ Features
 
 All features of our Blender plugin are described here.
 
-If in need of a guide to make sure your model is complete please visit the :ref:`workflow page <workflow>`.
+If in need of a guide to make sure your model is complete please visit the :ref:`workflow page <user-workflow>`.
 
 .. warning::
    Please note that some are still being ported from Blender 2.49b and are marked appropriately.
@@ -19,7 +20,6 @@ If in need of a guide to make sure your model is complete please visit the :ref:
 .. toctree::
    :maxdepth: 1
    
-   workflow/index
    iosettings/index
    scene/index
    geometry/index

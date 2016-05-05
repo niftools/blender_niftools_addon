@@ -44,6 +44,7 @@ import re
 
 import pyffi
 from pyffi.formats.nif import NifFormat
+from io_scene_nif.utility.nif_logging import NifLog
 
 class NifCommon:
     """Abstract base class for import and export. Contains utility functions
@@ -95,11 +96,6 @@ class NifCommon:
     dict_textures = {}
     dict_mesh_uvlayers = []
 
-    
-    
-    
-    
-
     VERTEX_RESOLUTION = 1000
     NORMAL_RESOLUTION = 100
 
@@ -125,64 +121,30 @@ class NifCommon:
         - set self.context
         - set self.selected_objects
         """
-        # print scripts info
-        from . import bl_info
-        operator.report(
-            {'INFO'},
-            "Blender NIF Scripts %s"
-            " (running on Blender %s, PyFFI %s)"
-            % (".".join(str(i) for i in bl_info["version"]),
-               bpy.app.version_string,
-               pyffi.__version__))
-
         # copy properties from operator (contains import/export settings)
         self.operator = operator
         self.properties = operator.properties
+        
+        # save context (so it can be used in other methods without argument passing)
+        self.context = context     
+        
+        NifLog.op = self.operator
 
         # set logging level
         log_level_num = getattr(logging, self.properties.log_level)
         logging.getLogger("niftools").setLevel(log_level_num)
         logging.getLogger("pyffi").setLevel(log_level_num)
 
-        # save context (so it can be used in other methods without argument
-        # passing)
-        self.context = context
+        # print scripts info
+        from . import bl_info
+        niftools_ver = (".".join(str(i) for i in bl_info["version"]))
+        
+        NifLog.info("Executing - Niftools : Blender Nif Plugin v{0} (running on Blender {1}, PyFFI {2})".format(niftools_ver,
+                                                                                                bpy.app.version_string,
+                                                                                                pyffi.__version__))
 
-        # get list of selected objects
-        # (find and store this list now, as creating new objects adds them
-        # to the selection list)
+        # find and store this list now of selected objects as creating new objects adds them to the selection list
         self.selected_objects = self.context.selected_objects[:]
-
-    def execute(self):
-        """Import/export entry point. Default implementation does nothing."""
-        return {'FINISHED'}
-
-    def debug(self, message):
-        """Report a debug message."""
-        self.operator.report({'DEBUG'}, message)
-
-    def info(self, message):
-        """Report an informative message."""
-        self.operator.report({'INFO'}, message)
-
-    def warning(self, message):
-        """Report a warning message."""
-        self.operator.report({'WARNING'}, message)
-
-    def error(self, message):
-        """Report an error and return ``{'FINISHED'}``. To be called by
-        the :meth:`execute` method, as::
-
-            return error('Something went wrong.')
-
-        Blender will raise an exception that is passed to the caller.
-
-        .. seealso::
-
-            The :ref:`error reporting <dev-design-error-reporting>` design.
-        """
-        self.operator.report({'ERROR'}, message)
-        return {'FINISHED'}
 
 
     def get_bone_name_for_blender(self, name):
@@ -248,8 +210,7 @@ class NifCommon:
         elif flags & 6 == 0: # 0b000
             return Blender.IpoCurve.ExtendTypes.CYCLIC
 
-        self.warning(
-            "Unsupported cycle mode in nif, using clamped.")
+        NifLog.warn("Unsupported cycle mode in nif, using clamped.")
         return Blender.IpoCurve.ExtendTypes.CONST
 
     def get_b_ipol_from_n_ipol(self, n_ipol):
@@ -260,8 +221,8 @@ class NifCommon:
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
             return Blender.IpoCurve.InterpTypes.CONST
-        self.warning(
-            "Unsupported interpolation mode in nif, using quadratic/bezier.")
+        
+        NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
         return Blender.IpoCurve.InterpTypes.BEZIER
 
     def get_n_ipol_from_b_ipol(self, b_ipol):
@@ -271,8 +232,8 @@ class NifCommon:
             return NifFormat.KeyType.QUADRATIC_KEY
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
             return NifFormat.KeyType.CONST_KEY
-        self.warning(
-            "Unsupported interpolation mode in blend, using quadratic/bezier.")
+        
+        NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
         return NifFormat.KeyType.QUADRATIC_KEY
 
     def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
@@ -282,7 +243,6 @@ class NifCommon:
             return NifFormat.ApplyMode.APPLY_HILIGHT2
         elif b_blend_type == "MIX":
             return NifFormat.ApplyMode.APPLY_MODULATE
-        self.warning(
-            "Unsupported blend type (%s) in material,"
-            " using apply mode APPLY_MODULATE" % b_blend_type)
+        
+        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
         return NifFormat.ApplyMode.APPLY_MODULATE

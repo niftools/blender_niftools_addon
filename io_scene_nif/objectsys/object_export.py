@@ -43,6 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class ObjectHelper():
 
@@ -95,10 +96,9 @@ class ObjectHelper():
         @param b_obj: The Blender object.
         @return: C{block}"""
         if b_obj is None:
-            self.nif_export.info("Exporting %s block"%block.__class__.__name__)
+            NifLog.info("Exporting {0} block".format(block.__class__.__name__))
         else:
-            self.nif_export.info("Exporting %s as %s block"
-                     % (b_obj, block.__class__.__name__))
+            NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
         self.nif_export.dict_blocks[block] = b_obj
         return block
     
@@ -230,10 +230,7 @@ class ObjectHelper():
             if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                 if b_obj_ipo:
                     # mesh with armature parent should not have animation!
-                    self.warning(
-                        "Mesh %s is skinned but also has object animation. "
-                        "The nif format does not support this: "
-                        "ignoring object animation." % b_obj.name)
+                    NifLog.warn("Mesh {0} is skinned but also has object animation. The nif format does not support this, ignoring object animation.".format(b_obj.name))
                     b_obj_ipo = None
                 trishape_space = space
                 space = 'none'
@@ -545,7 +542,7 @@ class MeshHelper():
 
 
     def export_tri_shapes(self, b_obj, space, parent_block, trishape_name = None):
-        self.nif_export.info("Exporting %s" % b_obj)
+        NifLog.info("Exporting {0}".format(b_obj))
 
         assert(b_obj.type == 'MESH')
 
@@ -557,7 +554,7 @@ class MeshHelper():
         # so quickly catch this (rare!) case
         if not b_obj.data.vertices:
             # do not export anything
-            self.nif_export.warning("%s has no vertices, skipped." % b_obj)
+            NifLog.warn("{0} has no vertices, skipped.".format(b_obj))
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -582,11 +579,8 @@ class MeshHelper():
 
             #vertex alpha check
             if len(b_mesh.vertex_colors) == 1:
-                self.nif_export.warning("Mesh only has one Vertex Color layer"
-                             " default alpha values will be written\n"
-                             " - For Alpha values add a second vertex layer, "
-                             " greyscale only"
-                             )
+                NifLog.warn("Mesh only has one Vertex Color layer. Default alpha values will be written."
+                               "For Custom alpha values add a second vertex layer, greyscale only" )
             else:
                 for b_loop in b_mesh.vertex_colors[1].data:
                     if(b_loop.color.v > self.properties.epsilon):
@@ -682,15 +676,10 @@ class MeshHelper():
                         for b_groupname in b_vert.groups:
                             if b_groupname.group == vertex_group.index:
                                 vertices_list.add(b_vert.index)
-                    self.nif_export.debug("Found body part %s" % bodypartgroupname)
-                    bodypartgroups.append(
-                        [bodypartgroupname,
-                         getattr(NifFormat.BSDismemberBodyPartType,
-                                 bodypartgroupname),
-                                 vertices_list])
-                         
-
-
+                    NifLog.debug("Found body part {0}".format(bodypartgroupname))
+                    bodypartgroups.append([bodypartgroupname,
+                                           getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname),
+                                           vertices_list])
 
 
             # note: we can be in any of the following five situations
@@ -1090,9 +1079,7 @@ class MeshHelper():
                 tridata.consistency_flags = NifFormat.ConsistencyType._enumvalues[cf_index]
             else:
                 tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
-                self.nif_export.warning(
-                    "%s has no consistency type set"
-                    "using default CT_STATIC." % b_obj)
+                NifLog.warn("{0} has no consistency type set using default CT_STATIC.".format(b_obj))
 
             # data
             tridata.num_vertices = len(vertlist)
@@ -1305,7 +1292,7 @@ class MeshHelper():
 
                         if (self.nif_export.version >= 0x04020100
                             and self.properties.skin_partition):
-                            self.nif_export.info("Creating skin partition")
+                            NifLog.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
                                 maxbonesperpartition=self.properties.max_bones_per_partition,
                                 maxbonespervertex=self.properties.max_bones_per_vertex,
@@ -1320,35 +1307,18 @@ class MeshHelper():
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
                                 if self.properties.pad_bones:
-                                    self.nif_export.warning(
-                                       "Using padbones on Oblivion export,"
-                                       " but you probably do not want to do"
-                                       " this."
-                                       " Disable the pad bones option to get"
-                                       " higher quality skin partitions.")
+                                    NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                                 if self.properties.max_bones_per_partition < 18:
-                                    self.nif_export.warning(
-                                       "Using less than 18 bones"
-                                       " per partition on Oblivion/Fallout 3"
-                                       " export."
-                                       " Set it to 18 to get higher quality"
-                                       " skin partitions.")
+                                    NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
+                                                   "Set it to 18 to get higher quality skin partitions.")
                             if self.properties.game in ('SKYRIM'):
                                 if self.properties.max_bones_per_partition < 24:
-                                    self.nif_export.warning(
-                                       "Using less than 24 bones"
-                                       " per partition on Skyrim"
-                                       " export."
-                                       " Set it to 24 to get higher quality"
-                                       " skin partitions.")
+                                    NifLog.warn("Using less than 24 bones per partition on Skyrim export."
+                                       "Set it to 24 to get higher quality skin partitions.")
                             if lostweight > self.properties.epsilon:
-                                self.nif_export.warning(
-                                    "Lost %f in vertex weights"
-                                    " while creating a skin partition"
-                                    " for Blender object '%s' (nif block '%s')"
-                                    % (lostweight, b_obj.name, trishape.name))
-
+                                NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')"
+                                               .format(str(lostweight), b_obj.name, trishape.name))
 
                         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
                             partitions = skininst.partitions
@@ -1360,9 +1330,6 @@ class MeshHelper():
                                     if s_part_name == b_part.name:
                                         s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
                                         s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
-                                
-
-
 
                         # clean up
                         del vert_weights
@@ -1425,8 +1392,7 @@ class MeshHelper():
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
                             morph.frame_name = keyblock.name
-                            self.nif_export.info("Exporting morph %s: vertices"
-                                             % keyblock.name)
+                            NifLog.info("Exporting morph {0}: vertices".format(keyblock.name))
                             morph.arg = morphdata.num_vertices
                             morph.vectors.update_size()
                             for b_v_index, (vert_indices, vert) \
@@ -1466,8 +1432,7 @@ class MeshHelper():
                             # and on floatdata for newer nifs
                             # of course only one of these will be actually
                             # written to the file
-                            self.nif_export.info("Exporting morph %s: curve"
-                                             % keyblock.name)
+                            NifLog.info("Exporting morph {0}: curve".format(keyblock.name))
                             interpol.data = self.nif_export.objecthelper.create_block("NiFloatData", curve)
                             floatdata = interpol.data.data
                             if curve.getExtrapolation() == "Constant":
@@ -1503,7 +1468,7 @@ class MeshHelper():
 
     def smooth_mesh_seams(self, b_objs):
         # get shared vertices
-        self.nif_export.info("Smoothing seams between objects...")
+        NifLog.info("Smoothing seams between objects...")
         vdict = {}
         for b_obj in [b_obj for b_obj in b_objs if b_obj.type == 'MESH']:
             b_mesh = b_obj.data
@@ -1550,6 +1515,6 @@ class MeshHelper():
                 vertex.normal = norm
                 # vertex.sel = True
             nv += 1
-        self.nif_export.info("Fixed normals on %i vertices." % nv)
+        NifLog.info("Fixed normals on {0} vertices.".format(str(nv)))
     
     

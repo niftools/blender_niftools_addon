@@ -37,11 +37,11 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import pyffi
 from pyffi.formats.nif import NifFormat
 
 import bpy
 import mathutils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class constraint_import():
 
@@ -63,29 +63,25 @@ class constraint_import():
 
         # find objects
         if len(self.nif_import.dict_havok_objects[hkbody]) != 1:
-            self.nif_import.warning(
-                "Rigid body with no or multiple shapes, constraints skipped")
+            NifLog.warn("Rigid body with no or multiple shapes, constraints skipped")
             return
 
         b_hkobj = self.nif_import.dict_havok_objects[hkbody][0]
 
-        self.nif_import.info("Importing constraints for %s" % b_hkobj.name)
+        NifLog.info("Importing constraints for %s" % b_hkobj.name)
 
         # now import all constraints
         for hkconstraint in hkbody.constraints:
 
             # check constraint entities
             if not hkconstraint.num_entities == 2:
-                self.warning(
-                    "Constraint with more than 2 entities, skipped")
+                NifLog.warn("Constraint with more than 2 entities, skipped")
                 continue
             if not hkconstraint.entities[0] is hkbody:
-                self.warning(
-                    "First constraint entity not self, skipped")
+                NifLog.warn("First constraint entity not self, skipped")
                 continue
             if not hkconstraint.entities[1] in self.nif_import.dict_havok_objects:
-                self.warning(
-                    "Second constraint entity not imported, skipped")
+                NifLog.warn("Second constraint entity not imported, skipped")
                 continue
 
             # get constraint descriptor
@@ -106,14 +102,12 @@ class constraint_import():
                     hkdescriptor = hkconstraint.limited_hinge
                     b_hkobj.rigid_body.enabled = False
                 else:
-                    self.nif_import.warning("Unknown malleable type (%i), skipped"
-                                        % hkconstraint.type)
+                    NifLog.warn("Unknown malleable type ({0}), skipped".format(str(hkconstraint.type)))
                 # extra malleable constraint settings
                 ### damping parameters not yet in Blender Python API
                 ### tau (force between bodies) not supported by Blender
             else:
-                self.nif_import.warning("Unknown constraint type (%s), skipped"
-                                    % hkconstraint.__class__.__name__)
+                NifLog.warn("Unknown constraint type ({0}), skipped".format(hkconstraint.__class__.__name__))
                 continue
 
             # add the constraint as a rigid body joint
@@ -229,16 +223,11 @@ class constraint_import():
                     # either not orthogonal, or negative orientation
                     if (mathutils.Vector.cross(-axis_x, axis_y)
                         - axis_z).length > 0.01:
-                        self.nif_import.warning(
-                            "Axes are not orthogonal in %s;"
-                            " arbitrary orientation has been chosen"
-                            % hkdescriptor.__class__.__name__)
+                        NifLog.warn("Axes are not orthogonal in {0}; Arbitrary orientation has been chosen".format(hkdescriptor.__class__.__name__))
                         axis_z = mathutils.Vector.cross(axis_x, axis_y)
                     else:
                         # fix orientation
-                        self.nif_import.warning(
-                            "X axis flipped in %s to fix orientation"
-                            % hkdescriptor.__class__.__name__)
+                        NifLog.warn("X axis flipped in {0} to fix orientation".format(hkdescriptor.__class__.__name__))
                         axis_x = -axis_x
                 # getting properties with no blender constraint
                 # equivalent and setting as obj properties
