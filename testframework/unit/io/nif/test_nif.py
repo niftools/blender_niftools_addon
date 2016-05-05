@@ -13,10 +13,6 @@ class Test_Nif_IO:
         NifLog.setMockReporter()
         cls.working_dir = os.path.dirname(__file__)
         
-    @classmethod
-    def teardown_class(cls):
-        NifFile.data = None
-        
     def test_load_supported_version(self):
         data = NifFile.load_nif(self.working_dir + os.sep + "readable.nif")
         nose.tools.assert_equal(data.version, 335544325)

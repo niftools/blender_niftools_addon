@@ -43,26 +43,28 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
 class KFFile():
-    
-    nif_file = NifFormat.Data()
+    """Class to load and save a NifFile"""
     
     @classmethod
     def load_kf(cls, file_path):
-        NifLog.info("Importing {0}".format(file_path))
+        """Loads a Kf file from the given path"""
+        NifLog.info("Loading {0}".format(file_path))
         
+        kf_file = NifFormat.Data()
+
         # open keyframe file for binary reading
-        with open(file_path, "rb") as kffile:
+        with open(file_path, "rb") as kf_stream:
             # check if nif file is valid
-            cls.nif_file.inspect_version_only(kffile)
-            if cls.nif_file.version >= 0:
+            kf_file.inspect_version_only(kf_stream)
+            if kf_file.version >= 0:
                 # it is valid, so read the file
                 NifLog.info("KF file version: {0}".format(cls.nif_file.version, "x"))
                 NifLog.info("Reading keyframe file")
-                cls.nif_file.read(kffile)
-            elif cls.nif_file.version == -1:
+                kf_file.read(kf_stream)
+            elif kf_file.version == -1:
                 raise NifError("Unsupported KF version.")
             else:                    
                 raise NifError("Not a KF file.")
             
-        return cls.nif_file    
+        return kf_file    
     

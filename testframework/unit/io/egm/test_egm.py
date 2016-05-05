@@ -13,10 +13,6 @@ class Test_EGM_IO:
         NifLog.setMockReporter()
         cls.working_dir = os.path.dirname(__file__)
         
-    @classmethod
-    def teardown_class(cls):
-        EGMFile.data = None
-        
     def test_load_supported_version(self):
         data = EGMFile.load_nif(self.working_dir + os.sep + "readable.nif")
         nose.tools.assert_equal(data.version, 335544325)

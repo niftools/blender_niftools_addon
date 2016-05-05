@@ -43,26 +43,28 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
 class NifFile():
-    
-    data = NifFormat.Data()
+    """Class to load and save a NifFile"""
     
     @classmethod
     def load_nif(cls, file_path):
+        """Loads a nif from the given file path"""
         NifLog.info("Importing {0}".format(file_path))
+
+        nif_data = NifFormat.Data()
         
         # open file for binary reading
-        with open(file_path, "rb") as niffile:
+        with open(file_path, "rb") as nif_stream:
             # check if nif file is valid
-            cls.data.inspect_version_only(niffile)
+            nif_data.inspect_version_only(nif_stream)
             if cls.data.version >= 0:
                 # it is valid, so read the file
                 NifLog.info("NIF file version: {0}".format(cls.data.version, "x"))
                 NifLog.info("Reading file")
-                cls.data.read(niffile)
-            elif cls.data.version == -1:
+                nif_data.read(nif_stream)
+            elif nif_data.version == -1:
                 raise NifError("Unsupported NIF version.")
             else:                    
                 raise NifError("Not a NIF file.")
             
-        return cls.data    
+        return nif_data
         
