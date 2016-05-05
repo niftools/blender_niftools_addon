@@ -43,26 +43,28 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
 class EGMFile():
-    
-    data = EgmFormat.Data()
-    
+    """Load and save a FaceGen Egm file"""
+
     @classmethod
     def load_egm(cls, file_path):
-        NifLog.info("Importing {0}".format(file_path))
+        """Loads an egm file from the given path"""
+        NifLog.info("Loading {0}".format(file_path))
+        
+        egm_file = EgmFormat.Data()
         
         # open keyframe file for binary reading
-        with open(file_path, "rb") as kffile:
+        with open(file_path, "rb") as egm_stream:
             # check if nif file is valid
-            cls.data.inspect_version_only(kffile)
-            if cls.data.version >= 0:
+            egm_file.inspect_version_only(egm_stream)
+            if egm_file.version >= 0:
                 # it is valid, so read the file
-                NifLog.info("EGM file version: {0}".format(cls.data.version, "x"))
+                NifLog.info("EGM file version: {0}".format(egm_file.version, "x"))
                 NifLog.info("Reading FaceGen egm file")
-                cls.data.read(kffile)
-            elif cls.data.version == -1:
+                egm_file.read(egm_stream)
+            elif egm_file.version == -1:
                 raise NifError("Unsupported EGM version.")
             else:                    
                 raise NifError("Not a EGM file.")
             
-        return cls.data
+        return egm_file
     

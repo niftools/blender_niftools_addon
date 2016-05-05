@@ -13,10 +13,6 @@ class Test_KF_IO:
         NifLog.setMockReporter()
         cls.working_dir = os.path.dirname(__file__)
         
-    @classmethod
-    def teardown_class(cls):
-        del cls.kf_file
-        
     def test_load_supported_version(self):
         kf_file = KFFile.load_nif(self.working_dir + os.sep + "readable.nif")
         nose.tools.assert_equal(kf_file.version, 335544325)
