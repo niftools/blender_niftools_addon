@@ -5,8 +5,8 @@ Documentation
 
 Documentation of the Blender Nif Plugin is of equal importance to having a clean, functional code base and automated tests.
 The plugin is intended to be used by content creators. The main causes for inability to use it correctly are.
-- functional bugs
-- Design and usablilty issues
+- Functional bugs
+- Design and usabilty issues
 - Poorly documented features.
 
 The first two issues can be fixed on a priority basis, unless things are documented to reflect there are known issues or the workflow is outlined correctly
