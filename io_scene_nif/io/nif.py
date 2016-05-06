@@ -56,9 +56,9 @@ class NifFile():
         with open(file_path, "rb") as nif_stream:
             # check if nif file is valid
             nif_data.inspect_version_only(nif_stream)
-            if cls.data.version >= 0:
+            if nif_data.version >= 0:
                 # it is valid, so read the file
-                NifLog.info("NIF file version: {0}".format(cls.data.version, "x"))
+                NifLog.info("NIF file version: {0}".format(nif_data.version, "x"))
                 NifLog.info("Reading file")
                 nif_data.read(nif_stream)
             elif nif_data.version == -1:
