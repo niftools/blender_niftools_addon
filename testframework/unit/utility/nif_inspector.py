@@ -16,7 +16,7 @@ class NifInspector:
         #Uses script directory to read from/write from, override for different location
         cls.input_dir = os.path.dirname(__file__)
         cls.input_filename = 'test'
-        cls.output_dir = ''
+        cls.output_dir = cls.input_dir
         cls.output_filename = cls.input_filename + "_out"
         cls.nif_file = NifFormat.Data()
         print("setup class")
@@ -24,8 +24,8 @@ class NifInspector:
     @istest
     def Runner(self):
         print("Test running")
-        # self.read_file()
-        # self.write_file()
+        self.read_file()
+        self.write_file()
         pass
      
      
