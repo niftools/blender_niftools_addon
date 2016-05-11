@@ -58,7 +58,7 @@ class KFFile():
             kf_file.inspect_version_only(kf_stream)
             if kf_file.version >= 0:
                 # it is valid, so read the file
-                NifLog.info("KF file version: {0}".format(cls.nif_file.version, "x"))
+                NifLog.info("KF file version: {0}".format(kf_file.version, "x"))
                 NifLog.info("Reading keyframe file")
                 kf_file.read(kf_stream)
             elif kf_file.version == -1:
