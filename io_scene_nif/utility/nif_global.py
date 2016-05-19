@@ -38,57 +38,26 @@
 # ***** END LICENSE BLOCK *****
 
 import logging
+from io_scene_nif.utility.nif_logging import NifLog
 
-class NifLog():
-    """A simple custom exception class for export errors. This module require initialisation of an operator reference to function."""  
+class NifGlobal():
+    """A simple reference holder class but enables classes to be decoupled. 
+    This module require initialisation to function."""  
     
-    # Injectable reference to reporting
-    op = setMockReporter()
-
-    @classmethod
-    def debug(cls, message):
-        """Report a debug message."""
-        cls.op.report({'DEBUG'}, message)
-
-    @classmethod
-    def info(cls, message):
-        """Report an informative message."""
-        cls.op.report({'INFO'}, message)
-
-    @classmethod
-    def warn(cls, message):
-        """Report a warning message."""
-        cls.op.report({'WARNING'}, message)
-
-    @classmethod
-    def error(cls, message):
-        """Report an error and return ``{'FINISHED'}``. To be called by
-        the :meth:`execute` method, as::
-
-            return error('Something went wrong.')
-
-        Blender will raise an exception that is passed to the caller.
-
-        .. seealso::
-
-            The :ref:`error reporting <dev-design-error-reporting>` design.
-        """
-        cls.op.report({'ERROR'}, message)
-        return {'FINISHED'}
+    op = None
+    ctx = None
+    prop = None
     
     @classmethod
-    def init(cls, operator):
+    def init(cls, operator, context):
         cls.op = operator
-        log_level_num = getattr(logging, operator.properties.log_level)
-        logging.getLogger("niftools").setLevel(log_level_num)
-        logging.getLogger("pyffi").setLevel(log_level_num)
-    
-    @classmethod
-    def setMockReporter(cls):
-        return cls._MockOperator()
-    
-    class _MockOperator():
+        cls.prop = operator.properties
+        cls.ctx = context
         
-        def report(self, level, message):
-            print(str(level) + ": " + message)
+        # init loggers logging level
+        NifLog.op = operator
         
+        
+        
+        
+
