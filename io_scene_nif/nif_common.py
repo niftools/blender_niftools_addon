@@ -37,14 +37,13 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import logging
-
 import bpy
 import re
 
 import pyffi
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifGlobal
 
 class NifCommon:
     """Abstract base class for import and export. Contains utility functions
@@ -113,14 +112,10 @@ class NifCommon:
     HAVOK_SCALE = 6.996
 
     def __init__(self, operator, context):
-        """Common initialization functions for executing the import/export
-        operators:
-
-        - initialize progress bar
-        - set logging level
-        - set self.context
-        - set self.selected_objects
-        """
+        """Common initialization functions for executing the import/export operators: """
+        
+        NifGlobal.init(operator, context)
+        
         # copy properties from operator (contains import/export settings)
         self.operator = operator
         self.properties = operator.properties
@@ -128,13 +123,6 @@ class NifCommon:
         # save context (so it can be used in other methods without argument passing)
         self.context = context     
         
-        NifLog.op = self.operator
-
-        # set logging level
-        log_level_num = getattr(logging, self.properties.log_level)
-        logging.getLogger("niftools").setLevel(log_level_num)
-        logging.getLogger("pyffi").setLevel(log_level_num)
-
         # print scripts info
         from . import bl_info
         niftools_ver = (".".join(str(i) for i in bl_info["version"]))
