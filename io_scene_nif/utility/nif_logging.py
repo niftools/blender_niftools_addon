@@ -39,11 +39,15 @@
 
 import logging
 
+class _MockOperator():
+    def report(self, level, message):
+        print(str(level) + ": " + message)
+
 class NifLog():
     """A simple custom exception class for export errors. This module require initialisation of an operator reference to function."""  
     
     # Injectable reference to reporting
-    op = setMockReporter()
+    op = _MockOperator()
 
     @classmethod
     def debug(cls, message):
@@ -83,12 +87,5 @@ class NifLog():
         logging.getLogger("niftools").setLevel(log_level_num)
         logging.getLogger("pyffi").setLevel(log_level_num)
     
-    @classmethod
-    def setMockReporter(cls):
-        return cls._MockOperator()
     
-    class _MockOperator():
-        
-        def report(self, level, message):
-            print(str(level) + ": " + message)
         
