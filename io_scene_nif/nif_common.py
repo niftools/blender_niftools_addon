@@ -116,13 +116,6 @@ class NifCommon:
         
         NifOp.init(operator, context)
         
-        # copy properties from operator (contains import/export settings)
-        self.operator = operator
-        self.properties = operator.properties
-        
-        # save context (so it can be used in other methods without argument passing)
-        self.context = context   
-        
         # print scripts info
         from . import bl_info
         niftools_ver = (".".join(str(i) for i in bl_info["version"]))
@@ -132,7 +125,7 @@ class NifCommon:
                                                                                                 pyffi.__version__))
 
         # find and store this list now of selected objects as creating new objects adds them to the selection list
-        self.selected_objects = self.context.selected_objects[:]
+        self.selected_objects = NifOp.ctx.selected_objects[:]
 
 
     def get_bone_name_for_blender(self, name):

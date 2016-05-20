@@ -44,12 +44,13 @@ import os.path
 import bpy
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
+
 
 class TextureLoader():
     
     def __init__(self, parent):
         self.nif_import = parent
-        self.properties = parent.properties
     
     def get_texture_hash(self, source):
         """Helper function for import_texture. Returns a key that uniquely
@@ -119,7 +120,7 @@ class TextureLoader():
         while True:
             fn = "image%03i.dds" % n
             tex = os.path.join(
-                os.path.dirname(self.properties.filepath), fn)
+                os.path.dirname(NifOp.props.filepath), fn)
             if not os.path.exists(tex):
                 break
             n += 1

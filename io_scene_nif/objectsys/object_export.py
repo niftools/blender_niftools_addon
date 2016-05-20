@@ -536,8 +536,6 @@ class MeshHelper():
 
     def __init__(self, parent):
         self.nif_export = parent
-        NifOp.props = parent.properties
-
 
     def export_tri_shapes(self, b_obj, space, parent_block, trishape_name = None):
         NifLog.info("Exporting {0}".format(b_obj))
