@@ -148,12 +148,12 @@ class NifExport(NifCommon):
 
 
                 if b_obj.type == 'MESH':
-                    b_armature_modifier = None
+#                     b_armature_modifier = None
                     b_obj_name = b_obj.name
                     if b_obj.parent:
                         for b_mod in bpy.data.objects[b_obj_name].modifiers:
                             if b_mod.type == 'ARMATURE':
-                                b_armature_modifier = b_mod.name
+#                                 b_armature_modifier = b_mod.name
                                 if b_mod.use_bone_envelopes:
                                     raise nif_utils.NifError(
                                             "'%s': Cannot export envelope skinning."
@@ -163,12 +163,12 @@ class NifExport(NifCommon):
                                             " to convert their envelopes to vertex weights,"
                                             " and turn off envelopes."
                                             % b_obj.name)
-                        if not b_armature_modifier:
-                            raise nif_utils.NifError(
-                                    "'%s': is parented but does not have"
-                                    " the armature modifier set. This will"
-                                    " cause animations to fail."
-                                    % b_obj.name)
+#                         if not b_armature_modifier:
+#                             raise nif_utils.NifError(
+#                                     "'%s': is parented but does not have"
+#                                     " the armature modifier set. This will"
+#                                     " cause animations to fail."
+#                                     % b_obj.name)
 
                 # check for non-uniform transforms
                 # (lattices are not exported so ignore them as they often tend
