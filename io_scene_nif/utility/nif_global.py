@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import logging
 from io_scene_nif.utility.nif_logging import NifLog
 
 class NifOp():
@@ -45,19 +44,13 @@ class NifOp():
     This module require initialisation to function."""  
     
     op = None
-    ctx = None
     props = None
     
     @classmethod
-    def init(cls, operator, context):
+    def init(cls, operator):
         cls.op = operator
         cls.props = operator.properties
-        cls.ctx = context
         
         # init loggers logging level
         NifLog.op = operator
         
-        
-        
-        
-

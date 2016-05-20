@@ -164,8 +164,8 @@ class AnimationHelper():
                 animtxt.write('%i/%s\n'%(frame, newkey))
 
             # set start and end frames
-            NifOp.ctx.scene.getRenderingContext().startFrame(1)
-            NifOp.ctx.scene.getRenderingContext().endFrame(frame)
+            bpy.context.scene.getRenderingContext().startFrame(1)
+            bpy.context.scene.getRenderingContext().endFrame(frame)
 
     def get_frames_per_second(self, roots):
         """Scan all blocks and return a reasonable number for FPS."""
@@ -343,7 +343,7 @@ class ObjectAnimation():
         b_curve.extend = self.nif_import.get_extend_from_flags(n_vis_ctrl.flags)
         for n_key in n_vis_ctrl.data.keys:
             b_curve[1 + n_key.time * self.fps] = (
-                2 ** (n_key.value + max([1] + NifOp.ctx.scene.getLayers()) - 1))
+                2 ** (n_key.value + max([1] + bpy.context.scene.getLayers()) - 1))
 
 class MaterialAnimation():
     
