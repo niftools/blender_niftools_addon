@@ -41,6 +41,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
 
 class AnimationHelper():
     
@@ -163,8 +164,8 @@ class AnimationHelper():
                 animtxt.write('%i/%s\n'%(frame, newkey))
 
             # set start and end frames
-            self.nif_import.context.scene.getRenderingContext().startFrame(1)
-            self.nif_import.context.scene.getRenderingContext().endFrame(frame)
+            NifOp.ctx.scene.getRenderingContext().startFrame(1)
+            NifOp.ctx.scene.getRenderingContext().endFrame(frame)
 
     def get_frames_per_second(self, roots):
         """Scan all blocks and return a reasonable number for FPS."""
@@ -342,7 +343,7 @@ class ObjectAnimation():
         b_curve.extend = self.nif_import.get_extend_from_flags(n_vis_ctrl.flags)
         for n_key in n_vis_ctrl.data.keys:
             b_curve[1 + n_key.time * self.fps] = (
-                2 ** (n_key.value + max([1] + self.nif_import.context.scene.getLayers()) - 1))
+                2 ** (n_key.value + max([1] + NifOp.ctx.scene.getLayers()) - 1))
 
 class MaterialAnimation():
     
@@ -351,7 +352,7 @@ class MaterialAnimation():
     
     def import_material_controllers(self, b_material, n_geom):
         """Import material animation data for given geometry."""
-        if not self.nif_import.properties.animation:
+        if not NifOp.props.animation:
             return
 
         self.import_material_alpha_controller(b_material, n_geom)

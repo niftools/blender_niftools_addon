@@ -47,6 +47,7 @@ from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 from io_scene_nif.objectsys.object_import import Object
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
 
 
 class bhkshape_import():
@@ -349,30 +350,27 @@ class bhkshape_import():
         b_obj.game.radius = bhkshape.radius*self.HAVOK_SCALE
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
-
         # find transform
-        if length > self.nif_import.properties.epsilon:
+        if length > NifOp.props.epsilon:
             normal = (bhkshape.first_point - bhkshape.second_point) / length
             normal = mathutils.Vector((normal.x, normal.y, normal.z))
         else:
             NifLog.warn("BhkCapsuleShape with identical points: using arbitrary axis")
             normal = mathutils.Vector((0, 0, 1))
+            
         minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
-        orthvec = mathutils.Vector([(1 if i == minindex else 0)
-                                            for i in (0,1,2)])
+        orthvec = mathutils.Vector([(1 if i == minindex else 0) for i in (0,1,2)])
+        
         vec1 = mathutils.Vector.cross(normal, orthvec)
         vec1.normalize()
         vec2 = mathutils.Vector.cross(normal, vec1)
-        # the rotation matrix should be such that
-        # (0,0,1) maps to normal
+        
+        # the rotation matrix should be such that (0,0,1) maps to normal
         transform = mathutils.Matrix([vec1, vec2, normal]).transposed()
         transform.resize_4x4()
-        transform[0][3] = (self.HAVOK_SCALE / 2) * (
-                            bhkshape.first_point.x + bhkshape.second_point.x)
-        transform[1][3] = (self.HAVOK_SCALE / 2) * (
-                            bhkshape.first_point.y + bhkshape.second_point.y)
-        transform[2][3] = (self.HAVOK_SCALE / 2) * (
-                            bhkshape.first_point.z + bhkshape.second_point.z)
+        transform[0][3] = (self.HAVOK_SCALE / 2) * (bhkshape.first_point.x + bhkshape.second_point.x)
+        transform[1][3] = (self.HAVOK_SCALE / 2) * (bhkshape.first_point.y + bhkshape.second_point.y)
+        transform[2][3] = (self.HAVOK_SCALE / 2) * (bhkshape.first_point.z + bhkshape.second_point.z)
         b_obj.matrix_local = transform
 
         # Recalculate mesh to render correctly

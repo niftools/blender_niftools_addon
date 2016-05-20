@@ -43,6 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
 
 class bhkshape_export():
 
@@ -51,7 +52,6 @@ class bhkshape_export():
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.properties = parent.properties
         self.HAVOK_SCALE = parent.HAVOK_SCALE
 
 
@@ -318,7 +318,7 @@ class bhkshape_export():
         maxz = max([b_vert[2] for b_vert in b_vertlist])
         
         calc_bhkshape_radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.HAVOK_SCALE)
-        if(b_obj.game.radius - calc_bhkshape_radius > self.nif_export.properties.epsilon):
+        if(b_obj.game.radius - calc_bhkshape_radius > NifOp.props.epsilon):
             radius = calc_bhkshape_radius
         else:
             radius = b_obj.game.radius
@@ -397,7 +397,7 @@ class bhkshape_export():
             vert2 = vert2 * transform
 
             # check if end points are far enough from each other
-            if (vert1 - vert2).length < self.properties.epsilon:
+            if (vert1 - vert2).length < NifOp.props.epsilon:
                 NifLog.warn("End points of cylinder {0} too close, converting to sphere.".format(b_obj))
                 # change type
                 b_obj.game.collision_bounds_type = 'SPHERE'
