@@ -95,9 +95,11 @@ def _init_loggers():
 
 
 def menu_func_import(self, context):
+    # TODO: get default path from config registry
+    # default_path = bpy.data.filename.replace(".blend", ".nif")
     self.layout.operator(
         operators.nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
-
+    # ).filepath = default_path
 
 def menu_func_export(self, context):
     self.layout.operator(
