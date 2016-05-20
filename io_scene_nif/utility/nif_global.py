@@ -46,12 +46,12 @@ class NifOp():
     
     op = None
     ctx = None
-    prop = None
+    props = None
     
     @classmethod
     def init(cls, operator, context):
         cls.op = operator
-        cls.prop = operator.properties
+        cls.props = operator.properties
         cls.ctx = context
         
         # init loggers logging level

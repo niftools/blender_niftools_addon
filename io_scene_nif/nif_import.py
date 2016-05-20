@@ -107,7 +107,7 @@ class NifImport(NifCommon):
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
-            if NifOp.prop.skeleton == "GEOMETRY_ONLY":
+            if NifOp.props.skeleton == "GEOMETRY_ONLY":
                 if (len(self.selected_objects) != 1
                     or self.selected_objects[0].type != 'ARMATURE'):
                     raise nif_utils.NifError(
@@ -140,7 +140,7 @@ class NifImport(NifCommon):
                 self.fps = self.animationhelper.get_frames_per_second(
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
-                self.context.scene.render.fps = self.fps
+                NifOp.ctx.scene.render.fps = self.fps
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -207,7 +207,7 @@ class NifImport(NifCommon):
             NifLog.info("Finished")
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            self.context.scene.update()
+            NifOp.ctx.scene.update()
 
         return {'FINISHED'}
      
@@ -570,7 +570,7 @@ class NifImport(NifCommon):
             # track camera for billboard nodes
             if isinstance(niBlock, NifFormat.NiBillboardNode):
                 # find camera object
-                for obj in self.context.scene.objects:
+                for obj in NifOp.ctx.scene.objects:
                     if obj.type == 'CAMERA':
                         b_obj_camera = obj
                         break
@@ -724,7 +724,7 @@ class NifImport(NifCommon):
         # TODO: - is longname needed??? Yes it is needed, it resets the original name on export
         b_empty.niftools.longname = niBlock.name.decode()
 
-        self.context.scene.objects.link(b_empty)
+        NifOp.ctx.scene.objects.link(b_empty)
         b_empty.niftools.bsxflags = self.bsxflags
         b_empty.niftools.objectflags = niBlock.flags
 
@@ -766,7 +766,7 @@ class NifImport(NifCommon):
             # create mesh object and link to data
             b_obj = bpy.data.objects.new(b_name, b_mesh)
             # link mesh object to the scene
-            self.context.scene.objects.link(b_obj)
+            NifOp.ctx.scene.objects.link(b_obj)
             # save original name as object property, for export
             if b_name != niBlock.name.decode():
                 b_obj.niftools.longname = niBlock.name.decode()
@@ -1332,8 +1332,8 @@ class NifImport(NifCommon):
 
             if self.IMPORT_EGMANIM:
                 # set begin and end frame
-                self.context.scene.getRenderingContext().startFrame(1)
-                self.context.scene.getRenderingContext().endFrame(
+                NifOp.ctx.scene.getRenderingContext().startFrame(1)
+                NifOp.ctx.scene.getRenderingContext().endFrame(
                     11 + len(b_mesh.key.blocks) * 10)
 
             # finally: return to base position
@@ -1405,26 +1405,3 @@ class NifImport(NifCommon):
                  if (isinstance(child, NifFormat.NiTriBasedGeom)
                      and child.name.find(node_name) != -1) ]
 
-    
-def menu_func(self, context):
-    """Import operator for the menu."""
-    # TODO: get default path from config registry
-    # default_path = bpy.data.filename.replace(".blend", ".nif")
-    default_path = "import.nif"
-    self.layout.operator(NifImport.bl_idname,
-                         text="NetImmerse/Gamebryo (.nif & .kf & .egm)"
-                         ).filepath = default_path
-
-def register():
-    """Register nif import operator."""
-    bpy.types.register(NifImport)
-    bpy.types.INFO_MT_file_import.append(menu_func)
-
-def unregister():
-    """Unregister nif import operator."""
-    bpy.types.unregister(NifImport)
-    bpy.types.INFO_MT_file_import.remove(menu_func)
-
-if __name__ == '__main__':
-    """Register nif import, when starting Blender."""
-    register()
