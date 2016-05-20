@@ -39,6 +39,10 @@
 
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.io.nif import NifFile
+from io_scene_nif.io.kf import KFFile
+from io_scene_nif.io.egm import EGMFile 
 
 from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
@@ -56,7 +60,6 @@ import mathutils
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
-from io_scene_nif.utility.nif_logging import NifLog
 
 class NifImport(NifCommon):
 
@@ -112,73 +115,22 @@ class NifImport(NifCommon):
                         " 'Import Geometry Only + Parent To Selected Armature'"
                         " mode.")
 
-            # open file for binary reading
-            NifLog.info("Importing {0}".format(self.properties.filepath))
-            niffile = open(self.properties.filepath, "rb")
-            self.data = NifFormat.Data()
-            try:
-                # check if nif file is valid
-                self.data.inspect(niffile)
-                if self.data.version >= 0:
-                    # it is valid, so read the file
-                    NifLog.info("NIF file version: 0x%08X" % self.data.version)
-                    NifLog.info("Reading file")
-                    self.data.read(niffile)
-                    if self.properties.override_scene_info:
-                        scene_import.import_version_info(self.data)
-                elif self.data.version == -1:
-                    raise nif_utils.NifError("Unsupported NIF version.")
-                else:
-                    raise nif_utils.NifError("Not a NIF file.")
-            finally:
-                # the file has been read or an error occurred: close file
-                niffile.close()
 
-            if self.properties.keyframe_file:
-                # open keyframe file for binary reading
-                NifLog.info("Importing {0}".format(self.properties.keyframe_file))
-                kffile = open(self.properties.keyframe_file, "rb")
-                self.kfdata = NifFormat.Data()
-                try:
-                    # check if kf file is valid
-                    self.kfdata.inspect(kffile)
-                    if self.kfdata.version >= 0:
-                        # it is valid, so read the file
-                        NifLog.info("KF file version: 0x%08X" % self.kfdata.version)
-                        NifLog.info("Reading keyframe file")
-                        self.kfdata.read(kffile)
-                    elif self.kfdata.version == -1:
-                        raise nif_utils.NifError("Unsupported KF version.")
-                    else:
-                        raise nif_utils.NifError("Not a KF file.")
-                finally:
-                    # the file has been read or an error occurred: close file
-                    kffile.close()
+            self.data = NifFile.load_nif(self.properties.filepath)
+            if self.properties.override_scene_info:
+                scene_import.import_version_info(self.data)
+
+            kf_path = self.properties.keyframe_file
+            if kf_path:
+                self.kfdata = KFFile.load_kf(kf_path)
             else:
                 self.kfdata = None
 
-            if self.properties.egm_file:
-                # open facegen egm file for binary reading
-                NifLog.info("Importing %s" % self.properties.egm_file)
-                egmfile = open(self.properties.egm_file, "rb")
-                self.egmdata = EgmFormat.Data()
-                try:
-                    # check if kf file is valid
-                    self.egmdata.inspect(egmfile)
-                    if self.egmdata.version >= 0:
-                        # it is valid, so read the file
-                        NifLog.info("EGM file version: %03i" % self.egmdata.version)
-                        NifLog.info("Reading FaceGen egm file")
-                        self.egmdata.read(egmfile)
-                        # scale the data
-                        self.egmdata.apply_scale(self.properties.scale_correction_import)
-                    elif self.egmdata.version == -1:
-                        raise nif_utils.NifError("Unsupported EGM version.")
-                    else:
-                        raise nif_utils.NifError("Not an EGM file.")
-                finally:
-                    # the file has been read or an error occurred: close file
-                    egmfile.close()
+            egm_path = self.properties.egm_file
+            if egm_path:
+                self.egmdata = EGMFile.load_egm(egm_path)
+                # scale the data
+                self.egmdata.apply_scale(self.properties.scale_correction_import)
             else:
                 self.egmdata = None
 
