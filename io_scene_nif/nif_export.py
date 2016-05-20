@@ -917,27 +917,3 @@ class NifExport(NifCommon):
             morph.set_relative_vertices(relative_vertices)
 
 
-def menu_func(self, context):
-    """Export operator for the menu."""
-    # TODO: get default path from config registry
-    #default_path = bpy.data.filename.replace(".blend", ".nif")
-    default_path = "export.nif"
-    self.layout.operator(NifExport.bl_idname, text="NetImmerse/Gamebryo (.nif & .kf & .egm)").filepath = default_path
-
-
-def register():
-    """Register nif export operator."""
-    bpy.types.register(NifExport)
-    bpy.types.INFO_MT_file_export.append(menu_func)
-
-
-def unregister():
-    """Unregister nif export operator."""
-    bpy.types.unregister(NifExport)
-    bpy.types.INFO_MT_file_export.remove(menu_func)
-
-
-if __name__ == '__main__':
-    """Register nif import, when starting Blender."""
-    register()
-
