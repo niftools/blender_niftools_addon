@@ -160,12 +160,11 @@ class TextureLoader():
         elif isinstance(source, str):
             fn = source
         else:
-            raise TypeError(
-                "source must be NiSourceTexture or str")
+            raise TypeError("source must be NiSourceTexture or str")
         fn = fn.replace( '\\', os.sep )
         fn = fn.replace( '/', os.sep )
         # go searching for it
-        importpath = os.path.dirname(self.nif_import.properties.filepath)
+        importpath = os.path.dirname(NifOp.props.filepath)
         searchPathList = [importpath]
         if bpy.context.user_preferences.filepaths.texture_directory:
             searchPathList.append(bpy.context.user_preferences.filepaths.texture_directory)
