@@ -68,7 +68,6 @@ class Armature():
 	
 	def __init__(self, parent):
 		self.nif_import = parent
-		NifOp.props = parent.properties
 		
 	def import_armature(self, niArmature):
 		"""Scans an armature hierarchy, and returns a whole armature.

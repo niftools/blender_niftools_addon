@@ -614,7 +614,7 @@ class NifExport(NifCommon):
 
             # find nif version to write
             #TODO Move fully to scene level
-            self.version = self.operator.version[NifOp.props.game]
+            self.version = NifOp.op.version[NifOp.props.game]
             self.user_version, self.user_version_2 = scene_export.get_version_info(NifOp.props)
             
             NifLog.info("Writing NIF version 0x%08X" % self.version)
