@@ -9,7 +9,6 @@ import math
 import io_scene_nif
 from io_scene_nif.utility import nif_utils
 
-import pyffi
 from pyffi.formats.nif import NifFormat
  
 @nottest 
