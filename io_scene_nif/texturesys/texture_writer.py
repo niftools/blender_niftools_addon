@@ -41,16 +41,14 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
-
+from io_scene_nif.utility.nif_global import NifOp
 
 import os.path
 
 class TextureWriter():
 
-
     def __init__(self, parent):
         self.nif_export = parent
-        self.properties = parent.properties
 
     
     def export_source_texture(self, texture=None, filename=None):
@@ -114,10 +112,10 @@ class TextureWriter():
         """
         if texture.type == 'ENVIRONMENT_MAP':
             # this works for morrowind only
-            if self.properties.game != 'MORROWIND':
+            if NifOp.props.game != 'MORROWIND':
                 raise nif_utils.NifError(
                     "cannot export environment maps for nif version '%s'"
-                    %self.properties.game)
+                    %NifOp.props.game)
             return "enviro 01.TGA"
         
         elif texture.type == 'IMAGE':
@@ -138,11 +136,11 @@ class TextureWriter():
 
             # try and find a DDS alternative, force it if required
             ddsfilename = "%s%s" % (filename[:-4], '.dds')
-            if os.path.exists(ddsfilename) or self.properties.force_dds:
+            if os.path.exists(ddsfilename) or NifOp.props.force_dds:
                 filename = ddsfilename
 
             # sanitize file path
-            if not self.properties.game in ('MORROWIND', 'OBLIVION','FALLOUT_3', 'SKYRIM'):
+            if not NifOp.props.game in ('MORROWIND', 'OBLIVION','FALLOUT_3', 'SKYRIM'):
                 # strip texture file path
                 filename = os.path.basename(filename)
                 
