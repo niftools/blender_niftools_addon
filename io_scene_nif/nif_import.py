@@ -53,13 +53,13 @@ from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
 from io_scene_nif.objectsys.object_import import Object
 from io_scene_nif.scenesys import scene_import
+from io_scene_nif.utility.nif_global import NifOp
 
 import bpy
 import mathutils
 
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
 
 class NifImport(NifCommon):
 
@@ -107,7 +107,7 @@ class NifImport(NifCommon):
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
-            if self.properties.skeleton == "GEOMETRY_ONLY":
+            if NifOp.prop.skeleton == "GEOMETRY_ONLY":
                 if (len(self.selected_objects) != 1
                     or self.selected_objects[0].type != 'ARMATURE'):
                     raise nif_utils.NifError(
@@ -116,42 +116,42 @@ class NifImport(NifCommon):
                         " mode.")
 
 
-            self.data = NifFile.load_nif(self.properties.filepath)
-            if self.properties.override_scene_info:
+            self.data = NifFile.load_nif(NifOp.props.filepath)
+            if NifOp.props.override_scene_info:
                 scene_import.import_version_info(self.data)
 
-            kf_path = self.properties.keyframe_file
+            kf_path = NifOp.props.keyframe_file
             if kf_path:
                 self.kfdata = KFFile.load_kf(kf_path)
             else:
                 self.kfdata = None
 
-            egm_path = self.properties.egm_file
+            egm_path = NifOp.props.egm_file
             if egm_path:
                 self.egmdata = EGMFile.load_egm(egm_path)
                 # scale the data
-                self.egmdata.apply_scale(self.properties.scale_correction_import)
+                self.egmdata.apply_scale(NifOp.props.scale_correction_import)
             else:
                 self.egmdata = None
 
             NifLog.info("Importing data")
             # calculate and set frames per second
-            if self.properties.animation:
+            if NifOp.props.animation:
                 self.fps = self.animationhelper.get_frames_per_second(
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
                 self.context.scene.render.fps = self.fps
 
             # merge skeleton roots and transform geometry into the rest pose
-            if self.properties.merge_skeleton_roots:
+            if NifOp.props.merge_skeleton_roots:
                 pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=self.data).recurse()
-            if self.properties.send_geoms_to_bind_pos:
+            if NifOp.props.send_geoms_to_bind_pos:
                 pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=self.data).recurse()
-            if self.properties.send_detached_geoms_to_node_pos:
+            if NifOp.props.send_detached_geoms_to_node_pos:
                 pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=self.data).recurse()
-            if self.properties.send_bones_to_bind_position:
+            if NifOp.props.send_bones_to_bind_position:
                 pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=self.data).recurse()
-            if self.properties.apply_skin_deformation:
+            if NifOp.props.apply_skin_deformation:
                 
                 # TODO Create function & move to object/mesh class
                 for n_geom in self.data.get_global_iterator():
@@ -168,7 +168,7 @@ class NifImport(NifCommon):
 
             # scale tree
             toaster = pyffi.spells.nif.NifToaster()
-            toaster.scale = self.properties.scale_correction_import
+            toaster.scale = NifOp.props.scale_correction_import
             pyffi.spells.nif.fix.SpellScale(data=self.data, toaster=toaster).recurse()
 
             # import all root blocks
@@ -189,7 +189,7 @@ class NifImport(NifCommon):
                         b.skin_instance.skeleton_root = root
                         # delete non-skeleton nodes if we're importing
                         # skeleton only
-                        if self.properties.skeleton == "SKELETON_ONLY":
+                        if NifOp.props.skeleton == "SKELETON_ONLY":
                             nonbip_children = (child for child in root.children
                                                if child.name[:6] != 'Bip01 ')
                             for child in nonbip_children:
@@ -197,7 +197,7 @@ class NifImport(NifCommon):
                 # import this root block
                 NifLog.debug("Root block: {0}".format(root.get_global_display()))
                 # merge animation from kf tree into nif tree
-                if self.properties.animation and self.kfdata:
+                if NifOp.props.animation and self.kfdata:
                     for kf_root in self.kfdata.roots:
                         self.animationhelper.import_kf_root(kf_root, root)
                 # import the nif tree
@@ -242,7 +242,7 @@ class NifImport(NifCommon):
         self.armaturehelper.mark_armatures_bones(root_block)
 
         # import the keyframe notes
-        if self.properties.animation:
+        if NifOp.props.animation:
             self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
@@ -317,7 +317,7 @@ class NifImport(NifCommon):
         self.constrainthelper.import_bhk_constraints()
 
         # parent selected meshes to imported skeleton
-        if self.properties.skeleton == "SKELETON_ONLY":
+        if NifOp.props.skeleton == "SKELETON_ONLY":
             # rename vertex groups to reflect bone names
             # (for blends imported with older versions of the scripts!)
             for b_child_obj in self.selected_objects:
@@ -348,9 +348,9 @@ class NifImport(NifCommon):
         if not niBlock:
             return None
         elif (isinstance(niBlock, NifFormat.NiTriBasedGeom)
-              and self.properties.skeleton != "SKELETON_ONLY"):
+              and NifOp.props.skeleton != "SKELETON_ONLY"):
             # it's a shape node and we're not importing skeleton only
-            # (self.properties.skeleton ==  "SKELETON_ONLY")
+            # (NifOp.props.skeleton ==  "SKELETON_ONLY")
             NifLog.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             self.active_obj_name = niBlock.name.decode()
@@ -386,7 +386,7 @@ class NifImport(NifCommon):
             if self.armaturehelper.is_armature_root(niBlock):
                 # all bones in the tree are also imported by
                 # import_armature
-                if self.properties.skeleton != "GEOMETRY_ONLY":
+                if NifOp.props.skeleton != "GEOMETRY_ONLY":
                     b_obj = self.armaturehelper.import_armature(niBlock)
                     b_armature = b_obj
                     n_armature = niBlock
@@ -411,14 +411,14 @@ class NifImport(NifCommon):
                 geom_group = self.is_grouping_node(niBlock)
                 # if importing animation, remove children that have
                 # morph controllers from geometry group
-                if self.properties.animation:
+                if NifOp.props.animation:
                     for child in geom_group:
                         if nif_utils.find_controller(
                             child, NifFormat.NiGeomMorpherController):
                             geom_group.remove(child)
                 # import geometry/empty
                 if (not geom_group
-                    or not self.properties.combine_shapes
+                    or not NifOp.props.combine_shapes
                     or len(geom_group) > 16):
                     # no grouping node, or too many materials to
                     # group the geometry into a single mesh
@@ -486,7 +486,7 @@ class NifImport(NifCommon):
                 if isinstance(b_child, bpy.types.Object)]
 
             # if not importing skeleton only
-            if self.properties.skeleton != "SKELETON_ONLY":
+            if NifOp.props.skeleton != "SKELETON_ONLY":
                 # import collision objects
                 if isinstance(niBlock.collision_object, NifFormat.bhkNiCollisionObject):
                     bhk_body = niBlock.collision_object.body
@@ -598,7 +598,7 @@ class NifImport(NifCommon):
                 b_obj.matrix_local = nif_utils.import_matrix(niBlock)
 
                 # import the animations
-                if self.properties.animation:
+                if NifOp.props.animation:
                     self.animationhelper.set_animation(niBlock, b_obj)
                     # import the extras
                     self.animationhelper.import_text_keys(niBlock)
@@ -967,7 +967,7 @@ class NifImport(NifCommon):
             try:
                 # this is the bottle neck...
                 # can we speed this up?
-                if not self.properties.combine_vertices:
+                if not NifOp.props.combine_vertices:
                     n_map_k = None
                 else:
                     n_map_k = n_map[k]
@@ -1197,7 +1197,7 @@ class NifImport(NifCommon):
                 b_obj_partflag.pf_startflag = (bodypart_flag[i].pf_start_net_boneset)
         # import morph controller
         # XXX todo: move this to import_mesh_controllers
-        if self.properties.animation:
+        if NifOp.props.animation:
             morphCtrl = nif_utils.find_controller(niBlock, NifFormat.NiGeomMorpherController)
             if morphCtrl:
                 morphData = morphCtrl.data
@@ -1379,7 +1379,7 @@ class NifImport(NifCommon):
         grouping node.
         """
         # combining shapes: disable grouping
-        if not self.properties.combine_shapes:
+        if not NifOp.props.combine_shapes:
             return []
         # check that it is a ninode
         if not isinstance(niBlock, NifFormat.NiNode):
@@ -1411,10 +1411,9 @@ def menu_func(self, context):
     # TODO: get default path from config registry
     # default_path = bpy.data.filename.replace(".blend", ".nif")
     default_path = "import.nif"
-    self.layout.operator(
-        NifImport.bl_idname,
-        text="NetImmerse/Gamebryo (.nif & .kf & .egm)"
-        ).filepath = default_path
+    self.layout.operator(NifImport.bl_idname,
+                         text="NetImmerse/Gamebryo (.nif & .kf & .egm)"
+                         ).filepath = default_path
 
 def register():
     """Register nif import operator."""

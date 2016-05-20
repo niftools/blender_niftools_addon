@@ -43,7 +43,7 @@ import re
 import pyffi
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
-from io_scene_nif.utility.nif_global import NifGlobal
+from io_scene_nif.utility.nif_global import NifOp
 
 class NifCommon:
     """Abstract base class for import and export. Contains utility functions
@@ -114,14 +114,14 @@ class NifCommon:
     def __init__(self, operator, context):
         """Common initialization functions for executing the import/export operators: """
         
-        NifGlobal.init(operator, context)
+        NifOp.init(operator, context)
         
         # copy properties from operator (contains import/export settings)
         self.operator = operator
         self.properties = operator.properties
         
         # save context (so it can be used in other methods without argument passing)
-        self.context = context     
+        self.context = context   
         
         # print scripts info
         from . import bl_info
