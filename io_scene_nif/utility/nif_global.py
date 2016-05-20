@@ -40,7 +40,7 @@
 import logging
 from io_scene_nif.utility.nif_logging import NifLog
 
-class NifGlobal():
+class NifOp():
     """A simple reference holder class but enables classes to be decoupled. 
     This module require initialisation to function."""  
     
