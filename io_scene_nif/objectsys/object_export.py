@@ -44,13 +44,13 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
 
 class ObjectHelper():
 
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.properties = parent.properties
         self.mesh_helper = MeshHelper(parent)
     
     def create_block(self, blocktype, b_obj = None):
@@ -64,9 +64,7 @@ class ObjectHelper():
         try:
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
-            raise nif_utils.NifError(
-                "'%s': Unknown block type (this is probably a bug)."
-                % blocktype)
+            raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(blocktype))
         return self.register_block(block, b_obj)
     
     
@@ -123,7 +121,7 @@ class ObjectHelper():
         # node:    contains new NifFormat.NiNode instance
         if (b_obj == None):
             export_types = ('EMPTY', 'MESH', 'ARMATURE')
-            for root_object in [b_obj for b_obj in self.nif_export.context.selected_objects
+            for root_object in [b_obj for b_obj in NifOp.ctx.selected_objects
                                 if b_obj.type in export_types]:
                 while root_object.parent:
                     root_object = root_object.parent
@@ -166,7 +164,7 @@ class ObjectHelper():
             #b_obj.draw_bounds_type = 'POLYHEDERON'
             #b_obj.draw_type = 'BOUNDS'
             #b_obj.show_wire = True
-            self.export_collision(b_obj, parent_block)
+            self.nif_export.export_collision(b_obj, parent_block)
             return None # done; stop here
 
         elif (b_obj_type == 'MESH' and b_obj.show_bounds
@@ -255,14 +253,14 @@ class ObjectHelper():
             elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags == 0) and (b_obj.parent == None):
                 node.flags = b_obj.niftools.objectflags
             else:
-                if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     node.flags = 0x000E
-                elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                elif NifOp.props.game in ('SID_MEIER_S_RAILROADS',
                                              'CIVILIZATION_IV'):
                     node.flags = 0x0010
-                elif self.properties.game in ('EMPIRE_EARTH_II',):
+                elif NifOp.props.game in ('EMPIRE_EARTH_II',):
                     node.flags = 0x0002
-                elif self.properties.game in ('DIVINITY_2',):
+                elif NifOp.props.game in ('DIVINITY_2',):
                     node.flags = 0x0310
                 else:
                     # morrowind
@@ -538,7 +536,7 @@ class MeshHelper():
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.properties = parent.properties
+        NifOp.props = parent.properties
 
 
     def export_tri_shapes(self, b_obj, space, parent_block, trishape_name = None):
@@ -583,7 +581,7 @@ class MeshHelper():
                                "For Custom alpha values add a second vertex layer, greyscale only" )
             else:
                 for b_loop in b_mesh.vertex_colors[1].data:
-                    if(b_loop.color.v > self.properties.epsilon):
+                    if(b_loop.color.v > NifOp.props.epsilon):
                         mesh_hasvcola = True    
                         break
                        
@@ -628,7 +626,7 @@ class MeshHelper():
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True # for proper lighting
-                if ((self.properties.game == 'SKYRIM') and (
+                if ((NifOp.props.game == 'SKYRIM') and (
                             b_obj.niftools_shader.bslsp_shaderobjtype == 'Skin Tint')):
                     mesh_hasnormals = False # for proper lighting
 
@@ -642,9 +640,9 @@ class MeshHelper():
                 #specular mat
                 mesh_mat_specular_color = b_mat.specular_color
                 
-                if ( mesh_mat_specular_color.r > self.properties.epsilon ) \
-                    or ( mesh_mat_specular_color.g > self.properties.epsilon ) \
-                    or ( mesh_mat_specular_color.b > self.properties.epsilon ):
+                if ( mesh_mat_specular_color.r > NifOp.props.epsilon ) \
+                    or ( mesh_mat_specular_color.g > NifOp.props.epsilon ) \
+                    or ( mesh_mat_specular_color.b > NifOp.props.epsilon ):
                     mesh_hasspec = b_spec_prop
 
                 #gloss mat
@@ -655,7 +653,7 @@ class MeshHelper():
                 mesh_hasalpha = b_alpha_prop
                 mesh_mat_transparency = (1 - b_mat.alpha)
                 if b_mat.use_transparency:
-                    if abs(mesh_mat_transparency - 1.0)> self.properties.epsilon:
+                    if abs(mesh_mat_transparency - 1.0)> NifOp.props.epsilon:
                         mesh_hasalpha = True
                 elif(mesh_hasvcola):
                     mesh_hasalpha = True
@@ -690,7 +688,7 @@ class MeshHelper():
             # no material                    -> typically, collision mesh
 
             # create a trishape block
-            if not self.properties.stripify:
+            if not NifOp.props.stripify:
                 trishape = self.nif_export.objecthelper.create_block("NiTriShape", b_obj)
             else:
                 trishape = self.nif_export.objecthelper.create_block("NiTriStrips", b_obj)
@@ -717,15 +715,15 @@ class MeshHelper():
             if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
                 trishape.flags = b_obj.niftools.objectflags
             else:
-                if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     trishape.flags = 0x000E
     
-                elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                elif NifOp.props.game in ('SID_MEIER_S_RAILROADS',
                                              'CIVILIZATION_IV'):
                     trishape.flags = 0x0010
-                elif self.properties.game in ('EMPIRE_EARTH_II',):
+                elif NifOp.props.game in ('EMPIRE_EARTH_II',):
                     trishape.flags = 0x0016
-                elif self.properties.game in ('DIVINITY_2',):
+                elif NifOp.props.game in ('DIVINITY_2',):
                     if trishape.name.lower[-3:] in ("med", "low"):
                         trishape.flags = 0x0014
                     else:
@@ -738,7 +736,7 @@ class MeshHelper():
                         trishape.flags = 0x0005 # use triangles as bounding box + hide
 
             # extra shader for Sid Meier's Railroads
-            if self.properties.game == 'SID_MEIER_S_RAILROADS':
+            if NifOp.props.game == 'SID_MEIER_S_RAILROADS':
                 trishape.has_shader = True
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1 # default
@@ -746,13 +744,13 @@ class MeshHelper():
             self.nif_export.objecthelper.set_object_matrix(b_obj, space, trishape)
 
             #add textures
-            if self.properties.game == 'FALLOUT_3':
+            if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
                     bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
                 
                     self.nif_export.objecthelper.register_block(bsshader)
                     trishape.add_property(bsshader)
-            elif self.properties.game == 'SKYRIM':
+            elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
                     bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
                 
@@ -775,7 +773,7 @@ class MeshHelper():
                         effect_control.stop_time = b_slot.texture.image.frame_end
                         bsshader.add_controller(effect_control)
             else:
-                if self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
+                if NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4:
                     # set shader slots in extra data
                     self.nif_export.texturehelper.add_shader_integer_extra_datas(trishape)
@@ -792,7 +790,7 @@ class MeshHelper():
             # add texture effect block (must be added as preceeding child of
             # the trishape)
             refmtex = self.nif_export.texturehelper.refmtex
-            if self.properties.game == 'MORROWIND' and refmtex:
+            if NifOp.props.game == 'MORROWIND' and refmtex:
                 # create a new parent block for this shape
                 extra_node = self.create_block("NiNode", refmtex)
                 parent_block.add_child(extra_node)
@@ -817,10 +815,10 @@ class MeshHelper():
                 if b_mat.niftools_alpha.alphaflag != 0:
                     alphaflags = b_mat.niftools_alpha.alphaflag
                     alphathreshold = b_mat.offset_z
-                elif self.properties.game == 'SID_MEIER_S_RAILROADS':
+                elif NifOp.props.game == 'SID_MEIER_S_RAILROADS':
                     alphaflags = 0x32ED
                     alphathreshold = 150
-                elif self.properties.game == 'EMPIRE_EARTH_II':
+                elif NifOp.props.game == 'EMPIRE_EARTH_II':
                     alphaflags = 0x00ED
                     alphathreshold = 0
                 else:
@@ -838,12 +836,12 @@ class MeshHelper():
                 # add NiStencilProperty
                 trishape.add_property(self.nif_export.propertyhelper.object_property.export_stencil_property())
 
-            if b_mat and not (self.properties.game == 'SKYRIM'):
+            if b_mat and not (NifOp.props.game == 'SKYRIM'):
                 # add NiTriShape's specular property
                 # but NOT for sid meier's railroads and other extra shader
                 # games (they use specularity even without this property)
                 if (mesh_hasspec
-                    and (self.properties.game
+                    and (NifOp.props.game
                          not in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
                     trishape.add_property(
@@ -978,21 +976,21 @@ class MeshHelper():
                             if mesh_uvlayers:
                                 if max(abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0])
                                        for uvlayer in range(len(mesh_uvlayers))) \
-                                       > self.properties.epsilon:
+                                       > NifOp.props.epsilon:
                                     continue
                                 if max(abs(vertquad[1][uvlayer][1] - vertquad_list[j][1][uvlayer][1])
                                        for uvlayer in range(len(mesh_uvlayers))) \
-                                       > self.properties.epsilon:
+                                       > NifOp.props.epsilon:
                                     continue
                             if mesh_hasnormals:
-                                if abs(vertquad[2][0] - vertquad_list[j][2][0]) > self.properties.epsilon: continue
-                                if abs(vertquad[2][1] - vertquad_list[j][2][1]) > self.properties.epsilon: continue
-                                if abs(vertquad[2][2] - vertquad_list[j][2][2]) > self.properties.epsilon: continue
+                                if abs(vertquad[2][0] - vertquad_list[j][2][0]) > NifOp.props.epsilon: continue
+                                if abs(vertquad[2][1] - vertquad_list[j][2][1]) > NifOp.props.epsilon: continue
+                                if abs(vertquad[2][2] - vertquad_list[j][2][2]) > NifOp.props.epsilon: continue
                             if mesh_hasvcol:
-                                if abs(vertquad[3][0] - vertquad_list[j][3][0]) > self.properties.epsilon: continue
-                                if abs(vertquad[3][1] - vertquad_list[j][3][1]) > self.properties.epsilon: continue
-                                if abs(vertquad[3][2] - vertquad_list[j][3][2]) > self.properties.epsilon: continue
-                                if abs(vertquad[3][3] - vertquad_list[j][3][3]) > self.properties.epsilon: continue
+                                if abs(vertquad[3][0] - vertquad_list[j][3][0]) > NifOp.props.epsilon: continue
+                                if abs(vertquad[3][1] - vertquad_list[j][3][1]) > NifOp.props.epsilon: continue
+                                if abs(vertquad[3][2] - vertquad_list[j][3][2]) > NifOp.props.epsilon: continue
+                                if abs(vertquad[3][3] - vertquad_list[j][3][3]) > NifOp.props.epsilon: continue
                             # all tests passed: so yes, we already have it!
                             f_index[i] = j
                             break
@@ -1022,7 +1020,7 @@ class MeshHelper():
                         f_indexed = (f_index[0], f_index[2+i], f_index[1+i])
                     trilist.append(f_indexed)
                     # add body part number
-                    if (self.properties.game not in ('FALLOUT_3','SKYRIM')
+                    if (NifOp.props.game not in ('FALLOUT_3','SKYRIM')
                         or not bodypartgroups):
                         # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
@@ -1039,9 +1037,9 @@ class MeshHelper():
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
                 # select mesh object
-                for b_deselect_obj in self.nif_export.context.scene.objects:
+                for b_deselect_obj in NifOp.ctx.scene.objects:
                     b_deselect_obj.select = False
-                self.nif_export.context.scene.objects.active = b_obj
+                NifOp.ctx.scene.objects.active = b_obj
                 b_obj.select = True
                 # select bad polygons
                 # switch to edit mode to select polygons
@@ -1113,7 +1111,7 @@ class MeshHelper():
             if mesh_uvlayers:
                 tridata.num_uv_sets = len(mesh_uvlayers)
                 tridata.bs_num_uv_sets = len(mesh_uvlayers)
-                if self.properties.game == 'FALLOUT_3':
+                if NifOp.props.game == 'FALLOUT_3':
                     if len(mesh_uvlayers) > 1:
                         raise nif_utils.NifError(
                             "Fallout 3 does not support multiple UV layers")
@@ -1127,17 +1125,17 @@ class MeshHelper():
             # set triangles
             # stitch strips for civ4
             tridata.set_triangles(trilist,
-                                 stitchstrips=self.properties.stitch_strips)
+                                 stitchstrips=NifOp.props.stitch_strips)
 
             # update tangent space (as binary extra data only for Oblivion)
             # for extra shader texture games, only export it if those
             # textures are actually exported (civ4 seems to be consistent with
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
-                if (self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM')
-                    or (self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
+                if (NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM')
+                    or (NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
-                        as_extra=(self.properties.game == 'OBLIVION'))
+                        as_extra=(NifOp.props.game == 'OBLIVION'))
 
             # now export the vertex weights, if there are any
             vertgroups = {vertex_group.name
@@ -1156,7 +1154,7 @@ class MeshHelper():
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
-                        if (self.properties.game in ('FALLOUT_3', 'SKYRIM')
+                        if (NifOp.props.game in ('FALLOUT_3', 'SKYRIM')
                             and bodypartgroups):
                             skininst = self.nif_export.objecthelper.create_block("BSDismemberSkinInstance", b_obj)
                         else:
@@ -1214,10 +1212,10 @@ class MeshHelper():
                         # vertices must be assigned at least one vertex group
                         # lets be nice and display them for the user 
                         if len(unassigned_verts) > 0:
-                            for b_scene_obj in self.nif_export.context.scene.objects:
+                            for b_scene_obj in NifOp.ctx.scene.objects:
                                 b_scene_obj.select = False
                                 
-                            b_obj = self.nif_export.context.scene.objects.active
+                            b_obj = NifOp.ctx.scene.objects.active
                             b_obj.select = True
                             
                             # switch to edit mode and raise exception
@@ -1291,32 +1289,32 @@ class MeshHelper():
                         trishape.update_skin_center_radius()
 
                         if (self.nif_export.version >= 0x04020100
-                            and self.properties.skin_partition):
+                            and NifOp.props.skin_partition):
                             NifLog.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
-                                maxbonesperpartition=self.properties.max_bones_per_partition,
-                                maxbonespervertex=self.properties.max_bones_per_vertex,
-                                stripify=self.properties.stripify,
-                                stitchstrips=self.properties.stitch_strips,
-                                padbones=self.properties.pad_bones,
+                                maxbonesperpartition=NifOp.props.max_bones_per_partition,
+                                maxbonespervertex=NifOp.props.max_bones_per_vertex,
+                                stripify=NifOp.props.stripify,
+                                stitchstrips=NifOp.props.stitch_strips,
+                                padbones=NifOp.props.pad_bones,
                                 triangles=trilist,
                                 trianglepartmap=bodypartfacemap,
                                 maximize_bone_sharing=(
-                                            self.properties.game in (
+                                            NifOp.props.game in (
                                                     'FALLOUT_3','SKYRIM')))
                             # warn on bad config settings
-                            if self.properties.game == 'OBLIVION':
-                                if self.properties.pad_bones:
+                            if NifOp.props.game == 'OBLIVION':
+                                if NifOp.props.pad_bones:
                                     NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                                if self.properties.max_bones_per_partition < 18:
+                            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3'):
+                                if NifOp.props.max_bones_per_partition < 18:
                                     NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
                                                    "Set it to 18 to get higher quality skin partitions.")
-                            if self.properties.game in ('SKYRIM'):
-                                if self.properties.max_bones_per_partition < 24:
+                            if NifOp.props.game in ('SKYRIM'):
+                                if NifOp.props.max_bones_per_partition < 24:
                                     NifLog.warn("Using less than 24 bones per partition on Skyrim export."
                                        "Set it to 24 to get higher quality skin partitions.")
-                            if lostweight > self.properties.epsilon:
+                            if lostweight > NifOp.props.epsilon:
                                 NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')"
                                                .format(str(lostweight), b_obj.name, trishape.name))
 
@@ -1425,7 +1423,7 @@ class MeshHelper():
 
                             # geometry only export has no float data
                             # also skip keys that have no curve (such as base key)
-                            if self.properties.animation == 'GEOM_NIF' or not curve:
+                            if NifOp.props.animation == 'GEOM_NIF' or not curve:
                                 continue
 
                             # note: we set data on morph for older nifs
