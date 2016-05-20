@@ -121,7 +121,7 @@ class ObjectHelper():
         # node:    contains new NifFormat.NiNode instance
         if (b_obj == None):
             export_types = ('EMPTY', 'MESH', 'ARMATURE')
-            for root_object in [b_obj for b_obj in NifOp.ctx.selected_objects
+            for root_object in [b_obj for b_obj in bpy.context.selected_objects
                                 if b_obj.type in export_types]:
                 while root_object.parent:
                     root_object = root_object.parent
@@ -1035,9 +1035,9 @@ class MeshHelper():
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
                 # select mesh object
-                for b_deselect_obj in NifOp.ctx.scene.objects:
+                for b_deselect_obj in bpy.context.scene.objects:
                     b_deselect_obj.select = False
-                NifOp.ctx.scene.objects.active = b_obj
+                bpy.context.scene.objects.active = b_obj
                 b_obj.select = True
                 # select bad polygons
                 # switch to edit mode to select polygons
@@ -1210,10 +1210,10 @@ class MeshHelper():
                         # vertices must be assigned at least one vertex group
                         # lets be nice and display them for the user 
                         if len(unassigned_verts) > 0:
-                            for b_scene_obj in NifOp.ctx.scene.objects:
+                            for b_scene_obj in bpy.context.scene.objects:
                                 b_scene_obj.select = False
                                 
-                            b_obj = NifOp.ctx.scene.objects.active
+                            b_obj = bpy.context.scene.objects.active
                             b_obj.select = True
                             
                             # switch to edit mode and raise exception
@@ -1444,12 +1444,12 @@ class MeshHelper():
                             for i, btriple in enumerate(curve.getPoints()):
                                 knot = btriple.getPoints()
                                 morph.keys[i].arg = morph.interpolation
-                                morph.keys[i].time = (knot[0] - self.context.scene.frame_start) * self.context.scene.render.fps
+                                morph.keys[i].time = (knot[0] - bpy.context.scene.frame_start) * self.context.scene.render.fps
                                 morph.keys[i].value = curve.evaluate( knot[0] )
                                 #morph.keys[i].forwardTangent = 0.0 # ?
                                 #morph.keys[i].backwardTangent = 0.0 # ?
                                 floatdata.keys[i].arg = floatdata.interpolation
-                                floatdata.keys[i].time = (knot[0] - self.context.scene.frame_start) * self.context.scene.render.fps
+                                floatdata.keys[i].time = (knot[0] - bpy.context.scene.frame_start) * self.context.scene.render.fps
                                 floatdata.keys[i].value = curve.evaluate( knot[0] )
                                 #floatdata.keys[i].forwardTangent = 0.0 # ?
                                 #floatdata.keys[i].backwardTangent = 0.0 # ?

@@ -70,7 +70,7 @@ class NifImport(NifCommon):
     
     
     def __init__(self, operator, context):
-        NifCommon.__init__(self, operator, context)
+        NifCommon.__init__(self, operator)
         
         self.root_ninode = 'NiNode'
 
@@ -140,7 +140,7 @@ class NifImport(NifCommon):
                 self.fps = self.animationhelper.get_frames_per_second(
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
-                NifOp.ctx.scene.render.fps = self.fps
+                bpy.context.scene.render.fps = self.fps
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -207,7 +207,7 @@ class NifImport(NifCommon):
             NifLog.info("Finished")
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            NifOp.ctx.scene.update()
+            bpy.context.scene.update()
 
         return {'FINISHED'}
      
@@ -570,7 +570,7 @@ class NifImport(NifCommon):
             # track camera for billboard nodes
             if isinstance(niBlock, NifFormat.NiBillboardNode):
                 # find camera object
-                for obj in NifOp.ctx.scene.objects:
+                for obj in bpy.context.scene.objects:
                     if obj.type == 'CAMERA':
                         b_obj_camera = obj
                         break
@@ -724,7 +724,7 @@ class NifImport(NifCommon):
         # TODO: - is longname needed??? Yes it is needed, it resets the original name on export
         b_empty.niftools.longname = niBlock.name.decode()
 
-        NifOp.ctx.scene.objects.link(b_empty)
+        bpy.context.scene.objects.link(b_empty)
         b_empty.niftools.bsxflags = self.bsxflags
         b_empty.niftools.objectflags = niBlock.flags
 
@@ -766,7 +766,7 @@ class NifImport(NifCommon):
             # create mesh object and link to data
             b_obj = bpy.data.objects.new(b_name, b_mesh)
             # link mesh object to the scene
-            NifOp.ctx.scene.objects.link(b_obj)
+            bpy.context.scene.objects.link(b_obj)
             # save original name as object property, for export
             if b_name != niBlock.name.decode():
                 b_obj.niftools.longname = niBlock.name.decode()
@@ -1332,8 +1332,8 @@ class NifImport(NifCommon):
 
             if self.IMPORT_EGMANIM:
                 # set begin and end frame
-                NifOp.ctx.scene.getRenderingContext().startFrame(1)
-                NifOp.ctx.scene.getRenderingContext().endFrame(
+                bpy.context.scene.getRenderingContext().startFrame(1)
+                bpy.context.scene.getRenderingContext().endFrame(
                     11 + len(b_mesh.key.blocks) * 10)
 
             # finally: return to base position

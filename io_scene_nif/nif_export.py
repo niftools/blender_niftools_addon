@@ -90,7 +90,7 @@ class NifExport(NifCommon):
     
 
     def __init__(self, operator, context):
-        NifCommon.__init__(self, operator, context)
+        NifCommon.__init__(self, operator)
     
         # Helper systems
         self.bhkshapehelper = bhkshape_export(parent=self)
@@ -186,13 +186,13 @@ class NifExport(NifCommon):
             root_name = filebase
             # get the root object from selected object
             # only export empties, meshes, and armatures
-            if not NifOp.ctx.selected_objects:
+            if not bpy.context.selected_objects:
                 raise nif_utils.NifError(
                     "Please select the object(s) to export,"
                     " and run this script again.")
             root_objects = set()
             export_types = ('EMPTY', 'MESH', 'ARMATURE')
-            for root_object in [b_obj for b_obj in NifOp.ctx.selected_objects
+            for root_object in [b_obj for b_obj in bpy.context.selected_objects
                                 if b_obj.type in export_types]:
                 while root_object.parent:
                     root_object = root_object.parent
@@ -209,7 +209,7 @@ class NifExport(NifCommon):
 
             # smoothen seams of objects
             if NifOp.props.smooth_object_seams:
-                self.objecthelper.mesh_helper.smooth_mesh_seams(NifOp.ctx.scene.objects)
+                self.objecthelper.mesh_helper.smooth_mesh_seams(bpy.context.scene.objects)
                 
                 
             # TODO: use Blender actions for animation groups
@@ -281,7 +281,7 @@ class NifExport(NifCommon):
                     # write the animation group text buffer
                     animtxt = bpy.data.texts.new("Anim")
                     animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" %
-                                  (NifOp.ctx.scene.frame_start, NifOp.ctx.scene.frame_end))
+                                  (bpy.context.scene.frame_start, bpy.context.scene.frame_end))
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
@@ -701,8 +701,8 @@ class NifExport(NifCommon):
                     kf_root.text_keys = anim_textextra
                     kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
                     kf_root.frequency = 1.0
-                    kf_root.start_time =(NifOp.ctx.scene.frame_start - 1) * NifOp.ctx.scene.render.fps
-                    kf_root.stop_time = (NifOp.ctx.scene.frame_end - NifOp.ctx.scene.frame_start) * NifOp.ctx.scene.render.fps
+                    kf_root.start_time =(bpy.context.scene.frame_start - 1) * bpy.context.scene.render.fps
+                    kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
                     # quick hack to set correct target name
                     if not self.EXPORT_ANIMTARGETNAME:
                         if "Bip01" in [node.name for
