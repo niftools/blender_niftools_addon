@@ -170,16 +170,16 @@ class AnimationHelper():
             # dummy ipo
             # default extend, start, and end
             extend = bpy.IpoCurve.ExtendTypes.CYCLIC
-            start_frame = NifOp.ctx.scene.frame_start
-            stop_frame = NifOp.ctx.scene.frame_end
+            start_frame = bpy.context.scene.frame_start
+            stop_frame = bpy.context.scene.frame_end
     
         # fill in the non-trivial values
         kfc.flags = 8 # active
         kfc.flags |= self.get_flags_from_extend(extend)
         kfc.frequency = 1.0
         kfc.phase = 0.0
-        kfc.start_time = (start_frame - 1) * NifOp.ctx.scene.render.fps
-        kfc.stop_time = (stop_frame - 1) * NifOp.ctx.scene.render.fps
+        kfc.start_time = (start_frame - 1) * bpy.context.scene.render.fps
+        kfc.stop_time = (stop_frame - 1) * bpy.context.scene.render.fps
     
         if NifOp.props.animation == 'GEOM_NIF':
             # keyframe data is not present in geometry files
@@ -252,7 +252,7 @@ class AnimationHelper():
                 # non-empty curve: go over all frames of the curve
                 for btriple in ipo[curve].bezierPoints:
                     frame = btriple.pt[0]
-                    if (frame < NifOp.ctx.scene.frame_start) or (frame > NifOp.ctx.scene.frame_end):
+                    if (frame < bpy.context.scene.frame_start) or (frame > bpy.context.scene.frame_end):
                         continue
                     # PO_SCALEX == OB_SCALEX, so this does both pose and object
                     # scale
@@ -386,9 +386,9 @@ class AnimationHelper():
                 rot_frame_x = kfd.xyz_rotations[0].keys[i]
                 rot_frame_y = kfd.xyz_rotations[1].keys[i]
                 rot_frame_z = kfd.xyz_rotations[2].keys[i]
-                rot_frame_x.time = (frame - 1) * NifOp.ctx.scene.render.fps
-                rot_frame_y.time = (frame - 1) * NifOp.ctx.scene.render.fps
-                rot_frame_z.time = (frame - 1) * NifOp.ctx.scene.render.fps
+                rot_frame_x.time = (frame - 1) * bpy.context.scene.render.fps
+                rot_frame_y.time = (frame - 1) * bpy.context.scene.render.fps
+                rot_frame_z.time = (frame - 1) * bpy.context.scene.render.fps
                 rot_frame_x.value = rot_curve[frame].x * 3.14159265358979323846 / 180.0
                 rot_frame_y.value = rot_curve[frame].y * 3.14159265358979323846 / 180.0
                 rot_frame_z.value = rot_curve[frame].z * 3.14159265358979323846 / 180.0
@@ -400,7 +400,7 @@ class AnimationHelper():
             kfd.quaternion_keys.update_size()
             for i, frame in enumerate(frames):
                 rot_frame = kfd.quaternion_keys[i]
-                rot_frame.time = (frame - 1) * NifOp.ctx.scene.render.fps
+                rot_frame.time = (frame - 1) * bpy.context.scene.render.fps
                 rot_frame.value.w = rot_curve[frame].w
                 rot_frame.value.x = rot_curve[frame].x
                 rot_frame.value.y = rot_curve[frame].y
@@ -413,7 +413,7 @@ class AnimationHelper():
         kfd.translations.keys.update_size()
         for i, frame in enumerate(frames):
             trans_frame = kfd.translations.keys[i]
-            trans_frame.time = (frame - 1) * NifOp.ctx.scene.render.fps
+            trans_frame.time = (frame - 1) * bpy.context.scene.render.fps
             trans_frame.value.x = trans_curve[frame][0]
             trans_frame.value.y = trans_curve[frame][1]
             trans_frame.value.z = trans_curve[frame][2]
@@ -425,7 +425,7 @@ class AnimationHelper():
         kfd.scales.keys.update_size()
         for i, frame in enumerate(frames):
             scale_frame = kfd.scales.keys[i]
-            scale_frame.time = (frame - 1) * NifOp.ctx.scene.render.fps
+            scale_frame.time = (frame - 1) * bpy.context.scene.render.fps
             scale_frame.value = scale_curve[frame]
             
 
@@ -462,8 +462,8 @@ class AnimationHelper():
             if (len(t) < 2):
                 raise nif_utils.NifError("Syntax error in Anim buffer ('%s')" % s)
             f = int(t[0])
-            if ((f < NifOp.ctx.scene.frame_start) or (f > NifOp.ctx.scene.frame_end)):
-                NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(str(f), str(NifOp.ctx.scene.frame_start), str(NifOp.ctx.scene.frame_end)))
+            if ((f < bpy.context.scene.frame_start) or (f > bpy.context.scene.frame_end)):
+                NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(str(f), str(bpy.context.scene.frame_start), str(bpy.context.scene.frame_end)))
             d = t[1].strip(' ')
             for i in range(2, len(t)):
                 d = d + '\r\n' + t[i].strip(' ')
@@ -482,7 +482,7 @@ class AnimationHelper():
         textextra.num_text_keys = len(flist)
         textextra.text_keys.update_size()
         for i, key in enumerate(textextra.text_keys):
-            key.time = NifOp.ctx.scene.render.fps * (flist[i]-1)
+            key.time = bpy.context.scene.render.fps * (flist[i]-1)
             key.value = dlist[i]
 
         return textextra
@@ -514,8 +514,8 @@ class TextureAnimation():
         # fill in NiFlipController's values
         flip.flags = 8 # active
         flip.frequency = 1.0
-        flip.start_time = (NifOp.ctx.scene.frame_start - 1) * NifOp.ctx.scene.render.fps
-        flip.stop_time = (NifOp.ctx.scene.frame_end - NifOp.ctx.scene.frame_start ) * NifOp.ctx.scene.render.fps
+        flip.start_time = (bpy.context.scene.frame_start - 1) * bpy.context.scene.render.fps
+        flip.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start ) * bpy.context.scene.render.fps
         flip.texture_slot = target_tex
         count = 0
         for t in tlist:
@@ -591,7 +591,7 @@ class MaterialAnimation():
             # add each point of the curve
             b_time, b_value = b_point.pt
             n_key.arg = n_floatdata.data.interpolation
-            n_key.time = (b_time - 1) * NifOp.ctx.scene.render.fps
+            n_key.time = (b_time - 1) * bpy.context.scene.render.fps
             n_key.value = b_value
             # track time
             n_times.append(n_key.time)
@@ -641,7 +641,7 @@ class MaterialAnimation():
         for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
             # add each point of the curves
             n_key.arg = n_posdata.data.interpolation
-            n_key.time = (b_time - 1) * NifOp.ctx.scene.render.fps
+            n_key.time = (b_time - 1) * bpy.context.scene.render.fps
             n_key.value.x = b_curves[0][b_time]
             n_key.value.y = b_curves[1][b_time]
             n_key.value.z = b_curves[2][b_time]
@@ -698,7 +698,7 @@ class MaterialAnimation():
                         # offsets are negated in blender
                         b_value = -b_value
                     n_key.arg = n_uvgroup.interpolation
-                    n_key.time = (b_time - 1) * NifOp.ctx.scene.render.fps
+                    n_key.time = (b_time - 1) * bpy.context.scene.render.fps
                     n_key.value = b_value
                     # track time
                     n_times.append(n_key.time)
@@ -744,13 +744,13 @@ class ObjectAnimation():
         n_bool_data.data.num_keys = len(b_curve.bezierPoints)
         n_vis_data.keys.update_size()
         n_bool_data.data.keys.update_size()
-        visible_layer = 2 ** (min(NifOp.ctx.scene.getLayers()) - 1)
+        visible_layer = 2 ** (min(bpy.context.scene.getLayers()) - 1)
         for b_point, n_vis_key, n_bool_key in zip(
             b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
             # add each point of the curve
             b_time, b_value = b_point.pt
             n_vis_key.arg = n_bool_data.data.interpolation # n_vis_data has no interpolation stored
-            n_vis_key.time = (b_time - 1) * NifOp.ctx.scene.render.fps
+            n_vis_key.time = (b_time - 1) * bpy.context.scene.render.fps
             n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
             n_bool_key.arg = n_bool_data.data.interpolation
             n_bool_key.time = n_vis_key.time

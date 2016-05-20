@@ -167,9 +167,8 @@ class TextureLoader():
         # go searching for it
         importpath = os.path.dirname(self.nif_import.properties.filepath)
         searchPathList = [importpath]
-        if self.nif_import.context.user_preferences.filepaths.texture_directory:
-            searchPathList.append(
-                self.nif_import.context.user_preferences.filepaths.texture_directory)
+        if bpy.context.user_preferences.filepaths.texture_directory:
+            searchPathList.append(bpy.context.user_preferences.filepaths.texture_directory)
         
         # TODO: 3 - Implement full texture path finding.
         nif_dir = os.path.join(os.getcwd() , 'nif')

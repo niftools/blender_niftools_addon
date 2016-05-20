@@ -111,10 +111,10 @@ class NifCommon:
     
     HAVOK_SCALE = 6.996
 
-    def __init__(self, operator, context):
+    def __init__(self, operator):
         """Common initialization functions for executing the import/export operators: """
         
-        NifOp.init(operator, context)
+        NifOp.init(operator)
         
         # print scripts info
         from . import bl_info
@@ -125,7 +125,7 @@ class NifCommon:
                                                                                                 pyffi.__version__))
 
         # find and store this list now of selected objects as creating new objects adds them to the selection list
-        self.selected_objects = NifOp.ctx.selected_objects[:]
+        self.selected_objects = bpy.context.selected_objects[:]
 
 
     def get_bone_name_for_blender(self, name):
