@@ -37,6 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
+
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
@@ -75,7 +77,7 @@ class TextureWriter():
             NifLog.warn("Exporting source texture without texture or filename (bug?).")
 
         # fill in default values (TODO: can we use 6 for everything?)
-        if self.nif_export.nif_export.version >= 0x0a000100:
+        if bpy.context.scene.niftools_scene.nif_version >= 0x0A000100:
             srctex.pixel_layout = 6
         else:
             srctex.pixel_layout = 5
