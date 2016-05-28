@@ -45,7 +45,7 @@ import operator
 
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
-from io_scene_nif.objectsys.object_import import Object
+from io_scene_nif.objectsys.object_import import NiObject
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -602,7 +602,7 @@ class bound_import():
             #    *bbox.bounding_box.rotation.as_list())
             # ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
-        b_obj.niftools.bsxflags = Object.import_bsxflag_data(bbox)
+        b_obj.niftools.bsxflags = NiObject.import_bsxflag_data(bbox)
         # TODO b_obj.niftools.objectflags = self.nif_import.objectflags
         b_obj.location = n_bbox_center
 
