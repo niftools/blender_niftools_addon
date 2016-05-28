@@ -51,7 +51,7 @@ from io_scene_nif.constraintsys.constraint_import import constraint_import
 from io_scene_nif.materialsys.material_import import Material
 from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
-from io_scene_nif.objectsys.object_import import Object
+from io_scene_nif.objectsys.object_import import NiObject
 from io_scene_nif.scenesys import scene_import
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -86,7 +86,7 @@ class NifImport(NifCommon):
         self.texturehelper.set_texture_loader(self.textureloader)
         self.materialhelper = Material(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
-        self.objecthelper = Object()
+        self.objecthelper = NiObject()
              
     def execute(self):
         """Main import function."""
