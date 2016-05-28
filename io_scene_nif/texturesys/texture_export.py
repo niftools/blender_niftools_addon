@@ -74,17 +74,17 @@ class TextureHelper():
 #         mesh_texeff_mtex = None
 #         mesh_ref_mtex = None
     
-    @classmethod
-    def get_used_textslots(cls, b_mat):
+    @staticmethod
+    def get_used_textslots(b_mat):
         used_slots = []
         if b_mat is not None:
             used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
         return used_slots
 
-    @classmethod
-    def get_uv_layers(cls, b_mat):
+    @staticmethod
+    def get_uv_layers(b_mat):
         used_uvlayers = set()
-        texture_slots = cls.get_used_textslots(b_mat)
+        texture_slots = TextureHelper.get_used_textslots(b_mat)
         for slot in texture_slots:
             used_uvlayers.add(slot.uv_layer)
         return used_uvlayers
