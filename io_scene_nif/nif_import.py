@@ -46,7 +46,7 @@ from io_scene_nif.io.egm import EGMFile
 
 from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
-from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
+from io_scene_nif.collisionsys.collision_import import bhkshape_import, BoundBox
 from io_scene_nif.constraintsys.constraint_import import constraint_import
 from io_scene_nif.materialsys.material_import import Material
 from io_scene_nif.texturesys.texture_import import Texture
@@ -79,7 +79,6 @@ class NifImport(NifCommon):
         self.armaturehelper = Armature(parent=self)
         # TODO: create super collisionhelper
         self.bhkhelper = bhkshape_import(parent=self)
-        self.boundhelper = bound_import(parent=self)
         self.constrainthelper = constraint_import(parent=self)
         self.textureloader = TextureLoader(parent=self)
         self.texturehelper = Texture(parent=self)
@@ -231,8 +230,6 @@ class NifImport(NifCommon):
         # set the block parent through the tree, to ensure I can always move
         # backward
         self.set_parents(root_block)
-        self.bsxflags = self.objecthelper.import_bsxflag_data(root_block)
-        self.upbflags = self.objecthelper.import_upbflag_data(root_block)
         self.objectflags = root_block.flags
         
         if isinstance(root_block, NifFormat.BSFadeNode):
@@ -256,18 +253,12 @@ class NifImport(NifCommon):
             # special case 2: root node is grouping node
             NifLog.debug("{0} is a grouping node".format(root_block.name))
             b_obj = self.import_branch(root_block)
-            b_obj.niftools.bsxflags = self.bsxflags
 
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
             b_obj = self.import_branch(root_block)
-            b_obj.niftools.bsxflags = self.bsxflags
 
         elif isinstance(root_block, NifFormat.NiNode):
-            # root node is dummy scene node
-            for n_extra in root_block.get_extra_datas():
-                if isinstance(n_extra, NifFormat.BSBound):
-                    self.boundhelper.import_bounding_box(n_extra)
             # process collision
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
@@ -288,17 +279,7 @@ class NifImport(NifCommon):
         else:
             NifLog.warn("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
 
-        if hasattr(root_block, "extra_data_list"):
-            for n_extra_list in root_block.extra_data_list:
-                if isinstance(n_extra_list, NifFormat.BSInvMarker):
-                    b_obj.niftools_bs_invmarker.add()
-                    b_obj.niftools_bs_invmarker[0].name = n_extra_list.name.decode()
-                    b_obj.niftools_bs_invmarker[0].bs_inv_x = n_extra_list.rotation_x
-                    b_obj.niftools_bs_invmarker[0].bs_inv_y = n_extra_list.rotation_y
-                    b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra_list.rotation_z
-                    b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra_list.zoom
-
-
+        NiObject.import_extra_data(b_obj, root_block)
 
         if self.root_ninode:
             b_obj.niftools.rootnode = self.root_ninode
@@ -403,7 +384,6 @@ class NifImport(NifCommon):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[self.dict_names[niBlock]]
                 # bones cannot group geometries into a single mesh
-                b_obj.niftools_bone.bsxflags = self.bsxflags
                 b_obj.niftools_bone.boneflags = niBlock.flags
                 geom_group = []
             else:
@@ -413,8 +393,7 @@ class NifImport(NifCommon):
                 # morph controllers from geometry group
                 if NifOp.props.animation:
                     for child in geom_group:
-                        if nif_utils.find_controller(
-                            child, NifFormat.NiGeomMorpherController):
+                        if nif_utils.find_controller(child, NifFormat.NiGeomMorpherController):
                             geom_group.remove(child)
                 # import geometry/empty
                 if (not geom_group
@@ -423,10 +402,10 @@ class NifImport(NifCommon):
                     # no grouping node, or too many materials to
                     # group the geometry into a single mesh
                     # so import it as an empty
-                    if not niBlock.has_bounding_box:
-                        b_obj = self.import_empty(niBlock)
-                    else:
-                        b_obj = self.boundhelper.import_bounding_box(niBlock)
+                    b_obj = self.import_empty(niBlock)
+                    if niBlock.has_bounding_box:
+                        b_bbox = BoundBox.import_bounding_box(niBlock)
+                        b_bbox.parent = b_obj
                     geom_group = []
                 else:
                     # node groups geometries, so import it as a mesh
@@ -495,13 +474,11 @@ class NifImport(NifCommon):
 
                     collision_objs = self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
                     # register children for parentship
-                    object_children += [
-                        (bhk_body, b_child) for b_child in collision_objs]
+                    object_children += [(bhk_body, b_child) for b_child in collision_objs]
 
                 # import bounding box
                 if bsbound:
-                    object_children += [
-                        (bsbound, self.boundhelper.import_bounding_box(bsbound))]
+                    object_children += [(bsbound, BoundBox.import_bsbound(bsbound))]
 
             # fix parentship
             if isinstance(b_obj, bpy.types.Object):
@@ -619,10 +596,8 @@ class NifImport(NifCommon):
                 range_data = niBlock.lod_level_data
                 for lod_level, (n_child, b_child) in zip(
                     range_data.lod_levels, b_children_list):
-                    b_child.addProperty(
-                        "Near Extent", lod_level.near_extent, "FLOAT")
-                    b_child.addProperty(
-                        "Far Extent", lod_level.far_extent, "FLOAT")
+                    b_child.addProperty("Near Extent", lod_level.near_extent, "FLOAT")
+                    b_child.addProperty("Far Extent", lod_level.far_extent, "FLOAT")
 
             return b_obj
         # all else is currently discarded
@@ -725,7 +700,6 @@ class NifImport(NifCommon):
         b_empty.niftools.longname = niBlock.name.decode()
 
         bpy.context.scene.objects.link(b_empty)
-        b_empty.niftools.bsxflags = self.bsxflags
         b_empty.niftools.objectflags = niBlock.flags
 
         if niBlock.name in self.dict_bone_priorities:

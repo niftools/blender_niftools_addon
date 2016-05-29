@@ -45,7 +45,6 @@ import operator
 
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
-from io_scene_nif.objectsys.object_import import NiObject
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -172,16 +171,14 @@ class bhkshape_import():
             b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
             
-            b_col_obj.niftools.bsxflags = self.nif_import.bsxflags
-            b_col_obj.niftools.objectflags = self.nif_import.objectflags
-            b_col_obj.niftools.upb = self.nif_import.upbflags
+            
             
             b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
             
             b_col_obj.rigid_body.use_deactivation = True
             b_col_obj.rigid_body.friction = bhkshape.friction
             b_col_obj.rigid_body.restitution = bhkshape.restitution
-            #b_col_obj.rigid_body. = bhkshape.
+
             b_col_obj.rigid_body.linear_damping = bhkshape.linear_damping
             b_col_obj.rigid_body.angular_damping = bhkshape.angular_damping
             b_col_obj.rigid_body.deactivate_linear_velocity = mathutils.Vector([
@@ -537,74 +534,72 @@ class bhkshape_import():
 
         return hk_objects
 
-class bound_import():
+class BoundBox():
     """Import a bound box shape"""
 
-    def __init__(self, parent):
-        self.nif_import = parent
-
-    def import_bounding_box(self, bbox):
-        """Import a bounding box (BSBound, or NiNode with bounding box)."""
-
-        # calculate bounds
-        if isinstance(bbox, NifFormat.BSBound):
-            b_mesh = bpy.data.meshes.new('BSBound')
-            minx = bbox.center.x - bbox.dimensions.x
-            miny = bbox.center.y - bbox.dimensions.y
-            minz = bbox.center.z - bbox.dimensions.z
-            maxx = bbox.center.x + bbox.dimensions.x
-            maxy = bbox.center.y + bbox.dimensions.y
-            maxz = bbox.center.z + bbox.dimensions.z
-            n_bbox_center = bbox.center.as_list()
-            
-        elif isinstance(bbox, NifFormat.NiNode):
-            if not bbox.has_bounding_box:
-                raise ValueError("Expected NiNode with bounding box.")
-            b_mesh = bpy.data.meshes.new('Bounding Box')
-
-            # Ninode's(bbox) behaves like a seperate mesh.
-            # bounding_box center(bbox.bounding_box.translation) is relative to the bound_box
-            minx = bbox.bounding_box.translation.x - bbox.translation.x - bbox.bounding_box.radius.x
-            miny = bbox.bounding_box.translation.y - bbox.translation.y - bbox.bounding_box.radius.y
-            minz = bbox.bounding_box.translation.z - bbox.translation.z - bbox.bounding_box.radius.z
-            maxx = bbox.bounding_box.translation.x - bbox.translation.x + bbox.bounding_box.radius.x
-            maxy = bbox.bounding_box.translation.y - bbox.translation.y + bbox.bounding_box.radius.y
-            maxz = bbox.bounding_box.translation.z - bbox.translation.z + bbox.bounding_box.radius.z
-            n_bbox_center = bbox.bounding_box.translation.as_list()
-
-        else:
-            raise TypeError("Expected BSBound or NiNode but got %s."
-                            % bbox.__class__.__name__)
-
+    @staticmethod
+    def import_bsbound(bbox):
+        b_mesh = bpy.data.meshes.new('BSBound')
+        minx = bbox.center.x - bbox.dimensions.x
+        miny = bbox.center.y - bbox.dimensions.y
+        minz = bbox.center.z - bbox.dimensions.z
+        maxx = bbox.center.x + bbox.dimensions.x
+        maxy = bbox.center.y + bbox.dimensions.y
+        maxz = bbox.center.z + bbox.dimensions.z
+        n_bbox_center = bbox.center.as_list()
+        
+        bounds = [minx, maxx, miny, maxy, minz, maxz]
+        b_mesh = BoundBox._create_mesh(b_mesh, bounds)
+        
+        b_obj = BoundBox._create_object('BSBound', b_mesh, n_bbox_center)
+        
+        return b_obj
+        
+    @staticmethod
+    def import_bounding_box(ninode):
+        if not ninode.has_bounding_box:
+            raise ValueError("Expected NiNode with bounding box.")
+        b_mesh = bpy.data.meshes.new('Bounding Box')
+    
+        # Ninode's(bbox) behaves like a seperate mesh.
+        # bounding_box center(bbox.bounding_box.translation) is relative to the bound_box
+        bbox = ninode.bounding_box
+        minx = bbox.translation.x - ninode.translation.x - ninode.bounding_box.radius.x
+        miny = bbox.translation.y - ninode.translation.y - ninode.bounding_box.radius.y
+        minz = bbox.translation.z - ninode.translation.z - ninode.bounding_box.radius.z
+        maxx = bbox.translation.x - ninode.translation.x + ninode.bounding_box.radius.x
+        maxy = bbox.translation.y - ninode.translation.y + ninode.bounding_box.radius.y
+        maxz = bbox.translation.z - ninode.translation.z + ninode.bounding_box.radius.z
+        n_bbox_center = bbox.bounding_box.translation.as_list()
+    
+        bounds = [minx, maxx, miny, maxy, minz, maxz]
+        b_mesh = BoundBox._create_mesh(b_mesh, bounds)
+        
+        b_obj = BoundBox._create_object('Bounding Box', b_mesh, n_bbox_center)
+        
+        return b_obj
+    
+    @staticmethod
+    def _create_mesh(b_mesh, bounds):
         # create mesh
-        for x in [minx, maxx]:
-            for y in [miny, maxy]:
-                for z in [minz, maxz]:
+        for x in [bounds[0], bounds[1]]:
+            for y in [bounds[2], bounds[3]]:
+                for z in [bounds[4], bounds[5]]:
                     b_mesh.vertices.add(1)
                     b_mesh.vertices[-1].co = (x,y,z)
 
         poly_gens = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
-        b_mesh = poly_gen.col_poly_gen(b_mesh, poly_gens)
+        return poly_gen.col_poly_gen(b_mesh, poly_gens)
+    
+    @staticmethod
+    def _create_object(name, mesh, center):
+        b_obj = bpy.data.objects.new(name, mesh)
 
-        # link box to scene and set transform
-        if isinstance(bbox, NifFormat.BSBound):
-            b_obj = bpy.data.objects.new('BSBound', b_mesh)
-            bpy.context.scene.objects.link(b_obj)
-            scn = bpy.context.scene
-            scn.objects.active = b_obj
-        else:
-            b_obj = bpy.data.objects.new('Bounding Box', b_mesh)
-            bpy.context.scene.objects.link(b_obj)
-            scn = bpy.context.scene
-            scn.objects.active = b_obj
-            # XXX this is set in the import_branch() method
-            # ob.matrix_local = mathutils.Matrix(
-            #    *bbox.bounding_box.rotation.as_list())
-            # ob.setLocation(
-            #    *bbox.bounding_box.translation.as_list())
-        b_obj.niftools.bsxflags = NiObject.import_bsxflag_data(bbox)
-        # TODO b_obj.niftools.objectflags = self.nif_import.objectflags
-        b_obj.location = n_bbox_center
+        bpy.context.scene.objects.link(b_obj)
+        scn = bpy.context.scene
+        scn.objects.active = b_obj
+        
+        b_obj.location = center
 
         # set bounds type
         b_obj.show_bounds = True
@@ -612,8 +607,6 @@ class bound_import():
         b_obj.draw_bounds_type = 'BOX'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'BOX'
-        # quick radius estimate
-        b_obj.game.radius = max(maxx, maxy, maxz)
         
         b_mesh = b_obj.data
         b_mesh.validate()
@@ -625,9 +618,6 @@ class bound_import():
 
 class poly_gen():
     
-    def __init__(self, parent):
-        self.nif_import = parent
-
     def col_poly_gen(self, poly_gens):
         f_map = [None]*len(poly_gens)
         b_f_index = len(self.polygons)
