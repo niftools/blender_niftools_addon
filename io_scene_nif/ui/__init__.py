@@ -35,4 +35,4 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from . import armature, collision, geometry, material, object, shader, scene
+from . import armature, collision, geometry, material, shader, scene, object

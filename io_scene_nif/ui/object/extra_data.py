@@ -38,34 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Panel, UIList, Menu
-
-
-class ObjectPanel(Panel):
-    bl_label = "Niftools Object Panel"
-    
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
-    
-    @classmethod
-    def poll(cls, context):
-        return True
-        
-
-    def draw(self, context):
-        nif_obj_props = context.object.niftools
-        
-        layout = self.layout
-        row = layout.column()
-        row.prop(nif_obj_props, "rootnode")
-        row.prop(nif_obj_props, "bsnumuvset")
-        row.prop(nif_obj_props, "upb")
-        row.prop(nif_obj_props, "bsxflags")
-        row.prop(nif_obj_props, "consistency_flags")
-        row.prop(nif_obj_props, "objectflags")
-        row.prop(nif_obj_props, "longname")
-        
+from bpy.types import Panel, UIList, Menu  
 
 class OBJECT_PT_ExtraData(Panel):
     bl_label = "Niftools Object Extra Data Panel"
@@ -96,14 +69,15 @@ class OBJECT_PT_ExtraData(Panel):
         if has_extra_data:
             col.operator("object.niftools_extradata_remove", icon='ZOOMOUT', text="")
             
-        if has_extra_data:
             row = layout.row()
             box = layout.box()
             
-            selected_extra_data = extra_data_store.extra_data[extra_data_store.extra_data_index]
-            box.prop(selected_extra_data, "name")
-            box.prop(selected_extra_data, "data") 
-            box.prop(selected_extra_data, "sub_class")
+            index = extra_data_store.extra_data_index
+            if index != -1:
+                selected_extra_data = extra_data_store.extra_data[index]
+                box.prop(selected_extra_data, "name")
+                box.prop(selected_extra_data, "data") 
+                box.prop(selected_extra_data, "sub_class")
             
 class OBJECT_MT_ExtraDataType(Menu):
     bl_label = "Extra Data Types"

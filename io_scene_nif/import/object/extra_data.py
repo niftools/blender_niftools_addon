@@ -34,3 +34,44 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+import bpy
+import mathutils
+
+from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.utility import nif_utils
+from io_scene_nif.collisionsys.collision_import import BoundBox
+from io_scene_nif.utility.nif_logging import NifLog
+
+def import_extra_data(b_obj, root_block):
+    for n_extra in root_block.get_extra_datas():
+        if isinstance(n_extra, NifFormat.BSBound):
+            b_bbox = BoundBox.import_bsbound(n_extra)
+            b_bbox.parent = b_obj
+        
+        elif isinstance(n_extra, NifFormat.BSXFlags):
+            # get bsx flags so we can attach it to collision object
+            b_obj.niftools.bsxflags = n_extra.integer_data
+        
+        elif isinstance(n_extra, NifFormat.NiStringExtraData):
+            if n_extra.name.decode() == "UPB":
+                b_obj.niftools.upb = n_extra.string_data.decode()
+        
+        elif isinstance(n_extra, NifFormat.BSInvMarker):
+                b_obj.niftools_bs_invmarker.add()
+                b_obj.niftools_bs_invmarker[0].name = n_extra.name.decode()
+                b_obj.niftools_bs_invmarker[0].bs_inv_x = n_extra.rotation_x
+                b_obj.niftools_bs_invmarker[0].bs_inv_y = n_extra.rotation_y
+                b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra.rotation_z
+                b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra.zoom
+                
+        else:
+            NifLog.warn("{0} Block currently unsupported for import".format(n_extra))
+            
+            
+            
+def import_BSX_Flags(b_obj, n_extra_data):
+    b_obj.niftools.extra_data_store.add()
+    
+    
+    

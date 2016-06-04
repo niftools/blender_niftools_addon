@@ -1,6 +1,6 @@
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2016, NIF File Format Library and Tools contributors.
+# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,3 +34,32 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+from . import extra_data
+from bpy.types import Panel
+
+class ObjectPanel(Panel):
+    bl_label = "Niftools Object Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+
+    def draw(self, context):
+        nif_obj_props = context.object.niftools
+        
+        layout = self.layout
+        row = layout.column()
+        row.prop(nif_obj_props, "rootnode")
+        row.prop(nif_obj_props, "bsnumuvset")
+        row.prop(nif_obj_props, "upb")
+        row.prop(nif_obj_props, "bsxflags")
+        row.prop(nif_obj_props, "consistency_flags")
+        row.prop(nif_obj_props, "objectflags")
+        row.prop(nif_obj_props, "longname")
+        
