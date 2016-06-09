@@ -47,7 +47,7 @@ from io_scene_nif import nif_import
 class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a nif file."""
 
-    #: Name of function for calling the nif export operators.
+    #: Name of function for calling the nif import operators.
     bl_idname = "import_scene.nif"
 
     #: How the nif import operators is labelled in the user interface.

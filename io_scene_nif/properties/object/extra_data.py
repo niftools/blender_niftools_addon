@@ -63,7 +63,7 @@ class ExtraData(PropertyGroup):
 #         self.sub_class = sub_class
     
     
-class BSXFlags():
+class BSXFlags(ExtraData):
     # type = NifFormat.BSXFlags()
     #     data = {}
     
