@@ -44,7 +44,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
 
-class Object():     
+class NiObject():     
     
     @staticmethod
     def import_bsbound_data(root_block):

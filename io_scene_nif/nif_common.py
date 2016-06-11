@@ -37,14 +37,13 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import logging
-
 import bpy
 import re
 
 import pyffi
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
 
 class NifCommon:
     """Abstract base class for import and export. Contains utility functions
@@ -112,29 +111,11 @@ class NifCommon:
     
     HAVOK_SCALE = 6.996
 
-    def __init__(self, operator, context):
-        """Common initialization functions for executing the import/export
-        operators:
-
-        - initialize progress bar
-        - set logging level
-        - set self.context
-        - set self.selected_objects
-        """
-        # copy properties from operator (contains import/export settings)
-        self.operator = operator
-        self.properties = operator.properties
+    def __init__(self, operator):
+        """Common initialization functions for executing the import/export operators: """
         
-        # save context (so it can be used in other methods without argument passing)
-        self.context = context     
+        NifOp.init(operator)
         
-        NifLog.op = self.operator
-
-        # set logging level
-        log_level_num = getattr(logging, self.properties.log_level)
-        logging.getLogger("niftools").setLevel(log_level_num)
-        logging.getLogger("pyffi").setLevel(log_level_num)
-
         # print scripts info
         from . import bl_info
         niftools_ver = (".".join(str(i) for i in bl_info["version"]))
@@ -144,7 +125,7 @@ class NifCommon:
                                                                                                 pyffi.__version__))
 
         # find and store this list now of selected objects as creating new objects adds them to the selection list
-        self.selected_objects = self.context.selected_objects[:]
+        self.selected_objects = bpy.context.selected_objects[:]
 
 
     def get_bone_name_for_blender(self, name):

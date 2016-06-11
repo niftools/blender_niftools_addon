@@ -39,6 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.materialsys.material_export import Material
+from io_scene_nif.utility.nif_global import NifOp
 
 class PropertyHelper():
     
@@ -51,7 +52,6 @@ class ObjectProperty():
     
     def __init__(self, parent):
         self.nif_export = parent
-        self.properties = parent.properties
         
     def export_vertex_color_property(self, block_parent, flags=1,
                                      vertex_mode=0, lighting_mode=1):
@@ -151,7 +151,7 @@ class ObjectProperty():
                 return block
         # no stencil property found, so create new one
         stencilprop = self.nif_export.objecthelper.create_block("NiStencilProperty")
-        if self.properties.game == 'FALLOUT_3':
+        if NifOp.props.game == 'FALLOUT_3':
             stencilprop.flags = 19840
         return stencilprop
     

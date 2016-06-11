@@ -288,11 +288,9 @@ class Texture():
 	def create_texture_slot(self, b_mat, image_texture):
 		b_mat_texslot = b_mat.texture_slots.add()
 		try:
-			b_mat_texslot.texture = self.textureloader.import_texture_source(
-										image_texture.source)
+			b_mat_texslot.texture = self.textureloader.import_texture_source(image_texture.source)
 		except:
-			b_mat_texslot.texture = self.textureloader.import_texture_source(
-										image_texture)
+			b_mat_texslot.texture = self.textureloader.import_texture_source(image_texture)
 		b_mat_texslot.use = True
 
 		# Influence mapping

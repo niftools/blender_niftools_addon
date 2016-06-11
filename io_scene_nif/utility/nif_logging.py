@@ -37,29 +37,35 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import logging
+
+class _MockOperator():
+    def report(self, level, message):
+        print(str(level) + ": " + message)
+
 class NifLog():
     """A simple custom exception class for export errors. This module require initialisation of an operator reference to function."""  
     
-    # Injectable reference to executing operator
-    op = None
+    # Injectable operator reference used to perform reporting, default to simple logging
+    op = _MockOperator()
 
-    @classmethod
-    def debug(cls, message):
+    @staticmethod
+    def debug(message):
         """Report a debug message."""
-        cls.op.report({'DEBUG'}, message)
+        NifLog.op.report({'DEBUG'}, message)
 
-    @classmethod
-    def info(cls, message):
+    @staticmethod
+    def info(message):
         """Report an informative message."""
-        cls.op.report({'INFO'}, message)
+        NifLog.op.report({'INFO'}, message)
 
-    @classmethod
-    def warn(cls, message):
+    @staticmethod
+    def warn(message):
         """Report a warning message."""
-        cls.op.report({'WARNING'}, message)
+        NifLog.op.report({'WARNING'}, message)
 
-    @classmethod
-    def error(cls, message):
+    @staticmethod
+    def error(message):
         """Report an error and return ``{'FINISHED'}``. To be called by
         the :meth:`execute` method, as::
 
@@ -71,16 +77,15 @@ class NifLog():
 
             The :ref:`error reporting <dev-design-error-reporting>` design.
         """
-        cls.op.report({'ERROR'}, message)
+        NifLog.op.report({'ERROR'}, message)
         return {'FINISHED'}
     
+    @staticmethod
+    def init(operator):
+        NifLog.op = operator
+        log_level_num = getattr(logging, operator.properties.log_level)
+        logging.getLogger("niftools").setLevel(log_level_num)
+        logging.getLogger("pyffi").setLevel(log_level_num)
     
-    @classmethod
-    def setMockReporter(cls):
-        NifLog.op = cls._MockOperator()
     
-    class _MockOperator():
-        
-        def report(self, level, message):
-            print(str(level) + ": " + message)
         

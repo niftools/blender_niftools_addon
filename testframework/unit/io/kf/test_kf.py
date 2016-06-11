@@ -10,7 +10,6 @@ class Test_KF_IO:
  
     @classmethod
     def setup_class(cls):
-        NifLog.setMockReporter()
         cls.working_dir = os.path.dirname(__file__)
         
     def test_load_supported_version(self):
