@@ -45,8 +45,8 @@ from io_scene_nif.utility.nif_utils import NifError
 class EGMFile():
     """Load and save a FaceGen Egm file"""
 
-    @classmethod
-    def load_egm(cls, file_path):
+    @staticmethod
+    def load_egm(file_path):
         """Loads an egm file from the given path"""
         NifLog.info("Loading {0}".format(file_path))
         

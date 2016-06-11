@@ -45,8 +45,8 @@ from io_scene_nif.utility.nif_utils import NifError
 class KFFile():
     """Class to load and save a NifFile"""
     
-    @classmethod
-    def load_kf(cls, file_path):
+    @staticmethod
+    def load_kf(file_path):
         """Loads a Kf file from the given path"""
         NifLog.info("Loading {0}".format(file_path))
         

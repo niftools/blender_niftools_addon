@@ -43,12 +43,13 @@ from io_scene_nif.utility import nif_utils
 import bpy
 import mathutils
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
+
 
 class constraint_export():
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.properties = parent.properties
         self.HAVOK_SCALE = parent.HAVOK_SCALE
         
     def export_constraints(self, b_obj, root_block):
@@ -70,7 +71,7 @@ class constraint_export():
         for b_constr in b_obj.constraints:
             # rigid body joints
             if b_constr.type == 'RIGID_BODY_JOINT':
-                if self.properties.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                if NifOp.props.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     NifLog.warn("Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {0}.".format(b_constr))
                     continue
                 # check that the object is a rigid body
@@ -138,7 +139,7 @@ class constraint_export():
                         max_friction = 0
                     else:
                         # non-malleable typically have 10
-                        if self.properties.game == 'FALLOUT_3':
+                        if NifOp.props.game == 'FALLOUT_3':
                             max_friction = 100
                         else: # oblivion
                             max_friction = 10
