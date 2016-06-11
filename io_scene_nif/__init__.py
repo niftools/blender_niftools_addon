@@ -40,26 +40,22 @@
 #: Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
-    "description":
-    "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
+    "description": "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "NifTools Team",
     "version": (2, 6, 0), # can't read from VERSION, blender wants it hardcoded
-    "blender": (2, 7, 2),
+    "blender": (2, 7, 7),
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "partially functional, port from 2.49 series still in progress",
-    "wiki_url": (
-        "http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/"\
-        "Import-Export/Nif"),
-    "tracker_url": (
-        "http://sourceforge.net/tracker/?group_id=149157&atid=776343"),
+    "wiki_url": ("http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/Import-Export/Nif"),
+    "tracker_url": ("http://www.niftools.org/forum", "https://www.github.com/niftools/blender_nif_plugin"),
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
 import io_scene_nif
 
 try:
-    from io_scene_nif import nif_debug
+    from io_scene_nif.utility import nif_debug
     nif_debug.startdebug()
 except:
     print("Failed to load debug module")
@@ -95,9 +91,11 @@ def _init_loggers():
 
 
 def menu_func_import(self, context):
+    # TODO: get default path from config registry
+    # default_path = bpy.data.filename.replace(".blend", ".nif")
     self.layout.operator(
         operators.nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
-
+    # ).filepath = default_path
 
 def menu_func_export(self, context):
     self.layout.operator(
