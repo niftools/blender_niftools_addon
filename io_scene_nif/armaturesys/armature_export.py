@@ -162,7 +162,8 @@ class Armature():
                         node.flags = 0x0196
                 else:
                     node.flags = 0x0002 # default for Morrowind bones
-            self.nif_export.set_object_matrix(bone, 'localspace', node) # rest pose
+
+            self.nif_export.objecthelper.set_object_matrix(bone, 'localspace', node) # rest pose
 
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
