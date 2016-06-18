@@ -1176,7 +1176,7 @@ class MeshHelper():
                         # fix geometry rest pose: transform relative to
                         # skeleton root
                         skindata.set_transform(
-                            self.nif_export.get_object_matrix(b_obj, 'localspace').get_inverse())
+                            self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').get_inverse())
                        
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}
