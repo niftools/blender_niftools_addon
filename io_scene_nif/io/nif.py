@@ -46,7 +46,7 @@ class NifFile():
     """Class to load and save a NifFile"""
     
     @staticmethod
-    def load_nif(cls, file_path):
+    def load_nif(file_path):
         """Loads a nif from the given file path"""
         NifLog.info("Importing {0}".format(file_path))
 
