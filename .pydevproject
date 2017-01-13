@@ -5,9 +5,9 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 3.0</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
-<path>C:\Python32\Lib\site-packages\pyffi</path>
-<path>C:\Python32\Lib\site-packages\nose-1.1.2-py3.2.egg</path>
-<path>C:\Program Files\Blender Foundation\Blender2.59\doc\python_api\pypredef</path>
+<path>C:\Blender Foundation\Blender2.62\2.62\python\lib\site-packages\pyffi</path>
+<path>C:\Blender Foundation\Blender2.62\2.62\python\lib\site-packages\nose-1.1.2-py3.2.egg</path>
+<path>C:\Blender Foundation\Blender2.62\doc\python_api\pypredef</path>
 </pydev_pathproperty>
 
 
