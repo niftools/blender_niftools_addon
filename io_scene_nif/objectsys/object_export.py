@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bmesh
 import bpy
 import mathutils
 
@@ -543,7 +544,16 @@ class MeshHelper():
         assert(b_obj.type == 'MESH')
 
         # get mesh from b_obj
-        b_mesh = b_obj.data # get mesh data
+        b_mesh = b_obj.data
+
+        # Let's turn those quads and n-gons into triangles
+        b_obj.update_from_editmode()  # get the latest updates from edit mode
+        bm = bmesh.new()
+        bm.from_mesh(b_mesh)  # load mesh data to be manipulated
+        bmesh.ops.triangulate(bm, faces=bm.faces)  # make quads and n-gons triangles
+        bm.to_mesh(b_mesh)  # push mesh data back into our b_obj.data
+        bm.free()  # clean up after ourselves
+        del bm
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
