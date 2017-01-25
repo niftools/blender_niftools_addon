@@ -916,9 +916,8 @@ class MeshHelper():
                     # if we have uv coordinates
                     # double check that we have uv data
                     if not b_mesh.uv_layer_stencil:
-                        raise nif_utils.NifError(
-                            "ERROR%t|Create a UV map for every texture,"
-                            " and run the script again.")
+                        NifLog.warn("No UV map for texture associated with poly {0} of selected "
+                                    "mesh '{1}'.".format(str(poly.index), b_mesh.name))
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
                 for i, loop_index in enumerate(
@@ -945,10 +944,8 @@ class MeshHelper():
                             #b_mesh.uv_layers[0].data[poly.index].uv
                             fuv.append(b_mesh.uv_layers[uvlayer].data[loop_index].uv)
                         else:
-                            raise nif_utils.NifError(
-                                "ERROR%t|Texture is set to use UV"
-                                " but no UV Map is Selected for"
-                                " Mapping > Map")
+                            NifLog.warn("Texture is set to use UV but no UV Map is Selected "
+                                        "for Mapping > Map")
                     fcol = None
 
                     '''TODO: Need to map b_verts -> n_verts'''
@@ -1117,6 +1114,7 @@ class MeshHelper():
                 tridata.uv_sets.update_size()
                 for j, uvlayer in enumerate(mesh_uvlayers):
                     for i, uv in enumerate(tridata.uv_sets[j]):
+                        if len(uvlist[i]) == 0: continue  # skip non-uv textures
                         uv.u = uvlist[i][j][0]
                         uv.v = 1.0 - uvlist[i][j][1] # opengl standard
 
