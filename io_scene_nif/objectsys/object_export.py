@@ -99,8 +99,7 @@ class ObjectHelper():
             NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
         self.nif_export.dict_blocks[block] = b_obj
         return block
-    
-    
+
     def export_node(self, b_obj, space, parent_block, node_name):
         """Export a mesh/armature/empty object b_obj as child of parent_block.
         Export also all children of b_obj.
@@ -119,32 +118,39 @@ class ObjectHelper():
         #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
         # b_obj_ipo:  object animation ipo
         # node:    contains new NifFormat.NiNode instance
-        if (b_obj == None):
-            export_types = ('EMPTY', 'MESH', 'ARMATURE')
+        export_types = ('EMPTY', 'MESH', 'ARMATURE')
+        if b_obj is None:
+            selected_exportable_objects = [b_obj for b_obj in bpy.context.selected_objects
+                                               if b_obj.type in export_types]
+            if len(selected_exportable_objects) == 0:
+                raise nif_utils.NifError(
+                    "Selected objects ({0}) are not exportable.".format(
+                        str(bpy.context.selected_objects)))
+
             for root_object in [b_obj for b_obj in bpy.context.selected_objects
                                 if b_obj.type in export_types]:
                 while root_object.parent:
                     root_object = root_object.parent
             # -> root node
-            if (root_object.type == 'ARMATURE'):
+            if root_object.type == 'ARMATURE':
                 b_obj = root_object
-            if (b_obj == None):
+            if b_obj is None:
                 # -> root node
-                assert(parent_block == None) # debug
+                assert(parent_block is None) # debug
                 node = self.create_ninode()
                 b_obj_type = None
                 b_obj_ipo = None
             else:
                 b_obj_type = b_obj.type
-                assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
-                assert(parent_block == None) # debug
+                assert(b_obj_type in export_types) # debug
+                assert(parent_block is None) # debug
                 b_obj_ipo = b_obj.animation_data # get animation data
                 b_obj_children = b_obj.children
                 node_name = b_obj.name
-        elif (b_obj.name != parent_block.name.decode()) and (b_obj.parent != None):
+        elif (b_obj.name != parent_block.name.decode()) and (b_obj.parent is not None):
             # -> empty, b_mesh, or armature
             b_obj_type = b_obj.type
-            assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
+            assert(b_obj_type in export_types) # debug
             assert(parent_block) # debug
             b_obj_ipo = b_obj.animation_data # get animation data
             b_obj_children = b_obj.children
@@ -243,7 +249,7 @@ class ObjectHelper():
         node.name = self.get_full_name(node_name)
 
         # default node flags
-        if b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']:
+        if b_obj_type in export_types:
             if (b_obj_type == 'EMPTY') and (b_obj.niftools.objectflags != 0):
                 node.flags = b_obj.niftools.objectflags
             if (b_obj_type == 'MESH') and (b_obj.niftools.objectflags != 0):
