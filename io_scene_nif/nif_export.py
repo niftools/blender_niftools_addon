@@ -229,6 +229,11 @@ class NifExport(NifCommon):
             # -----------
             NifLog.info("Exporting")
 
+            # find nif version to write
+            #TODO Move fully to scene level
+            self.version = NifOp.op.version[NifOp.props.game]
+            self.user_version, self.user_version_2 = scene_export.get_version_info(NifOp.props)
+
             # create a nif object
 
             # export the root node (the name is fixed later to avoid confusing the
@@ -612,11 +617,6 @@ class NifExport(NifCommon):
             # export nif file:
             # ----------------
 
-            # find nif version to write
-            #TODO Move fully to scene level
-            self.version = NifOp.op.version[NifOp.props.game]
-            self.user_version, self.user_version_2 = scene_export.get_version_info(NifOp.props)
-            
             NifLog.info("Writing NIF version 0x%08X" % self.version)
 
             if export_animation != 'ANIM_KF':
