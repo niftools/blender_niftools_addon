@@ -683,7 +683,7 @@ class NifImport(NifCommon):
         # if name is empty, create something non-empty
         if not niName:
             if isinstance(niBlock, NifFormat.RootCollisionNode):
-                niName = "collision"
+                niName = "RootCollisionNode"
             else:
                 niName = "noname"
         
