@@ -12,9 +12,9 @@ cd $DIR
 mkdir ${DIR}/temp
 
 cd ${DIR}/temp
-cp -r ${ROOT}/io_scene_nif/ .
+cp -r ${ROOT}/io_scene_nif .
 mkdir io_scene_nif/modules
-cp -r ${ROOT}/pyffi/pyffi/ io_scene_nif/modules
+cp -r ${ROOT}/pyffi/pyffi io_scene_nif/modules
 cp ${ROOT}/pyffi/*.rst io_scene_nif/modules/pyffi
 rm -rf io_scene_nif/modules/pyffi/formats/cgf
 rm -rf io_scene_nif/modules/pyffi/formats/dae
