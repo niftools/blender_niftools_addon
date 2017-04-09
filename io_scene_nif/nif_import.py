@@ -427,6 +427,9 @@ class NifImport(NifCommon):
                         b_obj = self.import_empty(niBlock)
                     else:
                         b_obj = self.boundhelper.import_bounding_box(niBlock)
+
+                    if isinstance(niBlock, NifFormat.RootCollisionNode):
+                        b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
                     geom_group = []
                 else:
                     # node groups geometries, so import it as a mesh
