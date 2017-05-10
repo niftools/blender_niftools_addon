@@ -870,8 +870,9 @@ class NifExport(NifCommon):
             node = self.objecthelper.create_block("RootCollisionNode", b_obj)
             parent_block.add_child(node)
             node.flags = 0x0003 # default
-            self.set_object_matrix(b_obj, 'localspace', node)
-            self.objecthelper.mesh_helper.export_tri_shapes(b_obj, 'none', node)
+            self.objecthelper.set_object_matrix(b_obj, 'localspace', node)
+            for child in b_obj.children:
+                self.objecthelper.export_node(child, 'localspace', node, None)
 
         elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
