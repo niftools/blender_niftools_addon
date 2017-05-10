@@ -700,20 +700,21 @@ class MeshHelper():
             # fill in the NiTriShape's non-trivial values
             if isinstance(parent_block, NifFormat.RootCollisionNode):
                 trishape.name = ""
-            elif not trishape_name:
-                if parent_block.name:
-                    trishape.name = "Tri " + parent_block.name.decode()
+            else:
+                if not trishape_name:
+                    if parent_block.name:
+                        trishape.name = "Tri " + parent_block.name.decode()
+                    else:
+                        trishape.name = "Tri " + b_obj.name.decode()
                 else:
-                    trishape.name = "Tri " + b_obj.name.decode()
-            else:
-                trishape.name = trishape_name
+                    trishape.name = trishape_name
 
-            # multimaterial meshes: add material index
-            # (Morrowind's child naming convention)
-            if len(mesh_materials) > 1:
-                trishape.name = trishape.name.decode() + ":%i" % materialIndex
-            else:
-                trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
+                # multimaterial meshes: add material index
+                # (Morrowind's child naming convention)
+                if len(mesh_materials) > 1:
+                    trishape.name = trishape.name.decode() + ":%i" % materialIndex
+                else:
+                    trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
 
             #Trishape Flags...
             if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
