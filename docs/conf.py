@@ -249,8 +249,10 @@ intersphinx_mapping = {
     'https://docs.python.org/': None,
     'https://www.blender.org/api/blender_python_api_2_72_release/': None,
     'http://pyffi.sourceforge.net/': None,
-    }
+}
 
 # Include all todos
 todo_include_todos = True
 
+# Mock Import Blender
+autodoc_mock_imports = ["bpy"]
