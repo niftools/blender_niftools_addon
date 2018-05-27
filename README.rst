@@ -14,14 +14,14 @@ Download
 Documentation
 -------------
 
-* For full Online documentation, visit `http://niftools.org/projects/plugins/blender_nif_plugin/docs/ <http://niftools.org/projects/plugins/blender_nif_plugin/docs/>`_
+* For full Online documentation, visit `https://blender-nif-plugin.readthedocs.io <https://blender-nif-plugin.readthedocs.io>`_
 * For a list of changes between versions, see `Changelog <CHANGELOG.rst>`_
 * See `How to Contribute <CONTRIBUTING.rst>`_ for a list of contribution rules.
 
 Support
 -------
 
-* General Blender Nif Plugin support available via our `forum <http://niftools.sourceforge.net/forum>`_
+* General Blender Nif Plugin support available via our `forum <https://forum.niftools.org/>`_
 * Report all bugs via Blender Nif Plugin repository's `Issue tracker <http://github.com/niftools/blender_nif_plugin/issues>`_
 
 Fork
