@@ -1,6 +1,10 @@
 Installation
 ============
 
+.. raw:: html
+  
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/2RvLZvX_rsI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
 .. _user-getblender:
 
 Install Blender
