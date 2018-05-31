@@ -9,5 +9,5 @@ Support
 For more information and further support, please contact us at:
 
 * `Wiki <http://niftools.sourceforge.net/wiki/Blender>`_
-* `Forum <http://niftools.sourceforge.net/forum>`_
+* `Forum <https://forum.niftools.org/>`_
 * `Report issues via Github Issues <https://www.github.com/niftools/blender_nif_plugin/issues>`_
