@@ -1,19 +1,19 @@
-@niftools/blender-nif-plugin-reviewer
+@niftools/blender-nif-plugin-reviewer -
 
 Before creating a new issue, ensure that
- - [x] Read the user documentation.
- - [x] Check that the issue hasn't already been reported.
- - [x] Read through the list of `Helpful resources` links on the right hand side.
- - [x] Talk with the developers to ensure its a valid issue.
+ - [ ] Read the user documentation.
+ - [ ] Check that the issue hasn't already been reported.
+ - [ ] Read through the list of `Helpful resources` links on the right hand side.
+ - [ ] Talk with the developers to ensure its a valid issue.
 
 Issue will get closed off immediately as invalid if
- - [x] The issue is just looking for support where the forums, chat or documentation is more appropriate.
- - [x] Goes off topic, loses focus or turns into a discussion.
- - [x] If you ignore or remove parts of the template the issue.
+ - [ ] The issue is just looking for support where the forums, chat or documentation is more appropriate.
+ - [ ] Goes off topic, loses focus or turns into a discussion.
+ - [ ] If you ignore or remove parts of the template the issue.
 
 Filling out the template to the best of your ability; include files, logs, helps us to help you.
 
-## Issue Overview 
+# Issue Overview
 [Provide general introduction to the issue and why it is relevant to this repository]
 
 ## Version Information
