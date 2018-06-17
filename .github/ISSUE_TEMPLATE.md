@@ -4,14 +4,14 @@ Before creating a new issue, ensure that
  - [ ] Read the user documentation.
  - [ ] Check that the issue hasn't already been reported.
  - [ ] Read through the list of `Helpful resources` links on the right hand side.
- - [ ] Talk with the developers to ensure its a valid issue.
+ - [ ] Talk with the developers to ensure its a valid issue
 
 Issue will get closed off immediately as invalid if
- - [ ] The issue is just looking for support where the forums, chat or documentation is more appropriate.
+ - [ ] Looking for support where the forums, chat or documentation is more appropriate.
  - [ ] Goes off topic, loses focus or turns into a discussion.
- - [ ] If you ignore or remove parts of the template the issue.
+ - [ ] Removing parts of the template the issue.
 
-Filling out the template to the best of your ability; include files, logs, helps us to help you.
+Fill out the template below to the best of your ability, including .blend files, nifs, logs; help us to help you.
 
 # Issue Overview
 [Provide general introduction to the issue and why it is relevant to this repository]
