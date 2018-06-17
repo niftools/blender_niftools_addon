@@ -1,15 +1,15 @@
-The Blender NIF plugin enables Blender to import and export NIF files.
+The Blender NIF Plugin enables Blender to import and export NIF files.
 
 Requirements
 ------------
 
-* `Latest Blender <http://www.blender.org/download/get-blender/>`_
+* `Blender <http://www.blender.org/download/get-blender/>`_
 
 Download
 --------
 
-* Currently no official releases of Blender Nif Plugin 2.6.x series - `https://github.com/niftools/blender_nif_plugin/releases <https://github.com/niftools/blender_nif_plugin/releases>`_  
-* See the developer forums for developer and nightly builds  
+* Release downloadable from - `https://github.com/niftools/blender_nif_plugin/releases <https://github.com/niftools/blender_nif_plugin/releases>`_
+* Currently there are no stable releases of Blender Nif Plugin 2.6.x series, only developer builds
 
 Documentation
 -------------
@@ -21,8 +21,12 @@ Documentation
 Support
 -------
 
-* General Blender Nif Plugin support available via our `forum <https://forum.niftools.org/>`_
-* Report all bugs via Blender Nif Plugin repository's `Issue tracker <http://github.com/niftools/blender_nif_plugin/issues>`_
+`Changelog <CHANGELOG.rst>`_
+
+Issues
+------
+
+* Report all bugs and issues via Blender Nif Plugin repository's `Issue tracker <http://github.com/niftools/blender_nif_plugin/issues>`_
 
 Fork
 ----

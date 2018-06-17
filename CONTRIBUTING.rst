@@ -19,22 +19,22 @@ There are three conditions any contribution to the codebase should respect:
  - Appropriate documentation updates
 
 These are not exclusive conditions for a contribution to be accepted, but generally enforced as close as possible to ensure quality.
-Merging of the PR is at the discression of the @niftools/blender-nif-plugin-merge team.
+Merging of the PR is at the discretion of the @niftools/blender-nif-plugin-merge team.
 
 Code
 ~~~~
 
 General rule of thumb is to see what has gone before, but if your way is better, ensure you demonstrate that to the review team. 
- * Adhere to conventions, see out main documenation for developers.
+ * Adhere to conventions, see out main documentation for developers.
  * Code should be as readable as possible.
  * Comments should help break down complex behavior. If the behavior is too complex, group the code into logical chunks, or extract to functions for easier to understand code.
- * Docstrings to descibe the intention, not implementation. Self describing code is good and may provide functionality, but useless if it doesn't do what is actually needed.
+ * Docstrings to describe the intention, not implementation. Self describing code is good and may provide functionality, but useless if it doesn't do what is actually needed.
 
 Testing
 ~~~~~~~
 
-Our template includes sections relating to ensure appropiate testing has been completed.
- * If you change the behavior of part of the code, you should try to change the relevent tests to adapt to the new behavior.
+Our template includes sections relating to ensure appropriate testing has been completed.
+ * If you change the behavior of part of the code, you should try to change the relevant tests to adapt to the new behavior.
  * If a test fails, it has to be fixed either in the test or the code.
 
 When possible, for every API additions add either unit or integration tests.
