@@ -42,9 +42,8 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.utility import nif_utils
 
-class NiObject():     
+class NiObject:
     
     @staticmethod
     def import_bsbound_data(root_block):
@@ -63,11 +62,10 @@ class NiObject():
 
     @staticmethod
     def import_upbflag_data(root_block):
-        #process extra data
+        # process extra data
         for n_extra in root_block.get_extra_datas():
             if isinstance(n_extra, NifFormat.NiStringExtraData):
                 if n_extra.name.decode() == "UPB":
                     upbflags = n_extra.string_data.decode()
                     return upbflags
         return ''
-    
