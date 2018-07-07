@@ -1,4 +1,4 @@
-''' Nif User Interface, custom nif properties for materials'''
+""" Nif User Interface, custom nif properties for materials"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -38,18 +38,18 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-
-from bpy.types import PropertyGroup
 from bpy.props import (PointerProperty,
                        FloatVectorProperty,
                        IntProperty,
                        BoolProperty,
                        FloatProperty,
                        )
+from bpy.types import PropertyGroup
+
 
 class Material(PropertyGroup):
-    '''Adds custom properties to material'''
-    
+    """Adds custom properties to material"""
+
     @classmethod
     def register(cls):
         bpy.types.Material.niftools = PointerProperty(
@@ -88,8 +88,8 @@ class Material(PropertyGroup):
         
         
 class AlphaFlags(PropertyGroup):
-    '''Adds custom properties to material'''
-    
+    """Adds custom properties to material"""
+
     @classmethod
     def register(cls):
         bpy.types.Material.niftools_alpha = PointerProperty(
@@ -116,4 +116,3 @@ class AlphaFlags(PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Material.niftools_alpha
-
