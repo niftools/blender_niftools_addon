@@ -1,4 +1,4 @@
-''' Nif User Interface, custom nif properties store for collisions settings'''
+""" Nif User Interface, custom nif properties store for collisions settings"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -51,7 +51,8 @@ from pyffi.formats.nif import NifFormat
 
 
 class CollisionProperty(PropertyGroup):
-    '''Group of Havok related properties, which gets attached to objects through a property pointer.'''
+    """Group of Havok related properties, which gets attached to objects through a property pointer."""
+
     @classmethod
     def register(cls):
 
@@ -128,11 +129,11 @@ class CollisionProperty(PropertyGroup):
                         )
         
         cls.use_blender_properties = BoolProperty(
-                        name='Use Blender Properties',
-                        description='Whether or not to export collision settings via blender properties',
-                        default=False,
-                        )
+            name='Use Blender Properties',
+            description='Whether or not to export collision settings via blender properties',
+            default=False,
+        )
+
     @classmethod
     def unregister(cls):
         del bpy.types.Object.nifcollision
-        

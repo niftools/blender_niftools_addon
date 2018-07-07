@@ -1,4 +1,4 @@
-'''Nif Format Properties, stores custom nif properties for armature settings'''
+"""Nif Format Properties, stores custom nif properties for armature settings"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -38,14 +38,11 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-
-from bpy.types import PropertyGroup
 from bpy.props import (PointerProperty,
-                       CollectionProperty,
                        IntProperty,
-                       StringProperty,
-                       FloatProperty,
                        )
+from bpy.types import PropertyGroup
+
 
 class BoneProperty(PropertyGroup):
     @classmethod
