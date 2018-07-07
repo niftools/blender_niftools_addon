@@ -44,15 +44,15 @@ from io_scene_nif.io.nif import NifFile
 from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile 
 
-from io_scene_nif.animationsys.animation_import import AnimationHelper
-from io_scene_nif.armaturesys.armature_import import Armature
-from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
-from io_scene_nif.constraintsys.constraint_import import constraint_import
-from io_scene_nif.materialsys.material_import import Material
-from modules.property.texturesys import Texture
-from modules.property.texturesys import TextureLoader
-from modules.object.object_import import NiObject
-from modules.header import scene_import
+from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules.armature import Armature
+from io_scene_nif.modules.collision import bhkshape_import, bound_import
+from io_scene_nif.modules.constraint import constraint_import
+from io_scene_nif.modules.material.material_import import Material
+from io_scene_nif.modules.property.texture import Texture
+from io_scene_nif.modules.property.texture import TextureLoader
+from io_scene_nif.modules.object.object_import import NiObject
+from io_scene_nif.modules.header import scene_import
 from io_scene_nif.utility.nif_global import NifOp
 
 import bpy
