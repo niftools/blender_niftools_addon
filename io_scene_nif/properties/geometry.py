@@ -38,14 +38,12 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-
-from bpy.types import PropertyGroup
 from bpy.props import (PointerProperty,
                        CollectionProperty,
-                       StringProperty,
                        IntProperty,
                        BoolProperty,
                        )
+from bpy.types import PropertyGroup
 
 
 class SkinPartHeader(PropertyGroup):
@@ -85,7 +83,7 @@ class SkinPartFlags(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_part_flags = CollectionProperty(type=SkinPartFlags)
-        
+
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_part_flags

@@ -38,8 +38,6 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-
-from bpy.types import PropertyGroup
 from bpy.props import (PointerProperty,
                        StringProperty,
                        IntProperty,
@@ -47,17 +45,16 @@ from bpy.props import (PointerProperty,
                        CollectionProperty,
                        FloatProperty
                        )
-
+from bpy.types import PropertyGroup
 from pyffi.formats.nif import NifFormat
 
 
 class ExtraData(PropertyGroup):
-    
-    name = StringProperty() 
+    name = StringProperty()
     data = StringProperty()
     sub_class = StringProperty()
-    
-    
+
+
 #     def __new__(self, name, data, sub_class):
 #         self.name = name
 #         self.data = data
@@ -67,10 +64,10 @@ class ExtraData(PropertyGroup):
 class BSXFlags:
     # type = NifFormat.BSXFlags()
     #     data = {}
-    
+
     def __init__(self):
         self.name = "BSXFlag"
-    
+
 
 class ExtraDataStore(PropertyGroup):
     @classmethod
@@ -82,12 +79,12 @@ class ExtraDataStore(PropertyGroup):
         )
 
         cls.extra_data_index = IntProperty()
-    
+
     @classmethod
     def unregister(cls):
         del cls.extra_data
         del cls.extra_data_index
-    
+
 
 class ObjectProperty(PropertyGroup):
     @classmethod
@@ -149,11 +146,11 @@ class ObjectProperty(PropertyGroup):
 
     @classmethod
     def unregister(cls):
-        del bpy.types.Object.niftools   
+        del bpy.types.Object.niftools
 
 
 class BsInventoryMarker(PropertyGroup):
-    
+
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_bs_invmarker = CollectionProperty(type=BsInventoryMarker)
