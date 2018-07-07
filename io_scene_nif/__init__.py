@@ -37,12 +37,26 @@
 #
 # ***** END LICENSE BLOCK *****
 
-#: Blender addon info.
+import sys
+import os
+import logging
+import bpy
+import bpy.props
+import io_scene_nif
+from io_scene_nif import properties, operators, ui
+
+try:
+    from io_scene_nif.utility import nif_debug
+    nif_debug.startdebug()
+except:
+    print("Failed to load debug module")
+
+# Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
     "description": "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "NifTools Team",
-    "version": (2, 6, 0), # can't read from VERSION, blender wants it hardcoded
+    "version": (2, 6, 0),  # can't read from VERSION, blender wants it hardcoded
     "blender": (2, 7, 7),
     "api": 39257,
     "location": "File > Import-Export",
@@ -52,54 +66,38 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
-import io_scene_nif
+# Python dependencies are bundled inside the io_scene_nif/dependencies folder
+_dependencies_path = os.path.join(os.path.dirname(__file__), "dependencies")
+if _dependencies_path not in sys.path:
+    sys.path.append(_dependencies_path)
+del _dependencies_path
 
-try:
-    from io_scene_nif.utility import nif_debug
-    nif_debug.startdebug()
-except:
-    print("Failed to load debug module")
-
-import sys
-import os
-
-# Python dependencies are bundled inside the io_scene_nif/modules folder
-_modules_path = os.path.join(os.path.dirname(__file__), "modules")
-if not _modules_path in sys.path:
-    sys.path.append(_modules_path)
-del _modules_path
-
-from io_scene_nif import properties, operators, ui
-
-import bpy
-import bpy.props
-
-import logging
 
 def _init_loggers():
     """Set up loggers."""
-    niftoolslogger = logging.getLogger("niftools")
-    niftoolslogger.setLevel(logging.WARNING)
-    pyffilogger = logging.getLogger("pyffi")
-    pyffilogger.setLevel(logging.WARNING)
-    loghandler = logging.StreamHandler()
-    loghandler.setLevel(logging.DEBUG)
-    logformatter = logging.Formatter("%(name)s:%(levelname)s:%(message)s")
-    loghandler.setFormatter(logformatter)
-    niftoolslogger.addHandler(loghandler)
-    pyffilogger.addHandler(loghandler)
+    niftools_logger = logging.getLogger("niftools")
+    niftools_logger.setLevel(logging.WARNING)
+    pyffi_logger = logging.getLogger("pyffi")
+    pyffi_logger.setLevel(logging.WARNING)
+    log_handler = logging.StreamHandler()
+    log_handler.setLevel(logging.DEBUG)
+    log_formatter = logging.Formatter("%(name)s:%(levelname)s:%(message)s")
+    log_handler.setFormatter(log_formatter)
+    niftools_logger.addHandler(log_handler)
+    pyffi_logger.addHandler(log_handler)
 
 
+# noinspection PyUnusedLocal
 def menu_func_import(self, context):
+    self.layout.operator(operators.nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
     # TODO: get default path from config registry
     # default_path = bpy.data.filename.replace(".blend", ".nif")
-    self.layout.operator(
-        operators.nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
     # ).filepath = default_path
 
+
+# noinspection PyUnusedLocal
 def menu_func_export(self, context):
-    self.layout.operator(
-        operators.nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+    self.layout.operator(operators.nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
 
 
 def register():
@@ -110,14 +108,11 @@ def register():
 
 
 def unregister():
-    # no idea how to do this... oh well, let's not lose any sleep over it
-    #_uninit_loggers()
+    # no idea how to do this... oh well, let's not lose any sleep over it uninit_loggers()
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
     bpy.utils.unregister_module(__name__)
-    
+
 
 if __name__ == "__main__":
     register()
-
-
