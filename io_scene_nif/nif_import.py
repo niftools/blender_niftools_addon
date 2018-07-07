@@ -49,8 +49,8 @@ from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
 from io_scene_nif.constraintsys.constraint_import import constraint_import
 from io_scene_nif.materialsys.material_import import Material
-from io_scene_nif.texturesys.texture_import import Texture
-from io_scene_nif.texturesys.texture_loader import TextureLoader
+from modules.property.texturesys import Texture
+from modules.property.texturesys import TextureLoader
 from modules.object.object_import import NiObject
 from modules.header import scene_import
 from io_scene_nif.utility.nif_global import NifOp
