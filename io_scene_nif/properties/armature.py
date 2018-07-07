@@ -48,17 +48,15 @@ class BoneProperty(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Bone.niftools_bone = PointerProperty(
-                        name='Niftools Bone Property',
-                        description='Additional bone properties used by the Nif File Format',
-                        type=cls,
-                        )
+            name='Niftools Bone Property',
+            description='Additional bone properties used by the Nif File Format',
+            type=cls,
+        )
         cls.boneflags = IntProperty(
-                        name='Bone Flag',
-                        default=0
-                        )
-        
+            name='Bone Flag',
+            default=0
+        )
+
     @classmethod
     def unregister(cls):
         del bpy.types.Bone.niftools_bone
-
-

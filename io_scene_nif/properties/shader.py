@@ -38,15 +38,13 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-
-from bpy.types import PropertyGroup
 from bpy.props import (PointerProperty,
-                       IntProperty,
                        BoolProperty,
                        EnumProperty,
                        )
-
+from bpy.types import PropertyGroup
 from pyffi.formats.nif import NifFormat
+
 
 class ShaderProps(PropertyGroup):
     @classmethod
