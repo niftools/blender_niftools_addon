@@ -45,11 +45,11 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.animationsys.animation_export import AnimationHelper
 from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
 from io_scene_nif.armaturesys.armature_export import Armature
-from io_scene_nif.propertysys.property_export import PropertyHelper
+from modules.property import PropertyHelper
 from io_scene_nif.constraintsys.constraint_export import constraint_export
 from io_scene_nif.texturesys.texture_export import TextureHelper
-from io_scene_nif.objectsys.object_export import ObjectHelper
-from io_scene_nif.scenesys import scene_export
+from modules.object.object_export import ObjectHelper
+from modules.header import scene_export
 from io_scene_nif.utility.nif_global import NifOp
 
 import pyffi.spells.nif.fix
@@ -58,7 +58,6 @@ from pyffi.formats.egm import EgmFormat
 
 import os.path
 
-import mathutils
 import bpy
 
 # main export class

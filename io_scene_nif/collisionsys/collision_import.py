@@ -45,7 +45,7 @@ import operator
 
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
-from io_scene_nif.objectsys.object_import import NiObject
+from io_scene_nif.modules.object.object_import import NiObject
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
