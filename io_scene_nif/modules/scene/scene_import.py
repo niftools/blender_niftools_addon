@@ -39,6 +39,7 @@
 
 import bpy
 
+
 def import_version_info(data):
     scene = bpy.context.scene.niftools_scene
     scene.nif_version = data._version_value_._value
