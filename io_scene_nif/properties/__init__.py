@@ -37,7 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from . import armature, collision, constraint, geometry, material, object, scene, shader
+
+def register():
+    from . import armature, collision, constraint, geometry, material, object, scene, shader
 
 
 def underscore_to_camelcase(s):

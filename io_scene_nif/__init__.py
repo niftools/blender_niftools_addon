@@ -37,16 +37,19 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import sys
-import os
 import logging
+import os
+import sys
+
 import bpy
 import bpy.props
+
 import io_scene_nif
 from io_scene_nif import properties, operators, ui
 
 try:
     from io_scene_nif.utility import nif_debug
+
     nif_debug.startdebug()
 except:
     print("Failed to load debug module")
@@ -102,6 +105,8 @@ def menu_func_export(self, context):
 
 def register():
     _init_loggers()
+    properties.register()
+    ui.register()
     bpy.utils.register_module(__name__)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
