@@ -42,14 +42,14 @@ from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 
-from io_scene_nif.animationsys.animation_export import AnimationHelper
-from io_scene_nif.modules.collisionsys import bhkshape_export, bound_export
-from io_scene_nif.modules.armaturesys import Armature
-from io_scene_nif.modules.property import PropertyHelper
-from io_scene_nif.modules.constraintsys.constraint_export import constraint_export
-from io_scene_nif.modules.property.texturesys import TextureHelper
+from io_scene_nif.modules.animation.animation_export import AnimationHelper
+from io_scene_nif.modules.collision.collision_export import bhkshape_export, bound_export
+from io_scene_nif.modules.armature.armature_export import Armature
+from io_scene_nif.modules.property.property_export import PropertyHelper
+from io_scene_nif.modules.constraint.constraint_export import constraint_export
+from io_scene_nif.modules.property.texture.texture_export import TextureHelper
 from io_scene_nif.modules.object.object_export import ObjectHelper
-from io_scene_nif.modules.header import scene_export
+from io_scene_nif.modules.scene import scene_export
 from io_scene_nif.utility.nif_global import NifOp
 
 import pyffi.spells.nif.fix
