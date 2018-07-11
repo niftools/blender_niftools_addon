@@ -1,4 +1,4 @@
-''' Nif Utilities, stores common code that is used across the code base'''
+""" Nif Utilities, stores common code that is used across the code base"""
 
 
 # ***** BEGIN LICENSE BLOCK *****
@@ -40,9 +40,11 @@
 
 import mathutils
 
+
 class NifError(Exception):
     """A simple custom exception class for export errors."""
     pass
+
 
 def import_matrix(niBlock, relative_to=None):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""

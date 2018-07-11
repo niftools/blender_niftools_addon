@@ -1,4 +1,4 @@
-''' Nif Utilities, stores logging across the code base'''
+""" Nif Utilities, stores logging across the code base"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -39,11 +39,13 @@
 
 import logging
 
-class _MockOperator():
+
+class _MockOperator:
     def report(self, level, message):
         print(str(level) + ": " + message)
 
-class NifLog():
+
+class NifLog:
     """A simple custom exception class for export errors. This module require initialisation of an operator reference to function."""  
     
     # Injectable operator reference used to perform reporting, default to simple logging
@@ -86,6 +88,3 @@ class NifLog():
         log_level_num = getattr(logging, operator.properties.log_level)
         logging.getLogger("niftools").setLevel(log_level_num)
         logging.getLogger("pyffi").setLevel(log_level_num)
-    
-    
-        

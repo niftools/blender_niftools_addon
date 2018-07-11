@@ -44,13 +44,20 @@ import sys
 import bpy
 import bpy.props
 
+# Python dependencies are bundled inside the io_scene_nif/dependencies folder
+_dependencies_path = os.path.join(os.path.dirname(__file__), "dependencies")
+if _dependencies_path not in sys.path:
+    sys.path.append(_dependencies_path)
+    print(sys.path)
+del _dependencies_path
+
 import io_scene_nif
 from io_scene_nif import properties, operators, ui
 
+
 try:
     from io_scene_nif.utility import nif_debug
-
-    nif_debug.startdebug()
+    nif_debug.start_debug()
 except:
     print("Failed to load debug module")
 
@@ -68,12 +75,6 @@ bl_info = {
     "tracker_url": "https://github.com/niftools/blender_nif_plugin/issues",
     "support": "COMMUNITY",
     "category": "Import-Export"}
-
-# Python dependencies are bundled inside the io_scene_nif/dependencies folder
-_dependencies_path = os.path.join(os.path.dirname(__file__), "dependencies")
-if _dependencies_path not in sys.path:
-    sys.path.append(_dependencies_path)
-del _dependencies_path
 
 
 def _init_loggers():
