@@ -5,3 +5,4 @@ docs/python_api
 docs/refresh_python_api.bat
 docs/refresh_python_api.lnk
 *.idea
+install/temp
