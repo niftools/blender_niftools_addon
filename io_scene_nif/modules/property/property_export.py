@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from pyffi.formats.nif import NifFormat
-from io_scene_nif.materialsys.material_export import Material
+from io_scene_nif.modules.property.material.material_export import Material
 from io_scene_nif.utility.nif_global import NifOp
 
 
