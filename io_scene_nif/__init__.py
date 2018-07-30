@@ -47,8 +47,8 @@ bl_info = {
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "partially functional, port from 2.49 series still in progress",
-    "wiki_url": ("http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/Import-Export/Nif"),
-    "tracker_url": ("http://www.niftools.org/forum", "https://www.github.com/niftools/blender_nif_plugin"),
+    "wiki_url": "https://blender-nif-plugin.readthedocs.io/",
+    "tracker_url": "https://github.com/niftools/blender_nif_plugin/issues",
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
