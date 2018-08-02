@@ -127,12 +127,13 @@ class ObjectHelper:
                 while root_object.parent:
                     root_object = root_object.parent
 
-            # -> root node
+            # root node
             if root_object.type == 'ARMATURE':
                 b_obj = root_object
+
+            # root node
             if b_obj is None:
-                # -> root node
-                assert (parent_block is None)  # debug
+                assert parent_block is None  # debug
                 node = self.create_ninode()
                 b_obj_type = None
                 b_obj_ipo = None
@@ -597,7 +598,7 @@ class MeshHelper:
 
             mesh_texture_alpha = False  # texture has transparency
 
-            mesh_uvlayers = []  # uv layers used by this material
+            mesh_uv_layers = []  # uv layers used by this material
             mesh_hasalpha = False  # mesh has transparency
             mesh_haswire = False  # mesh rendered as wireframe
             mesh_hasspec = False  # mesh specular property
@@ -761,10 +762,10 @@ class MeshHelper:
                     trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceeding child of the trishape)
-            refmtex = self.nif_export.texturehelper.refmtex
-            if NifOp.props.game == 'MORROWIND' and refmtex:
+            ref_mtex = self.nif_export.texturehelper.ref_mtex
+            if NifOp.props.game == 'MORROWIND' and ref_mtex:
                 # create a new parent block for this shape
-                extra_node = self.create_block("NiNode", refmtex)
+                extra_node = self.create_block("NiNode", ref_mtex)
                 parent_block.add_child(extra_node)
                 # set default values for this ninode
                 extra_node.rotation.set_identity()
@@ -772,7 +773,7 @@ class MeshHelper:
                 extra_node.flags = 0x000C  # morrowind
                 # create texture effect block and parent the
                 # texture effect and trishape to it
-                texeff = self.export_texture_effect(refmtex)
+                texeff = self.export_texture_effect(ref_mtex)
                 extra_node.add_child(texeff)
                 extra_node.add_child(trishape)
                 extra_node.add_effect(texeff)
@@ -855,7 +856,7 @@ class MeshHelper:
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
-            mesh_uvlayers = self.nif_export.texturehelper.get_uv_layers(b_mat)
+            mesh_uv_layers = self.nif_export.texturehelper.get_uv_layers(b_mat)
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
             vertlist = []
@@ -877,7 +878,7 @@ class MeshHelper:
                 if f_numverts < 3:
                     continue  # ignore degenerate polygons
                 assert ((f_numverts == 3) or (f_numverts == 4))  # debug
-                if mesh_uvlayers:
+                if mesh_uv_layers:
                     # if we have uv coordinates double check that we have uv data
                     if not b_mesh.uv_layer_stencil:
                         NifLog.warn("No UV map for texture associated with poly {0} of selected mesh '{1}'.".format(str(poly.index), b_mesh.name))
@@ -901,12 +902,12 @@ class MeshHelper:
                         fn = None
 
                     fuv = []
-                    for uvlayer in mesh_uvlayers:
-                        if uvlayer != "":
+                    for uv_layer in mesh_uv_layers:
+                        if uv_layer != "":
                             # TODO: map uv layer to index
                             # currently we have uv_layer names, but we need their index value
                             # b_mesh.uv_layers[0].data[poly.index].uv
-                            fuv.append(b_mesh.uv_layers[uvlayer].data[loop_index].uv)
+                            fuv.append(b_mesh.uv_layers[uv_layer].data[loop_index].uv)
                         else:
                             NifLog.warn("Texture is set to use UV but no UV Map is Selected for Mapping > Map")
 
@@ -926,14 +927,15 @@ class MeshHelper:
 
                     # check for duplicate vertquad?
                     f_index[i] = len(vertquad_list)
-                    if vertmap[vertex_index]:
+                    if vertmap[vertex_index] is not None:
                         # iterate only over vertices with the same vertex index and check if they have the same uvs, normals and colors
                         for j in vertmap[vertex_index]:
                             # TODO use function to do comparison
-                            if mesh_uvlayers:
-                                if max(abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0]) for uvlayer in range(len(mesh_uvlayers))) > NifOp.props.epsilon:
+                            if mesh_uv_layers:
+                                num_uvs_layers = len(mesh_uv_layers)
+                                if max(abs(vertquad[1][uv_layer][0] - vertquad_list[j][1][uv_layer][0]) for uv_layer in range(num_uvs_layers)) > NifOp.props.epsilon:
                                     continue
-                                if max(abs(vertquad[1][uvlayer][1] - vertquad_list[j][1][uvlayer][1]) for uvlayer in range(len(mesh_uvlayers))) > NifOp.props.epsilon:
+                                if max(abs(vertquad[1][uv_layer][1] - vertquad_list[j][1][uv_layer][1]) for uv_layer in range(num_uvs_layers)) > NifOp.props.epsilon:
                                     continue
                             if mesh_hasnormals:
                                 if abs(vertquad[2][0] - vertquad_list[j][2][0]) > NifOp.props.epsilon:
@@ -972,7 +974,7 @@ class MeshHelper:
                             normlist.append(vertquad[2])
                         if mesh_hasvcol:
                             vcollist.append(vertquad[3])
-                        if mesh_uvlayers:
+                        if mesh_uv_layers:
                             uvlist.append(vertquad[1])
 
                 # now add the (hopefully, convex) face, in triangles
@@ -1062,15 +1064,15 @@ class MeshHelper:
                     v.b = vcollist[i][2]
                     v.a = vcollist[i][3]
 
-            if mesh_uvlayers:
-                tridata.num_uv_sets = len(mesh_uvlayers)
-                tridata.bs_num_uv_sets = len(mesh_uvlayers)
+            if mesh_uv_layers:
+                tridata.num_uv_sets = len(mesh_uv_layers)
+                tridata.bs_num_uv_sets = len(mesh_uv_layers)
                 if NifOp.props.game == 'FALLOUT_3':
-                    if len(mesh_uvlayers) > 1:
+                    if len(mesh_uv_layers) > 1:
                         raise nif_utils.NifError("Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
-                for j, uvlayer in enumerate(mesh_uvlayers):
+                for j, uv_layer in enumerate(mesh_uv_layers):
                     for i, uv in enumerate(tridata.uv_sets[j]):
                         if len(uvlist[i]) == 0:
                             continue  # skip non-uv textures
@@ -1086,7 +1088,7 @@ class MeshHelper:
             # for extra shader texture games, only export it if those
             # textures are actually exported (civ4 seems to be consistent with
             # not using tangent space on non shadered nifs)
-            if mesh_uvlayers and mesh_hasnormals:
+            if mesh_uv_layers and mesh_hasnormals:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES):
                     trishape.update_tangent_space(as_extra=(NifOp.props.game == 'OBLIVION'))
 
