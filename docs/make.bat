@@ -1,6 +1,6 @@
 @ECHO OFF
 
-REM Command file for Sphinx documentation
+:: Command file for Sphinx documentation
 
 if "%BLENDERHOME%" == "" (
 	echo.Please set BLENDERHOME to the blender.exe folder

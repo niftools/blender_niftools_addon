@@ -16,7 +16,7 @@ The code is maintained with git. If you are not yet familiar with git, read `pro
 **Windows**
 
 We use git bash.
-Download `msysgit <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer instructions.
+Download `git bash <https://git-scm.com/downloads>`_ installer and follow the instructions.
 
 **Fedora**::
 
@@ -29,9 +29,10 @@ Download `msysgit <http://code.google.com/p/msysgit/downloads/list>`_ and follow
 Auto CLRF
 `````````
 
-* We need to ensure consistancy between end-of-file(EOF) markers.
-* This avoids excess commits where the enviroment automatically adds the EOF.
-* Git will think that the whole file has been edited.
+* We need to ensure consistency of end-of-file(EOF) markers between unix & windows platforms.
+* Locally it will keep your platform specifics EOF, but when you go to push it will update files as necessary
+* This avoids unnecessary commits, when your environment is different to the remote.
+* Without this option, Git will see the different markers and think that the whole file has been edited.
 * Read `EOF <http://en.wikipedia.org/wiki/Newline>`_.
 * For Windows-style line endings, use::
 
@@ -63,22 +64,17 @@ Create a Github Fork
 If you intend to work on the Blender nif plugin, first, you should
 clone the code on github.
 
-#. If you do not have one yet, `create a github account
-   <https://github.com/signup/free>`_.
+#. If you do not have one yet, `create a github account <https://github.com/signup/free>`_.
 
-#. Set up your `git environment
-   <http://help.github.com/set-up-git-redirect>`_.
+#. Set up your `git environment <http://help.github.com/set-up-git-redirect>`_.
 
 #. `Log in <https://github.com/login>`_ on github.
 
-#. Visit the `blender nif plugin mothership repository
-   <https://github.com/niftools/blender_nif_plugin>`_.
+#. Visit the `Blender Nif plugin mothership repository <https://github.com/niftools/blender_nif_plugin>`_.
 
 #. Click **Fork** (top right corner).
 
-Be sure to read the remaining `github help
-pages <http://help.github.com/>`_, particularly the beginner's
-guides.
+Be sure to read the remaining `github help pages <http://help.github.com/>`_, particularly the beginner's guides.
 
 
 Get the Source Code
@@ -90,8 +86,8 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
    git clone --recursive git@github.com:<username>/blender_nif_plugin.git
    cd blender_nif_plugin
 
-We use submodules to maintain dependancies.
-They are external repositories which can be updated and maintained as standalone projects, but allows us to choose which version to use. 
+We use submodules to maintain external dependencies.
+This allows us to update to version of the dependency independently of the corresponding project's release cycle.
 
 Fetching the submodules::
    
@@ -107,25 +103,6 @@ Run::
    $ rm -rf pyffi   
    $ git submodule update --init
 
-Optional remote tracking::
+Optional remote tracking of other developers::
 
-   git remote add neomonkeus git://github.com/neomonkeus/blender_nif_plugin.git
-
-   
-Install Build Environment Batch Script
---------------------------------------
-
-.. note::
-
-   * The build enviroment is a tool to standardise development for all NifTools application on Windows
-   * Its purpose is to initialises a command line window with temporary enviromental setting, avoiding bloating PATH.
-   * It will attempt to look for supported build utilities which can also be read from an .ini file 
-   * For more information, read the :file:`README.rst` file provided with the repository.
-
-**Windows**
-
-Get the build environment batch script::
-
-   cd workspace
-   git clone git@github.com:niftools/buildenv.git
-
+   git remote add <developer> git://github.com/<developer>/blender_nif_plugin.git
