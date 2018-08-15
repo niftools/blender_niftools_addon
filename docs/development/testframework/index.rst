@@ -18,8 +18,7 @@ For an overview of each level see the :ref: `design section <development-testfra
 Install
 -------
 
-To install the plugin from a git checkout,
-run the following in a buildenv (Windows)::
+To install the plugin from a git checkout, run the following ::
    
    cd blender_nif_plugin/install
    install.bat
