@@ -1,39 +1,42 @@
 #!/bin/bash
-DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-VERSION=`cat ${DIR}/../io_scene_nif/VERSION`
+BUILD_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+ROOT="${BUILD_DIR}"/..
+PLUGIN_IN="${ROOT}"/io_scene_nif/
+VERSION=`cat "${PLUGIN_IN}"/VERSION`
 NAME="blender_nif_plugin"
-ROOT=${DIR}/..
-DEPS="io_scene_nif/dependencies"
+TEMP="${BUILD_DIR}"/temp
+PLUGIN_OUT="${TEMP}"/io_scene_nif
+DEPS_OUT="${PLUGIN_OUT}"/dependencies
 
-cd ${ROOT}
+cd "${ROOT}"
 git clean -xfdq
 git submodule foreach --recursive git clean -xfdq
-cd ${DIR}
+cd "${DIR}"
 
-rm -r ${DIR}/temp
-mkdir ${DIR}/temp
-cd ${DIR}/temp
+rm -r "${TEMP}"
+mkdir "${TEMP}"
 
 echo "Copying io_scene_nif directory"
-cp -r ${ROOT}/io_scene_nif .
+cp -r "${PLUGIN_IN}" "${TEMP}"/
 
 echo "Creating dependencies folder"
-mkdir ${DEPS}
+mkdir -p "${DEPS_OUT}"
 
 echo "Moving pyffi to dependencies folder"
-cp -r ${ROOT}/pyffi/pyffi ${DEPS}
-cp ${ROOT}/pyffi/*.rst ${DEPS}/pyffi
-rm -rf ${DEPS}/pyffi/formats/cgf
-rm -rf ${DEPS}/pyffi/formats/dae
-rm -rf ${DEPS}/pyffi/formats/psk
-rm -rf ${DEPS}/pyffi/formats/rockstar
-rm -rf ${DEPS}/pyffi/formats/tga
-rm -rf ${DEPS}/pyffi/qskope
+cp -r "${ROOT}"/pyffi/pyffi "${DEPS_OUT}"
+cp "${ROOT}"/pyffi/*.rst "${DEPS_OUT}"/pyffi
+rm -rf "${DEPS_OUT}"/pyffi/formats/cgf
+rm -rf "${DEPS_OUT}"/pyffi/formats/dae
+rm -rf "${DEPS_OUT}"/pyffi/formats/psk
+rm -rf "${DEPS_OUT}"/pyffi/formats/rockstar
+rm -rf "${DEPS_OUT}"/pyffi/formats/tga
+rm -rf "${DEPS_OUT}"/pyffi/qskope
 
 echo "Copying loose files"
-cp ${ROOT}/AUTHORS.rst io_scene_nif
-cp ${ROOT}/CHANGELOG.rst io_scene_nif
-cp ${ROOT}/LICENSE.rst io_scene_nif
-cp ${ROOT}/README.rst io_scene_nif
+cp "${ROOT}"/AUTHORS.rst "${PLUGIN_OUT}"
+cp "${ROOT}"/CHANGELOG.rst "${PLUGIN_OUT}"
+cp "${ROOT}"/LICENSE.rst "${PLUGIN_OUT}"
+cp "${ROOT}"/README.rst "${PLUGIN_OUT}"
 
-zip -9rq "${DIR}/${NAME}-${VERSION}.zip" io_scene_nif -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
+zip -9rq "${TEMP}/${NAME}-${VERSION}.zip" io_scene_nif -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
+
