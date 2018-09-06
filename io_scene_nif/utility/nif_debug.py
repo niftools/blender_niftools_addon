@@ -38,12 +38,13 @@
 import sys
 import os
 
-def startdebug():
+
+def start_debug():
 
     try:
         pydev_src = os.environ['PYDEVDEBUG']
         
-        if (sys.path.count(pydev_src) < 1) :
+        if sys.path.count(pydev_src) < 1:
             sys.path.append(pydev_src)
              
         import pydevd
@@ -58,5 +59,3 @@ def startdebug():
     except:
         print("Python Remote Debugging Server not found")
         pass
-    
-    

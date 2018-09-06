@@ -1,4 +1,4 @@
-''' Nif Utilities, stores logging across the code base'''
+""" Nif Utilities, stores logging across the code base"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -39,10 +39,14 @@
 
 from io_scene_nif.utility.nif_logging import NifLog
 
-class NifOp():
+
+class NifOp:
     """A simple reference holder class but enables classes to be decoupled. 
-    This module require initialisation to function."""  
-    
+    This module require initialisation to function."""
+
+    def __init__(self):
+        pass
+
     op = None
     props = None
     
@@ -53,4 +57,3 @@ class NifOp():
         
         # init loggers logging level
         NifLog.op = operator
-        

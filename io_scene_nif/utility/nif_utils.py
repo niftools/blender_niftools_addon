@@ -1,4 +1,4 @@
-''' Nif Utilities, stores common code that is used across the code base'''
+""" Nif Utilities, stores common code that is used across the code base"""
 
 
 # ***** BEGIN LICENSE BLOCK *****
@@ -40,9 +40,11 @@
 
 import mathutils
 
+
 class NifError(Exception):
     """A simple custom exception class for export errors."""
     pass
+
 
 def import_matrix(niBlock, relative_to=None):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
@@ -96,6 +98,7 @@ def decompose_srt(matrix):
     # b_trans = trans_vec
     return [scale_vec[0], rot_quat.to_matrix(), trans_vec]
 
+
 def find_property(niBlock, property_type):
     """Find a property."""
     for prop in niBlock.properties:
@@ -106,6 +109,7 @@ def find_property(niBlock, property_type):
             return prop
     return None
 
+
 def find_controller(niBlock, controller_type):
     """Find a controller."""
     ctrl = niBlock.controller
@@ -114,7 +118,8 @@ def find_controller(niBlock, controller_type):
             break
         ctrl = ctrl.next_controller
     return ctrl
-    
+
+
 def find_extra(niBlock, extratype):
     # TODO: 3.0 - Optimise
     
