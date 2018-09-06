@@ -1,6 +1,8 @@
+"""This script contains classes to help import nif header information."""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2016, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,3 +36,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+import bpy
+
+
+def import_version_info(data):
+    scene = bpy.context.scene.niftools_scene
+    scene.nif_version = data._version_value_._value
+    scene.user_version = data._user_version_value_._value
+    scene.user_version_2 = data._user_version_2_value_._value

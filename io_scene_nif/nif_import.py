@@ -44,15 +44,15 @@ from io_scene_nif.io.nif import NifFile
 from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile 
 
-from io_scene_nif.animationsys.animation_import import AnimationHelper
-from io_scene_nif.armaturesys.armature_import import Armature
-from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
-from io_scene_nif.constraintsys.constraint_import import constraint_import
-from io_scene_nif.materialsys.material_import import Material
-from io_scene_nif.texturesys.texture_import import Texture
-from io_scene_nif.texturesys.texture_loader import TextureLoader
-from io_scene_nif.objectsys.object_import import NiObject
-from io_scene_nif.scenesys import scene_import
+from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules.armature.armature_import import Armature
+from io_scene_nif.modules.collision.collision_import import bhkshape_import, bound_import
+from io_scene_nif.modules.constraint.constraint_import import constraint_import
+from io_scene_nif.modules.property.material.material_import import Material
+from io_scene_nif.modules.property.texture.texture_import import Texture
+from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
+from io_scene_nif.modules.object.object_import import NiObject
+from io_scene_nif.modules.scene import scene_import
 from io_scene_nif.utility.nif_global import NifOp
 
 import bpy
@@ -61,14 +61,14 @@ import mathutils
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
+
 class NifImport(NifCommon):
 
     # degrees to radians conversion constant
     D2R = 3.14159265358979 / 180.0
     IMPORT_EXTRANODES = True
     IMPORT_EXPORTEMBEDDEDTEXTURES = False
-    
-    
+
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator)
         

@@ -1,4 +1,4 @@
-'''Nif Properties, nif specific custom properties definitions via Blender types''' 
+"""Nif Properties, nif specific custom properties definitions via Blender types"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,18 +37,20 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 
-from . import armature, collision, constraint, geometry, material, object, scene, shader
+def register():
+    from . import armature, collision, constraint, geometry, material, object, scene, shader
+
 
 def underscore_to_camelcase(s):
     """Take the underscore-separated string s and return a camelCase
     equivalent.  Initial and final underscores are preserved, and medial
     pairs of underscores are turned into a single underscore."""
+
     def camelcase_words(words):
         first_word_passed = False
         for word in words:
-            
+
             if not word:
                 yield "_"
                 continue
@@ -57,5 +59,5 @@ def underscore_to_camelcase(s):
             else:
                 yield word.lower()
             first_word_passed = True
-    return ''.join(camelcase_words(s.split('_')))
 
+    return ''.join(camelcase_words(s.split('_')))
