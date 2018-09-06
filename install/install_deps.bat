@@ -1,6 +1,3 @@
-@echo off
-
-:: Script to install developer dependancies for the Blender Nif Plugin
-
-python -m pip install Sphinx --target="%APPDATABLENDERADDONS%\modules"
-python -m pip install nose --target="%APPDATABLENDERADDONS%\modules"
+:: Script to install developer dependancies for the Blender Nif plugin
+python -m pip install Sphinx --target="%BLENDER_ADDONS_DIR"%\dependencies
+python -m pip install nose --target="%BLENDER_ADDONS_DIR"%\dependencies

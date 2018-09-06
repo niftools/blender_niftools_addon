@@ -1,49 +1,36 @@
 @echo off
 
 :: Script to install the blender nif scripts
-:: to detect APPDATABLENDERADDONS, you can use https://github.com/niftools/buildenv
 
 set DIR=%~dps0
 :: remove trailing backslash
-if %DIR:~-1%==\ set DIR=%DIR:~0,-1%
-set ROOT=%DIR%\..
+if "%DIR:~-1%" == "\" set DIR="%DIR:~0,-1%"
+set ROOT="%DIR%\.."
 set /p VERSION=<%ROOT%\io_scene_nif\VERSION
 set NAME=blender_nif_plugin
 
-if "%APPDATABLENDERADDONS%" == "" goto :blenderaddonserrormsg
-if "%SEVENZIPHOME%" == "" goto sevenziperrormsg
+if "%BLENDER_ADDONS_DIR%" == "" if not exist "%BLENDER_ADDONS_DIR%" (
+echo."Update BLENDER_ADDONS_DIR to the folder where the blender addons reside, such as:"
+echo."set BLENDER_ADDONS_DIR=%APPDATA%\Blender Foundation\Blender\2.79\scripts\addons"
+echo.
+pause
+goto end
+)
 
-echo.Installing to:
-echo.%APPDATABLENDERADDONS%\io_scene_nif
+echo "Blender addons directory : %BLENDER_ADDONS_DIR%"
 
-rem remove old files
-if exist "%APPDATABLENDERADDONS%\io_scene_nif" rmdir /s /q "%APPDATABLENDERADDONS%\io_scene_nif"
+echo. "Installing to:"
+echo. "%BLENDER_ADDONS_DIR%"\io_scene_nif
 
-rem create zip
+:: create zip
+echo. "Building artifact"
 call "%DIR%\makezip.bat"
 
-rem copy files from repository to blender addons folder
-pushd "%APPDATABLENDERADDONS%"
-"%SEVENZIPHOME%\7z.exe" x "%DIR%\%NAME%-%VERSION%.zip"
-popd
+:: remove old files
+echo.Removing old installation
+if exist "%BLENDER_ADDONS_DIR%\io_scene_nif" rmdir /s /q "%BLENDER_ADDONS_DIR%\io_scene_nif"
 
-goto end
-
-:blenderaddonserrormsg
-echo.Please set APPDATABLENDERADDONS to the folder where the blender addons reside, such as:
-echo.
-echo.  set APPDATABLENDERADDONS=%APPDATA%\Blender Foundation\Blender\2.73\scripts\addons
-echo.
-pause
-goto end
-
-:sevenziperrormsg
-echo.Please set SEVENZIPHOME to the folder where 7-zip is installed to, such as:
-echo.
-echo. set SEVENZIPHOME=%PROGRAMFILES%\7-Zip\
-echo.
-pause
-goto end
-
+:: copy files from repository to blender addons folder
+powershell -executionpolicy bypass -Command "%DIR%\unzip.ps1" -source '%DIR%\%NAME%-%VERSION%.zip' -destination '%BLENDER_ADDONS_DIR%\io_scene_nif'
 
 :end

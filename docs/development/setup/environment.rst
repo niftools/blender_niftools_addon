@@ -30,9 +30,7 @@ Install Python 3.4
 **Windows**
 
 #. Download `Python 3.4 <http://www.python.org/download/releases/3.2.3/>`_.
-
 #. Pick the installer appropriate for your platform, and follow the instructions.
-
 #. Use the default install location. (recommended)
 
 **Fedora**::
@@ -45,45 +43,27 @@ Install Python 3.4
  
 This is installed by default on 14.04 or later
 
-Setup BuildEnv
+Environment Variables
 --------------
 
-In the repo is a script called create_shortcut.bat.
-This creates shortcuts that when generate buildenv console, hooking to their specific ini file.
+**Windows**::
 
-The following is a sample .ini file for the Blender Nif Plug-in::
+   set /p BLENDER_ADDONS_DIR=<path_to_blender_addons>
 
-   start=workspace
-   python=<Python Directory>
-   blender=<Blender Directory>
-   seven_zip=<7-Zip Directory>
-   pydev_debug=<Eclipse Directory>\plugins\org.python.pydev_x.x.x.xxxxxxxxxxxxxxx\pysrc
-   
-By default running Create_shortcut.bat adds shortcuts on the Desktop for each .ini file.
+**Ubuntu**::
 
-Running from command-line you can decided where it will look for .ini files and where the shortcuts get created::
-
-   create-shortcuts.bat <ini-files>
-   or
-   create-shortcuts.bat <ini-files> <output_location>
-
-Example
-   
-   create-shortcuts.bat C:\Users\<username>\workspace\bin\ini C:\Users\<username>\Desktop\shortcuts
-   
+   set -X BLENDER_ADDONS_DIR=<path_to_blender_addons>
 
 Install Blender
 ---------------
 
 See :ref:`user docs <user-getblender>`.
-
-
 Alternatively you can build blender from source :ref:`Building Blender from Source <development-setup-buildblender>`
 
 Install Sphinx and Nose
 -----------------------
 
-Dependancy scripts are available in the install directory.
+Dependency scripts are available in the install directory.
 
 **Windows** run in buildenv::
 
@@ -114,4 +94,3 @@ and type::
    import nose
 
 You should not get any import errors.
-
