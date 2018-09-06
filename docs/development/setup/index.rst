@@ -18,6 +18,6 @@ Contents:
    
    environment
    sourcecode
+   building
    ide
-   buildblender
 

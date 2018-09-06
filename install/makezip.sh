@@ -1,32 +1,42 @@
 #!/bin/bash
-DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-VERSION=`cat ${DIR}/../io_scene_nif/VERSION`
+BUILD_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+ROOT="${BUILD_DIR}"/..
+PLUGIN_IN="${ROOT}"/io_scene_nif/
+VERSION=`cat "${PLUGIN_IN}"/VERSION`
 NAME="blender_nif_plugin"
-ROOT=${DIR}/..
+TEMP="${BUILD_DIR}"/temp
+PLUGIN_OUT="${TEMP}"/io_scene_nif
+DEPS_OUT="${PLUGIN_OUT}"/dependencies
 
-cd $ROOT
+cd "${ROOT}"
 git clean -xfdq
 git submodule foreach --recursive git clean -xfdq
-cd $DIR
+cd "${DIR}"
 
-mkdir ${DIR}/temp
+rm -r "${TEMP}"
+mkdir "${TEMP}"
 
-cd ${DIR}/temp
-cp -r ${ROOT}/io_scene_nif .
-mkdir io_scene_nif/modules
-cp -r ${ROOT}/pyffi/pyffi io_scene_nif/modules
-cp ${ROOT}/pyffi/*.rst io_scene_nif/modules/pyffi
-rm -rf io_scene_nif/modules/pyffi/formats/cgf
-rm -rf io_scene_nif/modules/pyffi/formats/dae
-rm -rf io_scene_nif/modules/pyffi/formats/psk
-rm -rf io_scene_nif/modules/pyffi/formats/rockstar
-rm -rf io_scene_nif/modules/pyffi/formats/tga
-rm -rf io_scene_nif/modules/pyffi/qskope
-cp ${ROOT}/AUTHORS.rst io_scene_nif
-cp ${ROOT}/CHANGELOG.rst io_scene_nif
-cp ${ROOT}/LICENSE.rst io_scene_nif
-cp ${ROOT}/README.rst io_scene_nif
-zip -9rq "${DIR}/${NAME}-${VERSION}.zip" io_scene_nif -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
-cd $DIR
+echo "Copying io_scene_nif directory"
+cp -r "${PLUGIN_IN}" "${TEMP}"/
 
-rm -r ${DIR}/temp
+echo "Creating dependencies folder"
+mkdir -p "${DEPS_OUT}"
+
+echo "Moving pyffi to dependencies folder"
+cp -r "${ROOT}"/pyffi/pyffi "${DEPS_OUT}"
+cp "${ROOT}"/pyffi/*.rst "${DEPS_OUT}"/pyffi
+rm -rf "${DEPS_OUT}"/pyffi/formats/cgf
+rm -rf "${DEPS_OUT}"/pyffi/formats/dae
+rm -rf "${DEPS_OUT}"/pyffi/formats/psk
+rm -rf "${DEPS_OUT}"/pyffi/formats/rockstar
+rm -rf "${DEPS_OUT}"/pyffi/formats/tga
+rm -rf "${DEPS_OUT}"/pyffi/qskope
+
+echo "Copying loose files"
+cp "${ROOT}"/AUTHORS.rst "${PLUGIN_OUT}"
+cp "${ROOT}"/CHANGELOG.rst "${PLUGIN_OUT}"
+cp "${ROOT}"/LICENSE.rst "${PLUGIN_OUT}"
+cp "${ROOT}"/README.rst "${PLUGIN_OUT}"
+
+zip -9rq "${TEMP}/${NAME}-${VERSION}.zip" io_scene_nif -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
+
