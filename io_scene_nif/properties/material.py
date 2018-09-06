@@ -1,4 +1,4 @@
-''' Nif User Interface, custom nif properties for materials'''
+""" Nif User Interface, custom nif properties for materials"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -38,82 +38,81 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-
-from bpy.types import PropertyGroup
 from bpy.props import (PointerProperty,
                        FloatVectorProperty,
                        IntProperty,
                        BoolProperty,
                        FloatProperty,
                        )
+from bpy.types import PropertyGroup
+
 
 class Material(PropertyGroup):
-    '''Adds custom properties to material'''
-    
+    """Adds custom properties to material"""
+
     @classmethod
     def register(cls):
         bpy.types.Material.niftools = PointerProperty(
-                        name='Niftools Materials',
-                        description='Additional material properties used by the Nif File Format',
-                        type=cls,
-                        )
+            name='Niftools Materials',
+            description='Additional material properties used by the Nif File Format',
+            type=cls,
+        )
 
         cls.ambient_preview = BoolProperty(
-                name='Ambient Preview', description='Allows a viewport preview of the ambient property', default=False)
-        
+            name='Ambient Preview', description='Allows a viewport preview of the ambient property', default=False)
+
         cls.ambient_color = FloatVectorProperty(
-                name='Ambient', subtype='COLOR', default=[1.0, 1.0, 1.0], min=0.0, max=1.0)
-        
+            name='Ambient', subtype='COLOR', default=[1.0, 1.0, 1.0], min=0.0, max=1.0)
+
         cls.emissive_preview = BoolProperty(
-                name='Emissive Preview', description='Allows a viewport preview of the emissive property', default=False)
-        
+            name='Emissive Preview', description='Allows a viewport preview of the emissive property', default=False)
+
         cls.emissive_color = FloatVectorProperty(
-                name='Emissive', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
-        
+            name='Emissive', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
+
         cls.emissive_alpha = FloatVectorProperty(
-                name='Alpha', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
-    
+            name='Alpha', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
+
         cls.lightingeffect1 = FloatProperty(
-                name='Lighting Effect 1',
-                default=0.3
-                )
+            name='Lighting Effect 1',
+            default=0.3
+        )
         cls.lightingeffect2 = FloatProperty(
-                name='Lighting Effect 2',
-                default=2
-                )
-                
+            name='Lighting Effect 2',
+            default=2
+        )
+
     @classmethod
     def unregister(cls):
         del bpy.types.Material.niftools
-        
-        
+
+
 class AlphaFlags(PropertyGroup):
-    '''Adds custom properties to material'''
-    
+    """Adds custom properties to material"""
+
     @classmethod
     def register(cls):
         bpy.types.Material.niftools_alpha = PointerProperty(
-                        name='Niftools Material Alpha',
-                        description='Additional material properties used by the Nif File Format',
-                        type=cls,
-                        )
-        
+            name='Niftools Material Alpha',
+            description='Additional material properties used by the Nif File Format',
+            type=cls,
+        )
+
         cls.alphaflag = IntProperty(
-                        name='Alpha Flag',
-                        default=0
-                        )
-        
+            name='Alpha Flag',
+            default=0
+        )
+
         cls.textureflag = IntProperty(
-                        name='Texture Flag',
-                        default=0
-                        )
+            name='Texture Flag',
+            default=0
+        )
 
         cls.materialflag = IntProperty(
-                        name='Material Flag',
-                        default=0
-                        )
-        
+            name='Material Flag',
+            default=0
+        )
+
     @classmethod
     def unregister(cls):
         del bpy.types.Material.niftools_alpha
-

@@ -35,4 +35,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from . import armature, collision, geometry, material, object, shader, scene
+
+def register():
+    from . import armature, collision, geometry, material, object, shader, scene
