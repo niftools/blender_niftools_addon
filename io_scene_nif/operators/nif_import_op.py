@@ -1,4 +1,4 @@
-'''Blender Nif Plugin Main Import operators, function called through Import Menu'''
+"""Blender Nif Plugin Main Import operators, function called through Import Menu"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -40,9 +40,9 @@
 import bpy
 from bpy_extras.io_utils import ImportHelper
 
+from io_scene_nif import nif_import
 from .nif_common_op import NifOperatorCommon
 
-from io_scene_nif import nif_import
 
 class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a nif file."""
@@ -103,8 +103,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     #: Send all detached geometries to the position of their parent node.
     send_detached_geoms_to_node_pos = bpy.props.BoolProperty(
         name="Send Detached Geometries To Node Position",
-        description=
-        "Send all detached geometries to the position of their parent node.",
+        description="Send all detached geometries to the position of their parent node.",
         default=False)
 
     #: Send all bones to their bind position.
@@ -114,7 +113,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         default=False)
 
     #: Apply skin deformation to all skinned geometries.
-    apply_skin_deformation =  bpy.props.BoolProperty(
+    apply_skin_deformation = bpy.props.BoolProperty(
         name="Apply Skin Deformation",
         description="Apply skin deformation to all skinned geometries.",
         default=False)
@@ -124,13 +123,12 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         items=(
             ("1", "Re-Align Tail Bone", "Re-Aligns bone tail on import."),
             ("2", "Re-Align Tail Bone + Roll", "Re-Align tail bone + roll"),
-            ),
+        ),
         name="Align",
         description="Re-align or Re-Align+Roll",
         default="1")
 
-
-    #: What should be imported.
+    # What should be imported.
     skeleton = bpy.props.EnumProperty(
         items=(
             ("EVERYTHING", "Everything",
@@ -139,7 +137,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
              "Import skeleton only and make it parent of selected geometry."),
             ("GEOMETRY_ONLY", "Geometry Only",
              "Import geometry only and parent them to selected skeleton."),
-            ),
+        ),
         name="Process",
         description="Parts of nif to be imported.",
         default="EVERYTHING")
@@ -149,13 +147,12 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         name="Combine Shapes",
         description="Import multi-material shapes as a single mesh.",
         default=False)
-    
+
     #: Merge vertices that have identical location and normal values.
     combine_vertices = bpy.props.BoolProperty(
         name="Combine Vertices",
         description="Merge vertices that have identical location and normal values.",
         default=False)
-    
 
     def execute(self, context):
         """Execute the import operators: first constructs a
@@ -163,13 +160,12 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         calls its :meth:`~io_scene_nif.nif_import.NifImport.execute`
         method.
         """
-        
+
         # setup the viewport for preferred viewing settings
         bpy.context.scene.game_settings.material_mode = 'GLSL'
         for area in bpy.context.window.screen.areas:
-            if area.type =='VIEW_3D':
+            if area.type is 'VIEW_3D':
                 area.spaces[0].viewport_shade = 'MATERIAL'
                 area.spaces[0].show_backface_culling = True
-        
+
         return nif_import.NifImport(self, context).execute()
-    
