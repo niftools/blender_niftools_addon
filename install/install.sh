@@ -28,13 +28,16 @@ else
     echo "Using ${BLENDER_ADDONS_DIR} as installation directory"
 fi
 
-echo "Installing to:"
-echo "${BLENDER_ADDONS_DIR}"/io_scene_nif
-# remove old files
-rm -rf "${BLENDER_ADDONS_DIR}"/io_scene_nif/
+PLUGIN_DIR="${BLENDER_ADDONS_DIR}/io_scene_nif/"
+echo "Installing to: ${PLUGIN_DIR}"
+if [ -d "${PLUGIN_DIR}" ]; then
+  echo "Removing old io_scene_nif directory"
+  rm -rf "${PLUGIN_DIR}"
+fi
 
 # create zip
 sh "${BUILD_DIR}"/makezip.sh
 
 # copy files from repository to blender addons folder
+echo "Unzipping to ${PLUGIN_DIR}"
 unzip -q "${TEMP}/${NAME}-${VERSION}.zip" -d "${BLENDER_ADDONS_DIR}"
