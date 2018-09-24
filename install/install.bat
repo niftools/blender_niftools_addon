@@ -18,9 +18,7 @@ goto end
 )
 
 echo "Blender addons directory : %BLENDER_ADDONS_DIR%"
-
-echo. "Installing to:"
-echo. "%BLENDER_ADDONS_DIR%"\io_scene_nif
+echo. "Installing to: %BLENDER_ADDONS_DIR%\io_scene_nif"
 
 :: create zip
 echo. "Building artifact"
