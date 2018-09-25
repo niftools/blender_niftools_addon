@@ -2,18 +2,16 @@
 
 import bpy
 import nose.tools
-import os
 
-import io_scene_nif.nif_export
-from pyffi.formats.nif import NifFormat
 from integration import SingleNif
-from integration.collisions import gen_boundbox
+from integration.data import n_gen_header, b_gen_header
+from integration.modules.collision.bounds import n_gen_boundbox
 
 
 class TestBBox(SingleNif):
-    g_name = "collisions/boundbox"
+    g_path = "collisions/boundbox"
+    g_name = "test_bounding_box"
     b_name = "Bounding Box"
-    n_game = "MORROWIND"
 
     b_verts = {
         (10, 10, -10),
@@ -24,7 +22,13 @@ class TestBBox(SingleNif):
         (-10, 10, -10),
         (10, 10, 10),
         (10, -10, 10),
-        }
+    }
+
+    def b_create_header(self):
+        b_gen_header.b_create_morrowind_info()
+
+    def n_create_header(self):
+        n_gen_header.n_create_header_morrowind(self.n_data)
 
     def b_create_data(self):
         # TODO
@@ -41,7 +45,7 @@ class TestBBox(SingleNif):
         b_obj.data.show_double_sided = False
 
     def n_create_data(self):
-        return gen_boundbox.n_create_data()
+        return n_gen_boundbox.n_create_data()
 
     def b_check_data(self):
         b_bbox = bpy.data.objects[self.b_name]
@@ -51,12 +55,13 @@ class TestBBox(SingleNif):
         verts = {tuple(round(x, 4) for x in vert.co) for vert in b_bbox.data.vertices}
         nose.tools.assert_set_equal(verts, self.b_verts)
 
-    def n_check_data(self, n_data):
-        n_bbox = n_data.roots[0].children[0]
+    def n_check_data(self):
+        n_bbox = self.n_data.roots[0].children[0]
         nose.tools.assert_equal(n_bbox.has_bounding_box, True)
         nose.tools.assert_almost_equal(n_bbox.bounding_box.radius.x, 10, places=4)
         nose.tools.assert_almost_equal(n_bbox.bounding_box.radius.y, 10, places=4)
         nose.tools.assert_almost_equal(n_bbox.bounding_box.radius.z, 10, places=4)
+
 
 '''
 class TestBSBound(TestBaseGeometry):
