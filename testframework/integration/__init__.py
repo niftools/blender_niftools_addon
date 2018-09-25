@@ -1,64 +1,57 @@
 """Package for regression testing of the blender nif scripts."""
 
-import bpy
-import io_scene_nif.nif_import
-import io_scene_nif.nif_export
-
-
-
 import os
 import os.path
 
+import bpy
 from pyffi.formats.nif import NifFormat
+
 
 def clear_bpy_data():
     """Remove all objects from blender."""
 
-    def clear_bpy_prop_collection(collection):
-        for elem in collection[:]:
-            collection.remove(elem)
+    def clear_bpy_prop_collection(col):
+        for elem in col[:]:
+            col.remove(elem)
     
-    def clear_users(collection):
-        for elem in collection[:]:
-            collection[elem.name].user_clear()
-            collection.remove(collection[elem.name])
+    def clear_users(col):
+        for elem in col[:]:
+            col[elem.name].user_clear()
+            col.remove(col[elem.name])
     
     # unlink objects
     for b_obj in bpy.data.objects[:]:
         bpy.context.scene.objects.unlink(b_obj)
     
     # remove all data
-    for collection in (
-        "actions", "objects", "meshes", "armatures", "lamps", "lattices",
-        "particles", "metaballs", "shape_keys", "texts", "curves",
-        "cameras", "grease_pencil", "groups", "libraries",
-        "node_groups",
-        "materials",
-        ):
+    for collection in ("actions", "objects", "meshes", "armatures", "lamps", "lattices",
+                       "particles", "metaballs", "shape_keys", "texts", "curves", "cameras",
+                       "grease_pencil", "groups", "libraries", "node_groups", "materials"):
         clear_bpy_prop_collection(getattr(bpy.data, collection))
     
     # need to remove any users first    
-    for collection in (
-        "brushes", "textures", "images",
-        ):
+    for collection in ("brushes", "textures", "images"):
         clear_users(getattr(bpy.data, collection))
+
 
 def setup():
     """Enables the nif scripts addon, so all tests can use it."""
     bpy.ops.wm.addon_enable(module="io_scene_nif")
     clear_bpy_data()
 
+
 def teardown():
     """Disables the nif scripts addon."""
     bpy.ops.wm.addon_disable(module="io_scene_nif")
 
+
 class Base:
     """Base class for all tests."""
-    
-    def b_clear(self):
+
+    @staticmethod
+    def b_clear():
         """Clear all objects from scene."""
-        # ensure in object mode
-        # unlinking objects will throw error otherwise 
+        # ensure in object mode, unlinking objects will throw error otherwise
         if not (bpy.context.mode == 'OBJECT'):
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         clear_bpy_data()
@@ -68,6 +61,7 @@ class Base:
         prepare for next test.
         """
         self.b_clear()
+
 
 class SingleNif(Base):
     """Base class for testing a feature concerning single nif files.
@@ -187,7 +181,7 @@ class SingleNif(Base):
 
     def _b_clear_check(self, b_obj_names):
         """Check that *b_obj_names* are really cleared from the scene."""
-        if(len(b_obj_names) != 0):
+        if len(b_obj_names) != 0:
             try:
                 for name in b_obj_names:
                     bpy.data.objects[name]
@@ -255,18 +249,12 @@ class SingleNif(Base):
 
     def n_import(self, n_filepath):
         """Import nif file."""
-        bpy.ops.import_scene.nif(
-            filepath=n_filepath,
-            log_level='DEBUG',
-            )
+        bpy.ops.import_scene.nif(filepath=n_filepath, log_level='DEBUG')
 
     def n_export(self, n_filepath):
         """Export selected blender object to nif file."""
         print("Export Options {0}, {1}".format(n_filepath, self.n_game))
-        bpy.ops.export_scene.nif(filepath=n_filepath,
-                                 log_level='DEBUG',
-                                 game=self.n_game,
-                                 )
+        bpy.ops.export_scene.nif(filepath=n_filepath, log_level='DEBUG', game=self.n_game)
 
     def test_export_user(self):       
         """User : Export user generated file"""
@@ -274,7 +262,7 @@ class SingleNif(Base):
         # create scene
         self.b_create_header()
         self.b_create_data()
-        if(self.gen_blender_scene):
+        if self.gen_blender_scene:
             self.b_save(self.b_filepath_1)
         self.b_check_data()
         
@@ -286,7 +274,7 @@ class SingleNif(Base):
         """User : Import user generated file"""
         # import and check data
         self.n_import(self.n_filepath_2)
-        if(self.gen_blender_scene):
+        if self.gen_blender_scene:
             self.b_save(self.b_filepath_2)
         self.b_check_data()
          
@@ -303,7 +291,7 @@ class SingleNif(Base):
           
         # import nif and check data
         self.n_import(self.n_filepath_0)
-        if(self.gen_blender_scene):
+        if self.gen_blender_scene:
             self.b_save(self.b_filepath_0)
         self.b_check_data()
         
@@ -312,4 +300,3 @@ class SingleNif(Base):
         # export and check data
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
-           
