@@ -40,21 +40,24 @@
 import bpy
 import nose.tools
 
-from pyffi.formats.nif import NifFormat
-
 from integration import SingleNif
-from integration.data import gen_data
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
-from integration.property.stencil import b_gen_stencil
-from integration.property.stencil import n_gen_stencil
+from integration.data import n_gen_header, b_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
+from integration.modules.property.stencil import b_gen_stencil, n_gen_stencil
 
 
 class TestStencilProperty(SingleNif):
     """Test import/export of meshes with material based alpha property."""
     
-    g_name = "property/stencil/test_stencil"
+    g_path = "property/stencil"
+    g_name = "test_stencil"
     b_name = "Cube"
+
+    def b_create_header(self):
+        b_gen_header.b_create_oblivion_info()
+
+    def n_create_header(self):
+        n_gen_header.n_create_header_oblivion(self.n_data)
 
     def b_create_data(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
@@ -66,7 +69,6 @@ class TestStencilProperty(SingleNif):
         b_gen_stencil.b_check_stencil_property(b_obj)
 
     def n_create_data(self):
-        gen_data.n_create_header_oblivion(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         n_trishape = self.n_data.roots[0].children[0]
         n_gen_stencil.n_create_stencil_prop(n_trishape)
@@ -80,5 +82,3 @@ class TestStencilProperty(SingleNif):
         n_stencil_prop = n_nitrishape.properties[0]
         n_gen_stencil.n_check_stencil_block(n_stencil_prop)
         n_gen_stencil.n_check_stencil_property(n_stencil_prop)
-    
-
