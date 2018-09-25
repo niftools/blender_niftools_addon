@@ -52,7 +52,7 @@ from integration.property.material import n_gen_material
 class TestGlossProperty(SingleNif):
     """Export and import material meshes with gloss."""
 
-    n_name = "property/material/test_gloss"
+    g_name = "property/material/test_gloss"
     b_name = 'Cube'
 
     def b_create_data(self):

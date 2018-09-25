@@ -53,7 +53,7 @@ from integration.property.stencil import n_gen_stencil
 class TestStencilProperty(SingleNif):
     """Test import/export of meshes with material based alpha property."""
     
-    n_name = "property/stencil/test_stencil"
+    g_name = "property/stencil/test_stencil"
     b_name = "Cube"
 
     def b_create_data(self):

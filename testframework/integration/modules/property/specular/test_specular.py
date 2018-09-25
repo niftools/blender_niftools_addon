@@ -54,7 +54,7 @@ from integration.property.specular import n_gen_specular
 class TestSpecularProperty(SingleNif):
     """Test import/export of meshes with material based specular property."""
     
-    n_name = "property/specular/test_specular"
+    g_name = "property/specular/test_specular"
     b_name = "Cube"
     
     def b_create_data(self):

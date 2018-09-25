@@ -11,7 +11,7 @@ from integration.collisions import gen_boundbox
 
 
 class TestBBox(SingleNif):
-    n_name = "collisions/boundbox"
+    g_name = "collisions/boundbox"
     b_name = "Bounding Box"
     n_game = "MORROWIND"
 

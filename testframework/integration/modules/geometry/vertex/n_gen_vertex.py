@@ -37,9 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import math
-import mathutils
-
 import nose
 
 from pyffi.utils.withref import ref
@@ -55,8 +52,8 @@ b_verts = {
         (-7.5, 7.5, -3.5),
         (-7.5, -7.5, 3.5),
         (7.5, -3.75, 1.75),
-        (-7.5, -7.5, -3.5),
-        }
+        (-7.5, -7.5, -3.5)
+}
 
 
 def n_create_blocks(n_data):
@@ -210,6 +207,7 @@ def n_create_blocks(n_data):
             n_triangle.v_3 = 5
     return n_data
 
+
 def n_check_trishape(n_trishape):
     nose.tools.assert_is_instance(n_trishape, NifFormat.NiTriShape)
     
@@ -223,7 +221,7 @@ def n_check_trishape_data(n_trishape_data):
     
     nose.tools.assert_equal(n_trishape_data.num_triangles, 12)
     
-    #TODO FIXME
+    # TODO FIXME
     # nose.tools.assert_equal(n_trishape_data.consistency_flags, NifFormat.ConsistencyType.CT_STATIC)
     
     
@@ -235,13 +233,11 @@ def n_check_cube_vertices(n_trishape_data):
         }
     nose.tools.assert_set_equal(verts, b_verts)
     
-    #See Issue #26
-    #nose.tools.assert_true(n_trishape_data.has_normals)
-    #nose.tools.assert_equal(n_trishape_data.num_normals, 8)
+    # See Issue #26
+    # nose.tools.assert_true(n_trishape_data.has_normals)
+    # nose.tools.assert_equal(n_trishape_data.num_normals, 8)
 
-    
-    #TODO: Additional checks needed.
-    
-    #TriData
+    # TODO: Additional checks needed.
+    # TriData
     #    Flags: blender - Continue, Maya - Triangles, Pyffi - Bound.
     #    radius:

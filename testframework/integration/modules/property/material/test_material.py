@@ -52,7 +52,7 @@ from integration.property.material import n_gen_material
 class TestMaterialProperty(SingleNif):
     """Test material property"""
     
-    n_name = 'property/material/test_material'
+    g_name = 'property/material/test_material'
     b_name = 'Cube'
 
     def b_create_data(self):

@@ -40,23 +40,25 @@
 import bpy
 import nose.tools
 
-from pyffi.formats.nif import NifFormat
-
 from integration import SingleNif
-from integration.data import gen_data
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
-from integration.property.material import b_gen_material
-from integration.property.material import n_gen_material
-from integration.property.wireframe import b_gen_wire
-from integration.property.wireframe import n_gen_wire
+from integration.data import n_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry
+from integration.modules.geometry.trishape import n_gen_geometry
+from integration.modules.property.material import b_gen_material
+from integration.modules.property.material import n_gen_material
+from integration.modules.property.wireframe import b_gen_wire
+from integration.modules.property.wireframe import n_gen_wire
+
 
 class TestWireframeProperty(SingleNif):
     """Test import/export of meshes with material based specular property."""
-    
-    n_name = "property/wireframe/test_wire"
+
+    g_name = "property/wireframe/test_wire"
     b_name = "Cube"
-    
+
+    def n_create_header(self):
+        n_gen_header.n_create_header_oblivion(self.n_data)
+
     def b_create_data(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
         b_mat = b_gen_material.b_create_material_block(b_obj)
@@ -70,11 +72,10 @@ class TestWireframeProperty(SingleNif):
         b_gen_wire.b_check_wire_property(b_mat)
 
     def n_create_data(self):
-        gen_data.n_create_header_oblivion(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         n_trishape = self.n_data.roots[0].children[0]
         n_gen_material.n_attach_material_prop(n_trishape)
-        n_gen_wire.n_attach_wire_prop(n_trishape) # add niwireframeprop
+        n_gen_wire.n_attach_wire_prop(n_trishape)  # add niwireframeprop
         return self.n_data
     
     def n_check_data(self):
@@ -87,6 +88,3 @@ class TestWireframeProperty(SingleNif):
         
         n_wire_prop = n_nitrishape.properties[0]
         n_gen_wire.n_check_wire_property(n_wire_prop)
-
-
-

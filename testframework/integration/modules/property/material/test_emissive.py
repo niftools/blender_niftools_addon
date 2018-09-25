@@ -53,7 +53,7 @@ from integration.property.material import n_gen_material
 class TestEmissiveMaterial(SingleNif):
     """Test import/export of meshes with material emissive property."""
     
-    n_name = "property/material/test_emissive"
+    g_name = "property/material/test_emissive"
     b_name = 'Cube'
 
     def b_create_data(self):

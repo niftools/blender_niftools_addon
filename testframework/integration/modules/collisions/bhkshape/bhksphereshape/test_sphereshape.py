@@ -56,7 +56,7 @@ from integration.collisions.bhkshape.bhksphereshape import n_gen_bhksphereshape
 class TestCollisionBhkSphereShape(SingleNif):
     """Test material property"""
     
-    n_name = 'collisions/bhksphereshape/test_sphereshape'
+    g_name = 'collisions/bhksphereshape/test_sphereshape'
     b_name = 'Cube'
     b_col_name = 'box'
 

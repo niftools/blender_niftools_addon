@@ -37,13 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import math
-import mathutils
-
-import nose
-
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
+
 
 def n_create_blocks(n_data):
     n_ninode_1 = NifFormat.NiNode()
@@ -80,7 +76,7 @@ def n_create_blocks(n_data):
             n_matrix33.m_13 = 0.5
             n_matrix33.m_23 = 0.75
             n_matrix33.m_33 = 0.433012
-            assert(n_matrix33.is_rotation()) # make sure in case we change values:
+            assert(n_matrix33.is_rotation())  # make sure in case we change values:
         n_nitrishape.scale = 0.75
         n_nitrishape.data = n_nitrishapedata_1
         

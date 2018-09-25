@@ -37,31 +37,29 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
-import nose.tools
-
-from pyffi.formats.nif import NifFormat
-
 from integration import SingleNif
-from integration.data import gen_data
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
-from integration.geometry.uv import b_gen_uv
-from integration.geometry.uv import n_gen_uv
-from integration.property.material import b_gen_material
-from integration.property.material import n_gen_material
+from integration.data import n_gen_header, b_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
+from integration.modules.geometry.uv import b_gen_uv, n_gen_uv
+
 
 class TestBaseUV(SingleNif):
     
     b_name = 'Cube'
-    n_name = "geometry/uvdata/test_uv"
-    
+    g_path = "geometry/vertex"
+    g_name = "test_uv"
+
+    def b_create_header(self):
+        b_gen_header.b_create_oblivion_info()
+
+    def n_create_header(self):
+        n_gen_header.n_create_header_oblivion()
+
     def b_create_data(self):        
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
         b_gen_uv.b_uv_object()
         b_gen_geometry.b_transform_cube(b_obj)
         
-    
     def b_check_data(self):
         pass
         '''
@@ -73,7 +71,7 @@ class TestBaseUV(SingleNif):
         # TODO_3.0 - Separate out the UV writing from requiring a texture.
 
     def n_create_data(self):
-        gen_data.n_create_header_oblivion(self.n_data)
+        n_gen_header.n_create_header_oblivion(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         return self.n_data
 

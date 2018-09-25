@@ -40,18 +40,20 @@
 import bpy
 
 from integration import SingleNif
-from integration.data import gen_data 
-from integration.geometry.vertex import b_gen_vertex
-from integration.geometry.vertex import n_gen_vertex
+from integration.data import n_gen_header, b_gen_header
+from integration.modules.geometry.vertex import b_gen_vertex
+from integration.modules.geometry.vertex import n_gen_vertex
+
 
 class TestVertex(SingleNif):
     """Test base geometry, single blender object."""
 
-    n_name = 'geometry/vertex/test_vertex' # (documented in base class)
     b_name = 'Cube'
+    g_path = 'geometry/vertex'  # (documented in base class)
+    g_name = 'test_vertex'  # (documented in base class)
 
     def b_create_header(self):
-        self.n_game = 'OBLIVION'
+        b_gen_header.b_create_oblivion_info()
 
     def b_create_data(self):
         # (documented in base class)
@@ -65,7 +67,7 @@ class TestVertex(SingleNif):
         b_gen_vertex.b_check_geom_obj(b_obj)
 
     def n_create_header(self):
-        gen_data.n_create_header_oblivion(self.n_data)
+        n_gen_header.n_create_header_oblivion(self.n_data)
 
     def n_create_data(self):
         n_gen_vertex.n_create_blocks(self.n_data)
@@ -74,4 +76,3 @@ class TestVertex(SingleNif):
     def n_check_data(self):
         n_trishape = self.n_data.roots[0].children[0]
         n_gen_vertex.n_check_trishape(n_trishape)
-

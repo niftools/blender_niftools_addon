@@ -54,7 +54,7 @@ from integration.property.alpha import n_gen_alpha
 class TestAlphaProperty(SingleNif):
     """Test import/export of meshes with material based alpha property."""
     
-    n_name = "property/alpha/test_alpha"
+    g_name = "property/alpha/test_alpha"
     b_name = "Cube"
     
     def b_create_data(self):
