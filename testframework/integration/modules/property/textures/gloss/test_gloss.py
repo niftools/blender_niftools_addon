@@ -41,14 +41,10 @@ import bpy
 import nose.tools
 import os.path
 
-from pyffi.formats.nif import NifFormat
-
 from integration import SingleNif
 from integration.data import n_gen_header
 from integration.modules.geometry.trishape import b_gen_geometry
-from integration.modules.geometry.trishape import n_gen_geometry
-from integration.modules.geometry.uv import b_gen_uv
-from integration.modules.geometry.uv import n_gen_uv
+from integration.modules.geometry.vertex.uv import b_gen_uv
 from integration.modules.property.material import b_gen_material
 from integration.modules.property.material import n_gen_material
 from integration.modules.property.textures import b_gen_texture

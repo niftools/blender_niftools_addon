@@ -6,7 +6,7 @@ import nose.tools
 from integration import SingleNif
 from integration.data import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import n_gen_geometry, b_gen_geometry
-from integration.modules.geometry.vertexcolor import gen_vertexcolor
+from integration.modules.geometry.vertex.color import n_gen_vertexcolor
 
 
 class TestBaseVertexColor(SingleNif):
@@ -114,7 +114,7 @@ class TestBaseVertexColor(SingleNif):
         self.n_data = n_gen_geometry.n_create_blocks(self.n_data)
 
         n_nitrishapedata = self.n_data.roots[0].children[0].data
-        self.n_data.roots[0].children[0].data = gen_vertexcolor.n_add_vertex_colors(n_nitrishapedata)
+        self.n_data.roots[0].children[0].data = n_gen_vertexcolor.n_add_vertex_colors(n_nitrishapedata)
         return self.n_data
 
     def n_check_data(self, n_data):

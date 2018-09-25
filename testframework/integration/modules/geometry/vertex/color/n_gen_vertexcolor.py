@@ -1,27 +1,27 @@
-"""Export and import meshes with uv data."""
+"""Helper functions to create and test pyffi-based geometry vertex color data blocks"""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -37,49 +37,33 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
-from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
-from integration.modules.geometry.uv import b_gen_uv, n_gen_uv
+from pyffi.utils.withref import ref
 
 
-class TestBaseUV(SingleNif):
+def n_add_vertex_colors(n_nitrishapedata):
     
-    b_name = 'Cube'
-    g_path = "geometry/vertex"
-    g_name = "test_uv"
-
-    def b_create_header(self):
-        b_gen_header.b_create_oblivion_info()
-
-    def n_create_header(self):
-        n_gen_header.n_create_header_oblivion()
-
-    def b_create_data(self):        
-        b_obj = b_gen_geometry.b_create_cube(self.b_name)
-        b_gen_uv.b_uv_object()
-        b_gen_geometry.b_transform_cube(b_obj)
-        
-    def b_check_data(self):
-        pass
-        '''
-        b_obj = bpy.data.objects[self.b_name]
-        b_mesh = b_obj.data
-        nose.tools.assert_equal(len(b_mesh.uv_textures), 1)
-        nose.tools.assert_equal()
-        '''
-        # TODO_3.0 - Separate out the UV writing from requiring a texture.
-
-    def n_create_data(self):
-        n_gen_header.n_create_header_oblivion(self.n_data)
-        n_gen_geometry.n_create_blocks(self.n_data)
-        return self.n_data
-
-    def n_check_data(self):
-        pass
-        '''
-        #TODO_3.0 - See above
-        n_geom = n_data.roots[0].children[0]
-        nose.tools.assert_equal(len(n_geom.data.uv_sets), 1)
-        nose.tools.assert_equal(len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))
-        '''
+    n_nitrishapedata.has_vertex_colors = True
+    n_nitrishapedata.vertex_colors.update_size()
+    with ref(n_nitrishapedata.vertex_colors[0]) as n_color4:
+        n_color4.r = 1
+        n_color4.a = 1
+    with ref(n_nitrishapedata.vertex_colors[1]) as n_color4:
+        n_color4.b = 1
+        n_color4.a = 1
+    with ref(n_nitrishapedata.vertex_colors[2]) as n_color4:
+        n_color4.g = 1
+        n_color4.a = 1
+    with ref(n_nitrishapedata.vertex_colors[3]) as n_color4:
+        n_color4.a = 1
+    with ref(n_nitrishapedata.vertex_colors[4]) as n_color4:
+        n_color4.r = 1
+        n_color4.a = 1
+    with ref(n_nitrishapedata.vertex_colors[5]) as n_color4:
+        n_color4.a = 1
+    with ref(n_nitrishapedata.vertex_colors[6]) as n_color4:
+        n_color4.g = 1
+        n_color4.a = 1
+    with ref(n_nitrishapedata.vertex_colors[7]) as n_color4:
+        n_color4.b = 1
+        n_color4.a = 1
+    return n_nitrishapedata
