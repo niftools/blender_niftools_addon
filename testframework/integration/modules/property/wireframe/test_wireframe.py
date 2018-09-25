@@ -41,20 +41,21 @@ import bpy
 import nose.tools
 
 from integration import SingleNif
-from integration.data import n_gen_header
-from integration.modules.geometry.trishape import b_gen_geometry
-from integration.modules.geometry.trishape import n_gen_geometry
-from integration.modules.property.material import b_gen_material
-from integration.modules.property.material import n_gen_material
-from integration.modules.property.wireframe import b_gen_wire
-from integration.modules.property.wireframe import n_gen_wire
+from integration.data import n_gen_header, b_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
+from integration.modules.property.material import b_gen_material, n_gen_material
+from integration.modules.property.wireframe import b_gen_wire, n_gen_wire
 
 
 class TestWireframeProperty(SingleNif):
     """Test import/export of meshes with material based specular property."""
 
-    g_name = "property/wireframe/test_wire"
+    g_path = "property/wireframe"
+    g_name = "test_wire"
     b_name = "Cube"
+
+    def b_create_header(self):
+        b_gen_header.b_create_oblivion_info()
 
     def n_create_header(self):
         n_gen_header.n_create_header_oblivion(self.n_data)
