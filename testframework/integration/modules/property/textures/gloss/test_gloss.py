@@ -42,23 +42,20 @@ import nose.tools
 import os.path
 
 from integration import SingleNif
-from integration.data import n_gen_header
+from integration.data import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import b_gen_geometry
 from integration.modules.geometry.vertex.uv import b_gen_uv
-from integration.modules.property.material import b_gen_material
-from integration.modules.property.material import n_gen_material
-from integration.modules.property.textures import b_gen_texture
-from integration.modules.property.textures import n_gen_texture
-from integration.modules.property.textures.diffuse import b_gen_diffusemap
-from integration.modules.property.textures.diffuse import n_gen_diffusemap
-from integration.modules.property.textures.gloss import b_gen_glossmap
-from integration.modules.property.textures.gloss import n_gen_glossmap
+from integration.modules.property.material import b_gen_material, n_gen_material
+from integration.modules.property.textures import b_gen_texture, n_gen_texture
+from integration.modules.property.textures.diffuse import b_gen_diffusemap, n_gen_diffusemap
+from integration.modules.property.textures.gloss import b_gen_glossmap, n_gen_glossmap
 
 
 class TestTexturePropertyGlossMap(SingleNif):
     """Test import/export of meshes with NiTexturingProperty based diffuse and glowmap texture"""
-    
-    g_name = "textures/glow/test_glow"
+
+    g_path = "property/texture"
+    g_name = "test_gloss"
     b_name = 'Cube'
 
     # Paths
@@ -67,6 +64,12 @@ class TestTexturePropertyGlossMap(SingleNif):
     
     diffuse_texture_path = os.path.join(nif_dir, 'textures', 'diffuse', 'diffuse.dds')
     glossmap_texture_path = os.path.join(nif_dir, 'textures', 'gloss', 'gloss.dds')
+
+    def b_create_header(self):
+        b_gen_header.b_create_oblivion_info()
+
+    def n_create_header(self):
+        n_gen_header.n_create_header_oblivion(self.n_data)
 
     def b_create_data(self):
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
