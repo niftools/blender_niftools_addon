@@ -45,20 +45,26 @@ FO3_VER = 335675399
 BETH_UV = 11
 BETH_UV2_FO3 = 34
 
+
 def n_create_header(n_data, nif_ver=0x0, user_ver=0x0, user_ver_2=0x0):
     n_data.version = nif_ver
     n_data.user_version = user_ver
     n_data.user_version_2 = user_ver_2
 
+
 def n_create_header_morrowind(n_data):
     n_create_header(n_data, nif_ver=MV_VER)
 
+
 def n_create_header_oblivion(n_data):
     n_create_header(n_data, nif_ver=OB_VER, user_ver=BETH_UV, user_ver_2=BETH_UV)
-    
+
+
 def n_create_header_fo3(n_data):
     n_create_header(n_data, nif_ver=FO3_VER, user_ver=BETH_UV, user_ver_2=BETH_UV2_FO3)
-    
+
+
+# noinspection PyUnusedLocal
 def n_create_header_skyrim(n_data):
     raise NotImplementedError
 
@@ -77,9 +83,11 @@ def n_check_version_info(n_data, nif_ver=0x0, user_ver=0x0, user_ver_2=0x0):
     uv2 = n_data.user_version_2
     print("user_version_2 - {0}".format(uv2))
     nose.tools.assert_equal(uv2, user_ver_2) 
-    
+
+
 def n_check_header_morrowind(n_data):
     n_check_version_info(n_data, nif_ver=MV_VER)
+
 
 def n_check_header_oblivion(n_data):
     n_check_version_info(n_data, nif_ver=OB_VER, user_ver=BETH_UV, user_ver_2=BETH_UV)
@@ -87,9 +95,8 @@ def n_check_header_oblivion(n_data):
     
 def n_check_header_fo3(n_data):
     n_check_version_info(n_data, nif_ver=FO3_VER, user_ver=BETH_UV, user_ver_2=BETH_UV2_FO3)
-    
 
+
+# noinspection PyUnusedLocal
 def n_check_header_skyrim(n_data):
     raise NotImplementedError
-
-    

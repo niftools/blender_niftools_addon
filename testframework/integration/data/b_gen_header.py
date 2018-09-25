@@ -54,15 +54,19 @@ def _set_version_info(nif_ver=0, user_ver=0, user_ver_2=0):
     scene.user_version = user_ver
     scene.user_version_2 = user_ver_2
 
+
 def b_create_morrowind_info():
     _set_version_info(nif_ver=MV_VER)
-    
+
+
 def b_create_oblivion_info():
     _set_version_info(nif_ver=OB_VER, user_ver=BETH_UV, user_ver_2=BETH_UV)
-    
+
+
 def b_create_fo3_info():
     _set_version_info(nif_ver=FO3_VER, user_ver=BETH_UV, user_ver_2=BETH_UV2_FO3)
-    
+
+
 def b_create_skyrim_info():
     raise NotImplementedError
 
@@ -86,14 +90,18 @@ def _b_check_version_info(nif_ver=0, user_ver=0, user_ver_2=0):
     nose.tools.assert_equal(scene.user_version, user_ver)  
     nose.tools.assert_equal(scene.user_version_2, user_ver_2)
 
-def b_check_morrowind_info():    
+
+def b_check_morrowind_info():
     _b_check_version_info(nif_ver=67108866)
-    
+
+
 def b_check_oblivion_info():
     _b_check_version_info(nif_ver=335544325, user_ver=11, user_ver_2=11)
-    
+
+
 def b_check_fo3_info():
     _b_check_version_info(nif_ver=335675399, user_ver=11, user_ver_2=34)
-    
+
+
 def b_check_skyrim_info():
     raise NotImplementedError

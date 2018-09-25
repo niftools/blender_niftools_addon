@@ -42,7 +42,7 @@ import bpy
 from io_scene_nif.utility.nif_logging import NifLog
 
 
-class NiMaterialProperty:
+class Material:
     
     def __init__(self, parent):
         self.nif_import = parent

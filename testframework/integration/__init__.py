@@ -4,6 +4,8 @@ import os
 import os.path
 
 import bpy
+from abc import ABC
+
 from pyffi.formats.nif import NifFormat
 
 
@@ -45,7 +47,7 @@ def teardown():
     bpy.ops.wm.addon_disable(module="io_scene_nif")
 
 
-class Base:
+class Base(ABC):
     """Base class for all tests."""
 
     @staticmethod
@@ -71,8 +73,9 @@ class SingleNif(Base):
     
     Every test must define the following attributes
     
-    * :attr: `SingleNif.n_name` - sets path where to generate files. 
-    
+    * :attr: `SingleNif.g_name` - sets name of file to be generated.
+    * :attr: `SingleNif.g_path` - sets path where to generate files.
+
     Every test needs to implement four functions, with specific behaviour for that test:
     
     * :meth:`SingleNif.n_create_data` - Python code used to create a physical nif
@@ -109,12 +112,12 @@ class SingleNif(Base):
 
     """
 
-    n_name = None
+    g_path = None
+    """Base generic path that will be shared between nif and autoblend folders to read/write to"""
+
+    g_name = None
     """Base name of nif file (without ``0.nif`` at the end)."""
 
-    n_data = None
-    """Store the nif as it generate, built in blocks. Useful to see generated nif in-memory"""
-    
     EPSILON = 0.005
     """A small value used when comparing floats."""
 
@@ -159,19 +162,20 @@ class SingleNif(Base):
         Base.__init__(self)
         
         self.n_data = NifFormat.Data()
-        
         root = "integration/gen/"
-        nif_path = root + "nif/" + self.n_name
-        blend_path = root + "autoblend/" + self.n_name
-        
-        self.n_filepath_0 = nif_path + "_py_code.nif"
-        self.n_filepath_1 = nif_path + "_export_py_code.nif"
-        self.n_filepath_2 = nif_path + "_export_user_ver.nif"
 
-        self.b_filepath_0 = blend_path + "_pycode_import.blend"
-        self.b_filepath_1 = blend_path + "_userver.blend"
-        self.b_filepath_2 = blend_path + "_userver_reimport.blend"
-        self.b_filepath_except = blend_path + "_exception.blend"
+        nif_path = root + "nif/" + self.g_path + "/"
+        nif_file_path = nif_path + self.g_name
+        self.n_filepath_0 = nif_file_path + "_py_code.nif"
+        self.n_filepath_1 = nif_file_path + "_export_py_code.nif"
+        self.n_filepath_2 = nif_file_path + "_export_user_ver.nif"
+
+        blend_path = root + "autoblend/" + self.g_path + "/"
+        blend_file_path = blend_path + self.g_name
+        self.b_filepath_0 = blend_file_path + "_pycode_import.blend"
+        self.b_filepath_1 = blend_file_path + "_userver.blend"
+        self.b_filepath_2 = blend_file_path + "_userver_reimport.blend"
+        self.b_filepath_except = blend_file_path + "_exception.blend"
 
         if not os.path.exists(nif_path):
             os.makedirs(nif_path)
@@ -192,7 +196,8 @@ class SingleNif(Base):
                 self.b_save(self.b_filepath_except)
                 raise RuntimeError("failed to clear objects from scene")
 
-    def _b_select_all(self):
+    @staticmethod
+    def _b_select_all():
         """Select all objects, and return their names."""
         b_obj_names = []
         print("Objects in scene - {0}".format(len(bpy.data.objects)))
@@ -202,7 +207,8 @@ class SingleNif(Base):
             b_obj_names.append(b_obj.name)
         return b_obj_names
 
-    def b_save(self, b_filepath):
+    @staticmethod
+    def b_save(b_filepath):
             """Save current scene to blend file."""
             bpy.ops.wm.save_mainfile(filepath=b_filepath)
 
@@ -235,19 +241,22 @@ class SingleNif(Base):
         self.n_data = self.n_read(n_filepath)
         self.n_check_data()
 
-    def n_read(self, n_filepath):
+    @staticmethod
+    def n_read(n_filepath):
         """Read nif file and return the data."""
         n_data = NifFormat.Data()
         with open(n_filepath, "rb") as stream:
             n_data.read(stream)
         return n_data
-    
-    def n_write(self, n_data, n_filepath):
+
+    @staticmethod
+    def n_write(n_data, n_filepath):
         """Write a nif file from data."""
         with open(n_filepath, "wb") as stream:
             n_data.write(stream)
 
-    def n_import(self, n_filepath):
+    @staticmethod
+    def n_import(n_filepath):
         """Import nif file."""
         bpy.ops.import_scene.nif(filepath=n_filepath, log_level='DEBUG')
 
@@ -256,7 +265,7 @@ class SingleNif(Base):
         print("Export Options {0}, {1}".format(n_filepath, self.n_game))
         bpy.ops.export_scene.nif(filepath=n_filepath, log_level='DEBUG', game=self.n_game)
 
-    def test_export_user(self):       
+    def test_export_user(self):
         """User : Export user generated file"""
         
         # create scene
