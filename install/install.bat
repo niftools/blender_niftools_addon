@@ -10,8 +10,8 @@ set /p VERSION=<%ROOT%\io_scene_nif\VERSION
 set NAME=blender_nif_plugin
 
 if "%BLENDER_ADDONS_DIR%" == "" if not exist "%BLENDER_ADDONS_DIR%" (
-echo."Update BLENDER_ADDONS_DIR to the folder where the blender addons reside, such as:"
-echo."set BLENDER_ADDONS_DIR=%APPDATA%\Blender Foundation\Blender\2.79\scripts\addons"
+echo. "Update BLENDER_ADDONS_DIR to the folder where the blender addons reside, such as:"
+echo. "set BLENDER_ADDONS_DIR=%APPDATA%\Blender Foundation\Blender\2.79\scripts\addons"
 echo.
 pause
 goto end
