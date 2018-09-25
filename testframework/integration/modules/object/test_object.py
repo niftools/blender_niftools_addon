@@ -69,7 +69,6 @@ class TestNiNode(SingleNif):
 
     def n_create_data(self):
         n_gen_object.n_create_blocks(self.n_data)
-        return self.n_data
 
     def n_check_data(self):
         n_ninode = self.n_data.roots[0].children[0]

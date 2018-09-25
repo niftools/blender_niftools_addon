@@ -223,7 +223,6 @@ def n_create_blocks(n_data):
             n_triangle.v_1 = 4
             n_triangle.v_2 = 3
             n_triangle.v_3 = 5
-    return n_data
 
 
 def n_check_trishape(n_trishape):

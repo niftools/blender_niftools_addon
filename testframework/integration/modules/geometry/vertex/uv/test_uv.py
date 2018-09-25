@@ -53,7 +53,7 @@ class TestBaseUV(SingleNif):
         b_gen_header.b_create_oblivion_info()
 
     def n_create_header(self):
-        n_gen_header.n_create_header_oblivion()
+        n_gen_header.n_create_header_oblivion(self.n_data)
 
     def b_create_data(self):        
         b_obj = b_gen_geometry.b_create_cube(self.b_name)

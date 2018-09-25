@@ -19,7 +19,7 @@ class TestBaseVertexColor(SingleNif):
         b_gen_header.b_create_oblivion_info()
 
     def n_create_header(self):
-        n_gen_header.n_create_header_oblivion()
+        n_gen_header.n_create_header_oblivion(self.n_data)
 
     # vertex color specific stuff
     b_faces = [(4, 0, 3),  # 0
@@ -110,17 +110,15 @@ class TestBaseVertexColor(SingleNif):
             # nose.tools.assert_almost_equal(b_color.b, self.vertcol[f_index][2])
 
     def n_create_data(self):
-        self.n_data = n_gen_header.n_create_data(self.n_data)
-        self.n_data = n_gen_geometry.n_create_blocks(self.n_data)
+        n_gen_geometry.n_create_blocks(self.n_data)
 
         n_nitrishapedata = self.n_data.roots[0].children[0].data
         self.n_data.roots[0].children[0].data = n_gen_vertexcolor.n_add_vertex_colors(n_nitrishapedata)
-        return self.n_data
 
-    def n_check_data(self, n_data):
+    def n_check_data(self):
         # TODO nif file has wrong transform and wrong geometry
         # TestBaseGeometry.n_check_data(self, n_data)
-        n_geom = n_data.roots[0].children[0]
+        n_geom = self.n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.data.has_vertex_colors, True)
         # TODO vertex split due to multiple vcols per vertex?
         #      fix this in data
