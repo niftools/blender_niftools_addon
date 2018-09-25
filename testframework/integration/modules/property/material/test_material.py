@@ -40,20 +40,24 @@
 import bpy
 import nose.tools
 
-from pyffi.formats.nif import NifFormat
-
 from integration import SingleNif
-from integration.data import gen_data
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
-from integration.property.material import b_gen_material
-from integration.property.material import n_gen_material
+from integration.data import n_gen_header, b_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
+from integration.modules.property.material import b_gen_material, n_gen_material
+
 
 class TestMaterialProperty(SingleNif):
     """Test material property"""
-    
-    g_name = 'property/material/test_material'
+
+    g_path = 'property/material'
+    g_name = 'test_material'
     b_name = 'Cube'
+
+    def b_create_header(self):
+        b_gen_header.b_create_oblivion_info()
+
+    def n_create_header(self):
+        n_gen_header.n_create_header_oblivion(self.n_data)
 
     def b_create_data(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
@@ -63,24 +67,23 @@ class TestMaterialProperty(SingleNif):
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
         b_gen_geometry.b_check_geom_obj(b_obj)
-        b_mat = b_gen_material.b_check_material_block(b_obj) # check we have a material
-        b_gen_material.b_check_material_property(b_mat) # check its values
+        b_mat = b_gen_material.b_check_material_block(b_obj)  # check we have a material
+        b_gen_material.b_check_material_property(b_mat)  # check its values
 
     def n_create_data(self):
-        gen_data.n_create_header_oblivion(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         n_trishape = self.n_data.roots[0].children[0]
-        n_gen_material.n_attach_material_prop(n_trishape) # add nimaterialprop
-        return self.n_data
+        n_gen_material.n_attach_material_prop(n_trishape)  # add nimaterialprop
 
     def n_check_data(self):
         n_nitrishape = self.n_data.roots[0].children[0]
         n_gen_geometry.n_check_trishape(n_nitrishape)
-        
-        nose.tools.assert_equal(n_nitrishape.num_properties, 1) 
-        n_mat_prop = n_nitrishape.properties[0]    
+
+        nose.tools.assert_equal(n_nitrishape.num_properties, 1)
+        n_mat_prop = n_nitrishape.properties[0]
         n_gen_material.n_check_material_block(n_mat_prop)
         n_gen_material.n_check_material_property(n_mat_prop)
+
 
 '''
 class TestAmbientMaterial(TestMaterialProperty):
