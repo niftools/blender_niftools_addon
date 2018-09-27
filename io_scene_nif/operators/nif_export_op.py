@@ -43,14 +43,15 @@ from bpy_extras.io_utils import ExportHelper
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif import nif_export
-
 from .nif_common_op import NifOperatorCommon
+
 
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
     table = str.maketrans(symbols, "_" * len(symbols))
     enum = game.upper().translate(table).replace("__", "_")
     return enum
+
 
 class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
     """Operator for saving a nif file."""
@@ -139,13 +140,13 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
 
     #: Maximum number of bones per skin partition.
     max_bones_per_partition = bpy.props.IntProperty(
-        name = "Max Partition Bones",
+        name="Max Partition Bones",
         description="Maximum number of bones per skin partition.",
         default=18, min=4, max=63)
 
     #: Maximum number of bones per vertex in skin partitions.
     max_bones_per_vertex = bpy.props.IntProperty(
-        name = "Max Vertex Bones",
+        name="Max Vertex Bones",
         description="Maximum number of bones per vertex in skin partitions.",
         default=4, min=1,
         )
@@ -169,4 +170,3 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         method.
         """
         return nif_export.NifExport(self, context).execute()
-    

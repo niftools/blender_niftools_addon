@@ -42,7 +42,8 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
-class NifFile():
+
+class NifFile:
     """Class to load and save a NifFile"""
     
     @staticmethod
@@ -67,4 +68,3 @@ class NifFile():
                 raise NifError("Not a NIF file.")
             
         return nif_data
-        

@@ -11,6 +11,7 @@ def overload_method(*types):
                 t = tuple(arg.__class__ for arg in args)
                 f = wrapper.typemap.get(t)
                 if f is None:
+                    print(str(t))
                     raise TypeError("no match")
                 return f(self, *args)
             wrapper.typemap = {}

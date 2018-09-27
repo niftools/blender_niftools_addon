@@ -37,5 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from . import object, geometry, nif_import_op, nif_export_op, nif_common_op
+
+def register():
+    from . import object, geometry, nif_import_op, nif_export_op, nif_common_op
 

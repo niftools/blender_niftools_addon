@@ -470,7 +470,7 @@ class NifExport(NifCommon):
                 self.propertyhelper.object_property.export_z_buffer_property(root_block)
             elif NifOp.props.game in ('EMPIRE_EARTH_II',):
                 self.propertyhelper.object_property.export_vertex_color_property(root_block)
-                self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, function=1)
+                self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, func=1)
 
             # FIXME:
             """

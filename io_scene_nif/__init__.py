@@ -48,18 +48,10 @@ import bpy.props
 _dependencies_path = os.path.join(os.path.dirname(__file__), "dependencies")
 if _dependencies_path not in sys.path:
     sys.path.append(_dependencies_path)
-    print(sys.path)
 del _dependencies_path
 
 import io_scene_nif
 from io_scene_nif import properties, operators, ui
-
-
-try:
-    from io_scene_nif.utility import nif_debug
-    nif_debug.start_debug()
-except:
-    print("Failed to load debug module")
 
 # Blender addon info.
 bl_info = {
@@ -106,6 +98,7 @@ def menu_func_export(self, context):
 
 def register():
     _init_loggers()
+    operators.register()
     properties.register()
     ui.register()
     bpy.utils.register_module(__name__)
