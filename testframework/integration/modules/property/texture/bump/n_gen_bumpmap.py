@@ -90,7 +90,7 @@ def n_check_bumpmap_source_texture(n_nisourcetexture, n_texture_path):
 
     nose.tools.assert_equal(n_src_path, n_rel_path)
     nose.tools.assert_equal(n_nisourcetexture.pixel_layout, NifFormat.PixelLayout.PIX_LAY_DEFAULT)  # 6
-    # TODO - check if this setting is correct
+    # TODO [property][texture][Flag] Check if this setting is correct
     # nose.tools.assert_equal(n_nisourcetexture.pixel_layout, NifFormat.PixelLayout.PIX_LAY_BUMPMAP)  # 4
     nose.tools.assert_equal(n_nisourcetexture.use_mipmaps, NifFormat.MipMapFormat.MIP_FMT_YES)  # 1
     nose.tools.assert_equal(n_nisourcetexture.use_external, 1)

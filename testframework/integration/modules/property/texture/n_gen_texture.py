@@ -367,8 +367,8 @@ def n_create_store_normal_data(n_nitrishape):
 
 def n_check_texturing_property(n_tex_prop):
     nose.tools.assert_equal(n_tex_prop.apply_mode, NifFormat.ApplyMode.APPLY_MODULATE)  # 2
-    # TODO check flags
-    # TODO texture count
+    # TODO [property][texture][flags] check flags
+    # TODO [pooperty][texture] assert on count
 
 
 def n_check_texdesc(n_tex_desc):

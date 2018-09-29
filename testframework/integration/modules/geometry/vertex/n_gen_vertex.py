@@ -221,7 +221,7 @@ def n_check_trishape_data(n_trishape_data):
     
     nose.tools.assert_equal(n_trishape_data.num_triangles, 12)
     
-    # TODO FIXME
+    # TODO [geometry][flags] Assert on flags
     # nose.tools.assert_equal(n_trishape_data.consistency_flags, NifFormat.ConsistencyType.CT_STATIC)
     
     
@@ -237,7 +237,7 @@ def n_check_cube_vertices(n_trishape_data):
     # nose.tools.assert_true(n_trishape_data.has_normals)
     # nose.tools.assert_equal(n_trishape_data.num_normals, 8)
 
-    # TODO: Additional checks needed.
+    # TODO [geometry][flags] Additional checks needed.
     # TriData
     #    Flags: blender - Continue, Maya - Triangles, Pyffi - Bound.
     #    radius:

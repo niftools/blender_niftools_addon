@@ -47,11 +47,11 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
 
-class TextureLoader():
-    
+class TextureLoader:
+
     def __init__(self, parent):
         self.nif_import = parent
-    
+
     def get_texture_hash(self, source):
         """Helper function for import_texture. Returns a key that uniquely
         identifies a texture from its source (which is either a
@@ -65,7 +65,7 @@ class TextureLoader():
             return source.lower()
         else:
             raise TypeError("source must be NiSourceTexture block or string")
-    
+
     def import_texture_source(self, source):
         """Convert a NiSourceTexture block, or simply a path string,
         to a Blender Texture object, return the Texture object and
@@ -80,28 +80,23 @@ class TextureLoader():
         texture_hash = self.get_texture_hash(source)
 
         try:
-            # look up the texture in the dictionary of imported textures
-            # and return it if found
+            # look up the texture in the dictionary of imported textures and return it if found
             return self.nif_import.dict_textures[texture_hash]
         except KeyError:
             pass
 
-        b_image = None
-        
-        if (isinstance(source, NifFormat.NiSourceTexture)
-            and not source.use_external):
+        if isinstance(source, NifFormat.NiSourceTexture) and not source.use_external:
             fn, b_image = self.import_embedded_texture_source(source)
         else:
             fn, b_image = self.import_source(source)
-            
-        # create a stub image if the image could not be loaded
-        
+
         b_text_name = os.path.basename(fn)
+        # create a stub image if the image could not be loaded
         if not b_image:
             NifLog.warn("Texture '{0}' not found or not supported and no alternate available".format(fn))
             b_image = bpy.data.images.new(name=b_text_name, width=1, height=1, alpha=False)
             b_image.filepath = fn
-        
+
         # create a texture
         b_texture = bpy.data.textures.new(name=b_text_name, type='IMAGE')
         b_texture.image = b_image
@@ -114,7 +109,7 @@ class TextureLoader():
 
     def import_embedded_texture_source(self, source):
         fn = None
-        
+
         # find a file name (but avoid overwriting)
         n = 0
         while True:
@@ -124,6 +119,7 @@ class TextureLoader():
             if not os.path.exists(tex):
                 break
             n += 1
+
         if self.nif_import.IMPORT_EXPORTEMBEDDEDTEXTURES:
             # save embedded texture as dds file
             stream = open(tex, "wb")
@@ -142,18 +138,18 @@ class TextureLoader():
                 # is forced via "b_image.size"
                 try:
                     b_image.size
-                except: # RuntimeError: couldn't load image data in Blender
-                    b_image = None # not supported, delete image object
+                except:  # RuntimeError: couldn't load image data in Blender
+                    b_image = None  # not supported, delete image object
             finally:
                 stream.close()
         else:
             b_image = None
         return [fn, b_image]
-        
+
     def import_source(self, source):
         b_image = None
         fn = None
-        
+
         # the texture uses an external image file
         if isinstance(source, NifFormat.NiSourceTexture):
             fn = source.file_name.decode()
@@ -161,48 +157,50 @@ class TextureLoader():
             fn = source
         else:
             raise TypeError("source must be NiSourceTexture or str")
-        fn = fn.replace( '\\', os.sep )
-        fn = fn.replace( '/', os.sep )
+        fn = fn.replace('\\', os.sep)
+        fn = fn.replace('/', os.sep)
         # go searching for it
-        importpath = os.path.dirname(NifOp.props.filepath)
-        searchPathList = [importpath]
+        import_path = os.path.dirname(NifOp.props.filepath)
+        search_path_list = [import_path]
         if bpy.context.user_preferences.filepaths.texture_directory:
-            searchPathList.append(bpy.context.user_preferences.filepaths.texture_directory)
-        
-        # TODO: 3 - Implement full texture path finding.
-        nif_dir = os.path.join(os.getcwd() , 'nif')
-        searchPathList.append(nif_dir)
-        
+            search_path_list.append(
+                bpy.context.user_preferences.filepaths.texture_directory)
+
+        # TODO [general][path] Implement full texture path finding.
+        nif_dir = os.path.join(os.getcwd(), 'nif')
+        search_path_list.append(nif_dir)
+
         # if it looks like a Morrowind style path, use common sense to
         # guess texture path
-        meshes_index = importpath.lower().find("meshes")
+        meshes_index = import_path.lower().find("meshes")
         if meshes_index != -1:
-            searchPathList.append(importpath[:meshes_index] + 'textures')
-        # if it looks like a Civilization IV style path, use common sense
-        # to guess texture path
-        art_index = importpath.lower().find("art")
+            search_path_list.append(import_path[:meshes_index] + 'textures')
+
+        # if it looks like a Civilization IV style path, use common sense to guess texture path
+        art_index = import_path.lower().find("art")
         if art_index != -1:
-            searchPathList.append(importpath[:art_index] + 'shared')
+            search_path_list.append(import_path[:art_index] + 'shared')
+
         # go through all texture search paths
-        for texdir in searchPathList:
-            texdir = texdir.replace( '\\', os.sep )
-            texdir = texdir.replace( '/', os.sep )
-            # go through all possible file names, try alternate extensions
-            # too; for linux, also try lower case versions of filenames
+        for texdir in search_path_list:
+            texdir = texdir.replace('\\', os.sep)
+            texdir = texdir.replace('/', os.sep)
+            # go through all possible file names, try alternate extensions too; for linux, also try lower case versions of filenames
             texfns = reduce(operator.add,
-                            [ [ fn[:-4]+ext, fn[:-4].lower()+ext ]
-                              for ext in ('.DDS','.dds','.PNG','.png',
-                                         '.TGA','.tga','.BMP','.bmp',
-                                         '.JPG','.jpg') ] )
+                            [[fn[:-4] + ext, fn[:-4].lower() + ext]
+                             for ext in ('.DDS', '.dds', '.PNG', '.png',
+                                         '.TGA', '.tga', '.BMP', '.bmp',
+                                         '.JPG', '.jpg')])
+
             texfns = [fn, fn.lower()] + list(set(texfns))
             for texfn in texfns:
                 # now a little trick, to satisfy many Morrowind mods
                 if (texfn[:9].lower() == 'textures' + os.sep) \
-                   and (texdir[-9:].lower() == os.sep + 'textures'):
+                        and (texdir[-9:].lower() == os.sep + 'textures'):
                     # strip one of the two 'textures' from the path
-                    tex = os.path.join( texdir[:-9], texfn )
+                    tex = os.path.join(texdir[:-9], texfn)
                 else:
-                    tex = os.path.join( texdir, texfn )
+                    tex = os.path.join(texdir, texfn)
                 # "ignore case" on linux
                 tex = bpy.path.resolve_ncase(tex)
                 NifLog.debug("Searching {0}".format(tex))
@@ -215,8 +213,8 @@ class TextureLoader():
                     # is forced via "b_image.size"
                     try:
                         b_image.size
-                    except: # RuntimeError: couldn't load image data in Blender
-                        b_image = None # not supported, delete image object
+                    except:  # RuntimeError: couldn't load image data in Blender
+                        b_image = None  # not supported, delete image object
                     else:
                         # file format is supported
                         NifLog.debug("Found '{0}' at {1}".format(fn, tex))
@@ -224,6 +222,6 @@ class TextureLoader():
             if b_image:
                 return [tex, b_image]
         else:
-            tex = os.path.join(searchPathList[0], fn)
+            tex = os.path.join(search_path_list[0], fn)
 
         return [tex, b_image]

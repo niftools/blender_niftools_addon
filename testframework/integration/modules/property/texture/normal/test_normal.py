@@ -62,7 +62,7 @@ from nose.tools import nottest
 '''
 
 
-# TODO
+# TODO [property][texture] Normal map test disabled
 @nottest
 class TestTexturePropertyNormalMap(SingleNif):
     """Test import/export of meshes with NiTexturingProperty based diffuse texture"""
@@ -104,7 +104,7 @@ class TestTexturePropertyNormalMap(SingleNif):
 
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
-        # TODO - probably should stick in some UV tests at some point.
+        # TODO [geometry][uv] assertions should go in here.
 
         b_mat = b_gen_material.b_check_material_block(b_obj)  # check we have a material
         b_gen_material.b_check_material_property(b_mat)  # check its values

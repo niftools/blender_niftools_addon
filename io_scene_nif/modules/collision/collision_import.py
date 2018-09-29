@@ -603,7 +603,7 @@ class bound_import():
             # ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
         b_obj.niftools.bsxflags = NiObject.import_bsxflag_data(bbox)
-        # TODO b_obj.niftools.objectflags = self.nif_import.objectflags
+        # TODO [object][flags] b_obj.niftools.objectflags = self.nif_import.objectflags
         b_obj.location = n_bbox_center
 
         # set bounds type

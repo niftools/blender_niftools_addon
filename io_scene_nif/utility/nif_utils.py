@@ -79,7 +79,7 @@ def decompose_srt(matrix):
     
     """Keeping commented code as potentially required for armatures 
     Suspect thought it is due to old style matrix access."""
-    # TODO Verify nolonger needed for armatures
+    # TODO [armature] Verify no longer needed for armatures
     
     # scale_rot = rot_quat.to_matrix()
     # b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
@@ -121,7 +121,7 @@ def find_controller(niBlock, controller_type):
 
 
 def find_extra(niBlock, extratype):
-    # TODO: 3.0 - Optimise
+    # TODO [object] 3.0 - Optimise
     
     """Find extra data."""
     # pre-10.x.x.x system: extra data chain

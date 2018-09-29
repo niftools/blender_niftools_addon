@@ -76,7 +76,7 @@ class TestBaseVertexColor(SingleNif):
         print(len(b_obj.data.vertex_colors))
 
         # iterate over each face, then set the vert color through lookup
-        # TODO use vertex coordinate to map vertex color
+        # TODO [geometry][vertex] use vertex coordinate to map vertex color
         #      (we should not rely on vertex ordering)
         for face_index, face in enumerate(self.b_faces):  # nif_faces: 0-11
             for vert_index, n_vert in enumerate(face):  # nif_verts: 0-7
@@ -87,14 +87,14 @@ class TestBaseVertexColor(SingleNif):
                 b_color.b = self.vertcol[n_vert][2]
 
     def b_check_data(self):
-        # TODO nif file has wrong transform and wrong geometry
+        # TODO [geometry] nif file has wrong transform and wrong geometry
         # TestBaseGeometry.b_check_data(self)
         b_obj = bpy.data.objects[self.b_name]
         b_mesh = b_obj.data
         self.b_check_vertex_layers(b_mesh)
 
     def b_check_vertex_layers(self, b_mesh):
-        # TODO fix, length is 2 during one of the checks
+        # TODO [geometry] Length is 2 during one of the checks
         # nose.tools.assert_equal(len(b_mesh.vertex_colors), 1)
         nose.tools.assert_equal(b_mesh.vertex_colors[0].name, 'VertexColor')
         b_meshcolor = b_mesh.vertex_colors["VertexColor"].data
@@ -104,7 +104,7 @@ class TestBaseVertexColor(SingleNif):
     def b_check_vert_colors(self, f_index, vertexcolor):
         for vert_index in [0, 1, 2]:
             b_color = getattr(vertexcolor, "color%s" % (vert_index + 1))
-            # TODO fix
+            # TODO [geometry] vcol assertion
             # nose.tools.assert_almost_equal(b_color.r, self.vertcol[f_index][0])
             # nose.tools.assert_almost_equal(b_color.g, self.vertcol[f_index][1])
             # nose.tools.assert_almost_equal(b_color.b, self.vertcol[f_index][2])
@@ -116,11 +116,11 @@ class TestBaseVertexColor(SingleNif):
         self.n_data.roots[0].children[0].data = n_gen_vertexcolor.n_add_vertex_colors(n_nitrishapedata)
 
     def n_check_data(self):
-        # TODO nif file has wrong transform and wrong geometry
+        # TODO [geometry] Nif file has wrong transform and wrong geometry
         # TestBaseGeometry.n_check_data(self, n_data)
         n_geom = self.n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.data.has_vertex_colors, True)
-        # TODO vertex split due to multiple vcols per vertex?
+        # TODO [geometry] vertex split due to multiple vcols per vertex?
         #      fix this in data
         # nose.tools.assert_equal(len(n_geom.data.vertex_colors), 8)
         for i, vert in enumerate(n_geom.data.vertex_colors):
@@ -128,7 +128,7 @@ class TestBaseVertexColor(SingleNif):
 
     def n_check_vert(self, index, vertexcolor):
         pass
-        # TODO fix
+        # TODO [geometry] vcol assertion
         # print("Sub Check: Comparing vertex color")
         # print("n_vert:" + str(vertexcolor.r) + " base_vert:" + str(self.vertcol[index][0]))
         # nose.tools.assert_equal(abs(vertexcolor.r - self.vertcol[index][0]) > 0.01, False)

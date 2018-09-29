@@ -88,7 +88,7 @@ class TestTexturePropertyBumpMap(SingleNif):
         
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
-        # TODO - probably should stick in some UV tests at some point.
+        # TODO [geometry][uv] assertions should go in here.
         
         b_mat = b_gen_material.b_check_material_block(b_obj)  # check we have a material
         b_gen_material.b_check_material_property(b_mat)  # check its values
@@ -126,7 +126,7 @@ class TestTexturePropertyBumpMap(SingleNif):
         return self.n_data
 
     def n_check_data(self):
-        # TODO - probably should stick in some UV tests at some point.'
+        # TODO [geometry][uv] assertions should go in here.
         n_geom = self.n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)  # mat & texture
         n_gen_material.n_check_material_property(n_geom.properties[1])

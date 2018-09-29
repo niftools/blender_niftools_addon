@@ -79,6 +79,7 @@ class TextureHelper:
             used_uvlayers.add(slot.uv_layer)
         return used_uvlayers
 
+    # TODO [property][shader]
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
         self.determine_texture_types(b_obj, b_mat)
@@ -87,7 +88,7 @@ class TextureHelper:
         if b_obj.niftools_shader.bs_shadertype == 'BSShaderPPLightingProperty':
             bsshader = NifFormat.BSShaderPPLightingProperty()
             # set shader options
-            # TODO: FIXME:
+            # TODO [property][shader]
             b_s_type = NifFormat.BSShaderType._enumkeys.index(b_obj.niftools_shader.bsspplp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
 
@@ -100,6 +101,7 @@ class TextureHelper:
             b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_obj.niftools_shader.bslsp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
 
+            # TODO [property][material]
             # UV Offset
             if hasattr(bsshader, 'uv_offset'):
                 self.export_uv_offset(bsshader)

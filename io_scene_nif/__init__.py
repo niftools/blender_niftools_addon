@@ -86,7 +86,7 @@ def _init_loggers():
 # noinspection PyUnusedLocal
 def menu_func_import(self, context):
     self.layout.operator(operators.nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
-    # TODO: get default path from config registry
+    # TODO [general] get default path from config registry
     # default_path = bpy.data.filename.replace(".blend", ".nif")
     # ).filepath = default_path
 

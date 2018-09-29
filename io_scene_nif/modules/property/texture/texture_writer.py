@@ -76,7 +76,8 @@ class TextureWriter():
             # this probably should not happen
             NifLog.warn("Exporting source texture without texture or filename (bug?).")
 
-        # fill in default values (TODO: can we use 6 for everything?)
+        # TODO [property][texture] Can we use 6 for everything?
+        # fill in default values
         if bpy.context.scene.niftools_scene.nif_version >= 0x0A000100:
             srctex.pixel_layout = 6
         else:

@@ -374,7 +374,7 @@ class AnimationHelper():
             kfd.xyz_rotations[0].num_keys = len(frames)
             kfd.xyz_rotations[1].num_keys = len(frames)
             kfd.xyz_rotations[2].num_keys = len(frames)
-            # XXX todo: quadratic interpolation?
+            # TODO [animation] quadratic interpolation?
             kfd.xyz_rotations[0].interpolation = NifFormat.KeyType.LINEAR_KEY
             kfd.xyz_rotations[1].interpolation = NifFormat.KeyType.LINEAR_KEY
             kfd.xyz_rotations[2].interpolation = NifFormat.KeyType.LINEAR_KEY
@@ -382,7 +382,7 @@ class AnimationHelper():
             kfd.xyz_rotations[1].keys.update_size()
             kfd.xyz_rotations[2].keys.update_size()
             for i, frame in enumerate(frames):
-                # XXX todo: speed up by not recalculating stuff
+                # TODO [animation] speed up by not recalculating stuff
                 rot_frame_x = kfd.xyz_rotations[0].keys[i]
                 rot_frame_y = kfd.xyz_rotations[1].keys[i]
                 rot_frame_z = kfd.xyz_rotations[2].keys[i]
@@ -394,7 +394,7 @@ class AnimationHelper():
                 rot_frame_z.value = rot_curve[frame].z * 3.14159265358979323846 / 180.0
         else:
             # quaternions
-            # XXX todo: quadratic interpolation?
+            # TODO [animation] quadratic interpolation?
             kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
             kfd.num_rotation_keys = len(frames)
             kfd.quaternion_keys.update_size()
@@ -494,7 +494,7 @@ class TextureAnimation():
         self.nif_export = parent
     
     def export_flip_controller(self, fliptxt, texture, target, target_tex):
-        ## TODO:port code to use native Blender texture flipping system
+        # TODO [animation] port code to use native Blender texture flipping system
         #
         # export a NiFlipController
         #
@@ -538,10 +538,9 @@ class MaterialAnimation():
     def __init__(self, parent):
         self.nif_export = parent
     
-
     def export_material_controllers(self, b_material, n_geom):
         """Export material animation data for given geometry."""
-        # XXX todo: port to blender 2.5x+ interface
+        # TODO [animation] port to blender 2.5x+ interface
         # XXX Blender.Ipo channel constants are replaced by FCurve.data_path?
         return
 

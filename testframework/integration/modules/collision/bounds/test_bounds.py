@@ -31,7 +31,7 @@ class TestBBox(SingleNif):
         n_gen_header.n_create_header_morrowind(self.n_data)
 
     def b_create_data(self):
-        # TODO
+        # TODO [object] Create base geom
         # b_obj = self.b_create_base_geometry()
         bpy.ops.mesh.primitive_cube_add()
         b_obj = bpy.data.objects[bpy.context.active_object.name]

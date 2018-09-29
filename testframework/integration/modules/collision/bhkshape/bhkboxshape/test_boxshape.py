@@ -104,7 +104,7 @@ class TestCollisionBhkBoxShape(SingleNif):
         n_ninode = self.n_data.roots[0]
         
         #bsx flag
-        # nose.tools.assert_equal(n_ninode.num_extra_data_list, 2) #UPB TODO
+        # nose.tools.assert_equal(n_ninode.num_extra_data_list, 2) # TODO [object] UPB
         n_bsxflag = n_ninode.extra_data_list[0]
         n_gen_collision.n_check_bsx_flag(n_bsxflag)
         

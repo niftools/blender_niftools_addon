@@ -166,7 +166,7 @@ class ObjectHelper:
 
         if node_name == 'RootCollisionNode':
             # -> root collision node (can be mesh or empty)
-            # TODO: do we need to fix this stuff on export?
+            # TODO [object] do we need to fix this stuff on export?
             # b_obj.draw_bounds_type = 'POLYHEDERON'
             # b_obj.draw_type = 'BOUNDS'
             # b_obj.show_wire = True
@@ -304,7 +304,7 @@ class ObjectHelper:
             return self.create_block("NiNode")
 
         # exporting an object, so first create node of correct type
-        # TODO: rework to get node type from nif format based on custom value?
+        # TODO [object] rework to get node type from nif format based on custom value?
         try:
             n_node_type = b_obj.getProperty("Type").data
         except (RuntimeError, AttributeError, NameError):
@@ -321,7 +321,7 @@ class ObjectHelper:
     def rebuild_full_names(self):
         """Recovers the full object names from the text buffer and rebuilds
         the names dictionary."""
-        # TODO: get objects to store their own names.
+        # TODO [object] get objects to store their own names.
         try:
             namestxt = bpy.data.texts['FullNames']
         except KeyError:
@@ -339,8 +339,8 @@ class ObjectHelper:
         :param b_name: Name of object as in blender.
         :type b_name: :class:`str`
 
-        .. todo:: Refactor and simplify this code.
         """
+        # TODO [object] Refactor and simplify this code.
         unique_name = "unnamed"
         if b_name:
             unique_name = b_name
@@ -361,9 +361,9 @@ class ObjectHelper:
         """Returns the original imported name if present, or the name by which
         the object was exported already.
 
-        .. todo:: Refactor and simplify this code.
         :param b_name:
         """
+        # TODO [object] Refactor and simplify this code.
         try:
             return self.nif_export.dict_names[b_name]
         except KeyError:
@@ -458,7 +458,7 @@ class ObjectHelper:
         relative to the bone parent head including bone correction.
 
         space is either 'none' (gives identity transform) or 'localspace'"""
-        # TODO: remove the space argument, always do local space
+        # TODO [object] remove the space argument, always do local space
         # handle the trivial case first
         if space == 'none':
             return (1.0,
@@ -473,7 +473,7 @@ class ObjectHelper:
             matrix = self.nif_export.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
 
         else:
-            # TODO MOVE TO ARMATUREHELPER
+            # TODO [armature] Move to armature module
 
             matrix = b_obj.matrix_local.copy()
             bone_parent_name = b_obj.parent_bone
@@ -572,7 +572,8 @@ class MeshHelper:
         # Textured materials, they represent lighting details
 
         # let's now export one trishape for every mesh material
-        # TODO: needs refactoring - move material, texture, etc. to separate function
+        # TODO [property][material] needs refactoring - move material,
+        # TODO [property][texture] texture to separate function
         for materialIndex, b_mat in enumerate(mesh_materials):
 
             b_ambient_prop = False
@@ -819,7 +820,7 @@ class MeshHelper:
                 trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
                     name=self.nif_export.objecthelper.get_full_name(b_mat.name),
                     flags=0x0001,
-                    # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
+                    # TODO [material] Defualt flag check, material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
                     specular=mesh_mat_specular_color,
@@ -904,14 +905,14 @@ class MeshHelper:
                     fuv = []
                     for uv_layer in mesh_uv_layers:
                         if uv_layer != "":
-                            # TODO: map uv layer to index
+                            # TODO [geometry] map uv layer to index
                             # currently we have uv_layer names, but we need their index value
                             # b_mesh.uv_layers[0].data[poly.index].uv
                             fuv.append(b_mesh.uv_layers[uv_layer].data[loop_index].uv)
                         else:
                             NifLog.warn("Texture is set to use UV but no UV Map is Selected for Mapping > Map")
 
-                    # TODO: Need to map b_verts -> n_verts
+                    # TODO [general] Need to map b_verts -> n_verts
                     if mesh_hasvcol:
                         # check for an alpha layer
                         b_color = b_mesh.vertex_colors[0].data[loop_index].color
@@ -930,7 +931,7 @@ class MeshHelper:
                     if vertmap[vertex_index] is not None:
                         # iterate only over vertices with the same vertex index and check if they have the same uvs, normals and colors
                         for j in vertmap[vertex_index]:
-                            # TODO use function to do comparison
+                            # TODO [general] use function to do comparison
                             if mesh_uv_layers:
                                 num_uvs_layers = len(mesh_uv_layers)
                                 if max(abs(vertquad[1][uv_layer][0] - vertquad_list[j][1][uv_layer][0]) for uv_layer in range(num_uvs_layers)) > NifOp.props.epsilon:
@@ -987,7 +988,7 @@ class MeshHelper:
 
                     # add body part number
                     if NifOp.props.game not in ('FALLOUT_3', 'SKYRIM') or not bodypartgroups:
-                        # TODO: or not self.EXPORT_FO3_BODYPARTS):
+                        # TODO [geometry] or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
                         for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
