@@ -34,3 +34,49 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from functools import singledispatch
+
+from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.utility.nif_decorator import overload_method
+
+
+class Property:
+
+    def __init__(self):
+        self.b_mesh = None
+        self.process_property = singledispatch(self.process_property)
+        self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencilproperty_property)
+
+    def process_property_list(self, n_block, b_mesh):
+        self.b_mesh = b_mesh
+        for prop in n_block.properties:
+            print("About to process" + str(prop.__class__))
+            self.process_property(prop)
+
+    # @overload_method(NifFormat.NiStencilProperty)
+    def process_nistencilproperty_property(self, prop):
+        """Stencil (for double sided meshes"""
+        print("NiStencilProperty property found" + str(prop))
+        self.b_mesh.show_double_sided = True  # We don't check flags for now, nothing fancy
+
+    # # @overload_method(NifFormat.NiAlphaProperty)
+    # def process_property(self, prop):
+    #     """Alpha for transparancy in the material or texture"""
+    #     print("NiAlphaProperty property found" + str(prop))
+    #
+    # # @overload_method(NifFormat.NiSpecularProperty)
+    # def process_property(self, prop):
+    #     """Material based specular"""
+    #     print("NiSpecularProperty property found" + str(prop))
+    #
+    # # @overload_method(NifFormat.NiWireframeProperty)
+    # def process_property(self, prop):
+    #     """Material based specular"""
+    #     print("NiWireframeProperty found" + str(prop))
+
+    # @overload_method(object)
+    def process_property(self, prop):
+        """Stencil (for double sided meshes"""
+        print("Unknown property found" + str(prop))
+        print("This type isn't supported: {}".format(type(prop.__class__)))

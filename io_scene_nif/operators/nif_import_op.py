@@ -161,6 +161,9 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         method.
         """
 
+        # from io_scene_nif.utility import nif_debug
+        # nif_debug.start_debug()
+
         # setup the viewport for preferred viewing settings
         bpy.context.scene.game_settings.material_mode = 'GLSL'
         for area in bpy.context.window.screen.areas:
@@ -168,4 +171,6 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
                 area.spaces[0].viewport_shade = 'MATERIAL'
                 area.spaces[0].show_backface_culling = True
 
-        return nif_import.NifImport(self, context).execute()
+        i = nif_import.NifImport(self, context)
+        res = i.execute()
+        return res

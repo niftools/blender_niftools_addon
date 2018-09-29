@@ -46,8 +46,8 @@ from integration.data import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import b_gen_geometry
 from integration.modules.geometry.vertex.uv import b_gen_uv
 from integration.modules.property.material import b_gen_material, n_gen_material
-from integration.modules.property.textures import b_gen_texture, n_gen_texture
-from integration.modules.property.textures.diffuse import b_gen_diffusemap, n_gen_diffusemap
+from integration.modules.property.texture import b_gen_texture, n_gen_texture
+from integration.modules.property.texture.diffuse import b_gen_diffusemap, n_gen_diffusemap
 
 
 class TestTexturePropertyDiffuseMap(SingleNif):
