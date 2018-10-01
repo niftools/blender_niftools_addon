@@ -162,16 +162,18 @@ class SingleNif(Base):
         Base.__init__(self)
         
         self.n_data = NifFormat.Data()
-        root = "integration/gen/"
 
-        nif_path = root + "nif/" + self.g_path + "/"
-        nif_file_path = nif_path + self.g_name
+        fp = os.path.dirname(__file__)
+        root = os.path.join(fp, "gen")
+
+        nif_path = os.path.join(root, "nif", self.g_path)
+        nif_file_path = nif_path + os.path.sep + self.g_name
         self.n_filepath_0 = nif_file_path + "_py_code.nif"
         self.n_filepath_1 = nif_file_path + "_export_py_code.nif"
         self.n_filepath_2 = nif_file_path + "_export_user_ver.nif"
 
-        blend_path = root + "autoblend/" + self.g_path + "/"
-        blend_file_path = blend_path + self.g_name
+        blend_path = os.path.join(root, "autoblend", self.g_path)
+        blend_file_path = blend_path + os.path.sep + self.g_name
         self.b_filepath_0 = blend_file_path + "_pycode_import.blend"
         self.b_filepath_1 = blend_file_path + "_userver.blend"
         self.b_filepath_2 = blend_file_path + "_userver_reimport.blend"
@@ -265,9 +267,13 @@ class SingleNif(Base):
         print("Export Options {0}, {1}".format(n_filepath, self.n_game))
         bpy.ops.export_scene.nif(filepath=n_filepath, log_level='DEBUG', game=self.n_game)
 
-    def test_export_user(self):
+    def test_ordered_user_tests(self):
+        """Replicated what a user would do"""
+        self._export_user()
+        self._import_user()
+
+    def _export_user(self):
         """User : Export user generated file"""
-        
         # create scene
         self.b_create_header()
         self.b_create_data()
@@ -279,7 +285,7 @@ class SingleNif(Base):
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
     
-    def test_import_user(self):     
+    def _import_user(self):
         """User : Import user generated file"""
         # import and check data
         self.n_import(self.n_filepath_2)

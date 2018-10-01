@@ -37,13 +37,12 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
-import nose.tools
-import test
+from nose.tools import nottest
 
 from integration import SingleNif
 
 
+@nottest
 class TestFeature(SingleNif):
     """Test Feature"""
 
