@@ -36,6 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
@@ -46,6 +47,7 @@ from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile
 
 from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules import armature
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import bhkshape_import, bound_import
 from io_scene_nif.modules.constraint.constraint_import import constraint_import
@@ -107,10 +109,7 @@ class NifImport(NifCommon):
             # to armature' mode
             if NifOp.props.skeleton == "GEOMETRY_ONLY":
                 if len(self.selected_objects) != 1 or self.selected_objects[0].type != 'ARMATURE':
-                    raise nif_utils.NifError(
-                        "You must select exactly one armature in"
-                        " 'Import Geometry Only + Parent To Selected Armature'"
-                        " mode.")
+                    raise nif_utils.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature'  mode.")
 
             self.data = NifFile.load_nif(NifOp.props.filepath)
             if NifOp.props.override_scene_info:
@@ -177,17 +176,15 @@ class NifImport(NifCommon):
                     # skeleton root (can only happen for better bodies meshes)
                     if root in [c for c in b.skin_instance.skeleton_root.children]:
                         # fix parenting and update transform accordingly
-                        b.skin_instance.data.set_transform(
-                            root.get_transform()
-                            * b.skin_instance.data.get_transform())
+                        b.skin_instance.data.set_transform(root.get_transform() * b.skin_instance.data.get_transform())
                         b.skin_instance.skeleton_root = root
                         # delete non-skeleton nodes if we're importing
                         # skeleton only
                         if NifOp.props.skeleton == "SKELETON_ONLY":
-                            nonbip_children = (child for child in root.children
-                                               if child.name[:6] != 'Bip01 ')
+                            nonbip_children = (child for child in root.children if child.name[:6] != 'Bip01 ')
                             for child in nonbip_children:
                                 root.remove_child(child)
+
                 # import this root block
                 NifLog.debug("Root block: {0}".format(root.get_global_display()))
                 # merge animation from kf tree into nif tree
@@ -312,7 +309,7 @@ class NifImport(NifCommon):
             for b_child_obj in self.selected_objects:
                 if b_child_obj.type == 'MESH':
                     for oldgroupname in b_child_obj.vertex_groups.items():
-                        newgroupname = self.get_bone_name_for_blender(oldgroupname)
+                        newgroupname = armature.get_bone_name_for_blender(oldgroupname)
                         if oldgroupname != newgroupname:
                             NifLog.info("{0} : renaming vertex group {1} to {2}".format(b_child_obj, oldgroupname, newgroupname))
                             b_child_obj.data.renameVertGroup(oldgroupname, newgroupname)
@@ -343,6 +340,8 @@ class NifImport(NifCommon):
             # note: transform matrix is set during import
             self.active_obj_name = niBlock.name.decode()
             b_obj = self.import_mesh(niBlock)
+
+            # TODO [object][flags]
             b_obj.niftools.objectflags = niBlock.flags
 
             # TODO [property][shader][material] Do proper property processing
@@ -353,10 +352,12 @@ class NifImport(NifCommon):
             #     for b_prop in niBlock.bs_properties:
             #         self.import_shader_types(b_obj, b_prop)
 
-            if niBlock.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
-                cf_index = NifFormat.ConsistencyType._enumvalues.index(niBlock.data.consistency_flags)
-                b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
-                b_obj.niftools.bsnumuvset = niBlock.data.bs_num_uv_sets
+            # TODO [object][flags]
+            # if niBlock.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
+            #     cf_index = NifFormat.ConsistencyType._enumvalues.index(niBlock.data.consistency_flags)
+            #     b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+            #     b_obj.niftools.bsnumuvset = niBlock.data.bs_num_uv_sets
+
             # skinning? add armature modifier
             if niBlock.skin_instance:
                 self.armature_helper.append_armature_modifier(b_obj, b_armature)
@@ -405,9 +406,7 @@ class NifImport(NifCommon):
                         if nif_utils.find_controller(child, NifFormat.NiGeomMorpherController):
                             geom_group.remove(child)
                 # import geometry/empty
-                if (not geom_group
-                        or not NifOp.props.combine_shapes
-                        or len(geom_group) > 16):
+                if not geom_group or not NifOp.props.combine_shapes or len(geom_group) > 16:
                     # no grouping node, or too many materials to
                     # group the geometry into a single mesh
                     # so import it as an empty
@@ -649,11 +648,9 @@ class NifImport(NifCommon):
             if uniqueInt == -1:
                 shortName = niName[:max_length - 1]
             else:
-                shortName = ('%s.%02d'
-                             % (niName[:max_length - 4],
-                                uniqueInt))
+                shortName = ('%s.%02d' % (niName[:max_length - 4], uniqueInt))
             # bone naming convention for blender
-            shortName = self.get_bone_name_for_blender(shortName)
+            shortName = armature.get_bone_name_for_blender(shortName)
             # make sure it is unique
             if niName == "InvMarker":
                 if niName not in self.dict_names:
@@ -686,8 +683,7 @@ class NifImport(NifCommon):
         b_empty.niftools.objectflags = niBlock.flags
 
         if niBlock.name in self.dict_bone_priorities:
-            constr = b_empty.constraints.append(
-                bpy.types.Constraint.NULL)
+            constr = b_empty.constraints.append(bpy.types.Constraint.NULL)
             constr.name = "priority:%i" % self.dict_bone_priorities[niBlock.name]
         return b_empty
 
@@ -734,9 +730,7 @@ class NifImport(NifCommon):
         # set transform matrix for the mesh
         if not applytransform:
             if group_mesh:
-                raise nif_utils.NifError(
-                    "BUG: cannot set matrix when importing meshes in groups;"
-                    " use applytransform = True")
+                raise nif_utils.NifError("BUG: cannot set matrix when importing meshes in groups; use applytransform = True")
 
             b_obj.matrix_local = nif_utils.import_matrix(niBlock, relative_to=relative_to)
 

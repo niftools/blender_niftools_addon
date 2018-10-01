@@ -41,6 +41,7 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -199,7 +200,7 @@ class ObjectHelper:
                     break
                 # does geom have priority value in NULL constraint?
                 elif constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[self.nif_export.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
+                    self.nif_export.dict_bone_priorities[armature.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
 
             if is_collision:
                 self.nif_export.export_collision(b_obj, parent_block)
@@ -222,7 +223,7 @@ class ObjectHelper:
             # does node have priority value in NULL constraint?
             for constr in b_obj.constraints:
                 if constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[self.nif_export.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
+                    self.nif_export.dict_bone_priorities[armature.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -345,7 +346,7 @@ class ObjectHelper:
         if b_name:
             unique_name = b_name
         # blender bone naming -> nif bone naming
-        unique_name = self.nif_export.get_bone_name_for_nif(unique_name)
+        unique_name = armature.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
         if unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
             unique_int = 0
