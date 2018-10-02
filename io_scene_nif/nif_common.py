@@ -120,14 +120,7 @@ class NifCommon:
         # find and store this list now of selected objects as creating new objects adds them to the selection list
         self.selected_objects = bpy.context.selected_objects[:]
 
-    def get_extend_from_flags(self, flags):
-        if flags & 6 == 4: # 0b100
-            return Blender.IpoCurve.ExtendTypes.CONST
-        elif flags & 6 == 0: # 0b000
-            return Blender.IpoCurve.ExtendTypes.CYCLIC
 
-        NifLog.warn("Unsupported cycle mode in nif, using clamped.")
-        return Blender.IpoCurve.ExtendTypes.CONST
 
     def get_b_ipol_from_n_ipol(self, n_ipol):
         if n_ipol == NifFormat.KeyType.LINEAR_KEY:

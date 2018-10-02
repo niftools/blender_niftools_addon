@@ -36,6 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from io_scene_nif.modules.geometry.skin.skin_import import Skin
 from io_scene_nif.modules.geometry.vertex_import import Vertex
 from io_scene_nif.modules.obj import object_import
 from io_scene_nif.nif_common import NifCommon
@@ -47,7 +48,7 @@ from io_scene_nif.io.nif import NifFile
 from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile
 
-from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules.animation.animation_import import AnimationHelper, GeometryAnimation
 from io_scene_nif.modules import armature, obj
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import bhkshape_import, bound_import
@@ -760,7 +761,7 @@ class NifImport(NifCommon):
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
-        v_map = [(i) for i in range(len(n_verts))]  # pre-allocate memory, for faster performance
+        v_map = [i for i in range(len(n_verts))]  # pre-allocate memory, for faster performance
 
         # Following code avoids introducing unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
@@ -907,128 +908,15 @@ class NifImport(NifCommon):
             #             tface.image = imgobj
 
         # import skinning info, for meshes affected by bones
+
         skininst = n_block.skin_instance
         if skininst:
-            skindata = skininst.data
-            bones = skininst.bones
-            boneWeights = skindata.bone_list
-            for idx, bone in enumerate(bones):
-                # skip empty bones (see pyffi issue #3114079)
-                if not bone:
-                    continue
-                vertex_weights = boneWeights[idx].vertex_weights
-                groupname = self.dict_names[bone]
-                if not groupname in b_obj.vertex_groups.items():
-                    v_group = b_obj.vertex_groups.new(groupname)
-                for skinWeight in vertex_weights:
-                    vert = skinWeight.index
-                    weight = skinWeight.weight
-                    v_group.add([v_map[vert]], weight, 'REPLACE')
-
-            # import body parts as vertex groups
-            if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-                skinpart_list = []
-                bodypart_flag = []
-                skinpart = n_block.get_skin_partition()
-                for bodypart, skinpartblock in zip(
-                        skininst.partitions, skinpart.skin_partition_blocks):
-                    bodypart_wrap = NifFormat.BSDismemberBodyPartType()
-                    bodypart_wrap.set_value(bodypart.body_part)
-                    groupname = bodypart_wrap.get_detail_display()
-                    # create vertex group if it did not exist yet
-                    if not (groupname in b_obj.vertex_groups.items()):
-                        v_group = b_obj.vertex_groups.new(groupname)
-                        skinpart_index = len(skinpart_list)
-                        skinpart_list.append((skinpart_index, groupname))
-                        bodypart_flag.append(bodypart.part_flag)
-                    # find vertex indices of this group
-                    groupverts = [v_map[v_index]
-                                  for v_index in skinpartblock.vertex_map]
-                    # create the group
-                    v_group.add(groupverts, 1, 'ADD')
-                b_obj.niftools_part_flags_panel.pf_partcount = len(skinpart_list)
-                for i, pl_name in skinpart_list:
-                    b_obj_partflag = b_obj.niftools_part_flags.add()
-                    # b_obj.niftools_part_flags.pf_partint = (i)
-                    b_obj_partflag.name = (pl_name)
-                    b_obj_partflag.pf_editorflag = (bodypart_flag[i].pf_editor_visible)
-                    b_obj_partflag.pf_startflag = (bodypart_flag[i].pf_start_net_boneset)
+            Skin.process_geometry_skin(b_obj, n_block, skininst, v_map)
 
         # import morph controller
         # TODO [animation][geometry] move this to import_mesh_controllers
         if NifOp.props.animation:
-            morphCtrl = nif_utils.find_controller(n_block, NifFormat.NiGeomMorpherController)
-            if morphCtrl:
-                morphData = morphCtrl.data
-                if morphData.num_morphs:
-                    # insert base key at frame 1, using relative keys
-                    b_mesh.insertKey(1, 'relative')
-                    # get name for base key
-                    keyname = morphData.morphs[0].frame_name
-                    if not keyname:
-                        keyname = 'Base'
-                    # set name for base key
-                    b_mesh.key.blocks[0].name = keyname
-                    # get base vectors and import all morphs
-                    baseverts = morphData.morphs[0].vectors
-                    b_ipo = Blender.Ipo.New('Key', 'KeyIpo')
-                    b_mesh.key.ipo = b_ipo
-                    for idxMorph in range(1, morphData.num_morphs):
-                        # get name for key
-                        keyname = morphData.morphs[idxMorph].frame_name
-                        if not keyname:
-                            keyname = 'Key %i' % idxMorph
-                        NifLog.info("Inserting key '{0}'".format(keyname))
-                        # get vectors
-                        morphverts = morphData.morphs[idxMorph].vectors
-                        # for each vertex calculate the key position from base
-                        # pos + delta offset
-                        assert (len(baseverts) == len(morphverts) == len(v_map))
-                        for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
-                            base = mathutils.Vector(bv.x, bv.y, bv.z)
-                            delta = mathutils.Vector(mv.x, mv.y, mv.z)
-                            v = base + delta
-                            if applytransform:
-                                v *= transform
-                            b_mesh.vertices[b_v_index].co[0] = v.x
-                            b_mesh.vertices[b_v_index].co[1] = v.y
-                            b_mesh.vertices[b_v_index].co[2] = v.z
-                        # update the mesh and insert key
-                        b_mesh.insertKey(idxMorph, 'relative')
-                        # set name for key
-                        b_mesh.key.blocks[idxMorph].name = keyname
-                        # set up the ipo key curve
-                        try:
-                            b_curve = b_ipo.addCurve(keyname)
-                        except ValueError:
-                            # this happens when two keys have the same name
-                            # an instance of this is in fallout 3
-                            # meshes/characters/_male/skeleton.nif HeadAnims:0
-                            NifLog.warn("Skipped duplicate of key '{0}'".format(keyname))
-                        # no idea how to set up the bezier triples -> switching
-                        # to linear instead
-                        b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
-                        # select extrapolation
-                        b_curve.extend = self.get_extend_from_flags(morphCtrl.flags)
-                        # set up the curve's control points
-                        # first find the keys
-                        # older versions store keys in the morphData
-                        morphkeys = morphData.morphs[idxMorph].keys
-                        # newer versions store keys in the controller
-                        if (not morphkeys) and morphCtrl.interpolators:
-                            morphkeys = morphCtrl.interpolators[idxMorph].data.data.keys
-                        for key in morphkeys:
-                            x = key.value
-                            frame = 1 + int(key.time * self.fps + 0.5)
-                            b_curve.addBezier((frame, x))
-                        # finally: return to base position
-                        for bv, b_v_index in zip(baseverts, v_map):
-                            base = mathutils.Vector(bv.x, bv.y, bv.z)
-                            if applytransform:
-                                base *= transform
-                            b_mesh.vertices[b_v_index].co[0] = base.x
-                            b_mesh.vertices[b_v_index].co[1] = base.y
-                            b_mesh.vertices[b_v_index].co[2] = base.z
+            b_ipo = GeometryAnimation.process_geometry_animation(applytransform, b_mesh, n_block, transform, v_map)
 
         # import facegen morphs
         if self.egmdata:
