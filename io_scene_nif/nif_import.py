@@ -535,9 +535,9 @@ class NifImport(NifCommon):
             # track camera for billboard nodes
             if isinstance(n_block, NifFormat.NiBillboardNode):
                 # find camera object
-                for obj in bpy.context.scene.objects:
-                    if obj.type == 'CAMERA':
-                        b_obj_camera = obj
+                for b_obj in bpy.context.scene.objects:
+                    if b_obj.type == 'CAMERA':
+                        b_obj_camera = b_obj
                         break
                 else:
                     raise nif_utils.NifError(

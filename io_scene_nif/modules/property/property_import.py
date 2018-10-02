@@ -34,11 +34,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+import bpy
 from functools import singledispatch
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.utility.nif_decorator import overload_method
+from io_scene_nif.modules.property import material
+# from io_scene_nif.utility.nif_decorator import overload_method
+from io_scene_nif.utility.nif_logging import NifLog
 
 
 class Property:
@@ -47,17 +50,24 @@ class Property:
         self.b_mesh = None
         self.process_property = singledispatch(self.process_property)
         self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencilproperty_property)
+        self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
+        self.process_property.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
 
     def process_property_list(self, n_block, b_mesh):
         self.b_mesh = b_mesh
         for prop in n_block.properties:
-            print("About to process" + str(prop.__class__))
+            NifLog.debug("About to process" + str(type(prop)))
             self.process_property(prop)
+
+    def process_property(self, prop):
+        """Base method to warn user that this property is not supported"""
+        NifLog.warn("Unknown property block found : " + str(prop.name))
+        NifLog.warn("This type isn't currently supported: {}".format(type(prop)))
 
     # @overload_method(NifFormat.NiStencilProperty)
     def process_nistencilproperty_property(self, prop):
         """Stencil (for double sided meshes"""
-        print("NiStencilProperty property found" + str(prop))
+        NifLog.debug("NiStencilProperty property found" + str(prop))
         self.b_mesh.show_double_sided = True  # We don't check flags for now, nothing fancy
 
     # # @overload_method(NifFormat.NiAlphaProperty)
@@ -69,14 +79,30 @@ class Property:
     # def process_property(self, prop):
     #     """Material based specular"""
     #     print("NiSpecularProperty property found" + str(prop))
-    #
-    # # @overload_method(NifFormat.NiWireframeProperty)
-    # def process_property(self, prop):
-    #     """Material based specular"""
-    #     print("NiWireframeProperty found" + str(prop))
 
-    # @overload_method(object)
-    def process_property(self, prop):
-        """Stencil (for double sided meshes"""
-        print("Unknown property found" + str(prop))
-        print("This type isn't supported: {}".format(type(prop.__class__)))
+    def process_nimaterial_property(self, prop):
+        """Import a NiMaterialProperty based material"""
+        NifLog.debug("NiMaterialProperty property found" + str(prop))
+        b_mat = self._find_or_create_material()
+
+
+
+
+    def process_niwireframe_property(self, prop):
+        """Material based specular"""
+        # Wireframe
+        NifLog.debug("NiWireframeProperty found" + str(prop))
+        b_mat = self._find_or_create_material()
+        b_mat.type = 'WIRE'
+
+    def _find_or_create_material(self):
+        b_mats = self.b_mesh.materials
+        if len(b_mats) == 0:
+            # assign to 1st material slot
+            NifLog.debug("Creating placeholder material to store properties in")
+            b_mat = bpy.data.materials.new("")
+            self.b_mesh.materials.append(b_mat)
+        else:
+            NifLog.debug("Reusing existing material to store additional properties in")
+            b_mat = self.b_mesh.materials[0]
+        return b_mat
