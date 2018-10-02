@@ -48,7 +48,7 @@ from io_scene_nif.modules.armature.armature_export import Armature
 from io_scene_nif.modules.property.property_export import PropertyHelper
 from io_scene_nif.modules.constraint.constraint_export import constraint_export
 from io_scene_nif.modules.property.texture.texture_export import TextureHelper
-from io_scene_nif.modules.object.object_export import ObjectHelper
+from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.modules.scene import scene_export
 from io_scene_nif.utility.nif_global import NifOp
 

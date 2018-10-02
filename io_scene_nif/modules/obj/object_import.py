@@ -42,7 +42,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.armature import DICT_BLOCKS
-from io_scene_nif.modules.object import DICT_NAMES
+from io_scene_nif.modules.obj import DICT_NAMES
 from io_scene_nif.utility.nif_logging import NifLog
 
 

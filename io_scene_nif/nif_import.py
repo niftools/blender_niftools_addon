@@ -48,14 +48,14 @@ from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile
 
 from io_scene_nif.modules.animation.animation_import import AnimationHelper
-from io_scene_nif.modules import armature
+from io_scene_nif.modules import armature, obj
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import bhkshape_import, bound_import
 from io_scene_nif.modules.constraint.constraint_import import constraint_import
 from io_scene_nif.modules.property.property_import import Property
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.texture.texture_import import TextureSlots
-from io_scene_nif.modules.object.object_import import NiObject, Empty
+from io_scene_nif.modules.obj.object_import import NiObject, Empty
 from io_scene_nif.modules.scene import scene_import
 
 import bpy
