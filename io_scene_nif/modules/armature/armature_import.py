@@ -44,7 +44,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
+from io_scene_nif.modules import armature, obj
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
@@ -515,7 +515,7 @@ class Armature:
             namestxt = bpy.data.texts.new("FullNames")
 
         # write the names to the text buffer
-        for block, shortname in self.nif_import.dict_names.items():
+        for block, shortname in obj.dict_names.items():
             block_name = block.name.decode()
             if block_name and shortname != block_name:
                 namestxt.write('%s;%s\n' % (shortname, block_name))

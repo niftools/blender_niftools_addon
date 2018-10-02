@@ -39,6 +39,8 @@
 
 
 from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules.geometry.vertex_import import Vertex
 from io_scene_nif.utility.nif_logging import NifLog
 
 
@@ -310,7 +312,7 @@ class Texture():
             b_mat_texslot.uv_layer = self.get_uv_layer_name(
                 image_texture.uv_set)
         except:
-            b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
+            b_mat_texslot.uv_layer = Vertex.get_uv_layer_name(0)
 
         return b_mat_texslot
 
