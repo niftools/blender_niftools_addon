@@ -8,6 +8,8 @@ from abc import ABC
 
 from pyffi.formats.nif import NifFormat
 
+INTEGRATION_ROOT = os.path.dirname(__file__)
+
 
 def clear_bpy_data():
     """Remove all objects from blender."""
@@ -163,7 +165,7 @@ class SingleNif(Base):
         
         self.n_data = NifFormat.Data()
 
-        fp = os.path.dirname(__file__)
+        fp = INTEGRATION_ROOT
         root = os.path.join(fp, "gen")
 
         nif_path = os.path.join(root, "nif", self.g_path)

@@ -41,6 +41,8 @@ import nose
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
+from integration.modules.property.texture import n_gen_texture
+
 
 def n_create_bump_map_property(n_nitexturingproperty):
     """Adds a bumpmap texture to a NiTexturingProperty"""
@@ -80,15 +82,7 @@ def n_check_bumpmap_property(n_tex_prop):
 def n_check_bumpmap_source_texture(n_nisourcetexture, n_texture_path):
     """Checks the settings of the source bump texture"""
     
-    nose.tools.assert_is_instance(n_nisourcetexture, NifFormat.NiSourceTexture)
-    
-    n_split_path = n_texture_path.split(path.sep)
-    n_rel_path = n_split_path[len(n_split_path)-3:]  # get a path relative to \\textures folder
-    
-    n_src_path = n_nisourcetexture.file_name.decode()
-    n_src_path = n_src_path.split(path.sep)
-
-    nose.tools.assert_equal(n_src_path, n_rel_path)
+    n_gen_texture.n_check_source_texture(n_nisourcetexture, n_texture_path)
     nose.tools.assert_equal(n_nisourcetexture.pixel_layout, NifFormat.PixelLayout.PIX_LAY_DEFAULT)  # 6
     # TODO [property][texture][Flag] Check if this setting is correct
     # nose.tools.assert_equal(n_nisourcetexture.pixel_layout, NifFormat.PixelLayout.PIX_LAY_BUMPMAP)  # 4

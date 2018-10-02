@@ -39,6 +39,8 @@
 
 
 import bpy
+
+from io_scene_nif.modules.obj import object_import
 from io_scene_nif.utility.nif_logging import NifLog
 
 
@@ -48,7 +50,7 @@ class Material:
         self.nif_import = parent
 
     @staticmethod
-    def get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, extra_datas):
+    def get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop):
         """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
@@ -57,8 +59,7 @@ class Material:
         return (n_mat_prop.get_hash()[1:] if n_mat_prop else None,  # skip first element, which is name
                 n_texture_prop.get_hash() if n_texture_prop else None,
                 n_alpha_prop.get_hash() if n_alpha_prop else None,
-                n_specular_prop.get_hash() if n_specular_prop else None,
-                tuple(extra.get_hash() for extra in extra_datas))
+                n_specular_prop.get_hash() if n_specular_prop else None)
 
     @staticmethod
     def set_alpha(b_mat, n_alpha_prop):
@@ -71,84 +72,91 @@ class Material:
         
         return b_mat
 
-    def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, extra_datas):
+    def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop):
         
         """Creates and returns a material."""
         # First check if material has been created before.
-        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, extra_datas)
-        try:
-            return self.nif_import.dict_materials[material_hash]
-        except KeyError:
-            pass
+        # TODO [property][material] Decide whether or not to keep the material hash
+        # material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop)
+        # try:
+        #     return self.nif_import.dict_materials[material_hash]
+        # except KeyError:
+        #     pass
         
         # name unique material
-        name = self.nif_import.import_name(n_mat_prop)
+        name = object_import.import_name(n_mat_prop)
         if name is None:
             name = (self.nif_import.active_obj_name + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
-        
-        # texures
-        if n_texture_prop:
-            print(n_texture_prop)
-            self.texturehelper.import_nitextureprop_textures(b_mat, n_texture_prop)
-            if extra_datas:
-                self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
 
-        # TODO [property][texture][shader]
-        # if n_texture_effect:
-        #     self.texturehelper.import_texture_effect(b_mat, n_texture_effect)
-        
         # material based properties
         if n_mat_prop:
             # Ambient color
-            self.import_ambient(b_mat, n_mat_prop)
+            import_material_ambient(b_mat, n_mat_prop)
 
             # Diffuse color
-            self.import_diffuse(b_mat, n_mat_prop)
+            import_material_diffuse(b_mat, n_mat_prop)
 
             # TODO [material] Detect fallout 3+, use emit multi as a degree of emission
             # TODO [material] Test some values to find emission maximium. 0-1 -> 0-max_val
             # TODO [material] Should we factor in blender bounds 0.0 - 2.0
             
             # Emissive
-            self.import_material_emissive(b_mat, n_mat_prop)
+            import_material_emissive(b_mat, n_mat_prop)
 
             # gloss
             b_mat.specular_hardness = n_mat_prop.glossiness
             
-            # Alpha
-            if n_alpha_prop:
-                b_mat = self.set_alpha(b_mat, n_alpha_prop)
-    
             # Specular color
-            self.import_material_specular(b_mat, n_mat_prop)
+            import_material_specular(b_mat, n_mat_prop)
 
             if (not n_specular_prop) and (self.nif_import.data.version != 0x14000004):
                 b_mat.specular_intensity = 0.0  # no specular prop
             else:
                 b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
-                
-        self.nif_import.dict_materials[material_hash] = b_mat
+
+        # self.nif_import.dict_materials[material_hash] = b_mat
+
+        # Alpha
+        if n_alpha_prop:
+            b_mat = self.set_alpha(b_mat, n_alpha_prop)
+
+        # texures
+        if n_texture_prop:
+            print(n_texture_prop)
+            self.texturehelper.import_nitextureprop_textures(b_mat, n_texture_prop)
+            # TODO [property][texture][shader]
+            # if extra_datas:
+            #     self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
+
+        # TODO [property][texture][shader]
+        # if n_texture_effect:
+        #     self.texturehelper.import_texture_effect(b_mat, n_texture_effect)
+
         return b_mat
 
-    def import_material_specular(self, b_mat, n_mat_prop):
-        b_mat.specular_color.r = n_mat_prop.specular_color.r
-        b_mat.specular_color.g = n_mat_prop.specular_color.g
-        b_mat.specular_color.b = n_mat_prop.specular_color.b
 
-    def import_material_emissive(self, b_mat, n_mat_prop):
-        b_mat.niftools.emissive_color.r = n_mat_prop.emissive_color.r
-        b_mat.niftools.emissive_color.g = n_mat_prop.emissive_color.g
-        b_mat.niftools.emissive_color.b = n_mat_prop.emissive_color.b
-        b_mat.emit = n_mat_prop.emit_multi
+def import_material_specular(b_mat, n_mat_prop):
+    b_mat.specular_color.r = n_mat_prop.specular_color.r
+    b_mat.specular_color.g = n_mat_prop.specular_color.g
+    b_mat.specular_color.b = n_mat_prop.specular_color.b
 
-    def import_diffuse(self, b_mat, n_mat_prop):
-        b_mat.diffuse_color.r = n_mat_prop.diffuse_color.r
-        b_mat.diffuse_color.g = n_mat_prop.diffuse_color.g
-        b_mat.diffuse_color.b = n_mat_prop.diffuse_color.b
-        b_mat.diffuse_intensity = 1.0
 
-    def import_ambient(self, b_mat, n_mat_prop):
-        b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
-        b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
-        b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b
+def import_material_emissive(b_mat, n_mat_prop):
+    b_mat.niftools.emissive_color.r = n_mat_prop.emissive_color.r
+    b_mat.niftools.emissive_color.g = n_mat_prop.emissive_color.g
+    b_mat.niftools.emissive_color.b = n_mat_prop.emissive_color.b
+    b_mat.emit = n_mat_prop.emit_multi
+
+
+def import_material_diffuse(b_mat, n_mat_prop):
+    b_mat.diffuse_color.r = n_mat_prop.diffuse_color.r
+    b_mat.diffuse_color.g = n_mat_prop.diffuse_color.g
+    b_mat.diffuse_color.b = n_mat_prop.diffuse_color.b
+    b_mat.diffuse_intensity = 1.0
+
+
+def import_material_ambient(b_mat, n_mat_prop):
+    b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
+    b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
+    b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b

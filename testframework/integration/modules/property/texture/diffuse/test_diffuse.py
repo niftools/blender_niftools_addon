@@ -42,7 +42,8 @@ import nose.tools
 import os.path
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.property import texture
+from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import b_gen_geometry
 from integration.modules.geometry.vertex.uv import b_gen_uv
 from integration.modules.property.material import b_gen_material, n_gen_material
@@ -56,11 +57,11 @@ class TestTexturePropertyDiffuseMap(SingleNif):
     g_path = "property/texture"
     g_name = "test_diffuse"
     b_name = 'Cube'
+
     # Paths
-    root_dir = os.getcwd()
-    nif_dir = os.path.join(root_dir, 'nif')
-    
-    diffuse_texture_path = os.path.join(nif_dir, 'textures', 'diffuse', 'diffuse.dds')
+    texture_dir = texture.TEXTURE_DATA_DIR
+
+    diffuse_texture_path = os.path.join(texture_dir, 'diffuse', 'diffuse.dds')
 
     def b_create_header(self):
         b_gen_header.b_create_oblivion_info()

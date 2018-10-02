@@ -42,9 +42,10 @@ import nose.tools
 import os.path
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
-from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
-from integration.modules.geometry.vertex.uv import b_gen_uv, n_gen_uv
+from integration.modules.property import texture
+from integration.modules.scene import n_gen_header, b_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry
+from integration.modules.geometry.vertex.uv import b_gen_uv
 from integration.modules.property.material import b_gen_material, n_gen_material
 from integration.modules.property.texture import b_gen_texture, n_gen_texture
 from integration.modules.property.texture.diffuse import b_gen_diffusemap, n_gen_diffusemap
@@ -71,18 +72,17 @@ class TestTexturePropertyNormalMap(SingleNif):
     g_name = "test_normal"
     b_name = 'Cube'
 
+    # Paths
+    texture_dir = texture.TEXTURE_DATA_DIR
+
+    diffuse_texture_path = os.path.join(texture_dir, 'diffuse', 'diffuse.dds')
+    normalmap_texture_path = os.path.join(texture_dir, 'normal', 'normal.dds')
+
     def b_create_header(self):
         b_gen_header.b_create_oblivion_info()
 
     def n_create_header(self):
         n_gen_header.n_create_header_oblivion(self.n_data)
-
-    # Paths
-    root_dir = os.getcwd()
-    nif_dir = os.path.join(root_dir, 'nif')
-
-    diffuse_texture_path = os.path.join(nif_dir, 'textures', 'diffuse', 'diffuse.dds')
-    normalmap_texture_path = os.path.join(nif_dir, 'textures', 'normal', 'normal.dds')
 
     def b_create_data(self):
         b_obj = b_gen_geometry.b_create_cube(self.b_name)

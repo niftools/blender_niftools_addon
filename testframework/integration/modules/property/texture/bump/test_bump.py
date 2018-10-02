@@ -41,10 +41,12 @@ import bpy
 import nose.tools
 import os.path
 
+
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import b_gen_geometry
 from integration.modules.geometry.vertex.uv import b_gen_uv
+from integration.modules.property import texture
 from integration.modules.property.material import b_gen_material, n_gen_material
 from integration.modules.property.texture import b_gen_texture, n_gen_texture
 from integration.modules.property.texture.diffuse import b_gen_diffusemap, n_gen_diffusemap
@@ -59,11 +61,10 @@ class TestTexturePropertyBumpMap(SingleNif):
     b_name = 'Cube'
 
     # Paths
-    root_dir = os.getcwd()
-    nif_dir = os.path.join(root_dir, 'nif')
+    texture_dir = texture.TEXTURE_DATA_DIR
     
-    diffuse_texture_path = os.path.join(nif_dir, 'textures', 'diffuse', 'diffuse.dds')
-    bumpmap_texture_path = os.path.join(nif_dir, 'textures', 'bump', 'bump.dds')
+    diffuse_texture_path = os.path.join(texture_dir, 'diffuse', 'diffuse.dds')
+    bumpmap_texture_path = os.path.join(texture_dir, 'bump', 'bump.dds')
 
     def b_create_header(self):
         b_gen_header.b_create_oblivion_info()

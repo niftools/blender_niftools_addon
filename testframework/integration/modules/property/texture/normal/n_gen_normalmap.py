@@ -41,6 +41,8 @@ from os import path
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
+from integration.modules.property.texture import n_gen_texture
+
 
 def n_create_normal_map(n_nitexturingproperty):
     """Adds a diffuse texture to a NiTexturingProperty"""
@@ -64,15 +66,11 @@ def n_check_normal_property(n_tex_prop):
 
 
 def n_check_normal_source_texture(n_nisourcetexture, n_texture_path):
-    nose.tools.assert_is_instance(n_nisourcetexture, NifFormat.NiSourceTexture)
-    
-    n_split_path = n_texture_path.split(path.sep)
-    n_rel_path = n_split_path[len(n_split_path)-3:]  # get a path relative to \\textures folder
-    
-    n_src_path = n_nisourcetexture.file_name.decode()
-    n_src_path = n_src_path.split(path.sep)
+    n_gen_texture.n_check_source_texture(n_nisourcetexture, n_texture_path)
 
-    nose.tools.assert_equal(n_src_path, n_rel_path)
     nose.tools.assert_equal(n_nisourcetexture.pixel_layout, NifFormat.PixelLayout.PIX_LAY_DEFAULT)  # 6
     nose.tools.assert_equal(n_nisourcetexture.use_mipmaps, NifFormat.MipMapFormat.MIP_FMT_YES)  # 1
     nose.tools.assert_equal(n_nisourcetexture.use_external, 1)
+
+
+

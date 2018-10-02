@@ -36,17 +36,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.property.texture.texture_import import TextureSlots
 
 
 class Vertex:
 
     @staticmethod
-    def process_vertex_colors(b_mesh, niData, v_map):
+    def process_vertex_colors(b_mesh, n_geometry, v_map):
         # vertex colors
-        if b_mesh.polygons and niData.vertex_colors:
+        if b_mesh.polygons and n_geometry.vertex_colors:
             n_vcol_map = list()
-            for n_vcol, n_vmap in zip(niData.vertex_colors, v_map):
+            for n_vcol, n_vmap in zip(n_geometry.vertex_colors, v_map):
                 n_vcol_map.append((n_vcol, n_vmap))
 
             # create vertex_layers

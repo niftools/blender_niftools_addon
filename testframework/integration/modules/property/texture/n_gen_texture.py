@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from os import path
 
 import nose
 from pyffi.utils.withref import ref
@@ -376,3 +377,12 @@ def n_check_texdesc(n_tex_desc):
     nose.tools.assert_equal(n_tex_desc.filter_mode, 2)
     nose.tools.assert_equal(n_tex_desc.uv_set, 0)
     nose.tools.assert_equal(n_tex_desc.has_texture_transform, False)
+
+
+def n_check_source_texture(n_nisourcetexture, n_texture_path):
+    nose.tools.assert_is_instance(n_nisourcetexture, NifFormat.NiSourceTexture)
+    n_split_path = n_texture_path.split(path.sep)
+    n_rel_path = n_split_path[len(n_split_path) - 3:]  # get a path relative to \\textures folder
+    n_src_path = n_nisourcetexture.file_name.decode()
+    n_src_path = n_src_path.split(path.sep)
+    nose.tools.assert_equal(n_src_path, n_rel_path)
