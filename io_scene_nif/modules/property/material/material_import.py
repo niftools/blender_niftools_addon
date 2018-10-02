@@ -46,11 +46,9 @@ class Material:
     
     def __init__(self, parent):
         self.nif_import = parent
-        
-    def set_texture_helper(self, texturehelper):
-        self.texturehelper = texturehelper
 
-    def get_material_hash(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, nitextureeffect, n_wire_prop, extra_datas):
+    @staticmethod
+    def get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, extra_datas):
         """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
@@ -60,8 +58,6 @@ class Material:
                 n_texture_prop.get_hash() if n_texture_prop else None,
                 n_alpha_prop.get_hash() if n_alpha_prop else None,
                 n_specular_prop.get_hash() if n_specular_prop else None,
-                nitextureeffect.get_hash() if nitextureeffect else None,
-                n_wire_prop.get_hash() if n_wire_prop else None,
                 tuple(extra.get_hash() for extra in extra_datas))
 
     @staticmethod
@@ -75,12 +71,11 @@ class Material:
         
         return b_mat
 
-    def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, n_texture_effect, n_wire_prop, extra_datas):
+    def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, extra_datas):
         
         """Creates and returns a material."""
         # First check if material has been created before.
-        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop,
-                                               n_texture_effect, n_wire_prop, extra_datas)
+        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, extra_datas)
         try:
             return self.nif_import.dict_materials[material_hash]
         except KeyError:
@@ -94,11 +89,14 @@ class Material:
         
         # texures
         if n_texture_prop:
+            print(n_texture_prop)
             self.texturehelper.import_nitextureprop_textures(b_mat, n_texture_prop)
             if extra_datas:
                 self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
-        if n_texture_effect:
-            self.texturehelper.import_texture_effect(b_mat, n_texture_effect)
+
+        # TODO [property][texture][shader]
+        # if n_texture_effect:
+        #     self.texturehelper.import_texture_effect(b_mat, n_texture_effect)
         
         # material based properties
         if n_mat_prop:
@@ -108,10 +106,9 @@ class Material:
             # Diffuse color
             self.import_diffuse(b_mat, n_mat_prop)
 
-        
-            # TODO: Detect fallout 3+, use emit multi as a degree of emission
-            # TODO: Test some values to find emission maximium. 0-1 -> 0-max_val
-            # TODO: Should we factor in blender bounds 0.0 - 2.0
+            # TODO [material] Detect fallout 3+, use emit multi as a degree of emission
+            # TODO [material] Test some values to find emission maximium. 0-1 -> 0-max_val
+            # TODO [material] Should we factor in blender bounds 0.0 - 2.0
             
             # Emissive
             self.import_material_emissive(b_mat, n_mat_prop)
@@ -131,11 +128,6 @@ class Material:
             else:
                 b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
                 
-        # check wireframe property
-        if n_wire_prop:
-            # enable wireframe rendering
-            b_mat.type = 'WIRE'
-
         self.nif_import.dict_materials[material_hash] = b_mat
         return b_mat
 

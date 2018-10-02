@@ -43,7 +43,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_global import NifOp
 
 
-class Material():
+class Material:
     
     def __init__(self, parent):
         self.nif_export = parent
@@ -53,7 +53,7 @@ class Material():
         a new one if a material property with these settings is not found."""
 
         # create block (but don't register it yet in self.dict_blocks)
-        matprop = NifFormat.NiMaterialProperty()
+        mat_prop = NifFormat.NiMaterialProperty()
 
         # list which determines whether the material name is relevant or not
         # only for particular names this holds, such as EnvMap2
@@ -65,8 +65,7 @@ class Material():
         # renamed to EnvMap2.xxx or skin.xxx on import)
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             for specialname in specialnames:
-                if (name.lower() == specialname.lower()
-                    or name.lower().startswith(specialname.lower() + ".")):
+                if name.lower() == specialname.lower() or name.lower().startswith(specialname.lower() + "."):
                     if name != specialname:
                         NifLog.warn("Renaming material '{0}' to '{1}'".format(name, specialname))
                     name = specialname
@@ -76,26 +75,26 @@ class Material():
             NifLog.warn("Renaming material '{0}' to ''".format(name))
             name = ""
 
-        matprop.name = name
-        matprop.flags = flags
-        matprop.ambient_color.r = ambient.r
-        matprop.ambient_color.g = ambient.g
-        matprop.ambient_color.b = ambient.b
+        mat_prop.name = name
+        mat_prop.flags = flags
+        mat_prop.ambient_color.r = ambient.r
+        mat_prop.ambient_color.g = ambient.g
+        mat_prop.ambient_color.b = ambient.b
         
-        matprop.diffuse_color.r = diffuse.r
-        matprop.diffuse_color.g = diffuse.g
-        matprop.diffuse_color.b = diffuse.b
+        mat_prop.diffuse_color.r = diffuse.r
+        mat_prop.diffuse_color.g = diffuse.g
+        mat_prop.diffuse_color.b = diffuse.b
         
-        matprop.specular_color.r = specular.r
-        matprop.specular_color.g = specular.g
-        matprop.specular_color.b = specular.b
+        mat_prop.specular_color.r = specular.r
+        mat_prop.specular_color.g = specular.g
+        mat_prop.specular_color.b = specular.b
         
-        matprop.emissive_color.r = emissive.r
-        matprop.emissive_color.g = emissive.g
-        matprop.emissive_color.b = emissive.b
-        matprop.glossiness = gloss
-        matprop.alpha = alpha
-        matprop.emit_multi = emitmulti
+        mat_prop.emissive_color.r = emissive.r
+        mat_prop.emissive_color.g = emissive.g
+        mat_prop.emissive_color.b = emissive.b
+        mat_prop.glossiness = gloss
+        mat_prop.alpha = alpha
+        mat_prop.emit_multi = emitmulti
 
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different
@@ -112,11 +111,9 @@ class Material():
 
             # check hash
             first_index = 1 if ignore_strings else 0
-            if (block.get_hash()[first_index:] ==
-                matprop.get_hash()[first_index:]):
-                NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, block.name))
+            if block.get_hash()[first_index:] == mat_prop.get_hash()[first_index:]:
+                NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(mat_prop.name, block.name))
                 return block
 
-        # no material property with given settings found, so use and register
-        # the new one
-        return matprop
+        # no material property with given settings found, so use and register the new one
+        return mat_prop
