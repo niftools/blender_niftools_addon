@@ -50,16 +50,16 @@ def start_debug(port=REMOTE_PORT):
             sys.path.append(pydev_src)
     except KeyError:
         print("Dev: Sys variable not set")
+        return
 
     try:
-        import pydevd
+        from pydevd import settrace
     except ImportError:
         print("Dev: Import failed to find pydevd module.\nPython Remote Debugging Server not found")
-        pass
-
+        return
     try:
-        pydevd.settrace('localhost', port=port, stdoutToServer=True, stderrToServer=True, suspend=True)
+        settrace('localhost', port=port, stdoutToServer=True, stderrToServer=True, suspend=True)
     except Exception as e:
         print("Unable to connect to Remote debugging server")
         print(e)
-        pass
+        return
