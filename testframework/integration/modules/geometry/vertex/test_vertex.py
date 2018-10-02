@@ -40,7 +40,7 @@
 import bpy
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.geometry.vertex import b_gen_vertex
 from integration.modules.geometry.vertex import n_gen_vertex
 

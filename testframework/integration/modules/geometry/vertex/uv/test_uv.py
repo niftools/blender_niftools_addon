@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
 from integration.modules.geometry.vertex.uv import b_gen_uv
 

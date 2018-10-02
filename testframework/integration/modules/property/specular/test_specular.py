@@ -41,7 +41,7 @@ import bpy
 import nose.tools
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
 from integration.modules.property.material import b_gen_material, n_gen_material
 from integration.modules.property.specular import b_gen_specular, n_gen_specular

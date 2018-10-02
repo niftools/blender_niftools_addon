@@ -41,7 +41,7 @@ import bpy
 import nose.tools
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.data import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
 from integration.modules.property.stencil import b_gen_stencil, n_gen_stencil
 

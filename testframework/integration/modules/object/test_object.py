@@ -40,7 +40,7 @@
 import bpy
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.object import b_gen_object, n_gen_object
 
 PATH = 'object/test_object'

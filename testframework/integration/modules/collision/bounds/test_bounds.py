@@ -4,7 +4,7 @@ import bpy
 import nose.tools
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.collision.bounds import n_gen_boundbox
 
 

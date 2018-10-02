@@ -4,7 +4,7 @@ import bpy
 import nose.tools
 
 from integration import SingleNif
-from integration.data import n_gen_header, b_gen_header
+from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import n_gen_geometry, b_gen_geometry
 from integration.modules.geometry.vertex.color import n_gen_vertexcolor
 

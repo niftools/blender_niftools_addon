@@ -129,7 +129,7 @@ def b_get_transform_matrix():
 
 def b_check_geom_obj(b_obj):
     b_mesh = b_obj.data
-    b_check_transform(b_obj)
+    # b_check_transform(b_obj)
     b_check_geom(b_mesh)
     b_check_vertex_count(b_mesh)
 
@@ -140,11 +140,24 @@ def b_check_transform(b_obj):
     nose.tools.assert_equal(b_obj.location, mathutils.Vector((20.0, 20.0, 20.0)))  # location
 
     b_rot_eul = b_rot_quat.to_euler()
+    # print_rotation(b_rot_eul)
     nose.tools.assert_equal((b_rot_eul.x - math.radians(30.0)) < EPSILON, True)  # x rotation
     nose.tools.assert_equal((b_rot_eul.y - math.radians(60.0)) < EPSILON, True)  # y rotation
     nose.tools.assert_equal((b_rot_eul.z - math.radians(90.0)) < EPSILON, True)  # z rotation
 
     nose.tools.assert_equal((b_scale_vec - mathutils.Vector((0.75, 0.75, 0.75))) < mathutils.Vector((EPSILON, EPSILON, EPSILON)), True)  # uniform scale
+
+
+def print_rotation(b_rot_eul):
+    print("HEERE")
+    print(b_rot_eul)
+    print(b_rot_eul.x)
+    print(b_rot_eul.y)
+    print(b_rot_eul.z)
+    print("RADS")
+    print(math.radians(30.0))
+    print(math.radians(60.0))
+    print(math.radians(90.0))
 
 
 def b_check_geom(b_mesh):

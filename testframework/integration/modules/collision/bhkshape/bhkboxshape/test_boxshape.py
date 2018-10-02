@@ -40,7 +40,7 @@
 import bpy
 
 from integration import SingleNif
-from integration.data import b_gen_header, n_gen_header
+from integration.modules.scene import b_gen_header, n_gen_header
 from integration.modules.collision import bhkshape
 from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
 from integration.modules.collision.bhkshape import b_gen_collision, n_gen_collision
