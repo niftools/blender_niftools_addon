@@ -44,6 +44,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
+
 class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
@@ -71,13 +72,7 @@ class NifCommon:
     # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
     # we use this dictionary to set the physics constraints (ragdoll etc)
     dict_havok_objects = {}
-    
-    # dictionary of names, to map NIF blocks to correct Blender names
-    dict_names = {}
 
-    # dictionary of bones, maps Blender name to NIF block
-    dict_blocks = {}
-    
     # keeps track of names of exported blocks, to make sure they are unique
     dict_block_names = []
 
@@ -119,9 +114,8 @@ class NifCommon:
         from . import bl_info
         niftools_ver = (".".join(str(i) for i in bl_info["version"]))
         
-        NifLog.info("Executing - Niftools : Blender Nif Plugin v{0} (running on Blender {1}, PyFFI {2})".format(niftools_ver,
-                                                                                                bpy.app.version_string,
-                                                                                                pyffi.__version__))
+        NifLog.info("Executing - Niftools : Blender Nif Plugin v{0} (running on Blender {1}, PyFFI {2})".format(
+            niftools_ver, bpy.app.version_string, pyffi.__version__))
 
         # find and store this list now of selected objects as creating new objects adds them to the selection list
         self.selected_objects = bpy.context.selected_objects[:]

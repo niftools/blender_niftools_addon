@@ -34,3 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+
+# dictionary of names, to map NIF blocks to correct Blender names
+DICT_NAMES = {}

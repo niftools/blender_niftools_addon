@@ -36,6 +36,10 @@
 # ***** END LICENSE BLOCK *****
 
 
+# dictionary of bones, maps Blender name to NIF block
+DICT_BLOCKS = {}
+
+
 def get_bone_name_for_blender(name):
     """Convert a bone name to a name that can be used by Blender: turns
     'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
