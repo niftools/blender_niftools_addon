@@ -48,17 +48,17 @@ from integration.modules.property.wireframe import b_gen_wire, n_gen_wire
 
 
 class TestWireframeProperty(SingleNif):
-    """Test import/export of meshes with material based specular property."""
+    """Test import/export of meshes with material based wireframe property."""
 
     g_path = "property/wireframe"
     g_name = "test_wire"
     b_name = "Cube"
 
     def b_create_header(self):
-        b_gen_header.b_create_oblivion_info()
+        b_gen_header.b_create_morrowind_info()
 
     def n_create_header(self):
-        n_gen_header.n_create_header_oblivion(self.n_data)
+        n_gen_header.n_create_header_morrowind(self.n_data)
 
     def b_create_data(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)

@@ -39,7 +39,7 @@ import nose
 
 
 def b_create_wireframe_property(b_mat):
-    b_mat.type = 'WIRE';
+    b_mat.type = 'WIRE'
 
 
 def b_check_wire_property(b_mat):
