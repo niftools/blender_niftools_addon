@@ -515,7 +515,7 @@ class Armature:
             namestxt = bpy.data.texts.new("FullNames")
 
         # write the names to the text buffer
-        for block, shortname in obj.dict_names.items():
+        for block, shortname in obj.DICT_NAMES.items():
             block_name = block.name.decode()
             if block_name and shortname != block_name:
                 namestxt.write('%s;%s\n' % (shortname, block_name))
