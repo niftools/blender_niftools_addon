@@ -41,7 +41,8 @@ from io_scene_nif.modules.property.texture.texture_import import TextureSlots
 
 class Vertex:
 
-    def process_vertex_colors(self, b_mesh, niData, v_map):
+    @staticmethod
+    def process_vertex_colors(b_mesh, niData, v_map):
         # vertex colors
         if b_mesh.polygons and niData.vertex_colors:
             n_vcol_map = list()
