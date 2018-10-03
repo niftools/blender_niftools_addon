@@ -35,8 +35,31 @@
 #
 # ***** END LICENSE BLOCK *****
 
+# dictionary of bones that belong to a certain armature
+# maps NIF armature name to list of NIF bone name
+DICT_ARMATURES = {}
+# dictionary of bones, maps Blender bone name to matrix that maps the
+# NIF bone matrix on the Blender bone matrix
+# B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
+DICT_BONES_EXTRA_MATRIX = {}
 
-# dictionary of bones, maps Blender name to NIF block
+# dictionary of bones, maps Blender bone name to matrix that maps the
+# NIF bone matrix on the Blender bone matrix
+# Recall from the import script
+#   B' = X * B,
+# where B' is the Blender bone matrix, and B is the NIF bone matrix,
+# both in armature space. So to restore the NIF matrices we need to do
+#   B = X^{-1} * B'
+# Hence, we will restore the X's, invert them, and store those inverses in the
+# following dictionary.
+DICT_BONES_EXTRA_MATRIX_INV = {}
+
+# bone animation priorities (maps NiNode name to priority number);
+# priorities are set in import_kf_root and are stored into the name
+# of a NULL constraint (for lack of something better) in
+# import_armature
+DICT_BONE_PRIORITIES = {}
+
 DICT_BLOCKS = {}
 
 

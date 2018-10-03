@@ -42,18 +42,19 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
 
-class bhkshape_export():
+class BHKShape:
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.HAVOK_SCALE = parent.HAVOK_SCALE
+        self.HAVOK_SCALE = NifCommon.HAVOK_SCALE
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -71,9 +72,7 @@ class bhkshape_export():
         b_scene = bpy.context.scene.niftools_scene
         if b_scene.user_version == 12:
             if b_scene.user_version_2 == 83:
-                self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE * 10
-            else:
-                self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE
+                self.HAVOK_SCALE = NifCommon.HAVOK_SCALE * 10
 
         # find physics properties/defaults
         n_havok_mat = b_obj.nifcollision.havok_material
@@ -94,11 +93,8 @@ class bhkshape_export():
         max_angular_velocity = b_obj.nifcollision.max_angular_velocity
         col_filter = b_obj.nifcollision.col_filter
 
-        # Aaron1178 collison stuff
-        '''
-        #export bsxFlags
-        self.export_bsx_upb_flags(b_obj, parent_block)
-        '''
+        # TODO [object][collision][flags] export bsxFlags
+        # self.export_bsx_upb_flags(b_obj, parent_block)
 
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
@@ -247,8 +243,7 @@ class bhkshape_export():
                 raise ValueError('not a packed list of collisions')
 
         mesh = b_obj.data
-        transform = mathutils.Matrix(
-            self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').as_list())
+        transform = mathutils.Matrix(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
@@ -312,7 +307,7 @@ class bhkshape_export():
         maxz = max([b_vert[2] for b_vert in b_vertlist])
 
         calc_bhkshape_radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.HAVOK_SCALE)
-        if (b_obj.game.radius - calc_bhkshape_radius > NifOp.props.epsilon):
+        if b_obj.game.radius - calc_bhkshape_radius > NifOp.props.epsilon:
             radius = calc_bhkshape_radius
         else:
             radius = b_obj.game.radius
@@ -330,8 +325,7 @@ class bhkshape_export():
             coltf.unknown_8_bytes[5] = 9
             coltf.unknown_8_bytes[6] = 253
             coltf.unknown_8_bytes[7] = 4
-            hktf = mathutils.Matrix(
-                self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').as_list())
+            hktf = mathutils.Matrix(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
@@ -381,12 +375,8 @@ class bhkshape_export():
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = b_obj.matrix_local.transposed()
-            vert1 = mathutils.Vector([(maxx + minx) / 2.0,
-                                      (maxy + miny) / 2.0,
-                                      maxz - localradius])
-            vert2 = mathutils.Vector([(maxx + minx) / 2.0,
-                                      (maxy + miny) / 2.0,
-                                      minz + localradius])
+            vert1 = mathutils.Vector([(maxx + minx) / 2.0, (maxy + miny) / 2.0, maxz - localradius])
+            vert2 = mathutils.Vector([(maxx + minx) / 2.0, (maxy + miny) / 2.0, minz + localradius])
             vert1 = vert1 * transform
             vert2 = vert2 * transform
 
@@ -448,15 +438,15 @@ class bhkshape_export():
             # remove duplicates through dictionary
             vertdict = {}
             for i, vert in enumerate(vertlist):
-                vertdict[(int(vert[0] * self.nif_export.VERTEX_RESOLUTION),
-                          int(vert[1] * self.nif_export.VERTEX_RESOLUTION),
-                          int(vert[2] * self.nif_export.VERTEX_RESOLUTION))] = i
+                vertdict[(int(vert[0] * NifCommon.VERTEX_RESOLUTION),
+                          int(vert[1] * NifCommon.VERTEX_RESOLUTION),
+                          int(vert[2] * NifCommon.VERTEX_RESOLUTION))] = i
             fdict = {}
             for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
-                fdict[(int(norm[0] * self.nif_export.NORMAL_RESOLUTION),
-                       int(norm[1] * self.nif_export.NORMAL_RESOLUTION),
-                       int(norm[2] * self.nif_export.NORMAL_RESOLUTION),
-                       int(dist * self.nif_export.VERTEX_RESOLUTION))] = i
+                fdict[(int(norm[0] * NifCommon.NORMAL_RESOLUTION),
+                       int(norm[1] * NifCommon.NORMAL_RESOLUTION),
+                       int(norm[2] * NifCommon.NORMAL_RESOLUTION),
+                       int(dist * NifCommon.VERTEX_RESOLUTION))] = i
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
             fkeys = sorted(fdict.keys())
@@ -498,7 +488,7 @@ class bhkshape_export():
                 % b_obj.game.collision_bounds_type)
 
 
-class bound_export():
+class Bound:
 
     def __init__(self, parent):
         self.nif_export = parent

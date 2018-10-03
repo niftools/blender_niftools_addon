@@ -200,7 +200,7 @@ class ObjectHelper:
                     break
                 # does geom have priority value in NULL constraint?
                 elif constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[armature.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
+                    armature.DICT_BONE_PRIORITIES[armature.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
 
             if is_collision:
                 self.nif_export.export_collision(b_obj, parent_block)
@@ -223,7 +223,7 @@ class ObjectHelper:
             # does node have priority value in NULL constraint?
             for constr in b_obj.constraints:
                 if constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[armature.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
+                    armature.DICT_BONE_PRIORITIES[armature.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
