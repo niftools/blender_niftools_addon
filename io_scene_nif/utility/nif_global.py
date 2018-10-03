@@ -49,7 +49,8 @@ class NifOp:
 
     op = None
     props = None
-    
+    data = None
+
     @staticmethod
     def init(operator):
         NifOp.op = operator
@@ -57,3 +58,11 @@ class NifOp:
         
         # init loggers logging level
         NifLog.op = operator
+
+
+class NifData:
+
+    data = None
+
+    def __init__(self):
+        pass
