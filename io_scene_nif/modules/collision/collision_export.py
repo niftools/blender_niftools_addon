@@ -42,7 +42,7 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.modules import collision, geometry
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -54,7 +54,7 @@ class BHKShape:
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.HAVOK_SCALE = NifCommon.HAVOK_SCALE
+        self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -72,7 +72,7 @@ class BHKShape:
         b_scene = bpy.context.scene.niftools_scene
         if b_scene.user_version == 12:
             if b_scene.user_version_2 == 83:
-                self.HAVOK_SCALE = NifCommon.HAVOK_SCALE * 10
+                self.HAVOK_SCALE = collision.HAVOK_SCALE * 10
 
         # find physics properties/defaults
         n_havok_mat = b_obj.nifcollision.havok_material
@@ -120,7 +120,7 @@ class BHKShape:
                 n_col_obj = self.nif_export.objecthelper.create_block("bhkCollisionObject", b_obj)
                 if layer == "OL_ANIM_STATIC" and col_filter != 128:
                     # animated collision requires flags = 41
-                    # unless it is a constrainted but not keyframed object
+                    # unless it is a constrained but not keyframed object
                     n_col_obj.flags = 41
                 else:
                     # in all other cases this seems to be enough
@@ -234,13 +234,13 @@ class BHKShape:
             # XXX to add a collision here; code will try to readd it with
             # XXX a fresh NiNode
             raise ValueError('multimaterial mopps not supported for now')
-            # XXX this code will do the trick once multimaterial mopps work
-            n_col_mopp = n_col_body.shape
-            if not isinstance(n_col_mopp, NifFormat.bhkMoppBvTreeShape):
-                raise ValueError('not a packed list of collisions')
-            n_col_shape = n_col_mopp.shape
-            if not isinstance(n_col_shape, NifFormat.bhkPackedNiTriStripsShape):
-                raise ValueError('not a packed list of collisions')
+            # TODO [collision] this code will do the trick once multimaterial mopps work
+            # n_col_mopp = n_col_body.shape
+            # if not isinstance(n_col_mopp, NifFormat.bhkMoppBvTreeShape):
+            #     raise ValueError('not a packed list of collisions')
+            # n_col_shape = n_col_mopp.shape
+            # if not isinstance(n_col_shape, NifFormat.bhkPackedNiTriStripsShape):
+            #     raise ValueError('not a packed list of collisions')
 
         mesh = b_obj.data
         transform = mathutils.Matrix(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').as_list())
@@ -373,10 +373,10 @@ class BHKShape:
 
         elif b_obj.game.collision_bounds_type in {'CYLINDER', 'CAPSULE'}:
             # take average radius and calculate end points
-            localradius = (maxx + maxy - minx - miny) / 4.0
+            local_radius = (maxx + maxy - minx - miny) / 4.0
             transform = b_obj.matrix_local.transposed()
-            vert1 = mathutils.Vector([(maxx + minx) / 2.0, (maxy + miny) / 2.0, maxz - localradius])
-            vert2 = mathutils.Vector([(maxx + minx) / 2.0, (maxy + miny) / 2.0, minz + localradius])
+            vert1 = mathutils.Vector([(maxx + minx) / 2.0, (maxy + miny) / 2.0, maxz - local_radius])
+            vert2 = mathutils.Vector([(maxx + minx) / 2.0, (maxy + miny) / 2.0, minz + local_radius])
             vert1 = vert1 * transform
             vert2 = vert2 * transform
 
@@ -403,7 +403,7 @@ class BHKShape:
             size_y = b_obj.scale.y
             size_z = b_obj.scale.z
 
-            colcaps.radius = localradius * (size_x + size_y) * 0.5
+            colcaps.radius = local_radius * (size_x + size_y) * 0.5
             colcaps.radius_1 = colcaps.radius
             colcaps.radius_2 = colcaps.radius
 
@@ -429,63 +429,59 @@ class BHKShape:
             '''
 
             # calculate vertices, normals, and distances
-            vertlist = [b_transform_mat * vert.co for vert in b_mesh.vertices]
-            fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.polygons]
-            fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.polygons[b_face.index].vertices[0]].co)).dot(
+            vert_list = [b_transform_mat * vert.co for vert in b_mesh.vertices]
+            f_norm_list = [b_rot_quat * b_face.normal for b_face in b_mesh.polygons]
+            f_dist_list = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.polygons[b_face.index].vertices[0]].co)).dot(
                 b_rot_quat.to_matrix() * b_face.normal)
                 for b_face in b_mesh.polygons]
 
             # remove duplicates through dictionary
-            vertdict = {}
-            for i, vert in enumerate(vertlist):
-                vertdict[(int(vert[0] * NifCommon.VERTEX_RESOLUTION),
-                          int(vert[1] * NifCommon.VERTEX_RESOLUTION),
-                          int(vert[2] * NifCommon.VERTEX_RESOLUTION))] = i
-            fdict = {}
-            for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
-                fdict[(int(norm[0] * NifCommon.NORMAL_RESOLUTION),
-                       int(norm[1] * NifCommon.NORMAL_RESOLUTION),
-                       int(norm[2] * NifCommon.NORMAL_RESOLUTION),
-                       int(dist * NifCommon.VERTEX_RESOLUTION))] = i
+            vert_dict = {}
+            for i, vert in enumerate(vert_list):
+                vert_dict[(int(vert[0] * geometry.VERTEX_RESOLUTION),
+                           int(vert[1] * geometry.VERTEX_RESOLUTION),
+                           int(vert[2] * geometry.VERTEX_RESOLUTION))] = i
+            f_dict = {}
+            for i, (norm, dist) in enumerate(zip(f_norm_list, f_dist_list)):
+                f_dict[(int(norm[0] * geometry.NORMAL_RESOLUTION),
+                        int(norm[1] * geometry.NORMAL_RESOLUTION),
+                        int(norm[2] * geometry.NORMAL_RESOLUTION),
+                        int(dist * geometry.VERTEX_RESOLUTION))] = i
             # sort vertices and normals
-            vertkeys = sorted(vertdict.keys())
-            fkeys = sorted(fdict.keys())
-            vertlist = [vertlist[vertdict[hsh]] for hsh in vertkeys]
-            fnormlist = [fnormlist[fdict[hsh]] for hsh in fkeys]
-            fdistlist = [fdistlist[fdict[hsh]] for hsh in fkeys]
+            vert_keys = sorted(vert_dict.keys())
+            f_keys = sorted(f_dict.keys())
+            vert_list = [vert_list[vert_dict[hsh]] for hsh in vert_keys]
+            f_norm_list = [f_norm_list[f_dict[hsh]] for hsh in f_keys]
+            f_dist_list = [f_dist_list[f_dict[hsh]] for hsh in f_keys]
 
-            if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise nif_utils.NifError(
-                    "ERROR%t|Too many polygons/vertices."
-                    " Decimate/split your b_mesh and try again.")
+            if len(f_norm_list) > 65535 or len(vert_list) > 65535:
+                raise nif_utils.NifError("ERROR%t|Too many polygons/vertices.\nDecimate/split your b_mesh and try again.")
 
-            colhull = self.nif_export.objecthelper.create_block("bhkConvexVerticesShape", b_obj)
-            colhull.material = n_havok_mat
-            colhull.radius = radius
-            colhull.unknown_6_floats[2] = -0.0  # enables arrow detection
-            colhull.unknown_6_floats[5] = -0.0  # enables arrow detection
+            col_hull = self.nif_export.objecthelper.create_block("bhkConvexVerticesShape", b_obj)
+            col_hull.material = n_havok_mat
+            col_hull.radius = radius
+            col_hull.unknown_6_floats[2] = -0.0  # enables arrow detection
+            col_hull.unknown_6_floats[5] = -0.0  # enables arrow detection
             # note: unknown 6 floats are usually all 0
-            colhull.num_vertices = len(vertlist)
-            colhull.vertices.update_size()
-            for vhull, vert in zip(colhull.vertices, vertlist):
-                vhull.x = vert[0] / self.HAVOK_SCALE
-                vhull.y = vert[1] / self.HAVOK_SCALE
-                vhull.z = vert[2] / self.HAVOK_SCALE
+            col_hull.num_vertices = len(vert_list)
+            col_hull.vertices.update_size()
+            for v_hull, vert in zip(col_hull.vertices, vert_list):
+                v_hull.x = vert[0] / self.HAVOK_SCALE
+                v_hull.y = vert[1] / self.HAVOK_SCALE
+                v_hull.z = vert[2] / self.HAVOK_SCALE
                 # w component is 0
-            colhull.num_normals = len(fnormlist)
-            colhull.normals.update_size()
-            for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
-                nhull.x = norm[0]
-                nhull.y = norm[1]
-                nhull.z = norm[2]
-                nhull.w = dist / self.HAVOK_SCALE
+            col_hull.num_normals = len(f_norm_list)
+            col_hull.normals.update_size()
+            for n_hull, norm, dist in zip(col_hull.normals, f_norm_list, f_dist_list):
+                n_hull.x = norm[0]
+                n_hull.y = norm[1]
+                n_hull.z = norm[2]
+                n_hull.w = dist / self.HAVOK_SCALE
 
-            return colhull
+            return col_hull
 
         else:
-            raise nif_utils.NifError(
-                'cannot export collision type %s to collision shape list'
-                % b_obj.game.collision_bounds_type)
+            raise nif_utils.NifError("cannot export collision type %s to collision shape list" % b_obj.game.collision_bounds_type)
 
 
 class Bound:
@@ -496,14 +492,14 @@ class Bound:
     def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
         # calculate bounding box extents
-        b_vertlist = [vert.co for vert in b_obj.data.vertices]
+        b_vert_list = [vert.co for vert in b_obj.data.vertices]
 
-        minx = min([b_vert[0] for b_vert in b_vertlist])
-        miny = min([b_vert[1] for b_vert in b_vertlist])
-        minz = min([b_vert[2] for b_vert in b_vertlist])
-        maxx = max([b_vert[0] for b_vert in b_vertlist])
-        maxy = max([b_vert[1] for b_vert in b_vertlist])
-        maxz = max([b_vert[2] for b_vert in b_vertlist])
+        min_x = min([b_vert[0] for b_vert in b_vert_list])
+        min_y = min([b_vert[1] for b_vert in b_vert_list])
+        min_z = min([b_vert[2] for b_vert in b_vert_list])
+        max_x = max([b_vert[0] for b_vert in b_vert_list])
+        max_y = max([b_vert[1] for b_vert in b_vert_list])
+        max_z = max([b_vert[2] for b_vert in b_vert_list])
 
         if bsbound:
             n_bbox = self.nif_export.objecthelper.create_block("BSBound")
@@ -520,9 +516,9 @@ class Bound:
             n_bbox.center.x = b_obj.location[0]
             n_bbox.center.y = b_obj.location[1]
             n_bbox.center.z = b_obj.location[2]
-            n_bbox.dimensions.x = (maxx - minx) * b_obj.scale[0] * 0.5
-            n_bbox.dimensions.y = (maxy - miny) * b_obj.scale[1] * 0.5
-            n_bbox.dimensions.z = (maxz - minz) * b_obj.scale[2] * 0.5
+            n_bbox.dimensions.x = (max_x - min_x) * b_obj.scale[0] * 0.5
+            n_bbox.dimensions.y = (max_y - min_y) * b_obj.scale[1] * 0.5
+            n_bbox.dimensions.z = (max_z - min_z) * b_obj.scale[2] * 0.5
 
         else:
             n_bbox = self.nif_export.objecthelper.create_ninode()
@@ -530,9 +526,9 @@ class Bound:
             # set name, flags, translation, and radius
             n_bbox.name = "Bounding Box"
             n_bbox.flags = 4
-            n_bbox.translation.x = (minx + maxx) * 0.5 + b_obj.location[0]
-            n_bbox.translation.y = (minx + maxx) * 0.5 + b_obj.location[1]
-            n_bbox.translation.z = (minx + maxx) * 0.5 + b_obj.location[2]
+            n_bbox.translation.x = (min_x + max_x) * 0.5 + b_obj.location[0]
+            n_bbox.translation.y = (min_x + max_x) * 0.5 + b_obj.location[1]
+            n_bbox.translation.z = (min_x + max_x) * 0.5 + b_obj.location[2]
             n_bbox.rotation.set_identity()
             n_bbox.has_bounding_box = True
 
@@ -540,6 +536,6 @@ class Bound:
             # bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
             n_bbox.bounding_box.translation.deepcopy(n_bbox.translation)
             n_bbox.bounding_box.rotation.set_identity()
-            n_bbox.bounding_box.radius.x = (maxx - minx) * 0.5
-            n_bbox.bounding_box.radius.y = (maxy - miny) * 0.5
-            n_bbox.bounding_box.radius.z = (maxz - minz) * 0.5
+            n_bbox.bounding_box.radius.x = (max_x - min_x) * 0.5
+            n_bbox.bounding_box.radius.y = (max_y - min_y) * 0.5
+            n_bbox.bounding_box.radius.z = (max_z - min_z) * 0.5
