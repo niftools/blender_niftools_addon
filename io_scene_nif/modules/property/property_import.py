@@ -35,12 +35,11 @@
 #
 # ***** END LICENSE BLOCK *****
 import bpy
+from pyffi.formats.nif import NifFormat
 from functools import singledispatch
 
-from pyffi.formats.nif import NifFormat
-
-from io_scene_nif.modules.property import material
-# from io_scene_nif.utility.nif_decorator import overload_method
+from io_scene_nif.modules.property.material.material_import import Material
+from io_scene_nif.utility.nif_global import NifData
 from io_scene_nif.utility.nif_logging import NifLog
 
 
@@ -48,49 +47,55 @@ class Property:
 
     def __init__(self):
         self.b_mesh = None
+        self.n_block = None
         self.process_property = singledispatch(self.process_property)
         self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencilproperty_property)
         self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
         self.process_property.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
+        self.process_property.register(NifFormat.NiAlphaProperty, self.process_nialphs_property)
 
     def process_property_list(self, n_block, b_mesh):
+        self.n_block = n_block
         self.b_mesh = b_mesh
         for prop in n_block.properties:
             NifLog.debug("About to process" + str(type(prop)))
             self.process_property(prop)
+        return
 
     def process_property(self, prop):
         """Base method to warn user that this property is not supported"""
         NifLog.warn("Unknown property block found : " + str(prop.name))
         NifLog.warn("This type isn't currently supported: {}".format(type(prop)))
 
-    # @overload_method(NifFormat.NiStencilProperty)
     def process_nistencilproperty_property(self, prop):
         """Stencil (for double sided meshes"""
         NifLog.debug("NiStencilProperty property found" + str(prop))
         self.b_mesh.show_double_sided = True  # We don't check flags for now, nothing fancy
 
-    # # @overload_method(NifFormat.NiAlphaProperty)
-    # def process_property(self, prop):
-    #     """Alpha for transparancy in the material or texture"""
-    #     print("NiAlphaProperty property found" + str(prop))
-    #
-    # # @overload_method(NifFormat.NiSpecularProperty)
-    # def process_property(self, prop):
-    #     """Material based specular"""
-    #     print("NiSpecularProperty property found" + str(prop))
+    def process_property(self, prop):
+        """SpecularProperty based specular"""
+        print("NiSpecularProperty property found" + str(prop))
+        NifLog.debug("NiAlphaProperty property found" + str(prop))
+        b_mat = self._find_or_create_material()
+
+        # TODO [material][property]
+        if NifData.data.version == 0x14000004:
+            b_mat.specular_intensity = 0.0  # no specular prop
+
+    def process_nialphs_property(self, prop):
+        """Import a NiAlphaProperty based material"""
+        NifLog.debug("NiAlphaProperty property found" + str(prop))
+        b_mat = self._find_or_create_material()
+        Material.set_alpha(b_mat, prop)
 
     def process_nimaterial_property(self, prop):
         """Import a NiMaterialProperty based material"""
         NifLog.debug("NiMaterialProperty property found" + str(prop))
         b_mat = self._find_or_create_material()
-
-
-
+        Material().import_material(self.n_block, b_mat, prop)
 
     def process_niwireframe_property(self, prop):
         """Material based specular"""
-        # Wireframe
         NifLog.debug("NiWireframeProperty found" + str(prop))
         b_mat = self._find_or_create_material()
         b_mat.type = 'WIRE'
