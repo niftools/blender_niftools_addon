@@ -36,12 +36,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from io_scene_nif.modules.geometry.mesh.mesh_import import Mesh
 from io_scene_nif.modules.geometry.skin.skin_import import Skin
 from io_scene_nif.modules.geometry.vertex_import import Vertex
 from io_scene_nif.modules.obj import object_import
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.nif_global import NifOp, NifData
 from io_scene_nif.utility.nif_logging import NifLog
 
 from io_scene_nif.io.nif import NifFile
@@ -51,7 +52,7 @@ from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.modules.animation.animation_import import AnimationHelper, GeometryAnimation
 from io_scene_nif.modules import armature, obj
 from io_scene_nif.modules.armature.armature_import import Armature
-from io_scene_nif.modules.collision.collision_import import bhkshape_import, bound_import
+from io_scene_nif.modules.collision.collision_import import BHKShape, Bound
 from io_scene_nif.modules.constraint.constraint_import import constraint_import
 from io_scene_nif.modules.property.property_import import Property
 from io_scene_nif.modules.property.material.material_import import Material
@@ -82,8 +83,8 @@ class NifImport(NifCommon):
         self.animation_helper = AnimationHelper(parent=self)
         self.armature_helper = Armature(parent=self)
         # TODO [collision] create super collisionhelper
-        self.bhkhelper = bhkshape_import(parent=self)
-        self.boundhelper = bound_import(parent=self)
+        self.bhkhelper = BHKShape(parent=self)
+        self.boundhelper = Bound(parent=self)
         self.constrainthelper = constraint_import(parent=self)
 
         self.objecthelper = NiObject()
@@ -114,9 +115,9 @@ class NifImport(NifCommon):
                 if len(self.selected_objects) != 1 or self.selected_objects[0].type != 'ARMATURE':
                     raise nif_utils.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature'  mode.")
 
-            self.data = NifFile.load_nif(NifOp.props.filepath)
+            NifData.data = NifFile.load_nif(NifOp.props.filepath)
             if NifOp.props.override_scene_info:
-                scene_import.import_version_info(self.data)
+                scene_import.import_version_info(NifData.data)
 
             kf_path = NifOp.props.keyframe_file
             if kf_path:
@@ -135,22 +136,22 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                fps = self.animation_helper.get_frames_per_second(self.data.roots + (self.kfdata.roots if self.kfdata else []))
+                fps = self.animation_helper.get_frames_per_second(NifData.data.roots + (self.kfdata.roots if self.kfdata else []))
                 bpy.context.scene.render.fps = fps
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
-                pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=NifData.data).recurse()
             if NifOp.props.send_geoms_to_bind_pos:
-                pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.send_detached_geoms_to_node_pos:
-                pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=NifData.data).recurse()
             if NifOp.props.send_bones_to_bind_position:
-                pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.apply_skin_deformation:
 
                 # TODO [Object] Create function & move to object/mesh class
-                for n_geom in self.data.get_global_iterator():
+                for n_geom in NifData.data.get_global_iterator():
                     if not isinstance(n_geom, NifFormat.NiGeometry):
                         continue
                     if not n_geom.is_skin():
@@ -165,10 +166,10 @@ class NifImport(NifCommon):
             # scale tree
             toaster = pyffi.spells.nif.NifToaster()
             toaster.scale = NifOp.props.scale_correction_import
-            pyffi.spells.nif.fix.SpellScale(data=self.data, toaster=toaster).recurse()
+            pyffi.spells.nif.fix.SpellScale(data=NifData.data, toaster=toaster).recurse()
 
             # import all root blocks
-            for block in self.data.roots:
+            for block in NifData.data.roots:
                 root = block
                 # root hack for corrupt better bodies meshes
                 # and remove geometry from better bodies on skeleton import
@@ -241,15 +242,21 @@ class NifImport(NifCommon):
             # special case 2: root node is grouping node
             NifLog.debug("{0} is a grouping node".format(root_block.name))
             b_obj = self.import_branch(root_block)
-            b_obj.niftools.bsxflags = self.bsx_flags
+
+            # TODO [object][flags]
+            # b_obj.niftools.bsxflags = self.bsx_flags
 
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
             b_obj = self.import_branch(root_block)
+
+            # TODO [object][flags]
             b_obj.niftools.bsxflags = self.bsx_flags
 
         elif isinstance(root_block, NifFormat.NiNode):
+
             # root node is dummy scene node
+            # TODO [object][property]
             for n_extra in root_block.get_extra_datas():
                 if isinstance(n_extra, NifFormat.BSBound):
                     self.boundhelper.import_bounding_box(n_extra)
@@ -316,14 +323,13 @@ class NifImport(NifCommon):
         NifLog.info("Importing data")
         if not n_block:
             return None
-        elif (isinstance(n_block, NifFormat.NiTriBasedGeom)
-              and NifOp.props.skeleton != "SKELETON_ONLY"):
+        elif isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
             # it's a shape node and we're not importing skeleton only
             # (NifOp.props.skeleton ==  "SKELETON_ONLY")
             NifLog.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             self.active_obj_name = n_block.name.decode()
-            b_obj = self.import_mesh(n_block)
+            b_obj = Mesh.import_mesh(n_block)
 
             # TODO [object][flags]
             b_obj.niftools.objectflags = n_block.flags
@@ -431,6 +437,7 @@ class NifImport(NifCommon):
                     if any(child.skin_instance
                            for child in geom_group):
                         self.armature_helper.append_armature_modifier(b_obj, b_armature)
+
                     # settings for collision node
                     if isinstance(n_block, NifFormat.RootCollisionNode):
                         b_obj.draw_type = 'BOUNDS'
@@ -516,8 +523,7 @@ class NifImport(NifCommon):
                     # with X = self.dict_bones_extra_matrix[B]
 
                     # post multiply Z with X^{-1}
-                    extra = mathutils.Matrix(
-                      self.dict_bones_extra_matrix[n_block])
+                    extra = mathutils.Matrix(self.dict_bones_extra_matrix[n_block])
                     extra.invert()
                     matrix = matrix * extra
                     # cancel out the tail translation T
@@ -589,424 +595,6 @@ class NifImport(NifCommon):
             return b_obj
         # all else is currently discarded
         return None
-
-    def import_mesh(self, n_block, group_mesh=None, applytransform=False, relative_to=None):
-        """Creates and returns a raw mesh, or appends geometry data to group_mesh.
-
-        :param relative_to:
-        :param n_block: The nif block whose mesh data to import.
-        :type n_block: C{NiTriBasedGeom}
-        :param group_mesh: The mesh to which to append the geometry
-            data. If C{None}, a new mesh is created.
-        :type group_mesh: A Blender object that has mesh data.
-        :param applytransform: Whether to apply the niBlock's
-            transformation to the mesh. If group_mesh is not C{None},
-            then applytransform must be C{True}.
-        :type applytransform: C{bool}
-        """
-        assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
-
-        NifLog.info("Importing mesh data for geometry {0}".format(n_block.name))
-
-        if group_mesh:
-            b_obj = group_mesh
-            b_mesh = group_mesh.data
-        else:
-            # Mesh name -> must be unique, so tag it if needed
-            b_name = object_import.import_name(n_block)
-            # create mesh data
-            b_mesh = bpy.data.meshes.new(b_name)
-            # create mesh object and link to data
-            b_obj = bpy.data.objects.new(b_name, b_mesh)
-            # link mesh object to the scene
-            bpy.context.scene.objects.link(b_obj)
-            # save original name as object property, for export
-            if b_name != n_block.name.decode():
-                b_obj.niftools.longname = n_block.name.decode()
-
-            # Mesh hidden flag
-            if n_block.flags & 1 == 1:
-                b_obj.draw_type = 'WIRE'  # hidden: wire
-            else:
-                b_obj.draw_type = 'TEXTURED'  # not hidden: shaded
-
-        # set transform matrix for the mesh
-        if not applytransform:
-            if group_mesh:
-                raise nif_utils.NifError("BUG: cannot set matrix when importing meshes in groups; use applytransform = True")
-
-            b_obj.matrix_local = nif_utils.import_matrix(n_block, relative_to=relative_to)
-
-        else:
-            # used later on
-            transform = nif_utils.import_matrix(n_block, relative_to=relative_to)
-
-        # shortcut for mesh geometry data
-        niData = n_block.data
-        if not niData:
-            raise nif_utils.NifError("no shape data in %s" % b_name)
-
-        # vertices
-        n_verts = niData.vertices
-
-        # polygons
-        poly_gens = [list(tri) for tri in niData.get_triangles()]
-
-        # "sticky" UV coordinates: these are transformed in Blender UV's
-        n_uv = list()
-        for i in range(len(niData.uv_sets)):
-            for lw in range(len(niData.uv_sets[i])):
-                n_uvt = list()
-                n_uvt.append(niData.uv_sets[i][lw].u)
-                n_uvt.append(1.0 - niData.uv_sets[i][lw].v)
-                n_uv.append(tuple(n_uvt))
-        n_uvco = tuple(n_uv)
-
-        # vertex normals
-        n_norms = niData.normals
-
-        '''
-        Properties
-        '''
-        Property().process_property_list(n_block, b_mesh)
-
-        # Material
-        # note that NIF files only support one material for each trishape
-        # find material property
-        # n_mat_prop = nif_utils.find_property(niBlock, NifFormat.NiMaterialProperty)
-
-        n_mat_prop = None
-
-        # TODO [property][shader]
-        # n_shader_prop = nif_utils.find_property(niBlock, NifFormat.BSLightingShaderProperty)
-        # n_effect_shader_prop = nif_utils.find_property(niBlock, NifFormat.BSEffectShaderProperty)
-
-        if n_mat_prop:  # or n_shader_prop or n_effect_shader_prop:
-            # Texture
-            n_texture_prop = None
-            if n_uvco:
-                n_texture_prop = nif_utils.find_property(n_block, NifFormat.NiTexturingProperty)
-
-            # TODO [property][texture][shader]
-            # extra datas (for sid meier's railroads) that have material info
-            # extra_datas = []
-            # for extra in niBlock.get_extra_datas():
-            #     if isinstance(extra, NifFormat.NiIntegerExtraData):
-            #         if extra.name in self.EXTRA_SHADER_TEXTURES:
-            #             # yes, it describes the shader slot number
-            #             extra_datas.append(extra)
-
-            # TODO [property][shader]
-            # # bethesda shader
-            # bsShaderProperty = nif_utils.find_property(niBlock, NifFormat.BSShaderPPLightingProperty)
-            # if bsShaderProperty is None:
-            #     bsShaderProperty = nif_utils.find_property(niBlock, NifFormat.BSLightingShaderProperty)
-            #
-            # if bsShaderProperty:
-            #     for textureslot in bsShaderProperty.texture_set.textures:
-            #         if textureslot:
-            #             self.bsShaderProperty1st = bsShaderProperty
-            #             break
-            #     else:
-            #         bsShaderProperty = self.bsShaderProperty1st
-
-            # bsEffectShaderProperty = nif_utils.find_property(niBlock, NifFormat.BSEffectShaderProperty)
-
-            # TODO [property][texture][shader]
-            # texturing effect for environment map
-            # in official files this is activated by a NiTextureEffect child
-            # preceeding the niBlock
-            # textureEffect = None
-            # if isinstance(niBlock._parent, NifFormat.NiNode):
-            #     lastchild = None
-            #     for child in niBlock._parent.children:
-            #         if child is niBlock:
-            #             if isinstance(lastchild, NifFormat.NiTextureEffect):
-            #                 textureEffect = lastchild
-            #             break
-            #         lastchild = child
-            #     else:
-            #         raise RuntimeError("texture effect scanning bug")
-            #     # in some mods the NiTextureEffect child follows the niBlock
-            #     # but it still works because it is listed in the effect list
-            #     # so handle this case separately
-            #     if not textureEffect:
-            #         for effect in niBlock._parent.effects:
-            #             if isinstance(effect, NifFormat.NiTextureEffect):
-            #                 textureEffect = effect
-            #                 break
-
-            # Alpha
-            n_alpha_prop = nif_utils.find_property(n_block, NifFormat.NiAlphaProperty)
-
-            # Specularity
-            n_specular_prop = nif_utils.find_property(n_block, NifFormat.NiSpecularProperty)
-
-            # create material and assign it to the mesh
-            # TODO [property][material] Delegate search for properties to import_material
-            material = self.materialhelper.import_material(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop)
-
-            # TODO [property][material] merge this call into import_material
-            self.animation_helper.material_animation.import_material_controllers(material, n_block)
-            # b_mesh_materials = list(b_mesh.materials)
-            # try:
-            #     materialIndex = b_mesh_materials.index(material)
-            # except ValueError:
-            #     materialIndex = len(b_mesh_materials)
-            #     b_mesh.materials.append(material)
-
-        else:
-            material = None
-            materialIndex = 0
-
-        # v_map will store the vertex index mapping
-        # nif vertex i maps to blender vertex v_map[i]
-        v_map = [i for i in range(len(n_verts))]  # pre-allocate memory, for faster performance
-
-        # Following code avoids introducing unwanted cracks in UV seams:
-        # Construct vertex map to get unique vertex / normal pair list.
-        # We use a Python dictionary to remove doubles and to keep track of indices.
-        # While we are at it, we also add vertices while constructing the map.
-        n_map = {}
-        b_v_index = len(b_mesh.vertices)
-        for i, v in enumerate(n_verts):
-            # The key k identifies unique vertex /normal pairs.
-            # We use a tuple of ints for key, this works MUCH faster than a
-            # tuple of floats.
-            if n_norms:
-                n = n_norms[i]
-                k = (int(v.x * self.VERTEX_RESOLUTION),
-                     int(v.y * self.VERTEX_RESOLUTION),
-                     int(v.z * self.VERTEX_RESOLUTION),
-                     int(n.x * self.NORMAL_RESOLUTION),
-                     int(n.y * self.NORMAL_RESOLUTION),
-                     int(n.z * self.NORMAL_RESOLUTION))
-            else:
-                k = (int(v.x * self.VERTEX_RESOLUTION),
-                     int(v.y * self.VERTEX_RESOLUTION),
-                     int(v.z * self.VERTEX_RESOLUTION))
-            # check if vertex was already added, and if so, what index
-            try:
-                # this is the bottle neck...
-                # can we speed this up?
-                if not NifOp.props.combine_vertices:
-                    n_map_k = None
-                else:
-                    n_map_k = n_map[k]
-            except KeyError:
-                n_map_k = None
-            if not n_map_k:
-                # not added: new vertex / normal pair
-                n_map[k] = i  # unique vertex / normal pair with key k was added, with NIF index i
-                v_map[i] = b_v_index  # NIF vertex i maps to blender vertex b_v_index
-                # add the vertex
-                if applytransform:
-                    v = mathutils.Vector([v.x, v.y, v.z])
-                    v = v * transform
-                    b_mesh.vertices.add(1)
-                    b_mesh.vertices[-1].co = [v.x, v.y, v.z]
-                else:
-                    b_mesh.vertices.add(1)
-                    b_mesh.vertices[-1].co = [v.x, v.y, v.z]
-                # adds normal info if present (Blender recalculates these when
-                # switching between edit mode and object mode, handled further)
-                # if n_norms:
-                #    mv = b_mesh.vertices[b_v_index]
-                #    n = n_norms[i]
-                #    mv.normal = mathutils.Vector(n.x, n.y, n.z)
-                b_v_index += 1
-            else:
-                # already added
-                # NIF vertex i maps to Blender vertex v_map[n_map_k]
-                v_map[i] = v_map[n_map_k]
-        # report
-        NifLog.debug("{0} unique vertex-normal pairs".format(str(len(n_map))))
-        # release memory
-        del n_map
-
-        # Adds the polygons to the mesh
-        f_map = [None] * len(poly_gens)
-        b_f_index = len(b_mesh.polygons)
-        bf2_index = len(b_mesh.polygons)
-        bl_index = len(b_mesh.loops)
-        poly_count = len(poly_gens)
-        b_mesh.polygons.add(poly_count)
-        b_mesh.loops.add(poly_count * 3)
-        num_new_faces = 0  # counter for debugging
-        unique_faces = list()  # to avoid duplicate polygons
-        tri_point_list = list()
-        for i, f in enumerate(poly_gens):
-            # get face index
-            f_verts = [v_map[vert_index] for vert_index in f]
-            if tuple(f_verts) in unique_faces:
-                continue
-            unique_faces.append(tuple(f_verts))
-            f_map[i] = b_f_index
-            tri_point_list.append(len(poly_gens[i]))
-            ls_list = list()
-            b_f_index += 1
-            num_new_faces += 1
-        for ls1 in range(0, num_new_faces * (tri_point_list[len(ls_list)]), (tri_point_list[len(ls_list)])):
-            ls_list.append((ls1 + bl_index))
-        for i in range(len(unique_faces)):
-            if f_map[i] is None:
-                continue
-            b_mesh.polygons[f_map[i]].loop_start = ls_list[(f_map[i] - bf2_index)]
-            b_mesh.polygons[f_map[i]].loop_total = len(unique_faces[(f_map[i] - bf2_index)])
-            loop_index = 0
-            lp_points = [v_map[loop_point] for loop_point in poly_gens[(f_map[i] - bf2_index)]]
-            while loop_index < (len(poly_gens[(f_map[i] - bf2_index)])):
-                b_mesh.loops[(loop_index + bl_index)].vertex_index = lp_points[loop_index]
-                loop_index += 1
-            bl_index += (len(poly_gens[(f_map[i] - bf2_index)]))
-
-        # at this point, deleted polygons (degenerate or duplicate)
-        # satisfy f_map[i] = None
-
-        NifLog.debug("{0} unique polygons".format(num_new_faces))
-
-        # set face smoothing and material
-        for b_polysmooth_index in f_map:
-            if b_polysmooth_index is None:
-                continue
-            polysmooth = b_mesh.polygons[b_polysmooth_index]
-            polysmooth.use_smooth = True if (n_norms or n_block.skin_instance) else False
-            polysmooth.material_index = materialIndex
-
-        Vertex.process_vertex_colors(b_mesh, niData, v_map)
-
-        if b_mesh.polygons:
-            Vertex.process_uv_coordinates(b_mesh, bf2_index, n_uvco, niData, poly_gens)
-
-        if material:
-            pass
-            # fix up vertex colors depending on whether we had textures in the material
-            # TODO [property][material] Move to texture
-            # mbasetex = self.texturehelper.has_base_texture(material)
-            # mglowtex = self.texturehelper.has_glow_texture(material)
-            # if b_mesh.vertex_colors:
-            #     if mbasetex or mglowtex:
-            #         # textured material: vertex colors influence lighting
-            #         material.use_vertex_color_light = True
-            #     else:
-            #         # non-textured material: vertex colors incluence color
-            #         material.use_vertex_color_paint = True
-
-            # # if there's a base texture assigned to this material sets it
-            # # to be displayed in Blender's 3D view
-            # # but only if there are UV coordinates
-            # if mbasetex and mbasetex.texture and n_uvco:
-            #     imgobj = mbasetex.texture.image
-            #     if imgobj:
-            #         for b_polyimage_index in f_map:
-            #             if b_polyimage_index is None:
-            #                 continue
-            #             tface = b_mesh.uv_textures.active.data[b_polyimage_index]
-            #             # gone in blender 2.5x+?
-            #             # f.mode = Blender.Mesh.FaceModes['TEX']
-            #             # f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
-            #             tface.image = imgobj
-
-        # import skinning info, for meshes affected by bones
-
-        skininst = n_block.skin_instance
-        if skininst:
-            Skin.process_geometry_skin(b_obj, n_block, skininst, v_map)
-
-        # import morph controller
-        # TODO [animation][geometry] move this to import_mesh_controllers
-        if NifOp.props.animation:
-            b_ipo = GeometryAnimation.process_geometry_animation(applytransform, b_mesh, n_block, transform, v_map)
-
-        # import facegen morphs
-        if self.egmdata:
-            # XXX if there is an egm, the assumption is that there is only one
-            # XXX mesh in the nif
-            sym_morphs = [list(morph.get_relative_vertices())
-                          for morph in self.egmdata.sym_morphs]
-            asym_morphs = [list(morph.get_relative_vertices())
-                           for morph in self.egmdata.asym_morphs]
-
-            # insert base key at frame 1, using relative keys
-            b_mesh.insertKey(1, 'relative')
-
-            if self.IMPORT_EGMANIM:
-                # if morphs are animated: create key ipo for mesh
-                b_ipo = Blender.Ipo.New('Key', 'KeyIpo')
-                b_mesh.key.ipo = b_ipo
-
-            morphs = ([(morph, "EGM SYM %i" % i)
-                       for i, morph in enumerate(sym_morphs)]
-                      +
-                      [(morph, "EGM ASYM %i" % i)
-                       for i, morph in enumerate(asym_morphs)])
-
-            for morphverts, keyname in morphs:
-                # length check disabled
-                # as sometimes, oddly, the morph has more vertices...
-                # assert(len(verts) == len(morphverts) == len(v_map))
-
-                # for each vertex calculate the key position from base
-                # pos + delta offset
-                for bv, mv, b_v_index in zip(n_verts, morphverts, v_map):
-                    base = mathutils.Vector(bv.x, bv.y, bv.z)
-                    delta = mathutils.Vector(mv[0], mv[1], mv[2])
-                    v = base + delta
-                    if applytransform:
-                        v *= transform
-                    b_mesh.vertices[b_v_index].co[0] = v.x
-                    b_mesh.vertices[b_v_index].co[1] = v.y
-                    b_mesh.vertices[b_v_index].co[2] = v.z
-                # update the mesh and insert key
-                b_mesh.insertKey(1, 'relative')
-                # set name for key
-                b_mesh.key.blocks[-1].name = keyname
-
-                if self.IMPORT_EGMANIM:
-                    # set up the ipo key curve
-                    b_curve = b_ipo.addCurve(keyname)
-                    # linear interpolation
-                    b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
-                    # constant extrapolation
-                    b_curve.extend = Blender.IpoCurve.ExtendTypes.CONST
-                    # set up the curve's control points
-                    framestart = 1 + len(b_mesh.key.blocks) * 10
-                    for frame, value in ((framestart, 0),
-                                         (framestart + 5, self.IMPORT_EGMANIMSCALE),
-                                         (framestart + 10, 0)):
-                        b_curve.addBezier((frame, value))
-
-            if self.IMPORT_EGMANIM:
-                # set begin and end frame
-                bpy.context.scene.getRenderingContext().startFrame(1)
-                bpy.context.scene.getRenderingContext().endFrame(
-                    11 + len(b_mesh.key.blocks) * 10)
-
-            # finally: return to base position
-            for bv, b_v_index in zip(n_verts, v_map):
-                base = mathutils.Vector(bv.x, bv.y, bv.z)
-                if applytransform:
-                    base *= transform
-                b_mesh.vertices[b_v_index].co[0] = base.x
-                b_mesh.vertices[b_v_index].co[1] = base.y
-                b_mesh.vertices[b_v_index].co[2] = base.z
-
-        # import priority if existing
-        if n_block.name in self.dict_bone_priorities:
-            constr = b_obj.constraints.append(
-                bpy.types.Constraint.NULL)
-            constr.name = "priority:%i" % self.dict_bone_priorities[n_block.name]
-
-        # recalculate mesh to render correctly
-        # implementation note: update() without validate() can cause crash
-
-        b_mesh.validate()
-        b_mesh.update()
-        b_obj.select = True
-        scn = bpy.context.scene
-        scn.objects.active = b_obj
-
-        return b_obj
 
     def set_parents(self, niBlock):
         """Set the parent block recursively through the tree, to allow

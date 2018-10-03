@@ -41,13 +41,12 @@
 import bpy
 
 from io_scene_nif.modules.obj import object_import
+from io_scene_nif.utility.nif_global import NifData
 from io_scene_nif.utility.nif_logging import NifLog
 
 
 class Material:
     
-    def __init__(self, parent):
-        self.nif_import = parent
 
     @staticmethod
     def get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop):
@@ -110,7 +109,7 @@ class Material:
             # Specular color
             import_material_specular(b_mat, n_mat_prop)
 
-            if (not n_specular_prop) and (self.nif_import.data.version != 0x14000004):
+            if (not n_specular_prop) and (NifData.data.version != 0x14000004):
                 b_mat.specular_intensity = 0.0  # no specular prop
             else:
                 b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
