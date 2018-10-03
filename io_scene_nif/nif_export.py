@@ -36,8 +36,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-
+from io_scene_nif.modules import obj, armature, collision
+from io_scene_nif.modules.property import texture
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
@@ -66,9 +66,7 @@ class NifExport(NifCommon):
 
     IDENTITY44 = NifFormat.Matrix44()
     IDENTITY44.set_identity()
-    FLOAT_MIN = -3.4028234663852886e+38
-    FLOAT_MAX = +3.4028234663852886e+38
-    
+
     # TODO: - Expose via properties
     
     EXPORT_OPTIMIZE_MATERIALS = True
@@ -87,6 +85,7 @@ class NifExport(NifCommon):
     EXPORT_OB_MATERIAL = 9  # wood
     EXPORT_OB_PRN = "NONE"  # Todo with location on character. For weapons, rings, helmets, Sheilds ect
 
+    # noinspection PyUnusedLocal
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator)
     
@@ -119,18 +118,16 @@ class NifExport(NifCommon):
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
-        self.dict_armatures = {}
-        self.dict_bones_extra_matrix = {}
-        self.dict_bones_extra_matrix_inv = {}
-        self.dict_bone_priorities = {}
-        self.dict_havok_objects = {}
-        self.dict_names = {}
-        self.dict_blocks = {}
-        self.dict_block_names = []
-        self.dict_materials = {}
-        self.dict_textures = {}
-        self.dict_mesh_uvlayers = []
-        
+        armature.DICT_BLOCKS = {}
+        armature.DICT_ARMATURES = {}
+        armature.DICT_BONES_EXTRA_MATRIX = {}
+        armature.DICT_BONES_EXTRA_MATRIX_INV = {}
+        armature.DICT_BONE_PRIORITIES = {}
+        collision.DICT_HAVOK_OBJECTS = {}
+        obj.DICT_NAMES = {}
+        obj.DICT_BLOCK_NAMES = []
+        texture.DICT_TEXTURES = {}
+
         # if an egm is exported, this will contain the data
         self.egm_data = None
 
@@ -255,7 +252,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
-                for block in self.dict_blocks:
+                for block in armature.DICT_BLOCKS:
                     # has it a controller field?
                     if isinstance(block, NifFormat.NiObjectNET):
                         if block.controller:
@@ -272,7 +269,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking controllers")
             if animtxt and NifOp.props.game == 'MORROWIND':
                 has_keyframecontrollers = False
-                for block in self.dict_blocks:
+                for block in armature.DICT_BLOCKS:
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
@@ -283,7 +280,7 @@ class NifExport(NifCommon):
                     self.animationhelper.export_keyframes(None, 'localspace', root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
-                for block in self.dict_blocks:
+                for block in armature.DICT_BLOCKS:
                     if isinstance(block, NifFormat.NiNode):
                         # if any of the shape children has a controller
                         # or if the ninode has a controller
@@ -301,7 +298,7 @@ class NifExport(NifCommon):
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
-                for block in list(self.dict_blocks.keys()):
+                for block in list(armature.DICT_BLOCKS.keys()):
                     if isinstance(block, NifFormat.NiNode) and block.name.decode() == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
                             ctrl = self.objecthelper.create_block("NiTransformController")
@@ -313,8 +310,8 @@ class NifExport(NifCommon):
                             ctrl.flags = 12
                             ctrl.frequency = 1.0
                             ctrl.phase = 0.0
-                            ctrl.start_time = self.FLOAT_MAX
-                            ctrl.stop_time = self.FLOAT_MIN
+                            ctrl.start_time = NifCommon.FLOAT_MAX
+                            ctrl.stop_time = NifCommon.FLOAT_MIN
                             interp.translation.x = bone.translation.x
                             interp.translation.y = bone.translation.y
                             interp.translation.z = bone.translation.z
@@ -394,7 +391,7 @@ class NifExport(NifCommon):
                     # we are not using blender properties to set the mass
                     # so calculate mass automatically first calculate distribution of mass
                     total_mass = 0
-                    for block in self.dict_blocks:
+                    for block in armature.DICT_BLOCKS:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             block.update_mass_center_inertia(solid=self.EXPORT_OB_SOLID)
                             total_mass += block.mass
@@ -404,7 +401,7 @@ class NifExport(NifCommon):
                         total_mass = 1
 
                     # now update the mass ensuring that total mass is self.EXPORT_OB_MASS
-                    for block in self.dict_blocks:
+                    for block in armature.DICT_BLOCKS:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             mass = self.EXPORT_OB_MASS * block.mass / total_mass
                             # lower bound on mass
@@ -414,7 +411,7 @@ class NifExport(NifCommon):
                 else:
                     # using blender properties, so block.mass *should* have
                     # been set properly
-                    for block in self.dict_blocks:
+                    for block in armature.DICT_BLOCKS:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             # lower bound on mass
                             if block.mass < 0.0001:
@@ -424,8 +421,8 @@ class NifExport(NifCommon):
                                 solid=self.EXPORT_OB_SOLID)
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
-            # note: self.dict_blocks changes during iteration, so need list copy
-            for block in list(self.dict_blocks):
+            # note: armature.DICT_BLOCKS changes during iteration, so need list copy
+            for block in list(armature.DICT_BLOCKS):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
                         if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
@@ -480,7 +477,7 @@ class NifExport(NifCommon):
                 # flatten skins
                 skelroots = set()
                 affectedbones = []
-                for block in self.dict_blocks:
+                for block in armature.DICT_BLOCKS:
                     if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
                         NifLog.info("Flattening skin on geometry {0}".format(block.name))
                         affectedbones.extend(block.flatten_skin())
@@ -512,7 +509,7 @@ class NifExport(NifCommon):
 
             # generate mopps (must be done after applying scale!)
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                for block in self.dict_blocks:
+                for block in armature.DICT_BLOCKS:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         NifLog.info("Generating mopp...")
                         block.update_mopp()
@@ -529,8 +526,8 @@ class NifExport(NifCommon):
                 if root_block.children[0].name[-3:] == 'nif':
                     root_block.children[0].name = filebase
                 NifLog.info("Making '{0}' the root block".format(root_block.children[0].name))
-                # remove root_block from self.dict_blocks
-                self.dict_blocks.pop(root_block)
+                # remove root_block from armature.DICT_BLOCKS
+                armature.DICT_BLOCKS.pop(root_block)
                 # set new root block
                 old_root_block = root_block
                 root_block = old_root_block.children[0]
@@ -696,14 +693,14 @@ class NifExport(NifCommon):
                                     # newer versions need the interpolator blocks
                                     controlledblock.interpolator = interpolator
                                 # get bone animation priority (previously fetched from the constraints during export_bones)
-                                if not node.name in self.dict_bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
+                                if not node.name in armature.DICT_BONE_PRIORITIES or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
                                     if self.EXPORT_ANIMPRIORITY != 0:
                                         priority = self.EXPORT_ANIMPRIORITY
                                     else:
                                         priority = 26
                                         NifLog.warn("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
                                 else:
-                                    priority = self.dict_bone_priorities[node.name]
+                                    priority = armature.DICT_BONE_PRIORITIES[node.name]
                                 controlledblock.priority = priority
                                 # set palette, and node and controller type names, and variables
                                 controlledblock.string_palette = kf_root.string_palette
@@ -838,7 +835,7 @@ class NifExport(NifCommon):
                 morph = self.egm_data.add_asym_morph()
             else:
                 continue
-            self.info("Exporting morph %s to egm" % keyblock.name)
+            NifLog.info("Exporting morph %s to egm" % keyblock.name)
             relative_vertices = []
             # note: keyblocks[0] is base key
             for vert, key_vert in zip(keyblocks[0].data, keyblock.data):

@@ -36,8 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-
+from io_scene_nif.modules import armature
 from io_scene_nif.utility.nif_logging import NifLog
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_global import NifOp
@@ -52,7 +51,7 @@ class Material:
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
-        # create block (but don't register it yet in self.dict_blocks)
+        # create block (but don't register it yet in obj.DICT_BLOCKS)
         mat_prop = NifFormat.NiMaterialProperty()
 
         # list which determines whether the material name is relevant or not
@@ -99,7 +98,7 @@ class Material:
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different
         # materials even when NiMaterialProperty is the same)
-        for block in self.nif_export.dict_blocks:
+        for block in armature.DICT_BLOCKS:
             if not isinstance(block, NifFormat.NiMaterialProperty):
                 continue
 

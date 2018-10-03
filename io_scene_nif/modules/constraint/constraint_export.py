@@ -75,7 +75,7 @@ class constraint_export():
                     NifLog.warn("Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {0}.".format(b_constr))
                     continue
                 # check that the object is a rigid body
-                for otherbody, otherobj in self.nif_export.dict_blocks.items():
+                for otherbody, otherobj in armature.DICT_BLOCKS.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
                         and otherobj is b_obj:
                         hkbody = otherbody
@@ -159,7 +159,7 @@ class constraint_export():
                     NifLog.warn("Constraint {0} has no target, skipped".format(b_constr))
                     continue
                 # find target's bhkRigidBody
-                for otherbody, otherobj in self.nif_export.dict_blocks.items():
+                for otherbody, otherobj in armature.DICT_BLOCKS.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
                         and otherobj == targetobj:
                         hkconstraint.entities[1] = otherbody

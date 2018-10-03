@@ -219,7 +219,7 @@ class Armature:
                         # to the armature
                         # so let's find that bone!
                         nif_bone_name = self.nif_export.objecthelper.get_full_name(parent_bone_name)
-                        for bone_block in self.nif_export.dict_blocks:
+                        for bone_block in armature.DICT_BLOCKS:
                             if isinstance(bone_block, NifFormat.NiNode) and bone_block.name.decode() == nif_bone_name:
                                 # ok, we should parent to block
                                 # instead of to parent_block

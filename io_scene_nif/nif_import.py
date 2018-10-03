@@ -92,8 +92,6 @@ class NifImport(NifCommon):
         """Main import function."""
 
         # TODO resets here for now
-        obj.DICT_NAMES = {}
-        obj.DICT_BLOCK_NAMES = []
         animation.FPS = 30
         armature.DICT_BLOCKS = {}
         armature.DICT_ARMATURES = {}
@@ -101,6 +99,8 @@ class NifImport(NifCommon):
         armature.DICT_BONES_EXTRA_MATRIX_INV = {}
         armature.DICT_BONE_PRIORITIES = {}
         collision.DICT_HAVOK_OBJECTS = {}
+        obj.DICT_NAMES = {}
+        obj.DICT_BLOCK_NAMES = []
         texture.DICT_TEXTURES = {}
 
         # catch nif import errors

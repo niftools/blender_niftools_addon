@@ -43,14 +43,13 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import collision, geometry
+from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
 
 class BHKShape:
-    FLOAT_MIN = -3.4028234663852886e+38
-    FLOAT_MAX = +3.4028234663852886e+38
 
     def __init__(self, parent):
         self.nif_export = parent
@@ -112,8 +111,8 @@ class BHKShape:
                 blendctrl.flags = 12
                 blendctrl.frequency = 1.0
                 blendctrl.phase = 0.0
-                blendctrl.start_time = self.FLOAT_MAX
-                blendctrl.stop_time = self.FLOAT_MIN
+                blendctrl.start_time = NifCommon.FLOAT_MAX
+                blendctrl.stop_time = NifCommon.FLOAT_MIN
                 parent_block.add_controller(blendctrl)
             else:
                 # usual collision object

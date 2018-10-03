@@ -38,3 +38,6 @@
 
 # dictionary of names, to map NIF blocks to correct Blender names
 DICT_NAMES = {}
+
+# keeps track of names of exported blocks, to make sure they are unique
+DICT_BLOCK_NAMES = []

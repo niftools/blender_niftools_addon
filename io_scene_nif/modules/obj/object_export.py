@@ -41,7 +41,7 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
+from io_scene_nif.modules import armature, geometry, obj
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -70,8 +70,8 @@ class ObjectHelper:
     def get_exported_objects(self):
         """Return a list of exported objects."""
         exported_objects = []
-        # iterating over self.nif_export.dict_blocks.itervalues() will count some objects twice
-        for b_obj in self.nif_export.dict_blocks.values():
+        # iterating over armature.DICT_BLOCKS.itervalues() will count some objects twice
+        for b_obj in armature.DICT_BLOCKS.values():
             # skip empty objects
             if b_obj is None:
                 continue
@@ -94,7 +94,7 @@ class ObjectHelper:
             NifLog.info("Exporting {0} block".format(block.__class__.__name__))
         else:
             NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
-        self.nif_export.dict_blocks[block] = b_obj
+        armature.DICT_BLOCKS[block] = b_obj
         return block
 
     def export_node(self, b_obj, space, parent_block, node_name):
@@ -331,7 +331,7 @@ class ObjectHelper:
             line = b_textline.body
             if len(line) > 0:
                 name, fullname = line.split(';')
-                self.nif_export.dict_names[name] = fullname
+                obj.DICT_NAMES[name] = fullname
 
     def get_unique_name(self, b_name):
         """Returns an unique name for use in the NIF file, from the name of a
@@ -348,14 +348,14 @@ class ObjectHelper:
         # blender bone naming -> nif bone naming
         unique_name = armature.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
-        if unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
+        if unique_name in obj.DICT_BLOCK_NAMES or unique_name in list(obj.DICT_NAMES.values()):
             unique_int = 0
             old_name = unique_name
-            while unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
+            while unique_name in obj.DICT_BLOCK_NAMES or unique_name in list(obj.DICT_NAMES.values()):
                 unique_name = "%s.%02d" % (old_name, unique_int)
                 unique_int += 1
-        self.nif_export.dict_block_names.append(unique_name)
-        self.nif_export.dict_names[b_name] = unique_name
+        obj.DICT_BLOCK_NAMES.append(unique_name)
+        obj.DICT_NAMES[b_name] = unique_name
         return unique_name
 
     def get_full_name(self, b_name):
@@ -366,7 +366,7 @@ class ObjectHelper:
         """
         # TODO [object] Refactor and simplify this code.
         try:
-            return self.nif_export.dict_names[b_name]
+            return obj.DICT_NAMES[b_name]
         except KeyError:
             return self.get_unique_name(b_name)
 
@@ -1114,7 +1114,7 @@ class MeshHelper:
                         else:
                             skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
-                        for block in self.nif_export.dict_blocks:
+                        for block in armature.DICT_BLOCKS:
                             if isinstance(block, NifFormat.NiNode):
                                 if block.name.decode() == self.nif_export.objecthelper.get_full_name(armaturename):
                                     skininst.skeleton_root = block
@@ -1123,13 +1123,13 @@ class MeshHelper:
                             raise nif_utils.NifError("Skeleton root '%s' not found." % armaturename)
 
                         # create skinning data and link it
-                        skindata = self.nif_export.objecthelper.create_block("NiSkinData", b_obj)
-                        skininst.data = skindata
+                        skin_data = self.nif_export.objecthelper.create_block("NiSkinData", b_obj)
+                        skininst.data = skin_data
 
-                        skindata.has_vertex_weights = True
+                        skin_data.has_vertex_weights = True
                         # fix geometry rest pose: transform relative to
                         # skeleton root
-                        skindata.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').get_inverse())
+                        skin_data.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').get_inverse())
 
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}
@@ -1187,7 +1187,7 @@ class MeshHelper:
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
-                            for block in self.nif_export.dict_blocks:
+                            for block in armature.DICT_BLOCKS:
                                 if isinstance(block, NifFormat.NiNode):
                                     if block.name.decode() == self.nif_export.objecthelper.get_full_name(bone):
                                         if not bone_block:
@@ -1409,9 +1409,9 @@ class MeshHelper:
                     pv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[pv_index]
                     vertex_vec = vertex.co
-                    vkey = (int(vertex_vec[0] * self.nif_export.VERTEX_RESOLUTION),
-                            int(vertex_vec[1] * self.nif_export.VERTEX_RESOLUTION),
-                            int(vertex_vec[2] * self.nif_export.VERTEX_RESOLUTION))
+                    vkey = (int(vertex_vec[0] * geometry.VERTEX_RESOLUTION),
+                            int(vertex_vec[1] * geometry.VERTEX_RESOLUTION),
+                            int(vertex_vec[2] * geometry.VERTEX_RESOLUTION))
                     try:
                         vdict[vkey].append((vertex, poly, b_mesh))
                     except KeyError:
