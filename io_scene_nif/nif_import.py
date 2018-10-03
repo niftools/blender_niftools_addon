@@ -79,7 +79,7 @@ class NifImport(NifCommon):
 
         # Helper systems
         self.animation_helper = AnimationHelper()
-        self.armature_helper = Armature()
+        self.armature_helper = Armature(parent=self)
         # TODO [collision] create super collisionhelper
         self.bhkhelper = BHKShape()
         self.boundhelper = Bound()
