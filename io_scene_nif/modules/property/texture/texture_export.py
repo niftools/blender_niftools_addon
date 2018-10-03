@@ -39,6 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -54,6 +55,8 @@ class TextureHelper:
     def __init__(self, parent):
         self.nif_export = parent
         self.texture_writer = TextureWriter(parent=self)
+        # TODO [texture] Not a dictionary lookup
+        self.DICT_MESH_UVLAYERS = {}
 
         self.base_mtex = None
         self.glow_mtex = None
@@ -219,7 +222,7 @@ class TextureHelper:
         self.export_nitextureprop_tex_descs(texprop)
 
         # search for duplicate
-        for block in self.nif_export.dict_blocks:
+        for block in armature.DICT_BLOCKS:
             if isinstance(block, NifFormat.NiTexturingProperty) and block.get_hash() == texprop.get_hash():
                 return block
 
@@ -232,7 +235,7 @@ class TextureHelper:
         if self.base_mtex:
             texprop.has_base_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.base_texture,
-                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                uvlayers=self.DICT_MESH_UVLAYERS,
                                                 b_mat_texslot=self.base_mtex)
             # check for texture flip definition
             try:
@@ -246,14 +249,14 @@ class TextureHelper:
         if self.glow_mtex:
             texprop.has_glow_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.glow_texture,
-                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                uvlayers=self.DICT_MESH_UVLAYERS,
                                                 b_mat_texslot=self.glow_mtex)
 
         if self.bump_mtex:
             if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_bump_map_texture = True
                 self.texture_writer.export_tex_desc(texdesc=texprop.bump_map_texture,
-                                                    uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                    uvlayers=self.DICT_MESH_UVLAYERS,
                                                     b_mat_texslot=self.bump_mtex)
                 texprop.bump_map_luma_scale = 1.0
                 texprop.bump_map_luma_offset = 0.0
@@ -271,7 +274,7 @@ class TextureHelper:
             if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_gloss_texture = True
                 self.texture_writer.export_tex_desc(texdesc=texprop.gloss_texture,
-                                                    uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                    uvlayers=self.DICT_MESH_UVLAYERS,
                                                     b_mat_texslot=self.gloss_mtex)
             else:
                 shadertexdesc = texprop.shader_textures[2]
@@ -281,13 +284,13 @@ class TextureHelper:
         if self.dark_mtex:
             texprop.has_dark_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.dark_texture,
-                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                uvlayers=self.DICT_MESH_UVLAYERS,
                                                 b_mat_texslot=self.dark_mtex)
 
         if self.detail_mtex:
             texprop.has_detail_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.detail_texture,
-                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                uvlayers=self.DICT_MESH_UVLAYERS,
                                                 b_mat_texslot=self.detail_mtex)
 
         if self.ref_mtex:
@@ -429,8 +432,8 @@ class TextureHelper:
             elif b_mat_texslot.texture_coords == 'UV':
 
                 # update set of uv layers that must be exported
-                if not b_mat_texslot.uv_layer in self.nif_export.dict_mesh_uvlayers:
-                    self.nif_export.dict_mesh_uvlayers.append(b_mat_texslot.uv_layer)
+                if b_mat_texslot.uv_layer not in self.DICT_MESH_UVLAYERS:
+                    self.DICT_MESH_UVLAYERS.append(b_mat_texslot.uv_layer)
 
                 # glow tex
                 if b_mat_texslot.use_map_emit:

@@ -43,6 +43,8 @@ import os.path
 
 import bpy
 from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules.property import texture
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -69,7 +71,7 @@ class TextureLoader:
     def import_texture_source(self, source):
         """Convert a NiSourceTexture block, or simply a path string,
         to a Blender Texture object, return the Texture object and
-        stores it in the self.nif_import.dict_textures dictionary to avoid future
+        stores it in the self.DICT_TEXTURES dictionary to avoid future
         duplicate imports.
         """
         # if the source block is not linked then return None
@@ -81,7 +83,7 @@ class TextureLoader:
 
         try:
             # look up the texture in the dictionary of imported textures and return it if found
-            return self.nif_import.dict_textures[texture_hash]
+            return texture.DICT_TEXTURES[texture_hash]
         except KeyError:
             pass
 
@@ -104,7 +106,7 @@ class TextureLoader:
         b_texture.use_mipmap = True
 
         # save texture to avoid duplicate imports, and return it
-        self.nif_import.dict_textures[texture_hash] = b_texture
+        texture.DICT_TEXTURES[texture_hash] = b_texture
         return b_texture
 
     def import_embedded_texture_source(self, source):

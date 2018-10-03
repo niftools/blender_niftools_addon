@@ -34,3 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+
+# dictionary of texture files, to reuse textures
+DICT_TEXTURES = {}
