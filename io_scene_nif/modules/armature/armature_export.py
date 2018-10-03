@@ -1,4 +1,4 @@
-'''Script to import/export all the skeleton related objects.'''
+"""Script to import/export all the skeleton related objects."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -91,13 +91,13 @@ class Armature:
         """Set bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.nif_export.dict_bones_extra_matrix_inv[armature.get_bone_name_for_nif(bone_name)] = matrix
+        armature.DICT_BONES_EXTRA_MATRIX_INV[armature.get_bone_name_for_nif(bone_name)] = matrix
 
     def get_bone_extra_matrix_inv(self, bone_name):
         """Get bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.nif_export.dict_bones_extra_matrix_inv[armature.get_bone_name_for_nif(bone_name)]
+        return armature.DICT_BONES_EXTRA_MATRIX_INV[armature.get_bone_name_for_nif(bone_name)]
     
     def export_bones(self, arm, parent_block):
         """Export the bones of an armature."""
@@ -180,7 +180,7 @@ class Armature:
             for constr in arm.pose.bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[armature.get_bone_name_for_nif(bone.name)] = int(constr.name[9:])
+                    armature.DICT_BONE_PRIORITIES[armature.get_bone_name_for_nif(bone.name)] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
         for bone in list(bones.values()):

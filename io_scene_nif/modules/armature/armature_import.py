@@ -45,7 +45,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature, obj
-from io_scene_nif.modules.obj import DICT_NAMES
+from io_scene_nif.modules.animation.animation_import import AnimationHelper
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp, NifData
@@ -73,7 +73,7 @@ class Armature:
     def import_armature(self, n_armature):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning of the bones before skins are attached."""
-        armature_name = self.nif_import.import_name(n_armature)
+        armature_name = obj.import_name(n_armature)
 
         b_armature_data = bpy.data.armatures.new(armature_name)
         # b_armature_data.use_vertex_groups = True
@@ -105,7 +105,7 @@ class Armature:
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes.
         if NifOp.props.animation:
-            self.nif_import.animationhelper.armature_animation.import_armature_animation(b_armature)
+            AnimationHelper().armature_animation.import_armature_animation(b_armature)
 
         # constraints (priority)
         # must be done outside edit mode hence after calling
@@ -113,12 +113,11 @@ class Armature:
             # find bone nif block
             if bone_name.startswith("InvMarker"):
                 bone_name = "InvMarker"
-            ni_bone = self.nif_import.dict_blocks[bone_name]
+            ni_bone = armature.DICT_BLOCKS[bone_name]
             # store bone priority, if applicable
-            if ni_bone.name in self.nif_import.dict_bone_priorities:
-                constr = b_posebone.constraints.append(
-                    bpy.types.ConstraintNULL)
-                constr.name = "priority:%i" % self.nif_import.dict_bone_priorities[ni_bone.name]
+            if ni_bone.name in armature.DICT_BONE_PRIORITIES:
+                constr = b_posebone.constraints.append(bpy.types.ConstraintNULL)
+                constr.name = "priority:%i" % armature.DICT_BONE_PRIORITIES[ni_bone.name]
 
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
@@ -139,15 +138,14 @@ class Armature:
         nub_length = 5.0
         scale = NifOp.props.scale_correction_import
         # bone name
-        bone_name = self.nif_import.import_name(n_block)
+        bone_name = obj.import_name(n_block)
         n_child_bones = [child for child in n_block.children if self.is_bone(child)]
         # create a new bone
         b_bone = b_armature_data.edit_bones.new(bone_name)
         # Sets active so edit bones are marked selected after import
         b_armature_data.edit_bones.active = b_bone
         # head: get position from niBlock
-        armature_space_matrix = nif_utils.import_matrix(n_block,
-                                                        relative_to=n_armature)
+        armature_space_matrix = nif_utils.import_matrix(n_block, relative_to=n_armature)
 
         b_bone_head_x = armature_space_matrix[0][3]
         b_bone_head_y = armature_space_matrix[1][3]
@@ -189,15 +187,13 @@ class Armature:
                 # to keep things neat if bones aren't realigned on import
                 # orient it as the vector between this
                 # bone's head and the parent's tail
-                parent_tail = b_armature_data.edit_bones[
-                    DICT_NAMES[n_block._parent]].tail
+                parent_tail = b_armature_data.edit_bones[obj.DICT_NAMES[n_block._parent]].tail
                 dx = b_bone_head_x - parent_tail[0]
                 dy = b_bone_head_y - parent_tail[1]
                 dz = b_bone_head_z - parent_tail[2]
                 if abs(dx + dy + dz) * 200 < NifOp.props.epsilon:
                     # no offset from the parent: follow the parent's orientation
-                    parent_head = b_armature_data.edit_bones[
-                        DICT_NAMES[n_block._parent]].head
+                    parent_head = b_armature_data.edit_bones[obj.DICT_NAMES[n_block._parent]].head
                     dx = parent_tail[0] - parent_head[0]
                     dy = parent_tail[1] - parent_head[1]
                     dz = parent_tail[2] - parent_head[2]
@@ -235,7 +231,7 @@ class Armature:
         new_bone_matrix[2][3] = b_bone_head_z
 
         # stores any correction or alteration applied to the bone matrix new * inverse(old)
-        self.nif_import.dict_bones_extra_matrix[n_block] = new_bone_matrix * old_bone_matrix_inv
+        armature.DICT_BONES_EXTRA_MATRIX[n_block] = new_bone_matrix * old_bone_matrix_inv
 
         # set bone children
         for niBone in n_child_bones:
@@ -304,8 +300,8 @@ class Armature:
                     skelroot = ni_block
             else:
                 skelroot = ni_block
-            if skelroot not in self.nif_import.dict_armatures:
-                self.nif_import.dict_armatures[skelroot] = []
+            if skelroot not in armature.DICT_ARMATURES:
+                armature.DICT_ARMATURES[skelroot] = []
             NifLog.info("Selecting node '%s' as skeleton root".format(skelroot.name))
             # add bones
             for bone in skelroot.tree():
@@ -315,17 +311,17 @@ class Armature:
                     continue
                 if self.nif_import.is_grouping_node(bone):
                     continue
-                if bone not in self.nif_import.dict_armatures[skelroot]:
-                    self.nif_import.dict_armatures[skelroot].append(bone)
+                if bone not in armature.DICT_ARMATURES[skelroot]:
+                    armature.DICT_ARMATURES[skelroot].append(bone)
             return  # done!
 
         # attaching to selected armature -> first identify armature and bones
-        elif NifOp.props.skeleton == "GEOMETRY_ONLY" and not self.nif_import.dict_armatures:
+        elif NifOp.props.skeleton == "GEOMETRY_ONLY" and not armature.DICT_ARMATURES:
             skelroot = ni_block.find(block_name=self.nif_import.selected_objects[0].name)
             if not skelroot:
                 raise nif_utils.NifError("nif has no armature '%s'" % self.nif_import.selected_objects[0].name)
             NifLog.debug("Identified '{0}' as armature".format(skelroot.name))
-            self.nif_import.dict_armatures[skelroot] = []
+            armature.dict_armatures[skelroot] = []
             for bone_name in self.nif_import.selected_objects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
                 nif_bone_name = armature.get_bone_name_for_nif(bone_name)
@@ -334,8 +330,8 @@ class Armature:
                 # add it to the name list if there is a bone with that name
                 if bone_block:
                     NifLog.info("Identified nif block '{0}' with bone '{1}' in selected armature".format(nif_bone_name, bone_name))
-                    DICT_NAMES[bone_block] = bone_name
-                    self.nif_import.dict_armatures[skelroot].append(bone_block)
+                    obj.DICT_NAMES[bone_block] = bone_name
+                    armature.DICT_ARMATURES[skelroot].append(bone_block)
                     self.complete_bone_tree(bone_block, skelroot)
 
         # search for all NiTriShape or NiTriStrips blocks...
@@ -349,11 +345,11 @@ class Armature:
                 skininst = ni_block.skin_instance
                 skelroot = skininst.skeleton_root
                 if NifOp.props.skeleton == "EVERYTHING":
-                    if skelroot not in self.nif_import.dict_armatures:
-                        self.nif_import.dict_armatures[skelroot] = []
+                    if skelroot not in armature.DICT_ARMATURES:
+                        armature.DICT_ARMATURES[skelroot] = []
                         NifLog.debug("'{0}' is an armature".format(skelroot.name))
                 elif NifOp.props.skeleton == "GEOMETRY_ONLY":
-                    if skelroot not in self.nif_import.dict_armatures:
+                    if skelroot not in armature.DICT_ARMATURES:
                         raise nif_utils.NifError("NIF structure incompatible with '%s' as armature: node '%s' has '%s' as armature" %
                                                  (self.nif_import.selected_objects[0].name, ni_block.name, skelroot.name))
 
@@ -361,8 +357,8 @@ class Armature:
                     # boneBlock can be None; see pyffi issue #3114079
                     if not boneBlock:
                         continue
-                    if boneBlock not in self.nif_import.dict_armatures[skelroot]:
-                        self.nif_import.dict_armatures[skelroot].append(boneBlock)
+                    if boneBlock not in armature.DICT_ARMATURES[skelroot]:
+                        armature.DICT_ARMATURES[skelroot].append(boneBlock)
                         NifLog.debug("'{0}' is a bone of armature '{1}'".format(boneBlock.name, skelroot.name))
                     # now we "attach" the bone to the armature:
                     # we make sure all NiNodes from this bone all the way
@@ -382,8 +378,8 @@ class Armature:
                             continue
                         if self.nif_import.is_grouping_node(bone):
                             continue
-                        if bone not in self.nif_import.dict_armatures[skelroot]:
-                            self.nif_import.dict_armatures[skelroot].append(bone)
+                        if bone not in armature.DICT_ARMATURES[skelroot]:
+                            armature.DICT_ARMATURES[skelroot].append(bone)
                             NifLog.debug("'{0}' marked as extra bone of armature '{1}'".format(bone.name, skelroot.name))
                             # we make sure all NiNodes from this bone
                             # all the way down to the armature NiNode
@@ -400,15 +396,15 @@ class Armature:
         """Make sure that the bones actually form a tree all the way down to the armature node. Call this function on all bones of a skin instance."""
 
         # we must already have marked this one as a bone
-        assert skelroot in self.nif_import.dict_armatures  # debug
-        assert bone in self.nif_import.dict_armatures[skelroot]  # debug
+        assert skelroot in armature.DICT_ARMATURES  # debug
+        assert bone in armature.DICT_ARMATURES[skelroot]  # debug
         # get the node parent, this should be marked as an armature or as a bone
         boneparent = bone._parent
         if boneparent != skelroot:
             # parent is not the skeleton root
-            if boneparent not in self.nif_import.dict_armatures[skelroot]:
+            if boneparent not in armature.DICT_ARMATURES[skelroot]:
                 # neither is it marked as a bone: so mark the parent as a bone
-                self.nif_import.dict_armatures[skelroot].append(boneparent)
+                armature.DICT_ARMATURES[skelroot].append(boneparent)
                 # store the coordinates for realignement autodetection
                 NifLog.debug("'{0}' is a bone of armature '{1}'".format(boneparent.name, skelroot.name))
             # now the parent is marked as a bone
@@ -420,7 +416,7 @@ class Armature:
         """Tests a NiNode to see if it's a bone."""
         if not ni_block:
             return False
-        for bones in self.nif_import.dict_armatures.values():
+        for bones in armature.DICT_ARMATURES.values():
             if ni_block in bones:
                 return True
         return False
@@ -428,7 +424,7 @@ class Armature:
     def is_armature_root(self, ni_block):
         """Tests a block to see if it's an armature."""
         if isinstance(ni_block, NifFormat.NiNode):
-            return ni_block in self.nif_import.dict_armatures
+            return ni_block in armature.DICT_ARMATURES
         return False
 
     def get_closest_bone(self, ni_block, skelroot):
@@ -445,10 +441,10 @@ class Armature:
     def get_blender_object(self, n_block):
         """Retrieves the Blender object or Blender bone matching the block."""
         if self.is_bone(n_block):
-            bone_name = DICT_NAMES[n_block]
-            for armature_block, bone_blocks in self.nif_import.dict_armatures.items():
+            bone_name = obj.DICT_NAMES[n_block]
+            for armature_block, bone_blocks in armature.DICT_ARMATURES.items():
                 if n_block in bone_blocks:
-                    armature_name = DICT_NAMES[armature_block]
+                    armature_name = obj.DICT_NAMES[armature_block]
                     break
                 else:
                     raise nif_utils.NifError("cannot find bone '%s'" % bone_name)
@@ -456,9 +452,10 @@ class Armature:
             b_armature_obj = bpy.types.Object(armature_name)
             return b_armature_obj.data.bones[bone_name]
         else:
-            return bpy.types.Object(DICT_NAMES[n_block])
+            return bpy.types.Object(obj.DICT_NAMES[n_block])
 
-    def decompose_srt(self, matrix):
+    @staticmethod
+    def decompose_srt(matrix):
         """Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
         # get scale components
         trans_vec, rot_quat, scale_vec = matrix.decompose()
@@ -490,7 +487,7 @@ class Armature:
         except KeyError:
             bonetxt = bpy.data.texts.new("BoneExMat")
         # write correction matrices to text buffer
-        for niBone, correction_matrix in self.nif_import.dict_bones_extra_matrix.items():
+        for niBone, correction_matrix in armature.DICT_BONES_EXTRA_MATRIX.items():
             # skip identity transforms
             if sum(sum(abs(x) for x in row) for row in (correction_matrix - self.IDENTITY44)) < NifOp.props.epsilon:
                 continue
@@ -499,11 +496,12 @@ class Armature:
             for row in correction_matrix:
                 line = '%s;%s,%s,%s,%s' % (line, row[0], row[1], row[2], row[3])
             # we write the bone names with their blender name!
-            blender_bone_name = DICT_NAMES[niBone]  # NOT niBone.name !!
+            blender_bone_name = obj.DICT_NAMES[niBone]  # NOT niBone.name !!
             # write it to the text buffer
             bonetxt.write('%s/%s\n' % (blender_bone_name, line[1:]))
 
-    def store_names(self):
+    @staticmethod
+    def store_names():
         """Stores the original, long object names so that they can be re-exported.
         In order for this to work it is necessary to mantain the imported names unaltered.
         Since the text buffer is cleared on each import only the last import will be exported correctly."""
