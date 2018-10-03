@@ -40,7 +40,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.geometry.vertex_import import Vertex
+from io_scene_nif.modules.geometry.mesh.vertex_import import Vertex
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
 
@@ -185,3 +185,31 @@ class TextureSlots:
     def get_used_textslots(self, b_mat):
         self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None]
         return self.used_slots
+
+    # TODO [property][texture] move to each texture type
+    # fix up vertex colors depending on whether we had textures in the material
+    # mbasetex = self.texturehelper.has_base_texture(material)
+    # mglowtex = self.texturehelper.has_glow_texture(material)
+    # if b_mesh.vertex_colors:
+    #     if mbasetex or mglowtex:
+    #         # textured material: vertex colors influence lighting
+    #         material.use_vertex_color_light = True
+    #     else:
+    #         # non-textured material: vertex colors incluence color
+    #         material.use_vertex_color_paint = True
+
+    # TODO [texture] check to see if the is needed.
+    # # if there's a base texture assigned to this material sets it
+    # # to be displayed in Blender's 3D view
+    # # but only if there are UV coordinates
+    # if mbasetex and mbasetex.texture and n_uvco:
+    #     imgobj = mbasetex.texture.image
+    #     if imgobj:
+    #         for b_polyimage_index in f_map:
+    #             if b_polyimage_index is None:
+    #                 continue
+    #             tface = b_mesh.uv_textures.active.data[b_polyimage_index]
+    #             # gone in blender 2.5x+?
+    #             # f.mode = Blender.Mesh.FaceModes['TEX']
+    #             # f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
+    #             tface.image = imgobj
