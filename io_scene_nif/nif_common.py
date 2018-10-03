@@ -49,48 +49,15 @@ class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
     """
-    
-    # dictionary of bones that belong to a certain armature
-    # maps NIF armature name to list of NIF bone name
-    dict_armatures = {}
-    # dictionary of bones, maps Blender bone name to matrix that maps the
-    # NIF bone matrix on the Blender bone matrix
-    # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
-    dict_bones_extra_matrix = {}
-
-    # dictionary of bones, maps Blender bone name to matrix that maps the
-    # NIF bone matrix on the Blender bone matrix
-    # Recall from the import script
-    #   B' = X * B,
-    # where B' is the Blender bone matrix, and B is the NIF bone matrix,
-    # both in armature space. So to restore the NIF matrices we need to do
-    #   B = X^{-1} * B'
-    # Hence, we will restore the X's, invert them, and store those inverses in the
-    # following dictionary.
-    dict_bones_extra_matrix_inv = {}
-
-    # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
-    # we use this dictionary to set the physics constraints (ragdoll etc)
-    dict_havok_objects = {}
 
     # keeps track of names of exported blocks, to make sure they are unique
     dict_block_names = []
 
-    # bone animation priorities (maps NiNode name to priority number);
-    # priorities are set in import_kf_root and are stored into the name
-    # of a NULL constraint (for lack of something better) in
-    # import_armature
-    dict_bone_priorities = {}
-
     # dictionary of materials, to reuse materials
     dict_materials = {}
-    
+
     # dictionary of texture files, to reuse textures
     dict_textures = {}
-    dict_mesh_uvlayers = []
-
-    VERTEX_RESOLUTION = 1000
-    NORMAL_RESOLUTION = 100
 
     EXTRA_SHADER_TEXTURES = [
         "EnvironmentMapIndex",
@@ -102,37 +69,21 @@ class NifCommon:
     """Names (ordered by default index) of shader texture slots for
     Sid Meier's Railroads and similar games.
     """
-    
-    HAVOK_SCALE = 6.996
 
     def __init__(self, operator):
         """Common initialization functions for executing the import/export operators: """
-        
+
         NifOp.init(operator)
-        
+
         # print scripts info
         from . import bl_info
         niftools_ver = (".".join(str(i) for i in bl_info["version"]))
-        
+
         NifLog.info("Executing - Niftools : Blender Nif Plugin v{0} (running on Blender {1}, PyFFI {2})".format(
             niftools_ver, bpy.app.version_string, pyffi.__version__))
 
         # find and store this list now of selected objects as creating new objects adds them to the selection list
         self.selected_objects = bpy.context.selected_objects[:]
-
-
-
-    def get_b_ipol_from_n_ipol(self, n_ipol):
-        if n_ipol == NifFormat.KeyType.LINEAR_KEY:
-            return Blender.IpoCurve.InterpTypes.LINEAR
-        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
-            return Blender.IpoCurve.InterpTypes.BEZIER
-        elif n_ipol == 0:
-            # guessing, not documented in nif.xml
-            return Blender.IpoCurve.InterpTypes.CONST
-        
-        NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
-        return Blender.IpoCurve.InterpTypes.BEZIER
 
     def get_n_ipol_from_b_ipol(self, b_ipol):
         if b_ipol == Blender.IpoCurve.InterpTypes.LINEAR:
@@ -141,7 +92,7 @@ class NifCommon:
             return NifFormat.KeyType.QUADRATIC_KEY
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
             return NifFormat.KeyType.CONST_KEY
-        
+
         NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
         return NifFormat.KeyType.QUADRATIC_KEY
 
@@ -152,6 +103,6 @@ class NifCommon:
             return NifFormat.ApplyMode.APPLY_HILIGHT2
         elif b_blend_type == "MIX":
             return NifFormat.ApplyMode.APPLY_MODULATE
-        
+
         NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
         return NifFormat.ApplyMode.APPLY_MODULATE
