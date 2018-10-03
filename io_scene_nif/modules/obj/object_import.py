@@ -40,9 +40,7 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
-from io_scene_nif.modules.armature import DICT_BLOCKS
-from io_scene_nif.modules.obj import DICT_NAMES
+from io_scene_nif.modules import armature, obj
 from io_scene_nif.utility.nif_logging import NifLog
 
 
@@ -59,13 +57,12 @@ def import_name(n_block, max_length=63):
     if n_block is None:
         return None
 
-    if n_block in DICT_NAMES:
-        return DICT_NAMES[n_block]
+    if n_block in obj.DICT_NAMES:
+        return obj.DICT_NAMES[n_block]
 
     NifLog.debug("Importing name for {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
 
     # find unique name for Blender to use
-    uniqueInt = 0
     n_name = n_block.name.decode()
     # if name is empty, create something non-empty
     if not n_name:
@@ -79,14 +76,12 @@ def import_name(n_block, max_length=63):
         if uniqueInt == -1:
             short_name = n_name[:max_length - 1]
         else:
-            short_name = ('%s.%02d'
-                         % (n_name[:max_length - 4],
-                            uniqueInt))
+            short_name = ('%s.%02d' % (n_name[:max_length - 4], uniqueInt))
         # bone naming convention for blender
         short_name = armature.get_bone_name_for_blender(short_name)
         # make sure it is unique
         if n_name == "InvMarker":
-            if n_name not in DICT_NAMES:
+            if n_name not in obj.DICT_NAMES:
                 break
         if (short_name not in bpy.data.objects
                 and short_name not in bpy.data.materials
@@ -98,10 +93,10 @@ def import_name(n_block, max_length=63):
     # save mapping
 
     # block niBlock has Blender name shortName
-    DICT_NAMES[n_block] = short_name
+    obj.DICT_NAMES[n_block] = short_name
 
     # Blender name shortName corresponds to niBlock
-    DICT_BLOCKS[short_name] = n_block
+    armature.DICT_BLOCKS[short_name] = n_block
     NifLog.debug("Selected unique name {0}".format(short_name))
     return short_name
 
@@ -134,8 +129,6 @@ class NiObject:
         return ''
 
     # TODO [object] [properties]
-
-    """
     # self.bsx_flags = self.objecthelper.import_bsxflag_data(root_block)
     # self.upb_flags = self.objecthelper.import_upbflag_data(root_block)
     # self.object_flags = root_block.flags
@@ -143,21 +136,20 @@ class NiObject:
     # if isinstance(root_block, NifFormat.BSFadeNode):
     #     self.root_ninode = 'BSFadeNode'
 
-        # TODO [Object] process at object level
-        # process extra_data_list
-        if hasattr(root_block, "extra_data_list"):
-            for n_extra_list in root_block.extra_data_list:
-                if isinstance(n_extra_list, NifFormat.BSInvMarker):
-                    b_obj.niftools_bs_invmarker.add()
-                    b_obj.niftools_bs_invmarker[0].name = n_extra_list.name.decode()
-                    b_obj.niftools_bs_invmarker[0].bs_inv_x = n_extra_list.rotation_x
-                    b_obj.niftools_bs_invmarker[0].bs_inv_y = n_extra_list.rotation_y
-                    b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra_list.rotation_z
-                    b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra_list.zoom
-
-        if self.root_ninode:
-            b_obj.niftools.rootnode = self.root_ninode
-    """
+    # TODO [Object] process at object level
+    # process extra_data_list
+    # if hasattr(root_block, "extra_data_list"):
+    #     for n_extra_list in root_block.extra_data_list:
+    #         if isinstance(n_extra_list, NifFormat.BSInvMarker):
+    #             b_obj.niftools_bs_invmarker.add()
+    #             b_obj.niftools_bs_invmarker[0].name = n_extra_list.name.decode()
+    #             b_obj.niftools_bs_invmarker[0].bs_inv_x = n_extra_list.rotation_x
+    #             b_obj.niftools_bs_invmarker[0].bs_inv_y = n_extra_list.rotation_y
+    #             b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra_list.rotation_z
+    #             b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra_list.zoom
+    #
+    # if self.root_ninode:
+    #     b_obj.niftools.rootnode = self.root_ninode
 
 
 class Empty:
@@ -176,8 +168,8 @@ class Empty:
         b_empty.niftools.objectflags = n_block.flags
 
         # TODO [armature]
-        # if niBlock.name in self.dict_bone_priorities:
+        # if niBlock.name in armature.DICT_BONE_PRIORITIES:
         #     constr = b_empty.constraints.append(bpy.types.Constraint.NULL)
-        #     constr.name = "priority:%i" % self.dict_bone_priorities[niBlock.name]
+        #     constr.name = "priority:%i" % armature.DICT_BONE_PRIORITIES[niBlock.name]
         return b_empty
 

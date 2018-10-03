@@ -321,7 +321,7 @@ class Armature:
             if not skelroot:
                 raise nif_utils.NifError("nif has no armature '%s'" % self.nif_import.selected_objects[0].name)
             NifLog.debug("Identified '{0}' as armature".format(skelroot.name))
-            armature.dict_armatures[skelroot] = []
+            armature.DICT_ARMATURES[skelroot] = []
             for bone_name in self.nif_import.selected_objects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
                 nif_bone_name = armature.get_bone_name_for_nif(bone_name)

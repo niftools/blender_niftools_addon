@@ -59,7 +59,7 @@ class Material:
         # TODO [property][material] Decide whether or not to keep the material hash
         # material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop)
         # try:
-        #     return self.nif_import.dict_materials[material_hash]
+        #     return material.DICT_MATERIALS[material_hash]
         # except KeyError:
         #     pass
         
