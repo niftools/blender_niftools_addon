@@ -65,7 +65,7 @@ class TestCollisionBhkBoxShape(SingleNif):
         """Create a cube and bhkboxshape collision object"""
 
         # mesh obj
-        b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
+        b_gen_geometry.b_create_base_geometry(self.b_name)
 
         # col obj
         b_col_obj = b_gen_geometry.b_create_cube(self.b_col_name)
