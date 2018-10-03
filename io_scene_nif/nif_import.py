@@ -37,9 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 from io_scene_nif.modules.geometry.mesh.mesh_import import Mesh
-from io_scene_nif.modules.geometry.skin.skin_import import Skin
-from io_scene_nif.modules.geometry.vertex_import import Vertex
 from io_scene_nif.modules.obj import object_import
+from io_scene_nif.modules.property import texture
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp, NifData
@@ -49,12 +48,11 @@ from io_scene_nif.io.nif import NifFile
 from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile
 
-from io_scene_nif.modules.animation.animation_import import AnimationHelper, GeometryAnimation
-from io_scene_nif.modules import armature, obj
+from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules import armature, obj, animation, collision
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import BHKShape, Bound
-from io_scene_nif.modules.constraint.constraint_import import constraint_import
-from io_scene_nif.modules.property.property_import import Property
+from io_scene_nif.modules.constraint.constraint_import import Constraint
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.texture.texture_import import TextureSlots
 from io_scene_nif.modules.obj.object_import import NiObject, Empty
@@ -80,37 +78,34 @@ class NifImport(NifCommon):
         self.root_ninode = 'NiNode'
 
         # Helper systems
-        self.animation_helper = AnimationHelper(parent=self)
-        self.armature_helper = Armature(parent=self)
+        self.animation_helper = AnimationHelper()
+        self.armature_helper = Armature()
         # TODO [collision] create super collisionhelper
-        self.bhkhelper = BHKShape(parent=self)
-        self.boundhelper = Bound(parent=self)
-        self.constrainthelper = constraint_import(parent=self)
-
+        self.bhkhelper = BHKShape()
+        self.boundhelper = Bound()
+        self.constrainthelper = Constraint()
         self.objecthelper = NiObject()
-        self.materialhelper = Material(parent=self)
+        self.materialhelper = Material()
         self.texturehelper = TextureSlots(parent=self)
 
     def execute(self):
         """Main import function."""
 
-        self.dict_armatures = {}
-        self.dict_bones_extra_matrix = {}
-        self.dict_bones_extra_matrix_inv = {}
-        self.dict_bone_priorities = {}
-        self.dict_havok_objects = {}
-        self.dict_block_names = []
-        self.dict_materials = {}
-        self.dict_textures = {}
-        self.dict_mesh_uvlayers = []
-
         # TODO resets here for now
-        armature.DICT_BLOCKS = {}
         obj.DICT_NAMES = {}
+        obj.DICT_BLOCK_NAMES = []
+        animation.FPS = 30
+        armature.DICT_BLOCKS = {}
+        armature.DICT_ARMATURES = {}
+        armature.DICT_BONES_EXTRA_MATRIX = {}
+        armature.DICT_BONES_EXTRA_MATRIX_INV = {}
+        armature.DICT_BONE_PRIORITIES = {}
+        collision.DICT_HAVOK_OBJECTS = {}
+        texture.DICT_TEXTURES = {}
+
         # catch nif import errors
         try:
-            # check that one armature is selected in 'import geometry + parent
-            # to armature' mode
+            # check that one armature is selected in 'import geometry + parent to armature' mode
             if NifOp.props.skeleton == "GEOMETRY_ONLY":
                 if len(self.selected_objects) != 1 or self.selected_objects[0].type != 'ARMATURE':
                     raise nif_utils.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature'  mode.")
@@ -136,8 +131,8 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                fps = self.animation_helper.get_frames_per_second(NifData.data.roots + (self.kfdata.roots if self.kfdata else []))
-                bpy.context.scene.render.fps = fps
+                animation.FPS = self.animation_helper.get_frames_per_second(NifData.data.roots + (self.kfdata.roots if self.kfdata else []))
+                bpy.context.scene.render.fps = animation.FPS
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -281,7 +276,7 @@ class NifImport(NifCommon):
             NifLog.warn("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
 
         # store bone matrix offsets for re-export
-        if self.dict_bones_extra_matrix:
+        if armature.DICT_BONES_EXTRA_MATRIX:
             self.armature_helper.store_bones_extra_matrix()
 
         # store original names for re-export
@@ -290,7 +285,6 @@ class NifImport(NifCommon):
 
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
-        self.bhkhelper.get_havok_objects()
         self.constrainthelper.import_bhk_constraints()
 
         # parent selected meshes to imported skeleton
@@ -381,9 +375,11 @@ class NifImport(NifCommon):
 
             elif self.armature_helper.is_bone(n_block):
                 # bones have already been imported during import_armature
-                b_obj = b_armature.data.bones[self.dict_names[n_block]]
+                b_obj = b_armature.data.bones[obj.DICT_NAMES[n_block]]
                 # bones cannot group geometries into a single mesh
-                b_obj.niftools_bone.bsxflags = self.bsx_flags
+
+                # TODO [object][property] Object flags
+                # b_obj.niftools_bone.bsxflags = self.bsx_flags
                 b_obj.niftools_bone.boneflags = n_block.flags
                 geom_group = []
 
@@ -434,8 +430,7 @@ class NifImport(NifCommon):
                     b_obj.name = object_import.import_name(n_block)
 
                     # skinning? add armature modifier
-                    if any(child.skin_instance
-                           for child in geom_group):
+                    if any(child.skin_instance for child in geom_group):
                         self.armature_helper.append_armature_modifier(b_obj, b_armature)
 
                     # settings for collision node
@@ -520,10 +515,10 @@ class NifImport(NifCommon):
                     #     = Z * X^{-1} * T^{-1}
                     # since
                     #   B' = X * B
-                    # with X = self.dict_bones_extra_matrix[B]
+                    # with X = armature.DICT_BONES_EXTRA_MATRIX[B]
 
                     # post multiply Z with X^{-1}
-                    extra = mathutils.Matrix(self.dict_bones_extra_matrix[n_block])
+                    extra = mathutils.Matrix(armature.DICT_BONES_EXTRA_MATRIX[n_block])
                     extra.invert()
                     matrix = matrix * extra
                     # cancel out the tail translation T
