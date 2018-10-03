@@ -50,14 +50,11 @@ class NifCommon:
     that are commonly used in both import and export.
     """
 
-    # keeps track of names of exported blocks, to make sure they are unique
-    dict_block_names = []
+    FLOAT_MAX = +3.4028234663852886e+38
+    FLOAT_MIN = -3.4028234663852886e+38
 
     # dictionary of materials, to reuse materials
     dict_materials = {}
-
-    # dictionary of texture files, to reuse textures
-    dict_textures = {}
 
     EXTRA_SHADER_TEXTURES = [
         "EnvironmentMapIndex",
