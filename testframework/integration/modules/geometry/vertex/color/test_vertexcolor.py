@@ -8,6 +8,9 @@ from integration.modules.scene import n_gen_header, b_gen_header
 from integration.modules.geometry.trishape import n_gen_geometry, b_gen_geometry
 from integration.modules.geometry.vertex.color import n_gen_vertexcolor
 
+VERTEX_COLOR_LAYER = 'VertexColor'
+VERTEX_ALPHA_LAYER = 'VertexAlpha'
+
 
 class TestBaseVertexColor(SingleNif):
 
@@ -70,44 +73,51 @@ class TestBaseVertexColor(SingleNif):
         bpy.ops.object.editmode_toggle()
 
         # add base vertex color layer
-        print(len(b_obj.data.vertex_colors))
         bpy.ops.mesh.vertex_color_add()
-        b_obj.data.vertex_colors[0].name = "VertexColor"
-        print(len(b_obj.data.vertex_colors))
+        b_obj.data.vertex_colors[0].name = VERTEX_COLOR_LAYER
 
         # iterate over each face, then set the vert color through lookup
         # TODO [geometry][vertex] use vertex coordinate to map vertex color
         #      (we should not rely on vertex ordering)
         for face_index, face in enumerate(self.b_faces):  # nif_faces: 0-11
             for vert_index, n_vert in enumerate(face):  # nif_verts: 0-7
-                b_meshcolor = b_obj.data.vertex_colors["VertexColor"].data[face_index]
-                b_color = getattr(b_meshcolor, "color%s" % (vert_index + 1))
+                b_meshcolor = b_obj.data.vertex_colors[VERTEX_COLOR_LAYER].data[face_index]
+                b_color = b_meshcolor.color
                 b_color.r = self.vertcol[n_vert][0]
                 b_color.g = self.vertcol[n_vert][1]
                 b_color.b = self.vertcol[n_vert][2]
 
     def b_check_data(self):
         # TODO [geometry] nif file has wrong transform and wrong geometry
-        # TestBaseGeometry.b_check_data(self)
-        b_obj = bpy.data.objects[self.b_name]
-        b_mesh = b_obj.data
-        self.b_check_vertex_layers(b_mesh)
+        from io_scene_nif.utility import nif_debug
+        # nif_debug.start_debug()
 
-    def b_check_vertex_layers(self, b_mesh):
+        b_obj = bpy.data.objects[self.b_name]
+        b_gen_geometry.b_check_geom_obj(b_obj)
+        b_mesh = b_obj.data
+
+        self.b_check_vertex_layers(b_mesh, VERTEX_COLOR_LAYER)
+        # self.b_check_vertex_layers(b_mesh, VERTEX_ALPHA_LAYER)
+
+    def b_check_vertex_layers(self, b_mesh, layer):
         # TODO [geometry] Length is 2 during one of the checks
         # nose.tools.assert_equal(len(b_mesh.vertex_colors), 1)
-        nose.tools.assert_equal(b_mesh.vertex_colors[0].name, 'VertexColor')
-        b_meshcolor = b_mesh.vertex_colors["VertexColor"].data
-        for b_col_index, b_meshcolor in enumerate(b_meshcolor):
-            self.b_check_vert_colors(b_col_index, b_meshcolor)
+        nose.tools.assert_equal(b_mesh.vertex_colors[0].name, layer)
+        layer_colors = b_mesh.vertex_colors[layer].data
 
-    def b_check_vert_colors(self, f_index, vertexcolor):
-        for vert_index in [0, 1, 2]:
-            b_color = getattr(vertexcolor, "color%s" % (vert_index + 1))
-            # TODO [geometry] vcol assertion
-            # nose.tools.assert_almost_equal(b_color.r, self.vertcol[f_index][0])
-            # nose.tools.assert_almost_equal(b_color.g, self.vertcol[f_index][1])
-            # nose.tools.assert_almost_equal(b_color.b, self.vertcol[f_index][2])
+        print("Vertex color list")
+        for item in layer_colors:
+            print(item.color)
+
+        for face_index, face in enumerate(self.b_faces):  # nif_faces: 0-11
+            for vert_index, n_vert in enumerate(face):
+                b_color = layer_colors[face_index + vert_index].color  # the collection is linear
+                self.b_check_vert_colors(b_color, self.vertcol[vert_index])
+
+    def b_check_vert_colors(self, b_color, lookup):
+        nose.tools.assert_almost_equal(b_color.r, lookup[0])
+        nose.tools.assert_almost_equal(b_color.g, lookup[1])
+        nose.tools.assert_almost_equal(b_color.b, lookup[2])
 
     def n_create_data(self):
         n_gen_geometry.n_create_blocks(self.n_data)

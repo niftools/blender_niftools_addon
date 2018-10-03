@@ -38,22 +38,22 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import mathutils
 
+import mathutils
 from pyffi.formats.nif import NifFormat
+
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.nif_logging import NifLog
+
 
 class bhkshape_export():
-
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
     def __init__(self, parent):
         self.nif_export = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
-
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -66,7 +66,7 @@ class bhkshape_export():
 
         # is it packed
         coll_ispacked = (b_obj.game.collision_bounds_type == 'TRIANGLE_MESH')
-        
+
         # Set Havok Scale ratio
         b_scene = bpy.context.scene.niftools_scene
         if b_scene.user_version == 12:
@@ -88,8 +88,8 @@ class bhkshape_export():
         penetration_depth = b_obj.collision.permeability
         linear_damping = b_obj.rigid_body.linear_damping
         angular_damping = b_obj.rigid_body.angular_damping
-        #linear_velocity = b_obj.rigid_body.deactivate_linear_velocity
-        #angular_velocity = b_obj.rigid_body.deactivate_angular_velocity
+        # linear_velocity = b_obj.rigid_body.deactivate_linear_velocity
+        # angular_velocity = b_obj.rigid_body.deactivate_angular_velocity
         max_linear_velocity = b_obj.nifcollision.max_linear_velocity
         max_angular_velocity = b_obj.nifcollision.max_angular_velocity
         col_filter = b_obj.nifcollision.col_filter
@@ -162,8 +162,8 @@ class bhkshape_export():
             n_bhkrigidbody.mass = mass
             n_bhkrigidbody.linear_damping = linear_damping
             n_bhkrigidbody.angular_damping = angular_damping
-            #n_bhkrigidbody.linear_velocity = linear_velocity
-            #n_bhkrigidbody.angular_velocity = angular_velocity
+            # n_bhkrigidbody.linear_velocity = linear_velocity
+            # n_bhkrigidbody.angular_velocity = angular_velocity
             n_bhkrigidbody.friction = friction
             n_bhkrigidbody.restitution = restitution
             n_bhkrigidbody.max_linear_velocity = max_linear_velocity
@@ -171,15 +171,15 @@ class bhkshape_export():
             n_bhkrigidbody.penetration_depth = penetration_depth
             n_bhkrigidbody.motion_system = motion_system
             n_bhkrigidbody.deactivator_type = deactivator_type
-            n_bhkrigidbody.solver_deactivation = solver_deactivation 
+            n_bhkrigidbody.solver_deactivation = solver_deactivation
             n_bhkrigidbody.unknown_byte_1 = self.nif_export.EXPORT_OB_UNKNOWNBYTE1
             n_bhkrigidbody.unknown_byte_2 = self.nif_export.EXPORT_OB_UNKNOWNBYTE2
             n_bhkrigidbody.quality_type = quality_type
             n_bhkrigidbody.unknown_int_9 = self.nif_export.EXPORT_OB_WIND
-            
+
             # we will use n_col_body to attach shapes to below
             n_col_body = n_bhkrigidbody
-            
+
         else:
             n_col_body = parent_block.collision_object.body
             # fix total mass
@@ -219,7 +219,7 @@ class bhkshape_export():
             # the mopp origin, scale, and data are written later
             n_col_shape = self.nif_export.objecthelper.create_block("bhkPackedNiTriStripsShape", b_obj)
             n_col_mopp.shape = n_col_shape
-            
+
             n_col_shape.unknown_int_1 = 0
             n_col_shape.unknown_int_2 = 21929432
             n_col_shape.unknown_float_1 = 0.1
@@ -256,7 +256,7 @@ class bhkshape_export():
         normals = []
         for face in mesh.polygons:
             if len(face.vertices) < 3:
-                continue # ignore degenerate polygons
+                continue  # ignore degenerate polygons
             triangles.append([face.vertices[i] for i in (0, 1, 2)])
             normals.append(rotation * face.normal)
             if len(face.vertices) == 4:
@@ -265,16 +265,12 @@ class bhkshape_export():
 
         n_col_shape.add_shape(triangles, normals, vertices, layer, n_havok_mat)
 
-
-
     def export_collision_single(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add collision object to n_col_body.
         If n_col_body already has a collision shape, throw ValueError."""
         if n_col_body.shape:
             raise ValueError('collision body already has a shape')
         n_col_body.shape = self.export_collision_object(b_obj, layer, n_havok_mat)
-
-
 
     def export_collision_list(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add collision object obj to the list of collision objects of n_col_body.
@@ -298,8 +294,6 @@ class bhkshape_export():
 
         n_col_shape.add_shape(self.export_collision_object(b_obj, layer, n_havok_mat))
 
-
-
     def export_collision_object(self, b_obj, layer, n_havok_mat):
         """Export object obj as box, sphere, capsule, or convex hull.
         Note: polyheder is handled by export_collision_packed."""
@@ -316,13 +310,13 @@ class bhkshape_export():
         maxx = max([b_vert[0] for b_vert in b_vertlist])
         maxy = max([b_vert[1] for b_vert in b_vertlist])
         maxz = max([b_vert[2] for b_vert in b_vertlist])
-        
+
         calc_bhkshape_radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.HAVOK_SCALE)
-        if(b_obj.game.radius - calc_bhkshape_radius > NifOp.props.epsilon):
+        if (b_obj.game.radius - calc_bhkshape_radius > NifOp.props.epsilon):
             radius = calc_bhkshape_radius
         else:
             radius = b_obj.game.radius
-        
+
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.nif_export.objecthelper.create_block("bhkConvexTransformShape", b_obj)
@@ -387,12 +381,12 @@ class bhkshape_export():
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = b_obj.matrix_local.transposed()
-            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
-                                       (maxy + miny)/2.0,
-                                       maxz - localradius ] )
-            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
-                                       (maxy + miny) / 2.0,
-                                       minz + localradius ] )
+            vert1 = mathutils.Vector([(maxx + minx) / 2.0,
+                                      (maxy + miny) / 2.0,
+                                      maxz - localradius])
+            vert2 = mathutils.Vector([(maxx + minx) / 2.0,
+                                      (maxy + miny) / 2.0,
+                                      minz + localradius])
             vert1 = vert1 * transform
             vert2 = vert2 * transform
 
@@ -448,27 +442,27 @@ class bhkshape_export():
             vertlist = [b_transform_mat * vert.co for vert in b_mesh.vertices]
             fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.polygons]
             fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.polygons[b_face.index].vertices[0]].co)).dot(
-                            b_rot_quat.to_matrix() * b_face.normal)
-                         for b_face in b_mesh.polygons ]
+                b_rot_quat.to_matrix() * b_face.normal)
+                for b_face in b_mesh.polygons]
 
             # remove duplicates through dictionary
             vertdict = {}
             for i, vert in enumerate(vertlist):
-                vertdict[(int(vert[0]*self.nif_export.VERTEX_RESOLUTION),
-                          int(vert[1]*self.nif_export.VERTEX_RESOLUTION),
-                          int(vert[2]*self.nif_export.VERTEX_RESOLUTION))] = i
+                vertdict[(int(vert[0] * self.nif_export.VERTEX_RESOLUTION),
+                          int(vert[1] * self.nif_export.VERTEX_RESOLUTION),
+                          int(vert[2] * self.nif_export.VERTEX_RESOLUTION))] = i
             fdict = {}
             for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
-                fdict[(int(norm[0]*self.nif_export.NORMAL_RESOLUTION),
-                       int(norm[1]*self.nif_export.NORMAL_RESOLUTION),
-                       int(norm[2]*self.nif_export.NORMAL_RESOLUTION),
-                       int(dist*self.nif_export.VERTEX_RESOLUTION))] = i
+                fdict[(int(norm[0] * self.nif_export.NORMAL_RESOLUTION),
+                       int(norm[1] * self.nif_export.NORMAL_RESOLUTION),
+                       int(norm[2] * self.nif_export.NORMAL_RESOLUTION),
+                       int(dist * self.nif_export.VERTEX_RESOLUTION))] = i
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
             fkeys = sorted(fdict.keys())
-            vertlist = [ vertlist[vertdict[hsh]] for hsh in vertkeys ]
-            fnormlist = [ fnormlist[fdict[hsh]] for hsh in fkeys ]
-            fdistlist = [ fdistlist[fdict[hsh]] for hsh in fkeys ]
+            vertlist = [vertlist[vertdict[hsh]] for hsh in vertkeys]
+            fnormlist = [fnormlist[fdict[hsh]] for hsh in fkeys]
+            fdistlist = [fdistlist[fdict[hsh]] for hsh in fkeys]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise nif_utils.NifError(
@@ -478,8 +472,8 @@ class bhkshape_export():
             colhull = self.nif_export.objecthelper.create_block("bhkConvexVerticesShape", b_obj)
             colhull.material = n_havok_mat
             colhull.radius = radius
-            colhull.unknown_6_floats[2] = -0.0 # enables arrow detection
-            colhull.unknown_6_floats[5] = -0.0 # enables arrow detection
+            colhull.unknown_6_floats[2] = -0.0  # enables arrow detection
+            colhull.unknown_6_floats[5] = -0.0  # enables arrow detection
             # note: unknown 6 floats are usually all 0
             colhull.num_vertices = len(vertlist)
             colhull.vertices.update_size()
