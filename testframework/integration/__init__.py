@@ -270,7 +270,6 @@ class SingleNif(Base):
         bpy.ops.export_scene.nif(filepath=n_filepath, log_level='DEBUG', game=self.n_game)
 
     def test_ordered_user_tests(self):
-        """Replicated what a user would do"""
         self._export_user()
         self._import_user()
 
@@ -296,7 +295,6 @@ class SingleNif(Base):
         self.b_check_data()
          
     def test_pycode_nif_fullflow(self):
-        """PyCode : Import/Export python generated file"""
         # create initial nif file and check data
         self.n_create_header()
         self.n_create_data()
