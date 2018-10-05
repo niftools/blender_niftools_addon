@@ -41,6 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature, obj
+from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
 
@@ -173,3 +174,33 @@ class Empty:
         #     constr.name = "priority:%i" % armature.DICT_BONE_PRIORITIES[niBlock.name]
         return b_empty
 
+
+def is_grouping_node(n_block):
+    """Determine whether node is grouping node.
+    Returns the children which are grouped, or empty list if it is not a
+    grouping node.
+    """
+    # combining shapes: disable grouping
+    if not NifOp.props.combine_shapes:
+        return []
+    # check that it is a ninode
+    if not isinstance(n_block, NifFormat.NiNode):
+        return []
+    # NiLODNodes are never grouping nodes
+    # (this ensures that they are imported as empties, with LODs
+    # as child meshes)
+    if isinstance(n_block, NifFormat.NiLODNode):
+        return []
+    # root collision node: join everything
+    if isinstance(n_block, NifFormat.RootCollisionNode):
+        return [child for child in n_block.children if
+                isinstance(child, NifFormat.NiTriBasedGeom)]
+    # check that node has name
+    node_name = n_block.name
+    if not node_name:
+        return []
+    # strip "NonAccum" trailer, if present
+    if node_name[-9:].lower() == " nonaccum":
+        node_name = node_name[:-9]
+    # get all geometry children
+    return [child for child in n_block.children if (isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1)]

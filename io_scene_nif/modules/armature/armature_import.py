@@ -46,6 +46,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature, obj
 from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules.obj.object_import import is_grouping_node
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp, NifData
@@ -309,7 +310,7 @@ class Armature:
                     continue
                 if not isinstance(bone, NifFormat.NiNode):
                     continue
-                if self.nif_import.is_grouping_node(bone):
+                if is_grouping_node(bone):
                     continue
                 if bone not in armature.DICT_ARMATURES[skelroot]:
                     armature.DICT_ARMATURES[skelroot].append(bone)
@@ -376,7 +377,7 @@ class Armature:
                         if isinstance(bone, NifFormat.NiLODNode):
                             # LOD nodes are never bones
                             continue
-                        if self.nif_import.is_grouping_node(bone):
+                        if is_grouping_node(bone):
                             continue
                         if bone not in armature.DICT_ARMATURES[skelroot]:
                             armature.DICT_ARMATURES[skelroot].append(bone)

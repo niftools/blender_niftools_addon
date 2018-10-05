@@ -85,9 +85,8 @@ class NifExport(NifCommon):
     EXPORT_OB_MATERIAL = 9  # wood
     EXPORT_OB_PRN = "NONE"  # Todo with location on character. For weapons, rings, helmets, Sheilds ect
 
-    # noinspection PyUnusedLocal
     def __init__(self, operator, context):
-        NifCommon.__init__(self, operator)
+        NifCommon.__init__(self, operator, context)
     
         # Helper systems
         self.bhkshapehelper = BHKShape(parent=self)
@@ -125,7 +124,7 @@ class NifExport(NifCommon):
         armature.DICT_BONE_PRIORITIES = {}
         collision.DICT_HAVOK_OBJECTS = {}
         obj.DICT_NAMES = {}
-        obj.DICT_BLOCK_NAMES = []
+        obj.BLOCK_NAMES_LIST = []
         texture.DICT_TEXTURES = {}
 
         # if an egm is exported, this will contain the data

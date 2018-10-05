@@ -67,10 +67,10 @@ class NifCommon:
     Sid Meier's Railroads and similar games.
     """
 
-    def __init__(self, operator):
+    def __init__(self, operator, context):
         """Common initialization functions for executing the import/export operators: """
 
-        NifOp.init(operator)
+        NifOp.init(operator, context)
 
         # print scripts info
         from . import bl_info

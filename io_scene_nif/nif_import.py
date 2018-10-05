@@ -55,7 +55,7 @@ from io_scene_nif.modules.collision.collision_import import BHKShape, Bound
 from io_scene_nif.modules.constraint.constraint_import import Constraint
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.texture.texture_import import TextureSlots
-from io_scene_nif.modules.obj.object_import import NiObject, Empty
+from io_scene_nif.modules.obj.object_import import NiObject, Empty, is_grouping_node
 from io_scene_nif.modules.scene import scene_import
 
 import bpy
@@ -73,7 +73,7 @@ class NifImport(NifCommon):
 
     # noinspection PyUnusedLocal
     def __init__(self, operator, context):
-        NifCommon.__init__(self, operator)
+        NifCommon.__init__(self, operator, context)
 
         self.root_ninode = 'NiNode'
 
@@ -100,7 +100,7 @@ class NifImport(NifCommon):
         armature.DICT_BONE_PRIORITIES = {}
         collision.DICT_HAVOK_OBJECTS = {}
         obj.DICT_NAMES = {}
-        obj.DICT_BLOCK_NAMES = []
+        obj.BLOCK_NAMES_LIST = []
         texture.DICT_TEXTURES = {}
 
         # catch nif import errors
@@ -168,9 +168,7 @@ class NifImport(NifCommon):
                 root = block
                 # root hack for corrupt better bodies meshes
                 # and remove geometry from better bodies on skeleton import
-                for b in (b for b in block.tree()
-                          if isinstance(b, NifFormat.NiGeometry)
-                             and b.is_skin()):
+                for b in (b for b in block.tree() if isinstance(b, NifFormat.NiGeometry) and b.is_skin()):
                     # check if root belongs to the children list of the
                     # skeleton root (can only happen for better bodies meshes)
                     if root in [c for c in b.skin_instance.skeleton_root.children]:
@@ -233,7 +231,7 @@ class NifImport(NifCommon):
             b_obj = self.import_branch(root_block)
             b_obj.niftools.objectflags = root_block.flags
 
-        elif self.is_grouping_node(root_block):
+        elif is_grouping_node(root_block):
             # special case 2: root node is grouping node
             NifLog.debug("{0} is a grouping node".format(root_block.name))
             b_obj = self.import_branch(root_block)
@@ -385,7 +383,7 @@ class NifImport(NifCommon):
 
             else:
                 # is it a grouping node?
-                geom_group = self.is_grouping_node(n_block)
+                geom_group = is_grouping_node(n_block)
                 # if importing animation, remove children that have
                 # morph controllers from geometry group
                 if NifOp.props.animation:
@@ -591,44 +589,12 @@ class NifImport(NifCommon):
         # all else is currently discarded
         return None
 
-    def set_parents(self, niBlock):
+    def set_parents(self, n_block):
         """Set the parent block recursively through the tree, to allow
         crawling back as needed."""
-        if isinstance(niBlock, NifFormat.NiNode):
+        if isinstance(n_block, NifFormat.NiNode):
             # list of non-null children
-            children = [child for child in niBlock.children if child]
+            children = [child for child in n_block.children if child]
             for child in children:
-                child._parent = niBlock
+                child._parent = n_block
                 self.set_parents(child)
-
-    def is_grouping_node(self, niBlock):
-        """Determine whether node is grouping node.
-        Returns the children which are grouped, or empty list if it is not a
-        grouping node.
-        """
-        # combining shapes: disable grouping
-        if not NifOp.props.combine_shapes:
-            return []
-        # check that it is a ninode
-        if not isinstance(niBlock, NifFormat.NiNode):
-            return []
-        # NiLODNodes are never grouping nodes
-        # (this ensures that they are imported as empties, with LODs
-        # as child meshes)
-        if isinstance(niBlock, NifFormat.NiLODNode):
-            return []
-        # root collision node: join everything
-        if isinstance(niBlock, NifFormat.RootCollisionNode):
-            return [child for child in niBlock.children if
-                    isinstance(child, NifFormat.NiTriBasedGeom)]
-        # check that node has name
-        node_name = niBlock.name
-        if not node_name:
-            return []
-        # strip "NonAccum" trailer, if present
-        if node_name[-9:].lower() == " nonaccum":
-            node_name = node_name[:-9]
-        # get all geometry children
-        return [child for child in niBlock.children
-                if (isinstance(child, NifFormat.NiTriBasedGeom)
-                    and child.name.find(node_name) != -1)]

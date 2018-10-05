@@ -348,13 +348,13 @@ class ObjectHelper:
         # blender bone naming -> nif bone naming
         unique_name = armature.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
-        if unique_name in obj.DICT_BLOCK_NAMES or unique_name in list(obj.DICT_NAMES.values()):
+        if unique_name in obj.BLOCK_NAMES_LIST or unique_name in list(obj.DICT_NAMES.values()):
             unique_int = 0
             old_name = unique_name
-            while unique_name in obj.DICT_BLOCK_NAMES or unique_name in list(obj.DICT_NAMES.values()):
+            while unique_name in obj.BLOCK_NAMES_LIST or unique_name in list(obj.DICT_NAMES.values()):
                 unique_name = "%s.%02d" % (old_name, unique_int)
                 unique_int += 1
-        obj.DICT_BLOCK_NAMES.append(unique_name)
+        obj.BLOCK_NAMES_LIST.append(unique_name)
         obj.DICT_NAMES[b_name] = unique_name
         return unique_name
 
