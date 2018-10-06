@@ -4,7 +4,7 @@
 NiProperty
 ==========
 
-The following is a overview of what the Nif Plugin will export Blender settings are mapped to.
+The following is an overview of what the Nif Plugin will export Blender settings are mapped to.
 
 
 .. _properties-nimaterial:
