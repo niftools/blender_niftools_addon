@@ -3,7 +3,7 @@ Interactive Development Environment
 
 .. _development-design-setup-ide:
 
-`PyCharm <https://www.jetbrains.com/pycharm/>`_ IDE is the preferred way to allows us maintain a unified workflow for general file manipulation,
+`PyCharm <https://www.jetbrains.com/pycharm/>`_ IDE is the preferred way to allows us to maintain a unified workflow for general file manipulation,
 repo management, python scripting, and hooks into Blender's debugging server.
 
 

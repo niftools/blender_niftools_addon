@@ -1,7 +1,7 @@
 @niftools/blender-nif-plugin-reviewer 
 
 # Overview
-[Overview of content of the pull request]
+[Overview of the content of the pull request]
 
 ## Fixes Known Issues
 [Ordered list of issues fixed by this PR]

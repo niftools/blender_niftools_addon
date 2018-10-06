@@ -17,7 +17,7 @@ function find_blender() {
     done
     if [ ! -e ~/.blender/"${BLENDER_VERSION}"/ ]; then
         echo Blender addons folder not found.
-        echo Start blender at least once, save user preferences, and try again.
+        echo Start Blender at least once, save user preferences, and try again.
         exit 1
     fi
 }
@@ -36,5 +36,5 @@ rm -rf "${BLENDER_ADDONS_DIR}"/io_scene_nif/
 # create zip
 sh "${BUILD_DIR}"/makezip.sh
 
-# copy files from repository to blender addons folder
+# copy files from repository to Blender addons folder
 unzip -q "${TEMP}/${NAME}-${VERSION}.zip" -d "${BLENDER_ADDONS_DIR}"

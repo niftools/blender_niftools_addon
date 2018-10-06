@@ -35,9 +35,9 @@ BS Inventory Marker
 -------------------
 
 **BS Inv Marker**
-   This sets the x, y, z rotation and zoom level of objects for the in game inventory display in games that support the property.
+   This sets the x, y, z rotation and zoom level of objects for the in-game inventory display in games that support the property.
    
-#. With blender in Object mode, open the BS Inv Marker property window and click "*+*".
+#. With Blender in Object mode, open the BS Inv Marker property window and click "*+*".
    
 .. note::
    * This should only be applied to the Root object:
@@ -48,7 +48,7 @@ BS Inventory Marker
    a. Set view to back view and use rotation to achieve the preferred object orientation.
    #. Copy the values from the rotation display into the x,y,z lines for BS Inv Marker.
    #. Delete the decimal and remove any numbers to the right of the fourth digit.
-   #. Press alt + R to reset the object rotation back to 0
+   #. Press Alt + R to reset the object rotation back to 0
    
 #. Apply desired value to zoom   
 
@@ -64,7 +64,7 @@ BS Inventory Marker
 UPB
 ---
 
-The **UPB** is a group of values contained in a single data string. It's use is unknown. 
+The **UPB** is a group of values contained in a single data string. Its use is unknown. 
 
 Niftools uses the following values as default for this item.:
 
@@ -85,13 +85,13 @@ Settings
 --------
 .. _user-feature-object-settings:
 
-First we complete the object panel:
+First, we complete the object panel:
 
-   #. The **Nif Root Node** determines the kind of block used at the nif's root. Select one from the dropdown box.
+   #. The **Nif Root Node** determines the kind of block used at the nif's root. Select one from the drop-down box.
    #. The **BS Num UV Set** is ????????. Set it to an appropriate number.
    #. The **UPB**'s use is currently unknown. It is recommended you leave it at the default value.
    #. Set your **BSX Flags**.
-   #. The **Consistency Flag** is ????????. Select one from the dropdown box.
+   #. The **Consistency Flag** is ????????. Select one from the drop-down box.
    #. The **Object Flag** is ???????. Set it to an appropriate number.
    #. The **Nif Long Name** is ???????. Set it to an appropriate string.   
 

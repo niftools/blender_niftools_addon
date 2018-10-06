@@ -5,7 +5,7 @@ Export Settings
 This section explains the import and export settings.
 
 .. warning::
-   Only a subset of these settings are currently supported even though they have been documented. 
+   Only a subset of these settings is currently supported even though they have been documented. 
    This is due to the fact that they are ported directly from the old plugin and as such, will functionally remain the same.
 
 
@@ -44,7 +44,7 @@ Smooth Inter-Object Seams
 -------------------------
 .. _user-features-iosettings-export-smoothseams:
 
-This option combines the normals data for all vertices containing the same xyz location data along an edge and uses the same normal tangent and bi-tangent values for all affected vertices.
+This option combines the normals data for all vertices containing the same XYZ location data along an edge and uses the same normal tangent and bi-tangent values for all affected vertices.
 
 Use NiBSAnimationNode
 ---------------------

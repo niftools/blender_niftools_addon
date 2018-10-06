@@ -40,7 +40,7 @@ Access                  Repr                      Access              Repr
 
 
 Matrix multiplication
-For a given matrices A B C where A * B * C -> D the equivilant D' in the alternate handed system is C' * B' * A' 
+For a given matrices A B C where A * B * C -> D the equivalent D' in the alternate handed system is C' * B' * A' 
 
 Objects
 -------
@@ -49,10 +49,10 @@ Objects
   :attr:`bpy.types.Object.vertex_groups`, instead of via
   :class:`bpy.types.Mesh`.
 
-Meshes : Index Mapping
+Meshes: Index Mapping
 ----------------------
 
-* Beware that, unlike in blender 2.4x, :attr:`bpy.types.MeshFace.vertices` 
+* Beware that, unlike in Blender 2.4x, :attr:`bpy.types.MeshFace.vertices` 
   does not return a list of the type :class:`bpy.types.MeshVertex`.
   Rather :class:`int`\ s are returned which are index values mapping 
   :attr:`bpy.types.MeshFace.vertices` to :attr:`bpy.types.Mesh.vertices`,
@@ -63,7 +63,7 @@ Meshes : Index Mapping
   when requiring the actual vertex coordinates of a
   :class:`bpy.types.MeshFace`.
   
-  This index mapping is also used by attributes such a vertex color, vertex weight, vertex uv
+  This index mapping is also used by attributes such a vertex colour, vertex weight, vertex UV
 
 Meshes
 ------
@@ -75,7 +75,7 @@ Meshes
     faces = [face if face[2] else (face[2], face[0], face[1])
              for face in faces]
 
-  before feeding faces to blender.
+  before feeding faces to Blender.
 
 * It appears that we have to use
   :meth:`bpy.types.bpy_prop_collection.add` (undocumented) and
@@ -89,7 +89,7 @@ Meshes
     b_mesh.vertices.foreach_set("co", unpack_list(verts))
     b_mesh.faces.foreach_set("vertices_raw", unpack_face_list(faces))
 
-  After this has been done, uv and vertex
+  After this has been done, UV and vertex
   color layers can be added and imported::
 
     b_mesh.uv_textures.new()
@@ -127,12 +127,12 @@ Collision
   - To identify the collision type to export, we rely exclusively on
     :attr:`bpy.types.GameObjectSettings.collision_bounds_type`.
     This also ensures that collision settings imported from nifs
-    will work with blender's game engine.
+    will work with Blender's game engine.
 
 Bone
 ----
 
-* Setting up the parent chile relationship is difficult for a number of reasons
+* Setting up the parent-child relationship is difficult for a number of reasons
 
  - The :attr:`bpy.types.Bone.parent` is a read-only value, only writable by through a :class:`bpy.types.EditBone`.
  
@@ -156,15 +156,15 @@ to :class:`str` whenever interfacing directly with the nif data.
 Error Reporting
 ---------------
 
-With the older blender 2.4x series, scripts could report fatal errors
-simply by raising an exception. The current blender series has the
+With the older Blender 2.4x series, scripts could report fatal errors
+simply by raising an exception. The current Blender series has the
 problem that *exceptions are not passed down to the caller of the
 operator*. Apparently, this is because of the way the user interface is
 implemented. From a user perspective, this makes no difference,
 however, for testing code, this means that **any exceptions raised
 cannot be caught by the testing framework**.
 
-The way blender solves this problem goes via the
+The way Blender solves this problem goes via the
 :meth:`bpy.types.Operator.report` method. So, in your
 :meth:`bpy.types.Operator.execute` methods, write::
 
@@ -177,12 +177,12 @@ instead of::
     if something == is_wrong:
         raise RuntimeError('Something is wrong')
 
-When the operator finishes, blender will check for any error reports,
+When the operator finishes, Blender will check for any error reports,
 and if it finds any, it will raise an exception, which will be passed
 back to the caller. This means that we can no longer raise *specific*
-exceptions, but in practice this is not really a problem.
+exceptions, but in practice, this is not really a problem.
 
-Following this convention makes the operator more user friendly for
+Following this convention makes the operator more user-friendly for
 other scripts, such as testing frameworks, who might want to catch the
 exception and/or inspect error reports.
 
