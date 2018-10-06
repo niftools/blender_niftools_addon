@@ -3,23 +3,23 @@ Development Overview
 
 .. _development-design-overview:
 
-This section outlines various priciples which govern how we develop the Blender Nif Plugin and why.
+This section outlines various principles which govern how we develop the Blender Nif Plugin and why.
 
 Development Methodology
 -----------------------
 
 A development methodology describes the principles we want as part of the development process.
 
-For the 2.6.x series of development we decided to develop a Feature Oriented, Test Driven Development (TDD) methodology to suit both current and future needs.
+For the 2.6.x series of development, we decided to develop a Feature-Oriented, Test Driven Development (TDD) methodology to suit both current and future needs.
 
-Test driven development in a nutshell means:
+Test-driven development in a nutshell means:
  * We write a test for some functionality we want.
  * We run the test, initially it will fail.
  * We code the feature.
  * We re-run our tests, changing the code until it passes.
  
 The advantages of TDD is:
- * It gives us quick feedback when changes arises.
+ * It gives us quick feedback when changes arise.
  * Constantly testing the code to ensure that it is doing what is meant to do, no assumptions.
  * When things break, it narrows the search; allowing fixes to be developed more quickly.
  * Ensure that the changes haven't broken any other existing functionality.
@@ -38,7 +38,7 @@ See :ref:`Code Porting Strategy <development-design-workflow>`
 
 Additionally
 
-   * It was decided that as code was ported that the conventions as described in the next section would be introduced to keep the code consistent and improve readability.
+   * It was decided that as the code was ported that the conventions as described in the next section would be introduced to keep the code consistent and improve readability.
 
    * Refactored of code into modular components when working on features sets; collisions, texture, armature etc. 
    
@@ -46,7 +46,7 @@ Modularisation
 --------------
 
 During the code porting process it became apparent that the code was monolithic. All of the import code was in one class, all export code in another.
-Initially we planned to hold off large scale refactoring until the code was ported and do it as part of the 3.0.x series.
+Initially, we planned to hold off large-scale refactoring until the code was ported and do it as part of the 3.0.x series.
 It was decided to separate out common areas of functionality into submodules which would be responsible for that specific areas.
 
  * Some systems are still highly coupled, such as geometry generation with the material system, these will remain in place.
@@ -62,9 +62,9 @@ we developed a git workflow based on the popular nvie gitflow model.
 
 The goals were:
  
- #. Central clean repository which everyone forks from, avoids new developer cleaning up unwanted branches
+ #. A central clean repository which everyone forks from, avoids new developer cleaning up unwanted branches
  #. Developers create feature branch off develop, rebase if develop is updated
- #. Central repository to accept pull requests, for peer review.
+ #. A central repository to accept pull requests, for peer review.
  #. Merge code into develop, developers synch with central
  
 When a develop forks from the central repo, their repo will have only 2 branches, master & develop.
@@ -87,10 +87,10 @@ When a developer feels that their feature branch is ready they can start the rev
 Test-Framework
 --------------
 
-In Test Driven Development, tests are the core to ensuring software quality. 
+In Test Driven Development, tests are the core of ensuring software quality. 
 Before any production code is written, a test should be written to check to see that the code does what it does. 
-Initially the tests will fail. As the code is developed, then more tests should pass until all tests do. 
-At this point a feature is deemed to be implemented.
+Initially, the tests will fail. As the code is developed, then more tests should pass until all tests do. 
+At this point, a feature is deemed to be implemented.
 
 Some points of note:
 
@@ -103,15 +103,15 @@ The current goal of the test-framework is to provide integration level testing t
 The Test Framework has several purposes 
 
  * Standardise testing through the use of the template pattern.
- * Provide functionality testing as features are ported to the newer api.
- * Act as a regression suite so that future changes to the api will be detected.
+ * Provide functionality testing as features are ported to the newer API.
+ * Act as a regression suite so that future changes to the API will be detected.
  * Provide a list of supported plugin features by testing features and asserting that they are known to be working.
  * Provide documentation of features by recreating user interaction.
 
 Feature Tests Creation
 ----------------------
 
-Supporting features is detailed workflow is detail in the :ref:`Test Framework Section <development-design-workflow>`.
+Supporting features is detailed workflow is detailed in the :ref:`Test Framework Section <development-design-workflow>`.
 
 Documentation
 -------------

@@ -29,7 +29,7 @@ Dismember Flags
 Inventory Marker
 ----------------
 
-* This is a special type of bone which is used to position object in the inventory display. 
+* This is a special type of bone which is used to position an object in the inventory display. 
 * It may also be used for animation placement involving multiple NPCs
 * The InvMarker bone should only be used in engines that can support them.
 

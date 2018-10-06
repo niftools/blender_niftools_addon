@@ -14,7 +14,7 @@ Mesh Geometry
 #. Give the Object an appropriate name.
 
   - In the **Object Tab** 
-  - Generic names are automatically generated, unique names helps distingush objects, 
+  - Generic names are automatically generated, unique names help distinguish objects, 
 
 .. Notes:
 
@@ -27,11 +27,11 @@ Mesh Geometry
   
 .. _geometry-doubleside:
 
-Double Sided Mesh
+Double-Sided Mesh
 -----------------
 
 * Each triangle is composed of 3 vertices, edges and a face.
-* To decide which way the face is pointing a vector(normal), perpendecular to the face is used.
+* To decide which way the face is pointing a vector(normal), perpendicular to the face is used.
 * This normal vector can be flipped to either side of the triangle; a common source for triangles appearing to not render. 
 
 Sometimes you want to allow the mesh to ignore the normal and render both sides, eg a cloak.
@@ -73,8 +73,8 @@ Vertex Color
 **Example:**
 
 #. :ref:`Create a mesh-object <geometry-mesh>`.
-#. Switch to Vertex Paint mode, this automatically adds a base vertex color layer.
-#. Apply the desired vertex colors evenly to the vertex.
+#. Switch to Vertex Paint mode, this automatically adds a base vertex colour layer.
+#. Apply the desired vertex colours evenly to the vertex.
 #. Ensure you have added a :ref:`material<properties-material-settings>`.
 
 **Notes:**
@@ -89,7 +89,7 @@ Vertex Color
 Vertex Alpha
 ------------
 
-Vertex alpha is handled in the same way as vertex color. The only difference is that vertex alpha use grey scale.
+Vertex alpha is handled in the same way as vertex colour. The only difference is that vertex alpha use the grey scale.
    
 **Example:**
 

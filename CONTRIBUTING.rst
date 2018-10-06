@@ -18,23 +18,23 @@ There are three conditions any contribution to the codebase should respect:
  - Tests to prove the implementation works and regression is still green
  - Appropriate documentation updates
 
-These are not exclusive conditions for a contribution to be accepted, but generally enforced as close as possible to ensure quality.
 Merging of the PR is at the discretion of the @niftools/blender-nif-plugin-merge team.
+These are not exclusive conditions for a contribution to be accepted but generally enforced as close as possible to ensure quality.
 
 Code
 ~~~~
 
-General rule of thumb is to see what has gone before, but if your way is better, ensure you demonstrate that to the review team. 
+The general rule of thumb is to see what has gone before, but if your way is better, ensure you demonstrate that to the review team. 
  * Adhere to conventions, read main documentation for developers.
  * Code should be as easy to read as possible.
- * Comments should help break down complex behavior. If the behavior is too complex, group the code into logical chunks, or extract to functions to make it easier to understand code.
- * Docstrings to describe the intention, not implementation. Self describing code is good and may provide functionality, but useless if it doesn't do what is actually needed.
+ * Comments should help break down complex behaviour. If the behaviour is too complex, group the code into logical chunks, or extract to functions to make it easier to understand the code.
+ * Docstrings to describe the intention, not implementation. Self-describing code is good and may provide functionality, but useless if it doesn't do what is actually needed.
 
 Testing
 ~~~~~~~
 
 Our template includes sections relating to ensure appropriate testing has been completed.
- * If you change the behavior of part of the code, you should try to change the relevant tests to adapt to the new behavior.
+ * If you change the behaviour of part of the code, you should try to change the relevant tests to adapt to the new behaviour.
  * If a test fails, it has to be fixed either in the test or the code.
 
 When possible, for every API additions add either unit or integration tests.
@@ -45,21 +45,21 @@ Documentation
 
 Documentation is used by both users and developers and is published.
  * Any updates that add, remove or modify behaviour require corresponding updates to ensure that user can use the functionality
- * Supporting developer documentation should be updated with relavent changes, design decisions, etc. 
+ * Supporting developer documentation should be updated with relevant changes, design decisions, etc. 
 
 Reviewer Contribution
 ---------------------
 
-The review group is to ensure that contributions are openly discussed, people can participate in the development process and ensure quality of development
- * If you are interested in joining the review group to give your input on contributions, talk to the @niftools/core team to be added as reviewer.
- * You will automatically recieve notificiations for any PR related to this repo.
+The review group is to ensure that contributions are openly discussed, people can participate in the development process and ensure the quality of development
+ * If you are interested in joining the review group to give your input on contributions, talk to the @niftools/core team to be added as a reviewer.
+ * You will automatically receive notifications for any PR related to this repo.
 
 Release process
 ---------------
 
 When all issues in a milestone are complete, a release branch is created from the `dev` branch, tagged, log updates and PR done towards `master`.  
  * The project uses the Python versioning scheme - https://www.python.org/dev/peps/pep-0440/#public-version-identifiers
- * A release will always include an accompanying version change, but the reverse is not true : the version can change without a release.
+ * A release will always include an accompanying version change, but the reverse is not true: the version can change without a release.
 After being merged, a release will be officially released using the GitHub release system.
 
 

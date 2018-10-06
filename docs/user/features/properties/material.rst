@@ -7,8 +7,8 @@ Material Based Properties
 * The following section goes through those Blender material settings and how they relate to corresponding nif blocks or attributes.
 * Unless otherwise stated your mesh needs to have a material.
 * The nif format only supports a single material per :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
-* A Mesh which contains mult-materials will be exported as multiple :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
-* Giving the Material an appropriate name helps distingush materials and encourages reuse, eg. Metal, Glass, plastic etc.
+* A Mesh which contains multiple -materials will be exported as multiple :class:`~PyFFI.formats.nif.NifFormat.NiTriShape`.
+* Giving the Material an appropriate name helps distinguish materials and encourages reuse, eg. Metal, Glass, plastic etc.
 
 Example
 ~~~~~~~
@@ -37,13 +37,13 @@ This is a global scene value; even if you use several materials they all share t
 
 #. In the **World Tab** -> **Ambient Color**.
 
-* The diffuse color dynamically calculated, so the value is not actually used.
+* The diffuse colour dynamically calculated, so the value is not actually used.
 * If you have found a nif that actually uses these values please contact the devs and we can enable per material ambient.
 
 Diffuse
 ~~~~~~~
 
-#. In the **Diffuse** panel, click on the color to bring up the color widget
+#. In the **Diffuse** panel, click on the colour to bring up the colour widget
 
 * Blender defaults is 0.800, which is off-white.
 * See notes above why this value is defaulted on export.
@@ -51,12 +51,12 @@ Diffuse
 Emissive
 ~~~~~~~~
 
-This value sets how much light the material emit.
+This value sets how much light the material emits.
 
-#. In the **Shading** panel is the Emissive color
+#. In the **Shading** panel is the Emissive colour
 #. Set the **Intensity** value,
 
-* Blender uses the diffuse color for emission, viewable in the viewport.
+* Blender uses the diffuse colour for emission, viewable in the viewport.
 
 .. 
    todo::
@@ -75,9 +75,9 @@ This value sets how diffuse the specular highlight across the material.
 Specular
 ~~~~~~~~
 
-The Specular value create the bright highlights that one would see on a glossy surface.
+The Specular value creates the bright highlights that one would see on a glossy surface.
 
-#. In the **Specular** panel, use the color widget to set the highlight color.
+#. In the **Specular** panel, use the colour widget to set the highlight colour.
 #. Set **Intensity** to whatever value you prefer. 
 
 

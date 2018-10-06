@@ -7,7 +7,7 @@ Shader
 
 The following section describes the available shader options and their settings.
 
-There are three different kind of shader nodes:
+There are three different kinds of shader nodes:
 
    * *BS Shader PP Lighting Property*
    * *BS Lighting Shader Property*
@@ -114,8 +114,8 @@ This shader node is used for things.
 * **Window Environment Mapping**
    Window Environment Mapping.
 
-* **Z Buffer Test**
-   Z Buffer Test.
+* **Z-Buffer Test**
+   Z-Buffer Test.
 
 
 
@@ -139,7 +139,7 @@ This shader node is used for things.
 * **Dynamic Decal**
    Dynamic Decal.
 
-* **Enviroment Mapping**
+* **Environment Mapping**
    Environment mapping (uses Envmap Scale).
 
 * **External Emittance**
@@ -169,8 +169,8 @@ This shader node is used for things.
 * **Landscape**
    Unknown.
 
-* **Localmap Hide Secret**
-   Object and anything it is positioned above will not render on local map view.
+* **Local map Hide Secret**
+   Object and anything it is positioned above will not render on the local map view.
 
 * **Model Space Normals**
    Use Model space normals and an external Specular Map.
@@ -182,7 +182,7 @@ This shader node is used for things.
    Unknown.
 
 * **Own Emit**
-   Provides its own emittance color.
+   Provides its own emittance colour.
 
 * **Parallax Occlusion**
    Parallax Occlusion.
@@ -194,7 +194,7 @@ This shader node is used for things.
    Used for decalling.
 
 * **Receive Shadows**
-   Object can recieve shadows.
+   The object can receive shadows.
 
 * **Refraction**
    Use normal map for refraction effect.
@@ -221,9 +221,9 @@ This shader node is used for things.
    Use Falloff value in EffectShaderProperty.
 
 * **Vertex Alpha**
-   Enables using alpha component of vertex colors.
+   Enables using the alpha component of vertex colours.
 
-* **Z Buffer Test**
+* **Z-Buffer Test**
    ZBuffer Test.
 
 * **Anisotropic Lighting**
@@ -268,10 +268,10 @@ This shader node is used for things.
 * **LOD Objects**
    LOD Objects.
 
-* **Multi Index Snow**
-   Multi Index Snow.
+* **Multi-Index Snow**
+   Multi-Index Snow.
 
-* **Multi Layer Parallax**
+* **Multi-Layer Parallax**
    Use Multilayer (inner-layer) Map.
 
 * **No Fade**
@@ -319,7 +319,7 @@ This shader node is used for things.
 * **Wireframe**
    Wireframe.
 
-* **Z Buffer Write**
+* **Z-Buffer Write**
    Enables writing to the Z-Buffer.
 
 
@@ -331,7 +331,7 @@ BS Effect Shader Property
 
 .. Describe this type
 
-Skyrim non-PP shader model, used primarily for transparency effects, often as decal.
+Skyrim non-PP shader model, used primarily for transparency effects, often as a decal.
 
 * **Cast Shadows**
    Can cast shadows.
@@ -342,7 +342,7 @@ Skyrim non-PP shader model, used primarily for transparency effects, often as de
 * **Dynamic Decal**
    Dynamic Decal.
 
-* **Enviroment Mapping**
+* **Environment Mapping**
    Environment mapping (uses Envmap Scale).
 
 * **External Emittance**
@@ -372,8 +372,8 @@ Skyrim non-PP shader model, used primarily for transparency effects, often as de
 * **Landscape**
    Unknown.
 
-* **Localmap Hide Secret**
-   Object and anything it is positioned above will not render on local map view.
+* **Local map Hide Secret**
+   Object and anything it is positioned above will not render on the local map view.
 
 * **Model Space Normals**
    Use Model space normals and an external Specular Map.
@@ -385,7 +385,7 @@ Skyrim non-PP shader model, used primarily for transparency effects, often as de
    Unknown.
 
 * **Own Emit**
-   Provides its own emittance color.
+   Provides its own emittance colour.
 
 * **Parallax Occlusion**
    Parallax Occlusion.
@@ -397,7 +397,7 @@ Skyrim non-PP shader model, used primarily for transparency effects, often as de
    Used for decalling.
 
 * **Receive Shadows**
-   Object can recieve shadows.
+   The object can receive shadows.
 
 * **Refraction**
    Use normal map for refraction effect.
@@ -424,9 +424,9 @@ Skyrim non-PP shader model, used primarily for transparency effects, often as de
    Use Falloff value in EffectShaderProperty.
 
 * **Vertex Alpha**
-   Enables using alpha component of vertex colors.
+   Enables using the alpha component of vertex colours.
 
-* **Z Buffer Test**
+* **Z-Buffer Test**
    ZBuffer Test.
 
 * **Anisotropic Lighting**
@@ -471,10 +471,10 @@ Skyrim non-PP shader model, used primarily for transparency effects, often as de
 * **LOD Objects**
    LOD Objects.
 
-* **Multi Index Snow**
-   Multi Index Snow.
+* **Multi-Index Snow**
+   Multi-Index Snow.
 
-* **Multi Layer Parallax**
+* **Multi-Layer Parallax**
    Use Multilayer (inner-layer) Map.
 
 * **No Fade**
@@ -522,7 +522,7 @@ Skyrim non-PP shader model, used primarily for transparency effects, often as de
 * **Wireframe**
    Wireframe.
 
-* **Z Buffer Write**
+* **Z-Buffer Write**
    Enables writing to the Z-Buffer.
 
 

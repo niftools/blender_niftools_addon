@@ -10,7 +10,7 @@ Porting Strategy
 
 We are following the following strategy for porting the plugin:
 
-#. Write regression test for desired feature.
+#. Write a regression test for the desired feature.
 #. Run the test.
 #. Fix the first exception that occurs, and commit the fix.
 #. Go back to step 2 until no more exceptions are raised.
@@ -20,9 +20,9 @@ We are following the following strategy for porting the plugin:
 The 2.6.x series is designated as purely experimental.
 
 Once enough features have and pass their regression test---i.e. as
-soon as the new plugin can be considered en par with the old
+soon as the new plugin can be considered on par with the old
 scripts---the code will be refactored and cleaned up, possibly moving
-some bits out to seperate addons (hull script, morph copy, etc.). The
+some bits out to separate addons (hull script, morph copy, etc.). The
 refactor is reserved for the 3.x.x series.
 
 Generate Documentation

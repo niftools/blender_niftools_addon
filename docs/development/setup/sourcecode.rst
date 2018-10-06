@@ -5,7 +5,7 @@ Downloading the Source Code
 
 This section will guide new developers through the process of downloading the source code.
 We use git as to manage and version our source control.
-It is hosted on github, a popular git hosting platform. 
+It is hosted on GitHub, a popular git hosting platform. 
 
 
 Install Git
@@ -29,9 +29,9 @@ Download `git bash <https://git-scm.com/downloads>`_ installer and follow the in
 Auto CLRF
 `````````
 
-* We need to ensure consistency of end-of-file(EOF) markers between unix & windows platforms.
+* We need to ensure consistency of end-of-file(EOF) markers between Unix & Windows platforms.
 * Locally it will keep your platform specifics EOF, but when you go to push it will update files as necessary
-* This avoids unnecessary commits, when your environment is different to the remote.
+* This avoids unnecessary commits when your environment is different to the remote.
 * Without this option, Git will see the different markers and think that the whole file has been edited.
 * Read `EOF <http://en.wikipedia.org/wiki/Newline>`_.
 * For Windows-style line endings, use::
@@ -62,19 +62,19 @@ Create a Github Fork
 --------------------
 
 If you intend to work on the Blender nif plugin, first, you should
-clone the code on github.
+clone the code on GitHub.
 
-#. If you do not have one yet, `create a github account <https://github.com/signup/free>`_.
+#. If you do not have one yet, `create a GitHub account <https://github.com/signup/free>`_.
 
 #. Set up your `git environment <http://help.github.com/set-up-git-redirect>`_.
 
-#. `Log in <https://github.com/login>`_ on github.
+#. `Log in <https://github.com/login>`_ on GitHub.
 
 #. Visit the `Blender Nif plugin mothership repository <https://github.com/niftools/blender_nif_plugin>`_.
 
 #. Click **Fork** (top right corner).
 
-Be sure to read the remaining `github help pages <http://help.github.com/>`_, particularly the beginner's guides.
+Be sure to read the remaining `GitHub help pages <http://help.github.com/>`_, particularly the beginner's guides.
 
 
 Get the Source Code
@@ -87,7 +87,7 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
    cd blender_nif_plugin
 
 We use submodules to maintain external dependencies.
-This allows us to update to version of the dependency independently of the corresponding project's release cycle.
+This allows us to update to a version of the dependency independently of the corresponding project's release cycle.
 
 Fetching the submodules::
    
