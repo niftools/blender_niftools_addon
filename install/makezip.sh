@@ -22,6 +22,7 @@ cp -r "${PLUGIN_IN}" "${TEMP}"/
 echo "Creating dependencies folder"
 mkdir -p "${DEPS_OUT}"
 
+echo "Moving pyffi to dependencies folder"
 cp -r "${ROOT}"/pyffi/pyffi "${DEPS_OUT}"
 cp "${ROOT}"/pyffi/*.rst "${DEPS_OUT}"/pyffi
 rm -rf "${DEPS_OUT}"/pyffi/formats/cgf
@@ -30,7 +31,6 @@ rm -rf "${DEPS_OUT}"/pyffi/formats/psk
 rm -rf "${DEPS_OUT}"/pyffi/formats/rockstar
 rm -rf "${DEPS_OUT}"/pyffi/formats/tga
 rm -rf "${DEPS_OUT}"/pyffi/qskope
-echo "Moving PyFFI to dependencies folder"
 
 echo "Copying loose files"
 cp "${ROOT}"/AUTHORS.rst "${PLUGIN_OUT}"
