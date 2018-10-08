@@ -49,7 +49,8 @@ class Property:
         self.b_mesh = None
         self.n_block = None
         self.process_property = singledispatch(self.process_property)
-        self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencilproperty_property)
+        self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
+        self.process_property.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
         self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
         self.process_property.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
         self.process_property.register(NifFormat.NiAlphaProperty, self.process_nialphs_property)
@@ -67,15 +68,14 @@ class Property:
         NifLog.warn("Unknown property block found : " + str(prop.name))
         NifLog.warn("This type isn't currently supported: {}".format(type(prop)))
 
-    def process_nistencilproperty_property(self, prop):
+    def process_nistencil_property(self, prop):
         """Stencil (for double sided meshes"""
         NifLog.debug("NiStencilProperty property found" + str(prop))
         self.b_mesh.show_double_sided = True  # We don't check flags for now, nothing fancy
 
-    def process_property(self, prop):
+    def process_nispecular_property(self, prop):
         """SpecularProperty based specular"""
-        print("NiSpecularProperty property found" + str(prop))
-        NifLog.debug("NiAlphaProperty property found" + str(prop))
+        NifLog.debug("NiSpecularProperty property found" + str(prop))
         b_mat = self._find_or_create_material()
 
         # TODO [material][property]
