@@ -74,7 +74,8 @@ class Armature:
     def import_armature(self, n_armature):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning of the bones before skins are attached."""
-        armature_name = obj.import_name(n_armature)
+        NifLog.info("Print out stuff")
+        armature_name = obj.object_import.import_name(n_armature)
 
         b_armature_data = bpy.data.armatures.new(armature_name)
         # b_armature_data.use_vertex_groups = True
@@ -139,7 +140,7 @@ class Armature:
         nub_length = 5.0
         scale = NifOp.props.scale_correction_import
         # bone name
-        bone_name = obj.import_name(n_block)
+        bone_name = obj.object_import.import_name(n_block)
         n_child_bones = [child for child in n_block.children if self.is_bone(child)]
         # create a new bone
         b_bone = b_armature_data.edit_bones.new(bone_name)

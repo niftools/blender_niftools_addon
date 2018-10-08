@@ -39,7 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.obj import object_import
+from io_scene_nif.modules import obj
 
 
 class Skin:
@@ -54,7 +54,7 @@ class Skin:
             if not bone:
                 continue
             vertex_weights = bone_weights[idx].vertex_weights
-            groupname = object_import.DICT_NAMES[bone]
+            groupname = obj.DICT_NAMES[bone]
             if groupname not in b_obj.vertex_groups.items():
                 v_group = b_obj.vertex_groups.new(groupname)
             for skinWeight in vertex_weights:
