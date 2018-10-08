@@ -79,10 +79,10 @@ Vertex Color
 
 **Notes:**
 
-* The Nif format only supports a single color per vertex, whereas Blender vertex color per face vertex.
-* Blender treats the vertex as if the faces had been split apart, each face can have a different color for that vertex.
-* `This image should clarify per-face vertes coloring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
-* On export the scripts will take an average of colors. 
+* The Nif format only supports a single colour per vertex, whereas Blender vertex colour per face vertex.
+* Blender treats the vertex as if the faces had been split apart, each face can have a different colour for that vertex.
+* `This image should clarify per-face vertex colouring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
+* On export, the scripts will take an average of colours. 
 
 .. _geometry-vertexalpha:
 
@@ -94,12 +94,12 @@ Vertex alpha is handled in the same way as vertex colour. The only difference is
 **Example:**
 
 #. :ref:`Create a mesh-object <geometry-mesh>`.
-#. Switch to Vertex Paint mode, If there are no vertex color layers this will create a new layer.
 	you will need to add a second layer manually by clicking the + button in the vertex colors 
 	control panel located in the object data menu.
-#. In the brush menu on the left side of the screen, leave the color selector in the center and 
 	use the slider on the right side to change the level of shading with white being fully visible
 	and black being fully transparent.
+#. Switch to Vertex Paint mode, If there are no vertex colour layers this will create a new layer.
+#. In the brush menu on the left side of the screen, leave the colour selector in the centre and 
 #. Apply the shading to the vertices just as you would for :ref:`Vertex Color <geometry-vertexcolor>`
 
 **Notes:**
