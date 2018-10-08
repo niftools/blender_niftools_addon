@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Panel
 
 
@@ -47,10 +46,10 @@ class ArmaturePanel(Panel):
     bl_region_type = 'WINDOW'
     bl_context = "bone"
 
+    # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
         return True
-        
 
     def draw(self, context):
         nif_bone_props = context.bone.niftools_bone
@@ -59,4 +58,3 @@ class ArmaturePanel(Panel):
         row = layout.column()
         
         row.prop(nif_bone_props, "boneflags")
-    

@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Panel, UIList, Menu
 
 
@@ -47,12 +46,13 @@ class ObjectPanel(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
-    
+
+    # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
         return True
         
-
+    # noinspection PyUnusedLocal
     def draw(self, context):
         nif_obj_props = context.object.niftools
         
@@ -67,18 +67,20 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "longname")
         
 
+# TODO [object][ui] Create a proper UI for extra data types
 class OBJECT_PT_ExtraData(Panel):
     bl_label = "Niftools Object Extra Data Panel"
     
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
-    
+
+    # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
         return True
         
-
+    # noinspection PyUnusedLocal
     def draw(self, context):
         b_obj = context.object
         extra_data_store = b_obj.niftools.extra_data_store
@@ -89,7 +91,7 @@ class OBJECT_PT_ExtraData(Panel):
         row = layout.row()
         row.template_list("OBJECT_UL_ExtraData", "", extra_data_store, "extra_data", extra_data_store, "extra_data_index")
         
-        #Add/Remove operators
+        # Add/Remove operators
         col = row.column(align=True)
         col.menu("OBJECT_MT_ExtraDataType", icon='ZOOMIN', text="")
 
@@ -104,10 +106,12 @@ class OBJECT_PT_ExtraData(Panel):
             box.prop(selected_extra_data, "name")
             box.prop(selected_extra_data, "data") 
             box.prop(selected_extra_data, "sub_class")
-            
+
+
 class OBJECT_MT_ExtraDataType(Menu):
     bl_label = "Extra Data Types"
-    
+
+    # noinspection PyUnusedLocal
     def draw(self, context):
         layout = self.layout
         layout.operator("object.niftools_extradata_bsx_add")
@@ -117,23 +121,26 @@ class OBJECT_MT_ExtraDataType(Menu):
         
 
 class OBJECT_UL_ExtraData(UIList):
+
+    # noinspection PyUnusedLocal
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(0.2)
         split.label(str(item.name))
         split.prop(item, "data", text="", emboss=False, translate=False, icon='BORDER_RECT')
+
 
 class ObjectInvMarkerPanel(Panel):
     bl_label = "BS Inv Marker"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
-    
+
+    # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
         return True
-        
 
-    def draw(self, context):       
+    def draw(self, context):
         layout = self.layout
         nif_bsinv_props = context.object.niftools_bs_invmarker
                 
@@ -145,8 +152,7 @@ class ObjectInvMarkerPanel(Panel):
 
         col = row.column(align=True)
         for i, x in enumerate(nif_bsinv_props):
-            col.prop(nif_bsinv_props[i], "bs_inv_x", index= i)
-            col.prop(nif_bsinv_props[i], "bs_inv_y", index= i)
-            col.prop(nif_bsinv_props[i], "bs_inv_z", index= i)
-            col.prop(nif_bsinv_props[i], "bs_inv_zoom", index= i)
-
+            col.prop(nif_bsinv_props[i], "bs_inv_x", index=i)
+            col.prop(nif_bsinv_props[i], "bs_inv_y", index=i)
+            col.prop(nif_bsinv_props[i], "bs_inv_z", index=i)
+            col.prop(nif_bsinv_props[i], "bs_inv_zoom", index=i)

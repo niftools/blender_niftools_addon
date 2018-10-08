@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,8 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Panel
+
 
 class CollisionBoundsPanel(Panel):
     bl_label = "Collision Bounds"
@@ -69,15 +69,15 @@ class CollisionBoundsPanel(Panel):
         box = layout.box()
         box.active = game.use_collision_bounds
         
-        box.prop(col_setting, "col_filter", text='Col Filter') # col filter prop
-        box.prop(col_setting, "deactivator_type", text='Deactivator Type') # motion dactivation prop
-        box.prop(col_setting, "solver_deactivation", text='Solver Deactivator') # motion dactivation prop
-        box.prop(col_setting, "quality_type", text='Quality Type') # quality type prop
-        box.prop(col_setting, "oblivion_layer", text='Oblivion Layer') # oblivion layer prop
-        box.prop(col_setting, "max_linear_velocity", text='Max Linear Velocity') # oblivion layer prop
-        box.prop(col_setting, "max_angular_velocity", text='Max Angular Velocity') # oblivion layer prop
-        box.prop(col_setting, "motion_system", text='Motion System') # motion system prop
-        box.prop(col_setting, "havok_material", text='Havok Material') # havok material prop
+        box.prop(col_setting, "col_filter", text='Col Filter')  # col filter prop
+        box.prop(col_setting, "deactivator_type", text='Deactivator Type')  # motion dactivation prop
+        box.prop(col_setting, "solver_deactivation", text='Solver Deactivator')  # motion dactivation prop
+        box.prop(col_setting, "quality_type", text='Quality Type')  # quality type prop
+        box.prop(col_setting, "oblivion_layer", text='Oblivion Layer')  # oblivion layer prop
+        box.prop(col_setting, "max_linear_velocity", text='Max Linear Velocity')  # oblivion layer prop
+        box.prop(col_setting, "max_angular_velocity", text='Max Angular Velocity')  # oblivion layer prop
+        box.prop(col_setting, "motion_system", text='Motion System')  # motion system prop
+        box.prop(col_setting, "havok_material", text='Havok Material')  # havok material prop
         
         con_setting = context.active_object.niftools_constraint
                 
