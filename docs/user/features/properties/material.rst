@@ -7,7 +7,7 @@ Material Based Properties
 * The following section goes through those Blender material settings and how they relate to corresponding nif blocks or attributes.
 * Unless otherwise stated your mesh needs to have a material.
 * The nif format only supports a single material per :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
-* A Mesh which contains multiple -materials will be exported as multiple :class:`~PyFFI.formats.nif.NifFormat.NiTriShape`.
+* A Mesh which contains multiple -materials will be exported as multiple :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
 * Giving the Material an appropriate name helps distinguish materials and encourages reuse, eg. Metal, Glass, plastic etc.
 
 Example
