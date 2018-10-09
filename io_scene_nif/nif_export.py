@@ -181,9 +181,6 @@ class NifExport(NifCommon):
                 if NifOp.props.game in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3'):
                     if (root_object.type == 'ARMATURE') or (root_object.name.lower() == "bip01"):
                         root_name = 'Scene Root'
-                # TODO remove as already filtered
-                if root_object.type not in export_types:
-                    raise nif_utils.NifError("Root object (%s) must be an 'EMPTY', 'MESH', or 'ARMATURE' object." % root_object.name)
                 root_objects.add(root_object)
 
             # smooth seams of objects
