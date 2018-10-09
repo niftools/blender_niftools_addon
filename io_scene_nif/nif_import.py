@@ -53,9 +53,7 @@ from io_scene_nif.modules import armature, obj, animation, collision
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import BHKShape, Bound
 from io_scene_nif.modules.constraint.constraint_import import Constraint
-from io_scene_nif.modules.property.material.material_import import Material
-from io_scene_nif.modules.property.texture.texture_import import TextureSlots
-from io_scene_nif.modules.obj.object_import import NiObject, Empty, is_grouping_node
+from io_scene_nif.modules.obj.object_import import Empty, is_grouping_node
 from io_scene_nif.modules.scene import scene_import
 
 import bpy
@@ -69,7 +67,7 @@ class NifImport(NifCommon):
     # degrees to radians conversion constant
     D2R = 3.14159265358979 / 180.0
     IMPORT_EXTRANODES = True
-    IMPORT_EXPORTEMBEDDEDTEXTURES = False
+
 
     # noinspection PyUnusedLocal
     def __init__(self, operator, context):
@@ -84,9 +82,6 @@ class NifImport(NifCommon):
         self.bhkhelper = BHKShape()
         self.boundhelper = Bound()
         self.constrainthelper = Constraint()
-        self.objecthelper = NiObject()
-        self.materialhelper = Material()
-        self.texturehelper = TextureSlots(parent=self)
 
     def execute(self):
         """Main import function."""
@@ -244,7 +239,7 @@ class NifImport(NifCommon):
             b_obj = self.import_branch(root_block)
 
             # TODO [object][flags]
-            b_obj.niftools.bsxflags = self.bsx_flags
+            # b_obj.niftools.bsxflags = self.bsx_flags
 
         elif isinstance(root_block, NifFormat.NiNode):
 
@@ -312,10 +307,11 @@ class NifImport(NifCommon):
         :param n_armature: The corresponding nif block for the armature for
             the current branch.
         """
-        NifLog.info("Importing data")
-        if not n_block:
+        if n_block:
+            NifLog.info("Importing data {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
+        else:
             return None
-        elif isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
+        if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
             # it's a shape node and we're not importing skeleton only
             # (NifOp.props.skeleton ==  "SKELETON_ONLY")
             NifLog.debug("Building mesh in import_branch")
@@ -324,7 +320,7 @@ class NifImport(NifCommon):
             b_obj = Mesh.import_mesh(n_block)
 
             # TODO [object][flags]
-            b_obj.niftools.objectflags = n_block.flags
+            # b_obj.niftools.objectflags = n_block.flags
 
             # TODO [property][shader][material] Do proper property processing
             # if niBlock.properties:
@@ -586,7 +582,7 @@ class NifImport(NifCommon):
                     b_child.addProperty("Far Extent", lod_level.far_extent, "FLOAT")
 
             return b_obj
-        # all else is currently discarded
+        NifLog.debug("Discarded {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
         return None
 
     def set_parents(self, n_block):

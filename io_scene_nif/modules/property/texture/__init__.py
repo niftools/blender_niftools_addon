@@ -38,3 +38,6 @@
 
 # dictionary of texture files, to reuse textures
 DICT_TEXTURES = {}
+
+# TODO [property][texture] Expose IMPORT_EMBEDDED_TEXTTURES as a import property
+IMPORT_EMBEDDED_TEXTURES = False

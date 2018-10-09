@@ -39,6 +39,8 @@ from pyffi.formats.nif import NifFormat
 from functools import singledispatch
 
 from io_scene_nif.modules.property.material.material_import import Material
+from io_scene_nif.modules.property.texture.texture_import import TextureSlots
+from io_scene_nif.modules.property.texture.types.nitexturesource import NiTextureProp
 from io_scene_nif.utility.nif_global import NifData
 from io_scene_nif.utility.nif_logging import NifLog
 
@@ -54,6 +56,7 @@ class Property:
         self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
         self.process_property.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
         self.process_property.register(NifFormat.NiAlphaProperty, self.process_nialphs_property)
+        self.process_property.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
 
     def process_property_list(self, n_block, b_mesh):
         self.n_block = n_block
@@ -93,6 +96,12 @@ class Property:
         NifLog.debug("NiMaterialProperty property found" + str(prop))
         b_mat = self._find_or_create_material()
         Material().import_material(self.n_block, b_mat, prop)
+
+    def process_nitexturing_property(self, prop):
+        """Import a NiMaterialProperty based material"""
+        NifLog.debug("NiMaterialProperty property found" + str(prop))
+        b_mat = self._find_or_create_material()
+        NiTextureProp.get().import_nitextureprop_textures(self.n_block, b_mat, prop)
 
     def process_niwireframe_property(self, prop):
         """Material based specular"""

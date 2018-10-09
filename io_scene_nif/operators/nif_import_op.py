@@ -161,9 +161,6 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         method.
         """
 
-        # from io_scene_nif.utility import nif_debug
-        # nif_debug.start_debug()
-
         # setup the viewport for preferred viewing settings
         bpy.context.scene.game_settings.material_mode = 'GLSL'
         for area in bpy.context.window.screen.areas:
