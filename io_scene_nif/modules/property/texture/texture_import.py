@@ -197,11 +197,6 @@ class TextureSlots:
             NifLog.warn("Unknown apply mode (%i) in material, using blend type 'MIX'".format(n_apply_mode))
             return "MIX"
 
-    @staticmethod
-    def get_used_textslots(b_mat):
-        used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot and b_texslot.use]
-        return used_slots
-
     # TODO [property][texture] move to each texture type
     # fix up vertex colors depending on whether we had textures in the material
     # mbasetex = self.texturehelper.has_base_texture(material)

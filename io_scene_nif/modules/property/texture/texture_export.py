@@ -40,6 +40,7 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -67,17 +68,12 @@ class TextureHelper:
         self.detail_mtex = None
         self.ref_mtex = None
 
-    @staticmethod
-    def get_used_textslots(b_mat):
-        used_slots = []
-        if b_mat is not None:
-            used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
-        return used_slots
+
 
     @staticmethod
     def get_uv_layers(b_mat):
         used_uvlayers = set()
-        texture_slots = TextureHelper.get_used_textslots(b_mat)
+        texture_slots = texture.get_used_textslots(b_mat)
         for slot in texture_slots:
             used_uvlayers.add(slot.uv_layer)
         return used_uvlayers
@@ -404,7 +400,7 @@ class TextureHelper:
 
     def determine_texture_types(self, b_obj, b_mat):
 
-        used_slots = self.get_used_textslots(b_mat)
+        used_slots = texture.get_used_textslots(b_mat)
         self.base_mtex = None
         self.bump_mtex = None
         self.dark_mtex = None

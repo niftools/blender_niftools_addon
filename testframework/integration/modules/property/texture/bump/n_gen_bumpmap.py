@@ -44,24 +44,19 @@ from pyffi.formats.nif import NifFormat
 from integration.modules.property.texture import n_gen_texture
 
 
-def n_create_bump_map_property(n_nitexturingproperty):
+def n_create_bump_map_property(n_nitexturingproperty, file_path):
     """Adds a bumpmap texture to a NiTexturingProperty"""
     
     n_nitexturingproperty.has_bump_map_texture = True
+    n_nisourcetexture = n_gen_texture.n_create_base_nisourcetexture(file_path)
+
     n_nitexturingproperty.bump_map_luma_scale = 1.0
     n_nitexturingproperty.bump_map_luma_offset = 0.0
     n_nitexturingproperty.bump_map_matrix.m_11 = 1.0
     n_nitexturingproperty.bump_map_matrix.m_12 = 0.0
     n_nitexturingproperty.bump_map_matrix.m_21 = 0.0
     n_nitexturingproperty.bump_map_matrix.m_22 = 1.0
-    
-    n_nisourcetexture = NifFormat.NiSourceTexture()  
-    
-    file_path = 'textures' + path.sep + 'bump' + path.sep + 'bump.dds'
-    n_nisourcetexture.file_name = file_path.encode()
-    n_nisourcetexture.pixel_layout = NifFormat.PixelLayout.PIX_LAY_DEFAULT  # 6
-    n_nisourcetexture.use_mipmaps = 1
-    
+
     with ref(n_nitexturingproperty.bump_map_texture) as n_texdesc:
         n_texdesc.source = n_nisourcetexture
     

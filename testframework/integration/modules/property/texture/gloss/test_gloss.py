@@ -121,8 +121,8 @@ class TestTexturePropertyGlossMap(SingleNif):
         n_gen_texture.n_create_texture_property(n_nitrishape)  # add nitexturingprop
         
         n_textureprop = n_nitrishape.properties[0]
-        n_gen_diffusemap.n_create_diffuse_map(n_textureprop)  # add nitexturesource diffuse
-        n_gen_glossmap.n_create_gloss_map(n_textureprop)  # add nitexturesource glowmap
+        n_gen_diffusemap.n_create_diffuse_map(n_textureprop, self.diffuse_texture_path)  # add nitexturesource diffuse
+        n_gen_glossmap.n_create_gloss_map(n_textureprop, self.glossmap_texture_path)  # add nitexturesource glowmap
         
         return self.n_data
 

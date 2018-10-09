@@ -133,8 +133,8 @@ class TestTexturePropertyNormalMap(SingleNif):
         n_gen_texture.n_create_texture_property(n_nitrishape)  # add nitexturingprop
 
         n_textureprop = n_nitrishape.properties[0]
-        n_gen_diffusemap.n_create_diffuse_map(n_textureprop)  # add nitexturesource diffuse
-        n_gen_normalmap.n_create_normal_map(n_textureprop)  # add nitexturesource normalmap
+        n_gen_diffusemap.n_create_diffuse_map(n_textureprop, self.diffuse_texture_path)  # add nitexturesource diffuse
+        n_gen_normalmap.n_create_normal_map(n_textureprop, self.normalmap_texture_path)  # add nitexturesource normalmap
 
         return self.n_data
 

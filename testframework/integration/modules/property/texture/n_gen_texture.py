@@ -372,6 +372,14 @@ def n_check_texturing_property(n_tex_prop):
     # TODO [pooperty][texture] assert on count
 
 
+def n_create_base_nisourcetexture(file_path):
+    n_nisourcetexture = NifFormat.NiSourceTexture()
+    n_nisourcetexture.file_name = file_path.encode()
+    n_nisourcetexture.pixel_layout = NifFormat.PixelLayout.PIX_LAY_DEFAULT  # 6
+    n_nisourcetexture.use_mipmaps = 1
+    return n_nisourcetexture
+
+
 def n_check_texdesc(n_tex_desc):
     nose.tools.assert_equal(n_tex_desc.clamp_mode, 3)
     nose.tools.assert_equal(n_tex_desc.filter_mode, 2)

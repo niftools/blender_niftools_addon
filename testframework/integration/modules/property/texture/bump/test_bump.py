@@ -62,9 +62,14 @@ class TestTexturePropertyBumpMap(SingleNif):
 
     # Paths
     texture_dir = texture.TEXTURE_DATA_DIR
-    
-    diffuse_texture_path = os.path.join(texture_dir, 'diffuse', 'diffuse.dds')
-    bumpmap_texture_path = os.path.join(texture_dir, 'bump', 'bump.dds')
+    diffuse_sub_path = ['diffuse', 'diffuse.dds']
+    bump_sub_path = ['bump', 'bump.dds']
+
+    diffuse_texture_abs_path = os.path.join(texture.TEXTURE_DATA_DIR, *diffuse_sub_path)
+    diffuse_texture_rel_path = os.path.join("textures", *diffuse_sub_path)
+
+    bumpmap_texture_abs_path = os.path.join(texture.TEXTURE_DATA_DIR, *bump_sub_path)
+    bumpmap_texture_rel_path = os.path.join("textures", *bump_sub_path)
 
     def b_create_header(self):
         b_gen_header.b_create_oblivion_info()
@@ -79,12 +84,12 @@ class TestTexturePropertyBumpMap(SingleNif):
         
         # diffuse
         b_mat_texslot = b_gen_texture.b_create_textureslot(b_mat, 'Diffuse')
-        b_gen_texture.b_create_load_texture(b_mat_texslot, self.diffuse_texture_path)
+        b_gen_texture.b_create_load_texture(b_mat_texslot, self.diffuse_texture_abs_path)
         b_gen_diffusemap.b_create_diffuse_texture_properties(b_mat_texslot)
         
         # bump
         b_mat_texslot = b_gen_texture.b_create_textureslot(b_mat, 'Bump')
-        b_gen_texture.b_create_load_texture(b_mat_texslot, self.bumpmap_texture_path)
+        b_gen_texture.b_create_load_texture(b_mat_texslot, self.bumpmap_texture_abs_path)
         b_gen_bumpmap.b_create_bumpmap_texture_properties(b_mat_texslot)
         
     def b_check_data(self):
@@ -98,14 +103,14 @@ class TestTexturePropertyBumpMap(SingleNif):
         nose.tools.assert_equal(b_mat.texture_slots[0] is not None, True)  # check slot exists
         b_texslot_diffuse = b_mat.texture_slots[0]
         b_gen_texture.b_check_texture_slot(b_texslot_diffuse)
-        b_gen_texture.b_check_image_texture_property(b_texslot_diffuse, self.diffuse_texture_path)  
+        b_gen_texture.b_check_image_texture_property(b_texslot_diffuse, self.diffuse_texture_abs_path)
         b_gen_diffusemap.b_check_diffuse_texture_settings(b_texslot_diffuse)
         
         # bump
         nose.tools.assert_equal(b_mat.texture_slots[1] is not None, True)  # check slot exists
         b_texslot_bump = b_mat.texture_slots[1]
         b_gen_texture.b_check_texture_slot(b_texslot_bump)
-        b_gen_texture.b_check_image_texture_property(b_texslot_bump, self.bumpmap_texture_path)  
+        b_gen_texture.b_check_image_texture_property(b_texslot_bump, self.bumpmap_texture_abs_path)
         b_gen_bumpmap.b_check_bumpmap_texture_settings(b_texslot_bump)
 
     def n_create_header(self):
@@ -121,8 +126,8 @@ class TestTexturePropertyBumpMap(SingleNif):
         n_gen_texture.n_create_texture_property(n_nitrishape)  # add nitexturingprop
         
         n_textureprop = n_nitrishape.properties[0]
-        n_gen_diffusemap.n_create_diffuse_map(n_textureprop)  # add nitexturesource diffuse
-        n_gen_bumpmap.n_create_bump_map_property(n_textureprop)  # add nitexturesource bumpmap
+        n_gen_diffusemap.n_create_diffuse_map(n_textureprop, self.diffuse_texture_rel_path)  # add nitexturesource diffuse
+        n_gen_bumpmap.n_create_bump_map_property(n_textureprop, self.bumpmap_texture_rel_path)  # add nitexturesource bumpmap
         
         return self.n_data
 
@@ -140,9 +145,9 @@ class TestTexturePropertyBumpMap(SingleNif):
         # diffuse
         n_texdesc_diffuse = n_tex_prop.base_texture
         n_gen_texture.n_check_texdesc(n_texdesc_diffuse)  # check generic props
-        n_gen_diffusemap.n_check_diffuse_source_texture(n_texdesc_diffuse.source, self.diffuse_texture_path)  # check diffuse image
+        n_gen_diffusemap.n_check_diffuse_source_texture(n_texdesc_diffuse.source, self.diffuse_texture_rel_path)  # check diffuse image
         
         # bump
         n_texdesc_bumpmap = n_tex_prop.bump_map_texture
         n_gen_texture.n_check_texdesc(n_texdesc_bumpmap)  # check generic props
-        n_gen_bumpmap.n_check_bumpmap_source_texture(n_texdesc_bumpmap.source, self.bumpmap_texture_path)  # check diffuse image
+        n_gen_bumpmap.n_check_bumpmap_source_texture(n_texdesc_bumpmap.source, self.bumpmap_texture_rel_path)  # check diffuse image
