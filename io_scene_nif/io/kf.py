@@ -42,7 +42,8 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
-class KFFile():
+
+class KFFile:
     """Class to load and save a NifFile"""
     
     @staticmethod
@@ -67,4 +68,3 @@ class KFFile():
                 raise NifError("Not a KF file.")
             
         return kf_file    
-    

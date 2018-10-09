@@ -42,7 +42,8 @@ from pyffi.formats.egm import EgmFormat
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
-class EGMFile():
+
+class EGMFile:
     """Load and save a FaceGen Egm file"""
 
     @staticmethod
@@ -67,4 +68,3 @@ class EGMFile():
                 raise NifError("Not a EGM file.")
             
         return egm_file
-    
