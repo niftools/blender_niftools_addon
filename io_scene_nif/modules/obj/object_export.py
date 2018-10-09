@@ -756,11 +756,11 @@ class MeshHelper:
                     self.nif_export.texturehelper.add_shader_integer_extra_datas(trishape)
 
                 if b_mat:
+                    # TODO [property][texture] This exports a texture even if there is none defined in the material
                     n_nitextureprop = self.nif_export.texturehelper.export_texturing_property(
                         flags=0x0001,  # standard
                         applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
-
                     self.nif_export.objecthelper.register_block(n_nitextureprop)
                     trishape.add_property(n_nitextureprop)
 
