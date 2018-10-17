@@ -10,7 +10,7 @@ Contributions should always be made through GitHub's Pull Request (PR) feature, 
 This repo comes with a template for Pull Requests and should be fully completed.
 
 Once the PR is submitted, the @niftools/blender-nif-plugin-review team is automatically notified and will start a discussion process.
-This can include ensuring the commit is beneficial to the project as a whole, is appropriately scoped, discuss any issues with the design, ensure all requirements are met. 
+This can include ensuring the commit is beneficial to the project as a whole, is appropriately scoped, discuss any issues regarding the design, and ensuring all requirements are met. 
 This is an iterative process; additional commits can be appended at any time based on PR discussion to the source branch and will be automatically included in the PR.
 
 There are three conditions any contribution to the codebase should respect:
@@ -25,9 +25,9 @@ Code
 ~~~~
 
 General rule of thumb is to see what has gone before, but if your way is better, ensure you demonstrate that to the review team. 
- * Adhere to conventions, see out main documentation for developers.
- * Code should be as readable as possible.
- * Comments should help break down complex behavior. If the behavior is too complex, group the code into logical chunks, or extract to functions for easier to understand code.
+ * Adhere to conventions, read main documentation for developers.
+ * Code should be as easy to read as possible.
+ * Comments should help break down complex behavior. If the behavior is too complex, group the code into logical chunks, or extract to functions to make it easier to understand code.
  * Docstrings to describe the intention, not implementation. Self describing code is good and may provide functionality, but useless if it doesn't do what is actually needed.
 
 Testing
