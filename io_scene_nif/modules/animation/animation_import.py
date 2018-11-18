@@ -207,7 +207,7 @@ class AnimationHelper():
                 lowest_diff = diff
                 fps = test_fps
         NifLog.info("Animation estimated at %i frames per second." % fps)
-        self.fps = fps
+        self.fps = 30.0
         return fps
 
     def store_animation_data(self, rootBlock):
