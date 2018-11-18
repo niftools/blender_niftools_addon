@@ -50,6 +50,7 @@ class AnimationHelper():
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
         self.armature_animation = ArmatureAnimation(parent)
+        self.fps = 30
     
 
     def import_kf_root(self, kf_root, root):
@@ -206,6 +207,7 @@ class AnimationHelper():
                 lowest_diff = diff
                 fps = test_fps
         NifLog.info("Animation estimated at %i frames per second." % fps)
+        self.fps = 30.0
         return fps
 
     def store_animation_data(self, rootBlock):

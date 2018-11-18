@@ -137,6 +137,12 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
+                #PG - FPS likely could only exist as a member of the animation classes. In this
+                #     edit, the class currently refers to "self.fps" to read off the fps, but
+                #     it didn't exist. It is now added as a member. Last function using FPS here
+                #     is the morph controller. When that is removed, this can just be called on
+                #     the class to set the FPS in it and to set the FPS of the scene without
+                #     needing to store it.
                 self.fps = self.animationhelper.get_frames_per_second(
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
