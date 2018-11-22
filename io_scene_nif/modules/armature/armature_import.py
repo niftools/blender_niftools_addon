@@ -180,7 +180,7 @@ class Armature():
 			dy = b_bone_head_y - b_bone_tail_y
 			dz = b_bone_head_z - b_bone_tail_z
 			is_zero_length = abs(dx + dy + dz) * 200 < NifOp.props.epsilon
-		elif NifOp.props.import_realign_bones == 2:
+		elif NifOp.props.import_realign_bones == "2":
 			# The correction matrix value is based on the childrens' head
 			# positions.
 			# If there are no children then set it as the same as the
@@ -191,7 +191,7 @@ class Armature():
 		if is_zero_length:
 			# this is a 0 length bone, to avoid it being removed
 			# set a default minimum length
-			if (NifOp.props.import_realign_bones == 2) \
+			if (NifOp.props.import_realign_bones == "2") \
 			   or not self.is_bone(niBlock._parent):
 				# no parent bone, or bone is realigned with correction
 				# set one random direction
@@ -227,10 +227,10 @@ class Armature():
 		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		b_bone = b_armatureData.bones[bone_name]
 		
-		if NifOp.props.import_realign_bones == 2:
+		if NifOp.props.import_realign_bones == "2":
 			# applies the corrected matrix explicitly
 			b_bone.matrix_local = m_correction.resize_4x4() * armature_space_matrix
-		elif NifOp.props.import_realign_bones == 1:
+		elif NifOp.props.import_realign_bones == "1":
 			# do not do anything, keep unit matrix
 			pass
 		else:
@@ -268,7 +268,7 @@ class Armature():
 	def find_correction_matrix(self, niBlock, niArmature):
 		"""Returns the correction matrix for a bone."""
 		m_correction = self.IDENTITY44.to_3x3()
-		if (NifOp.props.import_realign_bones == 2) and self.is_bone(niBlock):
+		if (NifOp.props.import_realign_bones == "2") and self.is_bone(niBlock):
 			armature_space_matrix = nif_utils.import_matrix(niBlock,
 													   relative_to=niArmature)
 
