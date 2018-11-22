@@ -185,14 +185,16 @@ class NifCommon:
 
         return name
 
+    # TODO: Is there a better way to this than return a string,
+    #       since handling requires different code per type?
     def get_extend_from_flags(self, flags):
         if flags & 6 == 4: # 0b100
-            return Blender.IpoCurve.ExtendTypes.CONST
+            return "CONST"
         elif flags & 6 == 0: # 0b000
-            return Blender.IpoCurve.ExtendTypes.CYCLIC
+            return "CYCLIC"
 
         NifLog.warn("Unsupported cycle mode in nif, using clamped.")
-        return Blender.IpoCurve.ExtendTypes.CONST
+        return "CONST"
 
     def get_b_ipol_from_n_ipol(self, n_ipol):
         if n_ipol == NifFormat.KeyType.LINEAR_KEY:
