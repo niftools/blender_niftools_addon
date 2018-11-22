@@ -386,7 +386,7 @@ class MaterialAnimation():
         b_channel = "Alpha"
         b_ipo = self.get_material_ipo(b_material)
         b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+        b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
             n_alphactrl.data.data.interpolation)
         b_curve.extend = self.nif_import.get_extend_from_flags(n_alphactrl.flags)
         for n_key in n_alphactrl.data.data.keys:
@@ -410,7 +410,7 @@ class MaterialAnimation():
         b_ipo = self.get_material_ipo(b_material)
         for i, b_channel in enumerate(b_channels):
             b_curve = b_ipo.addCurve(b_channel)
-            b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+            b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
                 n_matcolor_ctrl.data.data.interpolation)
             b_curve.extend = self.nif_import.get_extend_from_flags(n_matcolor_ctrl.flags)
             for n_key in n_matcolor_ctrl.data.data.keys:
@@ -431,7 +431,7 @@ class MaterialAnimation():
                 # create curve in material ipo
                 b_ipo = self.get_material_ipo(b_material)
                 b_curve = b_ipo.addCurve(b_channel)
-                b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+                b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
                     n_uvgroup.interpolation)
                 b_curve.extend = self.nif_import.get_extend_from_flags(n_ctrl.flags)
                 for n_key in n_uvgroup.keys:
