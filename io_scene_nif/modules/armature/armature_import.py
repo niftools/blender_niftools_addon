@@ -222,20 +222,16 @@ class Armature():
 		# sets the bone heads & tails
 		b_bone.head = mathutils.Vector((b_bone_head_x, b_bone_head_y, b_bone_head_z))
 		b_bone.tail = mathutils.Vector((b_bone_tail_x, b_bone_tail_y, b_bone_tail_z))
-		
-		# set bone name and store the niBlock for future reference
-		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
-		b_bone = b_armatureData.bones[bone_name]
-		
+				
 		if NifOp.props.import_realign_bones == "2":
 			# applies the corrected matrix explicitly
-			b_bone.matrix_local = m_correction.resize_4x4() * armature_space_matrix
+			b_bone.matrix = armature_space_matrix * m_correction.resize_4x4()
 		elif NifOp.props.import_realign_bones == "1":
 			# do not do anything, keep unit matrix
 			pass
 		else:
 			# no realign, so use original matrix
-			b_bone.matrix_local = armature_space_matrix
+			b_bone.matrix = armature_space_matrix
 		
 		# calculate bone difference matrix; we will need this when
 		# importing animation
@@ -253,14 +249,7 @@ class Armature():
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
-			bpy.ops.object.mode_set(mode='EDIT',toggle=False)
-			b_bone = b_armatureData.edit_bones[bone_name]
-			b_child_bone = b_armatureData.edit_bones[b_child_bone.name]
 			b_child_bone.parent = b_bone
-			bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
-			b_bone = b_armatureData.bones[bone_name]
-
-
 		
 		return b_bone
 
