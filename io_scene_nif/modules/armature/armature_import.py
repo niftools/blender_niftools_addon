@@ -244,7 +244,7 @@ class Armature():
 		new_bone_matrix[2][3] = b_bone_head_z
 		# stores any correction or alteration applied to the bone matrix
 		# new * inverse(old)
-		self.nif_import.dict_bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
+		self.nif_import.dict_bones_extra_matrix[niBlock] = old_bone_matrix_inv * new_bone_matrix
 		# set bone children
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
