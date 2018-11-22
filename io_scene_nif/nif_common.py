@@ -196,24 +196,24 @@ class NifCommon:
         NifLog.warn("Unsupported cycle mode in nif, using clamped.")
         return "CONST"
 
-    def get_b_ipol_from_n_ipol(self, n_ipol):
+    def get_b_curve_from_n_curve(self, n_ipol):
         if n_ipol == NifFormat.KeyType.LINEAR_KEY:
-            return Blender.IpoCurve.InterpTypes.LINEAR
+            return bpy.types.Keyframe.interpolation.LINEAR
         elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
-            return Blender.IpoCurve.InterpTypes.BEZIER
+            return bpy.types.Keyframe.interpolation.BEZIER
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
-            return Blender.IpoCurve.InterpTypes.CONST
+            return bpy.types.Keyframe.interpolation.CONST
         
         NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
-        return Blender.IpoCurve.InterpTypes.BEZIER
+        return bpy.types.Keyframe.interpolation.BEZIER
 
-    def get_n_ipol_from_b_ipol(self, b_ipol):
-        if b_ipol == Blender.IpoCurve.InterpTypes.LINEAR:
+    def get_n_curve_from_b_curve(self, b_ipol):
+        if b_ipol == bpy.types.Keyframe.interpolation.LINEAR:
             return NifFormat.KeyType.LINEAR_KEY
-        elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
+        elif b_ipol == bpy.types.Keyframe.interpolation.BEZIER:
             return NifFormat.KeyType.QUADRATIC_KEY
-        elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
+        elif b_ipol == bpy.types.Keyframe.interpolation.CONST:
             return NifFormat.KeyType.CONST_KEY
         
         NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
