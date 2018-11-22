@@ -264,9 +264,9 @@ class Armature():
 			niChildBones = [ child for child in niBlock.children
 							 if self.is_bone(child) ]
 			(sum_x, sum_y, sum_z, dummy) = (armature_space_matrix[0][3],
-											armature_space_matrix[1][3],
-											armature_space_matrix[2][3],
-											armature_space_matrix[3][3])
+							armature_space_matrix[1][3],
+							armature_space_matrix[2][3],
+							armature_space_matrix[3][3])
 			if len(niChildBones) > 0:
 				child_local_matrices = [ nif_utils.import_matrix(child)
 										 for child in niChildBones ]
@@ -481,30 +481,7 @@ class Armature():
 			return armatureObject.data.bones[bone_name]
 		else:
 			return bpy.types.Object(self.nif_import.dict_names[niBlock])
-		
 
-	def decompose_srt(self, matrix):
-		"""Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
-		# get scale components
-		trans_vec, rot_quat, scale_vec = matrix.decompose()
-		scale_rot = rot_quat.to_matrix()
-		b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
-                         			scale_vec[1] ** 0.5,\
-                            		scale_vec[2] ** 0.5))
-		# and fix their sign
-		if (scale_rot.determinant() < 0): b_scale.negate()
-		# only uniform scaling
-		if (abs(scale_vec[0]-scale_vec[1]) >= NifOp.props.epsilon
-			or abs(scale_vec[1]-scale_vec[2]) >= NifOp.props.epsilon):
-			NifLog.warn("Corrupt rotation matrix in nif: geometry errors may result.")
-		b_scale = b_scale[0]
-		# get rotation matrix
-		b_rot = scale_rot * b_scale
-		# get translation
-		b_trans = trans_vec
-		# done!
-		return [b_scale, b_rot, b_trans]
-	
 	
 	def store_bones_extra_matrix(self):
 		"""Stores correction matrices in a text buffer so that the original
@@ -533,8 +510,8 @@ class Armature():
 			blender_bone_name = self.nif_import.dict_names[niBone] # NOT niBone.name !!
 			# write it to the text buffer
 			bonetxt.write('%s/%s\n' % (blender_bone_name, line[1:]))
-		
-		
+
+
 	def store_names(self):
 		"""Stores the original, long object names so that they can be
 		re-exported. In order for this to work it is necessary to mantain the
