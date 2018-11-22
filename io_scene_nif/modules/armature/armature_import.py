@@ -264,9 +264,9 @@ class Armature():
 			niChildBones = [ child for child in niBlock.children
 							 if self.is_bone(child) ]
 			(sum_x, sum_y, sum_z, dummy) = (armature_space_matrix[0][3],
-											armature_space_matrix[1][3],
-											armature_space_matrix[2][3],
-											armature_space_matrix[3][3])
+							armature_space_matrix[1][3],
+							armature_space_matrix[2][3],
+							armature_space_matrix[3][3])
 			if len(niChildBones) > 0:
 				child_local_matrices = [ nif_utils.import_matrix(child)
 										 for child in niChildBones ]
