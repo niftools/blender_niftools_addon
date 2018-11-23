@@ -563,14 +563,13 @@ class ArmatureAnimation():
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
                         quat = mathutils.Quaternion(
                             [quat[0], quat[1], quat[2], quat[3]])
-                        # beware, CrossQuats takes arguments in a
-                        # counter-intuitive order:
-                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                        b_posebone.quat = rot
-                        b_posebone.insertKey(b_armature, frame,
-                                             [Blender.Object.Pose.ROT])
+
+                        quatVal = niBone_bind_quat_inv.cross(quat)
+                        rot = extra_matrix_quat_inv.cross(quatVal)
+                        rot = rot.cross(extra_matrix_quat)
+
+                        b_posebone.rotation_quaternion = rot
+                        b_posebone.keyframe_insert(data_path="rotation_quaternion", frame=frame, group=bone_name)
                         # fill optimizer dictionary
                         if translations:
                             rot_keys_dict[frame] = mathutils.Quaternion(rot)
@@ -671,19 +670,16 @@ class ArmatureAnimation():
                                 or abs(xkey.time - zkey.time) > self.properties.epsilon):
                                 NifLog.warn("XYZ key times do not correspond, animation may not be correctly imported")
                             frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
-                            euler = mathutils.Euler(
-                                [xkey.value * 180.0 / math.pi,
-                                 ykey.value * 180.0 / math.pi,
-                                 zkey.value * 180.0 / math.pi])
-                            quat = euler.toQuat()
+                            #blender now uses radians for euler
+                            euler = mathutils.Euler(xkey.value, ykey.value, zkey.value)
+                            quat = euler.to_quaternion()
 
-                            # beware, CrossQuats takes arguments in a counter-intuitive order:
-                            # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
+                            quatVal = quat.cross(niBone_bind_quat_inv)
+                            rot = extra_matrix_quat_inv.cross(quatVal)
+                            rot = rot.cross(extra_matrix_quat)
 
-                            quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                            rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                            b_posebone.quat = rot
-                            b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
+                            b_posebone.rotation_quaternion = rot
+                            b_posebone.keyframe_insert(data_path="rotation_euler", frame=frame, group=bone_name)
                             # fill optimizer dictionary
                             if translations:
                                 rot_keys_dict[frame] = mathutils.Quaternion(rot) 
@@ -698,21 +694,20 @@ class ArmatureAnimation():
                             frame = 1 + int(key.time * self.nif_import.fps + 0.5)
                             keyVal = key.value
                             quat = mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
-                            # beware, CrossQuats takes arguments in a
-                            # counter-intuitive order:
-                            # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                            quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                            rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                            b_posebone.quat = rot
-                            b_posebone.insertKey(b_armature, frame,
-                                                 [Blender.Object.Pose.ROT])
+
+                            quatVal = niBone_bind_quat_inv.cross(quat)
+                            rot = extra_matrix_quat_inv.cross(quatVal)
+                            rot = rot.cross(extra_matrix_quat)
+
+                            b_posebone.rotation_quaternion = rot
+                            b_posebone.keyframe_insert(data_path="rotation_quaternion", frame=frame, group=bone_name)
                             # fill optimizer dictionary
                             if translations:
                                 rot_keys_dict[frame] = mathutils.Quaternion(rot)
                         #else:
                         #    print("Rotation keys...(unknown)" + 
                         #          "WARNING: rotation animation data of type" +
-                        #          " %i found, but this type is not yet supported; data has been skipped""" % rotation_type)                        
+                        #          " %i found, but this type is not yet supported; data has been skipped""" % rotation_type)                       
     
                 # Translations
                 if translations.keys:
