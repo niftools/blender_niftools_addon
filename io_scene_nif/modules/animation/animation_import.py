@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 import bpy
+import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
@@ -50,6 +51,7 @@ class AnimationHelper():
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
         self.armature_animation = ArmatureAnimation(parent)
+        self.FPS = 30
     
 
     def import_kf_root(self, kf_root, root):
@@ -78,7 +80,7 @@ class AnimationHelper():
                 NifLog.info("Animation for {0} but no such node found in nif tree".format(nodename))
                 continue
             # node found, now find the controller
-            controllertype = controlledblock.get_controller_type()
+            controllertype = controlledblock.get_controller_type().decode()
             if not controllertype:
                 NifLog.info("Animation for {0} without controller type, so skipping".format(nodename))
                 continue
@@ -127,8 +129,9 @@ class AnimationHelper():
                 # ignore scale, usually contains invalid data in interpolator
 
             # save priority for future reference
-            # (priorities will be stored into the name of a NULL constraint on
+            # (priorities will be stored into the name of a TRANSFORM constraint on
             # bones, see import_armature function)
+            # This name is a bytestring, not a string
             self.nif_import.dict_bone_priorities[nodename] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
@@ -164,8 +167,8 @@ class AnimationHelper():
                 animtxt.write('%i/%s\n'%(frame, newkey))
 
             # set start and end frames
-            bpy.context.scene.getRenderingContext().startFrame(1)
-            bpy.context.scene.getRenderingContext().endFrame(frame)
+            bpy.context.scene.frame_start = 1
+            bpy.context.scene.frame_end = frame
 
     def get_frames_per_second(self, roots):
         """Scan all blocks and return a reasonable number for FPS."""
@@ -198,7 +201,7 @@ class AnimationHelper():
         fps = 30
         lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
                           for time in key_times)
-        # for fps in range(1,120): #disabled, used for testing
+        # for test_fps in range(1,120): #disabled, used for testing
         for test_fps in [20, 25, 35]:
             diff = sum(abs(int(time * test_fps + 0.5)-(time * test_fps))
                        for time in key_times)
@@ -284,7 +287,7 @@ class AnimationHelper():
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
-                Blender.Set('curframe', frame)
+                bpy.context.scene.frame_set(frame)
                 # both in radians, no conversion needed
                 b_obj.RotX = xkey.value
                 b_obj.RotY = ykey.value
@@ -296,7 +299,7 @@ class AnimationHelper():
                 NifLog.debug('Rotation keys...(quaternions)')
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                Blender.Set('curframe', frame)
+                bpy.context.scene.frame_set(frame)
                 rot = mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
                 # Blender euler is in degrees, object RotXYZ is in radians
                 b_obj.RotX = rot.x * self.D2R
@@ -308,13 +311,13 @@ class AnimationHelper():
             NifLog.debug('Translation keys...')
         for key in translations.keys:
             frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
+            bpy.context.scene.frame_set(frame)
             b_obj.LocX = key.value.x
             b_obj.LocY = key.value.y
             b_obj.LocZ = key.value.z
             b_obj.insertIpoKey(Blender.Object.LOC)
 
-        Blender.Set('curframe', 1)
+        bpy.context.scene.frame_set(1)
 
 
 class ObjectAnimation():
