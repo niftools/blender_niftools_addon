@@ -261,8 +261,6 @@ class AnimationHelper():
         NifLog.info("Animation")
         NifLog.info("Importing animation data for {0}".format(b_obj.name))
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
-        # create an Ipo for this object
-        b_ipo = ObjectAnimation.get_object_ipo(b_obj)
         # get the animation keys
         translations = kfd.translations
         scales = kfd.scales
@@ -270,11 +268,9 @@ class AnimationHelper():
         NifLog.debug('Scale keys...')
         for key in scales.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            b_obj.SizeX = key.value
-            b_obj.SizeY = key.value
-            b_obj.SizeZ = key.value
-            b_obj.insertIpoKey(Blender.Object.SIZE)
+            bpy.context.scene.frame_set(frame)
+            b_obj.scale = (key.value,key.value,key.value)
+            b_obj.keyframe_insert('scale')
 
         # detect the type of rotation keys
         rotation_type = kfd.rotation_type
@@ -289,10 +285,8 @@ class AnimationHelper():
                 # XXX we assume xkey.time == ykey.time == zkey.time
                 bpy.context.scene.frame_set(frame)
                 # both in radians, no conversion needed
-                b_obj.RotX = xkey.value
-                b_obj.RotY = ykey.value
-                b_obj.RotZ = zkey.value
-                b_obj.insertIpoKey(Blender.Object.ROT)
+                b_obj.rotation_euler = (xkey.value, ykey.value, zkey.value)
+                b_obj.keyframe_insert('rotation_euler')
         else:
             # uses quaternions
             if kfd.quaternion_keys:
@@ -300,22 +294,18 @@ class AnimationHelper():
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 bpy.context.scene.frame_set(frame)
-                rot = mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
-                # Blender euler is in degrees, object RotXYZ is in radians
-                b_obj.RotX = rot.x * self.D2R
-                b_obj.RotY = rot.y * self.D2R
-                b_obj.RotZ = rot.z * self.D2R
-                b_obj.insertIpoKey(Blender.Object.ROT)
+                #Blender euler is now in radians, not degrees
+                rot = mathutils.Quaternion((key.value.w, key.value.x, key.value.y, key.value.z)).toEuler()
+                b_obj.rotation_euler = (rot.x, rot.y, rot.z)
+                b_obj.keyframe_insert('rotation_euler')
 
         if translations.keys:
             NifLog.debug('Translation keys...')
         for key in translations.keys:
             frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
             bpy.context.scene.frame_set(frame)
-            b_obj.LocX = key.value.x
-            b_obj.LocY = key.value.y
-            b_obj.LocZ = key.value.z
-            b_obj.insertIpoKey(Blender.Object.LOC)
+            b_obj.location = (key.value.x, key.value.y, key.value.z)
+            b_obj.keyframe_insert('location')
 
         bpy.context.scene.frame_set(1)
 
