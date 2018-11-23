@@ -265,6 +265,13 @@ class AnimationHelper():
         translations = kfd.translations
         scales = kfd.scales
         # add the keys
+
+        #Create curve structure
+        if b_obj.animation_data == None:
+            b_obj.animation_data_create()
+        b_obj_action = bpy.data.actions.new(str(b_obj.name) + "-Anim")
+        b_obj.animation_data.action = b_obj_action
+
         NifLog.debug('Scale keys...')
         for key in scales.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
