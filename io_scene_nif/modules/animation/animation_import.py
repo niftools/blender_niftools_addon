@@ -764,13 +764,17 @@ class ArmatureAnimation():
                     del scale_keys_dict
                     del rot_keys_dict
 
-            # set extend mode for all ipo curves
+            # set extend mode for all fcurves
             if kfc:
-                try:
-                    ipo = action.getChannelIpo(bone_name)
-                except ValueError:
-                    # no channel for bone_name
-                    pass
-                else:
-                    for b_curve in ipo:
-                        b_curve.extend = self.nif_import.get_extend_from_flags(kfc.flags)
+                if bone_name in b_armature_action.groups:
+                    bone_fcurves = b_armature_action.groups[bone_name].channels
+                    f_curve_extend_type = self.nif_import.get_extend_from_flags(kfc.flags)
+                    if f_curve_extend_type == "CONST":
+                        for fcurve in bone_fcurves:
+                            fcurve.extrapolation = 'CONSTANT'
+                    elif f_curve_extend_type == "CYCLIC":
+                        for fcurve in bone_fcurves:
+                            fcurve.modifiers.new('CYCLES')
+                    else:
+                        for fcurve in bone_fcurves:
+                            fcurve.extrapolation = 'CONSTANT'
