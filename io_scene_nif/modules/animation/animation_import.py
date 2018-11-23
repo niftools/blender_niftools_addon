@@ -581,7 +581,7 @@ class ArmatureAnimation():
                         # time 0.0 is frame 1
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
                         trans = mathutils.Vector(*translation)
-                        locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+                        locVal = (1.0/niBone_bind_scale) * niBone_bind_rot_inv * (trans - niBone_bind_trans)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                         # the rotation matrix is needed at this frame (that's
                         # why the other keys are inserted first)
                         if rot_keys_dict:
@@ -589,12 +589,16 @@ class ArmatureAnimation():
                                 rot = rot_keys_dict[frame].to_matrix()
                             except KeyError:
                                 # fall back on slow method
-                                ipo = action.getChannelIpo(bone_name)
+                                # apparently, spline interpolators only have quaternion (?)
+                                fcurves = b_armature_action.groups[bone_name].channels
                                 quat = mathutils.Quaternion()
-                                quat.x = ipo.getCurve('QuatX').evaluate(frame)
-                                quat.y = ipo.getCurve('QuatY').evaluate(frame)
-                                quat.z = ipo.getCurve('QuatZ').evaluate(frame)
-                                quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                                #If there are no rotation keys, the quaternion will just be 1,0,0,0  so fine anyway
+                                for fc in fcurves:
+                                    if "rotation_quaternion" in fc.data_path:
+                                        if fc.array_index == 0: quat.w = fc.evaluate(frame)
+                                        if fc.array_index == 1: quat.x = fc.evaluate(frame)
+                                        if fc.array_index == 2: quat.y = fc.evaluate(frame)
+                                        if fc.array_index == 3: quat.z = fc.evaluate(frame)
                                 rot = quat.to_matrix()
                         else:
                             rot = mathutils.Matrix([[1.0, 0.0, 0.0],
@@ -605,9 +609,10 @@ class ArmatureAnimation():
                             try:
                                 sizeVal = scale_keys_dict[frame]
                             except KeyError:
-                                ipo = action.getChannelIpo(bone_name)
-                                if ipo.getCurve('SizeX'):
-                                    sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                                fcurves = bpy.data.actions[str(b_armature.name)+"Action"].groups[bone_name].channels
+                                for fc in fcurves:
+                                    if fc.data_path == "scale":
+                                        sizeVal = fc.evaluate(frame)
                                 else:
                                     sizeVal = 1.0
                         else:
@@ -615,10 +620,11 @@ class ArmatureAnimation():
                         size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
                                                  [0.0, sizeVal, 0.0],
                                                  [0.0, 0.0, sizeVal]])
+
                         # now we can do the final calculation
-                        loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
-                        b_posebone.loc = loc
-                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+                        loc = (extra_matrix_scale) * extra_matrix_rot_inv * (rot * size * extra_matrix_trans + locVal - extra_matrix_trans) # C' = X * C * inverse(X)
+                        b_posebone.location = loc
+                        b_posebone.keyframe_insert(data_path="location", frame=frame, group=bone_name)
 
                 # delete temporary dictionaries
                 if translations:
@@ -716,8 +722,8 @@ class ArmatureAnimation():
                         # time 0.0 is frame 1
                         frame = 1 + int(key.time * self.nif_import.fps + 0.5)
                         keyVal = key.value
-                        trans = mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
-                        locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+                        trans = mathutils.Vector((keyVal.x, keyVal.y, keyVal.z))
+                        locVal = (niBone_bind_rot_inv * (1.0/niBone_bind_scale)) * (trans - niBone_bind_trans)
                         # the rotation matrix is needed at this frame (that's
                         # why the other keys are inserted first)
                         if rot_keys_dict:
@@ -725,12 +731,23 @@ class ArmatureAnimation():
                                 rot = rot_keys_dict[frame].to_matrix()
                             except KeyError:
                                 # fall back on slow method
-                                ipo = action.getChannelIpo(bone_name)
+                                fcurves = b_armature_action.groups[bone_name].channels
                                 quat = mathutils.Quaternion()
-                                quat.x = ipo.getCurve('QuatX').evaluate(frame)
-                                quat.y = ipo.getCurve('QuatY').evaluate(frame)
-                                quat.z = ipo.getCurve('QuatZ').evaluate(frame)
-                                quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                                euler = None
+                                #If there are no rotation keys, the quaternion will just be 1,0,0,0  so fine anyway
+                                for fc in fcurves:
+                                    if "rotation_quaternion" in fc.data_path:
+                                        if fc.array_index == 0: quat.w = fc.evaluate(frame)
+                                        if fc.array_index == 1: quat.x = fc.evaluate(frame)
+                                        if fc.array_index == 2: quat.y = fc.evaluate(frame)
+                                        if fc.array_index == 3: quat.z = fc.evaluate(frame)
+                                    elif "rotation_euler" in fc.data_path:
+                                        euler = mathutils.Euler()
+                                        if fc.array_index == 0: euler.x = fc.evaluate(frame)
+                                        if fc.array_index == 1: euler.y = fc.evaluate(frame)
+                                        if fc.array_index == 2: euler.z = fc.evaluate(frame)
+                                if euler != None:
+                                   quat = euler.to_quaternion()
                                 rot = quat.to_matrix()
                         else:
                             rot = mathutils.Matrix([[1.0, 0.0, 0.0],
@@ -741,20 +758,21 @@ class ArmatureAnimation():
                             try:
                                 sizeVal = scale_keys_dict[frame]
                             except KeyError:
-                                ipo = action.getChannelIpo(bone_name)
-                                if ipo.getCurve('SizeX'):
-                                    sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
-                                else:
-                                    sizeVal = 1.0
+                                fcurves = bpy.data.actions[str(b_armature.name)+"-kfAnim"].groups[bone_name].channels
+                                #If there is no fcurve, size will just be 1.0
+                                sizeVal = 1.0
+                                for fc in fcurves:
+                                    if fc.data_path == "scale":
+                                        sizeVal = fc.evaluate(frame)
                         else:
                             sizeVal = 1.0
                         size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
                                                  [0.0, sizeVal, 0.0],
                                                  [0.0, 0.0, sizeVal]])
                         # now we can do the final calculation
-                        loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
-                        b_posebone.loc = loc
-                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+                        loc = (extra_matrix_rot_inv * (1.0/extra_matrix_scale)) * (rot * size * extra_matrix_trans + locVal - extra_matrix_trans) # C' = X * C * inverse(X)
+                        b_posebone.location = loc
+                        b_posebone.keyframe_insert(data_path="location", frame=frame, group=bone_name)
 
                 if translations:
                     del scale_keys_dict
