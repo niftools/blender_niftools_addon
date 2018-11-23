@@ -457,11 +457,16 @@ class ArmatureAnimation():
         
         
     def import_armature_animation(self, b_armature):
+        #current blender adds pose_bone keyframes to an fcurve in the armature's OBJECT
+        #data block, not the ARMATURE's data block. So, rna path (data_path) for fcurves
+        #will be  "pose.bones["bone name"].fcurvetype" with implicit "object." at front.
+        #Get object with bpy.data.objects[b_armature.name]
         # create an action
-        action = bpy.data.actions.new(b_armature.name)
-        bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
+        b_armature_object = bpy.data.objects[b_armature.name]
+        b_armature_object.animation_data_create()
+        b_armature_action = bpy.data.actions.new(str(b_armature.name) + "-kfAnim")
+        b_armature_object.animation_data.action = b_armature_action
         # go through all armature pose bones
-        # see http://www.elysiun.com/forum/viewtopic.php?t=58693
         NifLog.info('Importing Animations')
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
@@ -482,7 +487,7 @@ class ArmatureAnimation():
             # Rchannel = Rtotal * inverse(Rbind)
             # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
             bone_bm = nif_utils.import_matrix(niBone) # base pose
-            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
+            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(bone_bm)
             niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
             niBone_bind_rot_inv.invert()
             niBone_bind_quat_inv = niBone_bind_rot_inv.to_quaternion()
@@ -507,7 +512,7 @@ class ArmatureAnimation():
             # SC' = SX * SC / SX = SC
             # RC' = RX * RC * inverse(RX)
             # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.nif_import.dict_bones_extra_matrix[niBone])
+            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = nif_utils.decompose_srt(self.nif_import.dict_bones_extra_matrix[niBone])
             extra_matrix_quat = extra_matrix_rot.to_quaternion()
             extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
             extra_matrix_rot_inv.invert()
