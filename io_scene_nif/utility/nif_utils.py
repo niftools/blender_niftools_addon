@@ -40,6 +40,8 @@
 
 import mathutils
 
+from io_scene_nif.utility.nif_global import NifOp
+
 
 class NifError(Exception):
     """A simple custom exception class for export errors."""
@@ -74,29 +76,24 @@ def decompose_srt(matrix):
     """Decompose Blender transform matrix as a scale, rotation matrix, and
     translation vector."""
 
-    # get scale components
+    # get matrix components
     trans_vec, rot_quat, scale_vec = matrix.decompose()
-    
-    """Keeping commented code as potentially required for armatures 
-    Suspect thought it is due to old style matrix access."""
-    # TODO Verify nolonger needed for armatures
-    
-    # scale_rot = rot_quat.to_matrix()
-    # b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
-    #                             scale_vec[1] ** 0.5,\
-    #                             scale_vec[2] ** 0.5))
+
+    #obtain a combined scale and rotation matrix to test determinate
+    rotmat = rot_quat.to_matrix()
+    scalemat = mathutils.Matrix(   ((scale_vec[0], 0.0, 0.0),
+                                    (0.0, scale_vec[1], 0.0),
+                                    (0.0, 0.0, scale_vec[2])) )
+    scale_rot = scalemat * rotmat
+
     # and fix their sign
-    # if (scale_rot.determinant() < 0): b_scale.negate()
+    if (scale_rot.determinant() < 0): scale_vec.negate()
     # only uniform scaling
     # allow rather large error to accomodate some nifs
     if abs(scale_vec[0]-scale_vec[1]) + abs(scale_vec[1]-scale_vec[2]) > 0.02:
-        raise NifError(
-            "Non-uniform scaling not supported."
+        NifLog.warn("Non-uniform scaling not supported." +
             " Workaround: apply size and rotation (CTRL-A).")
-    # b_scale = b_scale[0]
-    # b_rot = scale_rot * b_scale
-    # b_trans = trans_vec
-    return [scale_vec[0], rot_quat.to_matrix(), trans_vec]
+    return [scale_vec[0], rotmat, trans_vec]
 
 
 def find_property(niBlock, property_type):
