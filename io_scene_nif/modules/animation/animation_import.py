@@ -622,7 +622,7 @@ class ArmatureAnimation():
                                                  [0.0, 0.0, sizeVal]])
 
                         # now we can do the final calculation
-                        loc = (extra_matrix_scale) * extra_matrix_rot_inv * (rot * size * extra_matrix_trans + locVal - extra_matrix_trans) # C' = X * C * inverse(X)
+                        loc = (extra_matrix_rot_inv * (1.0/extra_matrix_scale)) * (rot * size * extra_matrix_trans + locVal - extra_matrix_trans) # C' = X * C * inverse(X)
                         b_posebone.location = loc
                         b_posebone.keyframe_insert(data_path="location", frame=frame, group=bone_name)
 
