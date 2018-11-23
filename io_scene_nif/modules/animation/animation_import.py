@@ -553,6 +553,7 @@ class ArmatureAnimation():
 
                 # scales: ignore for now, implement later
                 #         should come here
+                # TODO: Was this skipped for a reason? Just copy from keyframe type below?
                 scales = None
 
                 # rotations
@@ -646,8 +647,8 @@ class ArmatureAnimation():
                         frame = 1 + int(scaleKey.time * self.nif_import.fps + 0.5)
                         sizeVal = scaleKey.value
                         size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
-                        b_posebone.size = mathutils.Vector(size, size, size)
-                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE]) # this is very slow... :(
+                        b_posebone.scale = mathutils.Vector(size, size, size)
+                        b_posebone.keyframe_insert(data_path="scale", frame=frame, group=bone_name)
                         # fill optimizer dictionary
                         if translations:
                             scale_keys_dict[frame] = size
