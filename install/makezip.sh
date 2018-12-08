@@ -15,7 +15,7 @@ DEPS_OUT="${PLUGIN_OUT}"/dependencies
 #git submodule foreach --recursive git clean -xfdq
 #cd "${DIR}"
 
-if [ -d "${TEMP}" ]; then
+if [[ -d "${TEMP}" ]]; then
   echo "Removing old temp directory"
   rm -rf "${TEMP}"
 fi
@@ -23,7 +23,7 @@ fi
 mkdir "${TEMP}"
 
 echo "Copying io_scene_nif directory"
-cp -r "${PLUGIN_IN}" "${TEMP}"/
+cp -r "${PLUGIN_IN}" "${PLUGIN_OUT}"
 
 echo "Creating dependencies folder"
 mkdir -p "${DEPS_OUT}"
