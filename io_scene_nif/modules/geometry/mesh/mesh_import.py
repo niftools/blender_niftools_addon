@@ -47,7 +47,7 @@ from io_scene_nif.modules.animation.animation_import import GeometryAnimation
 from io_scene_nif.modules.geometry.skin.skin_import import Skin
 from io_scene_nif.modules.geometry.mesh.vertex_import import Vertex
 from io_scene_nif.modules.obj import object_import
-from io_scene_nif.modules.property.property_import import Property
+from io_scene_nif.modules.property.property_import import MeshProperty
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -134,7 +134,7 @@ class Mesh:
         '''
         Properties
         '''
-        Property().process_property_list(n_block, b_mesh)
+        MeshProperty().process_property_list(n_block, b_mesh)
 
         # TODO [property][material][armature] Reimplement this
         materialIndex = 0
