@@ -513,8 +513,7 @@ class NifExport(NifCommon):
                         # block.parse_mopp(verbose = True)
                         # print "=== END OF MOPP TREE ==="
                         # warn about mopps on non-static objects
-                        if any(sub_shape.layer != 1
-                            for sub_shape in block.shape.sub_shapes):
+                        if any(sub_shape.layer != 1 for sub_shape in block.shape.sub_shapes):
                                 NifLog.warn("Mopps for non-static objects may not function correctly in-game. You may wish to use simple primitives for collision.")
 
             # delete original scene root if a scene root object was already defined
@@ -821,7 +820,7 @@ class NifExport(NifCommon):
 
         else:
             NifLog.warn("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '{0}'".format(b_obj.name))
-            
+
     def export_egm(self, keyblocks):
         self.egm_data = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
         for keyblock in keyblocks:

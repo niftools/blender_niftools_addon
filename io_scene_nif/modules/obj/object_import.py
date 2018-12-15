@@ -36,6 +36,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from functools import singledispatch
+
 import bpy
 
 from pyffi.formats.nif import NifFormat
@@ -102,33 +104,53 @@ def import_name(n_block, max_length=63):
     return short_name
 
 
+class ObjectProperty:
+
+    def __init__(self):
+        self.n_block = None
+        self.b_obj = None
+        self.process_data = singledispatch(self.process_extra_data)
+        self.process_data.register(NifFormat.BSXFlags, self.process_bsx_flag_data)
+        self.process_data.register(NifFormat.BSBound, self.process_bsbound_data)
+        self.process_data.register(NifFormat.NiStringExtraData, self.process_nistring_data)
+
+    def process_data_list(self, n_block, b_obj):
+        self.n_block = n_block
+        self.b_obj = b_obj
+        for n_extra in n_block.get_extra_datas():
+            NifLog.debug("About to process" + str(type(n_extra)))
+            self.process_data(n_extra)
+        return
+
+    def process_extra_data(self, n_extra):
+        """Base method to warn user that this property is not supported"""
+        NifLog.warn("Unknown property block found: " + str(n_extra))
+        NifLog.warn("This type isn't currently supported: {}".format(type(n_extra)))
+
+    def process_nistring_data(self, n_extra):
+        """Process NiStringExtraData based blocks"""
+        # TODO [properties] [object] Store extra data
+        NifLog.debug("Extra Data: Processing String data - " + str(n_extra))
+
+        if n_extra.name.decode() == "UPB":
+            upbflags = n_extra.string_data.decode()
+            return upbflags
+
+    def process_bsx_flag_data(self, n_extra):
+        """Process BSBound nodea based blocks"""
+        NifLog.debug("Extra Data: Processing BSX Flag data")
+        # TODO [properties] [object] Store extra data
+        bsxflags = n_extra.integer_data
+        return bsxflags
+
+    def process_bsbound_data(self, n_extra):
+        """Process BSBound nodea based blocks"""
+        NifLog.debug("Extra Data: Processing BSBound")
+        self.boundhelper.import_bounding_box(n_extra)
+
+
 class NiObject:
-
-    @staticmethod
-    def import_bsbound_data(self, root_block):
-        for n_extra in root_block.get_extra_datas():
-            if isinstance(n_extra, NifFormat.BSBound):
-                self.boundhelper.import_bounding_box(n_extra)
-
-    @staticmethod
-    def import_bsxflag_data(root_block):
-        for n_extra in root_block.get_extra_datas():
-            if isinstance(n_extra, NifFormat.BSXFlags):
-                # get bsx flags so we can attach it to collision object
-                bsxflags = n_extra.integer_data
-                return bsxflags
-        return 0
-
-    @staticmethod
-    def import_upbflag_data(root_block):
-        # process extra data
-        for n_extra in root_block.get_extra_datas():
-            if isinstance(n_extra, NifFormat.NiStringExtraData):
-                if n_extra.name.decode() == "UPB":
-                    upbflags = n_extra.string_data.decode()
-                    return upbflags
-        return ''
-
+    pass
     # TODO [object] [properties]
     # self.bsx_flags = self.objecthelper.import_bsxflag_data(root_block)
     # self.upb_flags = self.objecthelper.import_upbflag_data(root_block)
@@ -155,8 +177,7 @@ class NiObject:
 
 class Empty:
 
-    @staticmethod
-    def import_empty(n_block):
+    def import_empty(self, n_block):
         """Creates and returns a grouping empty."""
         shortname = import_name(n_block)
         b_empty = bpy.data.objects.new(shortname, None)
@@ -165,8 +186,11 @@ class Empty:
         b_empty.niftools.longname = n_block.name.decode()
 
         bpy.context.scene.objects.link(b_empty)
-        b_empty.niftools.bsxflags = NiObject.import_bsxflag_data(n_block)
-        b_empty.niftools.objectflags = n_block.flags
+        ObjectProperty().process_data_list(n_block, b_empty)
+
+        # TODO [object][properties]
+        # b_empty.niftools.bsxflags = NiObject.import_bsxflag_data(n_block)
+        # b_empty.niftools.objectflags = n_block.flags
 
         # TODO [armature]
         # if niBlock.name in armature.DICT_BONE_PRIORITIES:

@@ -53,7 +53,7 @@ from io_scene_nif.modules import armature, obj, animation, collision
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import BHKShape, Bound
 from io_scene_nif.modules.constraint.constraint_import import Constraint
-from io_scene_nif.modules.obj.object_import import Empty, is_grouping_node
+from io_scene_nif.modules.obj.object_import import Empty, is_grouping_node, ObjectProperty
 from io_scene_nif.modules.scene import scene_import
 
 import bpy
@@ -237,6 +237,7 @@ class NifImport(NifCommon):
             # trishape/tristrips root
             b_obj = self.import_branch(root_block)
 
+            ObjectProperty().process_data_list(root_block, b_obj)
             # TODO [object][flags]
             # b_obj.niftools.bsxflags = self.bsx_flags
 
@@ -319,6 +320,7 @@ class NifImport(NifCommon):
             b_obj = Mesh.import_mesh(n_block)
 
             # TODO [object][flags]
+            ObjectProperty().process_data_list(n_block, b_obj)
             # b_obj.niftools.objectflags = n_block.flags
 
             # TODO [property][shader][material] Do proper property processing
@@ -391,7 +393,7 @@ class NifImport(NifCommon):
                     # group the geometry into a single mesh
                     # so import it as an empty
                     if not n_block.has_bounding_box:
-                        b_obj = Empty.import_empty(n_block)
+                        b_obj = Empty().import_empty(n_block)
                     else:
                         b_obj = self.boundhelper.import_bounding_box(n_block)
 
@@ -404,7 +406,7 @@ class NifImport(NifCommon):
                     b_obj = None
                     for child in geom_group:
                         self.active_obj_name = n_block.name.decode()
-                        b_obj = self.import_mesh(child, group_mesh=b_obj, applytransform=True)
+                        b_obj = Mesh.import_mesh(child, group_mesh=b_obj, applytransform=True)
                         b_obj.niftools.objectflags = child.flags
 
                         # TODO [property][shader] do proper property processing
