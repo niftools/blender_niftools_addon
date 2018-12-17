@@ -36,9 +36,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
+import os
 
 from pyffi.formats.egm import EgmFormat
+
+from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
@@ -68,3 +70,13 @@ class EGMFile:
                 raise NifError("Not a EGM file.")
             
         return egm_file
+
+    @staticmethod
+    def write_egm(egm_data):
+        directory = os.path.dirname(NifOp.props.filepath)
+        file_name, _ = os.path.splitext(os.path.basename(NifOp.props.filepath))
+        ext = ".egm"
+        NifLog.info("Writing {0} file".format(ext))
+        egmfile = os.path.join(directory, file_name + ext)
+        with open(egmfile, "wb") as egm_stream:
+            egm_data.write(egm_stream)
