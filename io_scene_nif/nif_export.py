@@ -36,6 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.modules import obj, armature, collision
 from io_scene_nif.modules.property import texture
 from io_scene_nif.nif_common import NifCommon
@@ -45,16 +46,13 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.modules.animation.animation_export import AnimationHelper
 from io_scene_nif.modules.collision.collision_export import BHKShape, Bound
 from io_scene_nif.modules.armature.armature_export import Armature
-from io_scene_nif.modules.property.property_export import PropertyHelper
 from io_scene_nif.modules.constraint.constraint_export import Constraint
-from io_scene_nif.modules.property.texture.texture_export import TextureHelper
 from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.modules.scene import scene_export
 from io_scene_nif.utility.nif_global import NifOp
 
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
 
 import os.path
 
@@ -92,10 +90,8 @@ class NifExport(NifCommon):
         self.bhkshapehelper = BHKShape(parent=self)
         self.boundhelper = Bound(parent=self)
         self.armaturehelper = Armature(parent=self)
-        self.animationhelper = AnimationHelper(parent=self)
-        self.propertyhelper = PropertyHelper(parent=self)
+        
         self.constrainthelper = Constraint(parent=self)
-        self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
         
     def execute(self):
@@ -126,9 +122,6 @@ class NifExport(NifCommon):
         obj.DICT_NAMES = {}
         obj.BLOCK_NAMES_LIST = []
         texture.DICT_TEXTURES = {}
-
-        # if an egm is exported, this will contain the data
-        self.egm_data = None
 
         try:  # catch export errors
 
@@ -457,6 +450,7 @@ class NifExport(NifCommon):
                         "RING": "Bip01 R Finger1"}[self.EXPORT_OB_PRN]
                     root_block.add_extra_data(prn)
 
+            # TODO [properties] Object propertoes
             # add vertex color and zbuffer properties for civ4 and railroads
             if NifOp.props.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
                 self.propertyhelper.object_property.export_vertex_color_property(root_block)
@@ -500,6 +494,8 @@ class NifExport(NifCommon):
                 toaster.scale = NifOp.props.scale_correction_export
                 pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
                 # also scale egm
+
+                # TODO [morph]
                 if self.egm_data:
                     self.egm_data.apply_scale(NifOp.props.scale_correction_export)
 
@@ -763,18 +759,7 @@ class NifExport(NifCommon):
                 finally:
                     stream.close()
 
-            # export egm file:
-            # -----------------
-            if self.egm_data:
-                ext = ".egm"
-                NifLog.info("Writing {0} file".format(ext))
 
-                egmfile = os.path.join(directory, filebase + ext)
-                stream = open(egmfile, "wb")
-                try:
-                    self.egm_data.write(stream)
-                finally:
-                    stream.close()
         finally:
             # clear progress bar
             NifLog.info("Finished")
@@ -820,19 +805,3 @@ class NifExport(NifCommon):
 
         else:
             NifLog.warn("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '{0}'".format(b_obj.name))
-
-    def export_egm(self, keyblocks):
-        self.egm_data = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
-        for keyblock in keyblocks:
-            if keyblock.name.startswith("EGM SYM"):
-                morph = self.egm_data.add_sym_morph()
-            elif keyblock.name.startswith("EGM ASYM"):
-                morph = self.egm_data.add_asym_morph()
-            else:
-                continue
-            NifLog.info("Exporting morph %s to egm" % keyblock.name)
-            relative_vertices = []
-            # note: keyblocks[0] is base key
-            for vert, key_vert in zip(keyblocks[0].data, keyblock.data):
-                relative_vertices.append(key_vert - vert)
-            morph.set_relative_vertices(relative_vertices)
