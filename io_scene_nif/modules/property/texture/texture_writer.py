@@ -42,7 +42,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
-from io_scene_nif.modules.property import texture
+from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
@@ -51,9 +51,6 @@ import os.path
 
 
 class TextureWriter:
-
-    def __init__(self, parent):
-        self.nif_export = parent
 
     def export_source_texture(self, texture=None, filename=None):
         """Export a NiSourceTexture.
@@ -94,7 +91,7 @@ class TextureWriter:
                 return block
 
         # no identical source texture found, so use and register the new one
-        return self.nif_export.nif_export.objecthelper.register_block(srctex, texture)
+        return ObjectHelper.register_block(srctex, texture)
 
     def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):
         """Helper function for export_texturing_property to export each texture
@@ -122,7 +119,7 @@ class TextureWriter:
         elif b_texture.type == 'IMAGE':
             # get filename from image
 
-            # XXX still needed? can b_texture.image be None in current blender?
+            # TODO [texture] Can b_texture.image be None in current blender?
             # check that image is loaded
             if b_texture.image is None:
                 raise nif_utils.NifError("image type b_texture has no file loaded ('%s')" % b_texture.name)
@@ -157,56 +154,3 @@ class TextureWriter:
         else:
             # b_texture must be of type IMAGE or ENVMAP
             raise nif_utils.NifError("Error: Texture '%s' must be of type IMAGE or ENVMAP" % b_texture.name)
-
-
-def has_diffuse_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.diffusetextures
-
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use and b_mat_texslot.use_map_color_diffuse:
-            self.diffusetextures.append(b_mat_texslot)
-    return self.diffusetextures
-
-
-def has_glow_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.glowtextures
-
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use and b_mat_texslot.use_map_emit:
-            self.glowtextures.append(b_mat_texslot)
-    return self.glowtextures
-
-
-def has_bumpmap_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.bumpmaptextures
-
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use:
-            if b_mat_texslot.texture.use_normal_map is False and \
-                    b_mat_texslot.use_map_color_diffuse is False:
-                self.bumpmaptextures.append(b_mat_texslot)
-    return self.bumpmaptextures
-
-
-def has_gloss_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.glosstextures
-
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use and b_mat_texslot.use_map_color_spec:
-            self.glosstextures.append(b_mat_texslot)
-    return self.glosstextures
-
-
-def has_normalmap_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.normalmaptextures
-
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use:
-            if b_mat_texslot.use_map_color_diffuse is False and b_mat_texslot.texture.use_normal_map and b_mat_texslot.use_map_normal:
-                self.normalmaptextures.append(b_mat_texslot)
-    return self.normalmaptextures
