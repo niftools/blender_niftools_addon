@@ -1,3 +1,4 @@
+from io_scene_nif.modules.property import texture
 from io_scene_nif.utility.nif_logging import NifLog
 
 
@@ -21,9 +22,9 @@ def import_texture_extra_shader(self, b_mat, n_texture_prop, extra_datas):
             NifLog.warn("No slot for shader texture {0}.".format(shader_tex_desc.texture_data.source.file_name))
             continue
         try:
-            extra_shader_index = (self.nif_import.EXTRA_SHADER_TEXTURES.index(shader_name))
+            extra_shader_index = (texture.EXTRA_SHADER_TEXTURES.index(shader_name))
         except ValueError:
-            # shader_name not in self.EXTRA_SHADER_TEXTURES
+            # shader_name not in texture.EXTRA_SHADER_TEXTURES
             NifLog.warn("No slot for shader texture {0}.".format(shader_tex_desc.texture_data.source.file_name))
             continue
 

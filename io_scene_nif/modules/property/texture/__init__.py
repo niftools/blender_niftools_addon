@@ -39,8 +39,17 @@
 # dictionary of texture files, to reuse textures
 DICT_TEXTURES = {}
 
-# TODO [property][texture] Expose IMPORT_EMBEDDED_TEXTTURES as a import property
+# TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
 IMPORT_EMBEDDED_TEXTURES = False
+
+"""Names (ordered by default index) of shader texture slots for Sid Meier's Railroads and similar games."""
+EXTRA_SHADER_TEXTURES = [
+    "EnvironmentMapIndex",
+    "NormalMapIndex",
+    "SpecularIntensityIndex",
+    "EnvironmentIntensityIndex",
+    "LightCubeMapIndex",
+    "ShadowTextureIndex"]
 
 
 def get_used_textslots(b_mat):

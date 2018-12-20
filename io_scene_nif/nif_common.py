@@ -56,17 +56,6 @@ class NifCommon:
     # dictionary of materials, to reuse materials
     dict_materials = {}
 
-    EXTRA_SHADER_TEXTURES = [
-        "EnvironmentMapIndex",
-        "NormalMapIndex",
-        "SpecularIntensityIndex",
-        "EnvironmentIntensityIndex",
-        "LightCubeMapIndex",
-        "ShadowTextureIndex"]
-    """Names (ordered by default index) of shader texture slots for
-    Sid Meier's Railroads and similar games.
-    """
-
     def __init__(self, operator, context):
         """Common initialization functions for executing the import/export operators: """
 
