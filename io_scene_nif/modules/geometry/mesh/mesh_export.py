@@ -39,14 +39,19 @@
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import armature, geometry
 from io_scene_nif.modules.geometry.morph.morph_export import GeoMorph
 from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.modules.property import texture
+from io_scene_nif.modules.property.shader.bsshader_export import BSShaderProperty
+from io_scene_nif.modules.property.texture.texture_export import TextureHelper
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
 import mathutils
+import bpy
+
 
 class MeshHelper:
 
@@ -250,15 +255,15 @@ class MeshHelper:
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
-                    bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = BSShaderProperty().export_bs_shader_property(b_obj, b_mat)
 
-                    self.nif_export.objecthelper.register_block(bsshader)
+                    ObjectHelper.register_block(bsshader)
                     trishape.add_property(bsshader)
             elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
-                    bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = BSShaderProperty().export_bs_shader_property(b_obj, b_mat)
 
-                    self.nif_export.objecthelper.register_block(bsshader)
+                    ObjectHelper.register_block(bsshader)
                     num_props = trishape.num_properties
                     trishape.num_properties = num_props + 1
                     trishape.bs_properties.update_size()
@@ -269,14 +274,14 @@ class MeshHelper:
                     ttl269 made to the xml can you make the effort to contact him and get him to 
                     rebase and clear the conflict so it can be merged'''
                     if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
-                        effect_control = self.nif_export.objecthelper.create_block("BSEffectShaderPropertyFloatController", bsshader)
+                        effect_control = ObjectHelper.create_block("BSEffectShaderPropertyFloatController", bsshader)
                         effect_control.flags = b_mat.niftools_alpha.textureflag
                         effect_control.frequency = b_slot.texture.image.fps
                         effect_control.start_time = b_slot.texture.image.frame_start
                         effect_control.stop_time = b_slot.texture.image.frame_end
                         bsshader.add_controller(effect_control)
             else:
-                if NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
+                if NifOp.props.game in TextureHelper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4:
                     # set shader slots in extra data
                     self.nif_export.texturehelper.add_shader_integer_extra_datas(trishape)
@@ -287,7 +292,7 @@ class MeshHelper:
                         flags=0x0001,  # standard
                         applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
-                    self.nif_export.objecthelper.register_block(n_nitextureprop)
+                    ObjectHelper.register_block(n_nitextureprop)
                     trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceeding child of the trishape)
@@ -346,7 +351,7 @@ class MeshHelper:
 
                 # add NiTriShape's material property
                 trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
-                    name=self.nif_export.objecthelper.get_full_name(b_mat.name),
+                    name=ObjectHelper.get_full_name(b_mat.name),
                     flags=0x0001,
                     # TODO [material] Defualt flag check, material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
@@ -357,7 +362,7 @@ class MeshHelper:
                     alpha=mesh_mat_transparency,
                     emitmulti=mesh_mat_emitmulti)
 
-                self.nif_export.objecthelper.register_block(trimatprop)
+                ObjectHelper.register_block(trimatprop)
 
                 # refer to the material property in the trishape block
                 trishape.add_property(trimatprop)
@@ -385,7 +390,7 @@ class MeshHelper:
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
-            mesh_uv_layers = self.nif_export.texturehelper.get_uv_layers(b_mat)
+            mesh_uv_layers = TextureHelper.get_uv_layers(b_mat)
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
             vertlist = []
@@ -617,7 +622,7 @@ class MeshHelper:
             # textures are actually exported (civ4 seems to be consistent with
             # not using tangent space on non shadered nifs)
             if mesh_uv_layers and mesh_hasnormals:
-                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES):
+                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in TextureHelper.USED_EXTRA_SHADER_TEXTURES):
                     trishape.update_tangent_space(as_extra=(NifOp.props.game == 'OBLIVION'))
 
             # now export the vertex weights, if there are any
@@ -635,26 +640,26 @@ class MeshHelper:
                     if boneinfluences:  # yes we have skinning!
                         # create new skinning instance block and link it
                         if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
-                            skininst = self.nif_export.objecthelper.create_block("BSDismemberSkinInstance", b_obj)
+                            skininst = ObjectHelper.create_block("BSDismemberSkinInstance", b_obj)
                         else:
-                            skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
+                            skininst = ObjectHelper.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
                         for block in armature.DICT_BLOCKS:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(armaturename):
+                                if block.name.decode() == ObjectHelper.get_full_name(armaturename):
                                     skininst.skeleton_root = block
                                     break
                         else:
                             raise nif_utils.NifError("Skeleton root '%s' not found." % armaturename)
 
                         # create skinning data and link it
-                        skin_data = self.nif_export.objecthelper.create_block("NiSkinData", b_obj)
+                        skin_data = ObjectHelper.create_block("NiSkinData", b_obj)
                         skininst.data = skin_data
 
                         skin_data.has_vertex_weights = True
                         # fix geometry rest pose: transform relative to
                         # skeleton root
-                        skin_data.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').get_inverse())
+                        skin_data.set_transform(ObjectHelper.get_object_matrix(b_obj, 'localspace').get_inverse())
 
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}
@@ -714,7 +719,7 @@ class MeshHelper:
                             bone_block = None
                             for block in armature.DICT_BLOCKS:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(bone):
+                                    if block.name.decode() == ObjectHelper.get_full_name(bone):
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -796,8 +801,6 @@ class MeshHelper:
                         del vert_added
 
             GeoMorph().morph_export(b_mesh, b_obj, tridata, trishape, vertlist, vertmap)
-
-
 
     def smooth_mesh_seams(self, b_objs):
         # get shared vertices
