@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/pyffi" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/pyffi/external" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/pyffi/pyffi/formats/kfm/kfmxml" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/pyffi/pyffi/formats/nif/nifxml" vcs="Git" />
+  </component>
+</project>
