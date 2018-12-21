@@ -75,10 +75,9 @@ class NifExport(NifCommon):
     EXPORT_OB_MASS = 10.0
     EXPORT_OB_SOLID = True
     EXPORT_OB_MOTIONSYSTEM = 7,  # MO_SYS_FIXED
-    EXPORT_OB_UNKNOWNBYTE1 = 1
-    EXPORT_OB_UNKNOWNBYTE2 = 1
+
     EXPORT_OB_QUALITYTYPE = 1  # MO_QUAL_FIXED
-    EXPORT_OB_WIND = 0
+
     EXPORT_OB_LAYER = 1  # static
     EXPORT_OB_MATERIAL = 9  # wood
     EXPORT_OB_PRN = "NONE"  # Todo with location on character. For weapons, rings, helmets, Sheilds ect
@@ -90,7 +89,7 @@ class NifExport(NifCommon):
         self.bhkshapehelper = BHKShape(parent=self)
         self.boundhelper = Bound(parent=self)
         self.armaturehelper = Armature(parent=self)
-        
+
         self.constrainthelper = Constraint(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
         

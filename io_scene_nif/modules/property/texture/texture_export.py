@@ -70,8 +70,6 @@ class TextureHelper:
         self.detail_mtex = None
         self.ref_mtex = None
 
-
-
     @staticmethod
     def get_uv_layers(b_mat):
         used_uvlayers = set()
