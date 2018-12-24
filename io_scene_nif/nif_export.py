@@ -36,7 +36,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.modules import obj, armature, collision
 from io_scene_nif.modules.property import texture
 from io_scene_nif.nif_common import NifCommon
@@ -44,7 +43,6 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 
 from io_scene_nif.modules.animation.animation_export import AnimationHelper
-from io_scene_nif.modules.collision.collision_export import BHKShape, Bound
 from io_scene_nif.modules.armature.armature_export import Armature
 from io_scene_nif.modules.constraint.constraint_export import Constraint
 from io_scene_nif.modules.obj.object_export import ObjectHelper
@@ -62,11 +60,7 @@ import bpy
 # main export class
 class NifExport(NifCommon):
 
-    IDENTITY44 = NifFormat.Matrix44()
-    IDENTITY44.set_identity()
-
     # TODO: - Expose via properties
-    
     EXPORT_OPTIMIZE_MATERIALS = True
     EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False
     
@@ -85,11 +79,7 @@ class NifExport(NifCommon):
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
     
-        # Helper systems
-        self.bhkshapehelper = BHKShape(parent=self)
-        self.boundhelper = Bound(parent=self)
         self.armaturehelper = Armature(parent=self)
-
         self.constrainthelper = Constraint(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
         
@@ -261,11 +251,11 @@ class NifExport(NifCommon):
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
-                if ((not has_keyframecontrollers)
-                    and (not NifOp.props.bs_animation_node)):
+
+                if not (has_keyframecontrollers or NifOp.props.bs_animation_node):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.export_keyframes(None, 'localspace', root_block)
+                    AnimationHelper.export_keyframes(None, 'localspace', root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
                 for block in armature.DICT_BLOCKS:
@@ -609,6 +599,7 @@ class NifExport(NifCommon):
                         if node not in node_kfctrls:
                             node_kfctrls[node] = []
                         node_kfctrls[node].append(ctrl)
+
                 # morrowind
                 if NifOp.props.game in ('MORROWIND', 'FREEDOM_FORCE'):
                     # create kf root header
@@ -630,6 +621,7 @@ class NifExport(NifCommon):
                             kf_root.add_controller(ctrl)
                             # wipe controller target
                             ctrl.target = None
+
                 # oblivion
                 elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
                     # create kf root header
@@ -683,7 +675,7 @@ class NifExport(NifCommon):
                                     # newer versions need the interpolator blocks
                                     controlledblock.interpolator = interpolator
                                 # get bone animation priority (previously fetched from the constraints during export_bones)
-                                if not node.name in armature.DICT_BONE_PRIORITIES or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
+                                if node.name not in armature.DICT_BONE_PRIORITIES or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
                                     if self.EXPORT_ANIMPRIORITY != 0:
                                         priority = self.EXPORT_ANIMPRIORITY
                                     else:
@@ -758,7 +750,6 @@ class NifExport(NifCommon):
                 finally:
                     stream.close()
 
-
         finally:
             # clear progress bar
             NifLog.info("Finished")
@@ -768,39 +759,3 @@ class NifExport(NifCommon):
 
         return {'FINISHED'}
 
-    def export_collision(self, b_obj, parent_block):
-        """Main function for adding collision object b_obj to a node."""
-        if NifOp.props.game == 'MORROWIND':
-            if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
-                raise nif_utils.NifError("Morrowind only supports Triangle Mesh collisions.")
-            node = self.objecthelper.create_block("RootCollisionNode", b_obj)
-            parent_block.add_child(node)
-            node.flags = 0x0003  # default
-            self.objecthelper.set_object_matrix(b_obj, 'localspace', node)
-            for child in b_obj.children:
-                self.objecthelper.export_node(child, 'localspace', node, None)
-
-        elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-
-            nodes = [parent_block]
-            nodes.extend([block for block in parent_block.children if block.name[:14] == 'collisiondummy'])
-            for node in nodes:
-                try:
-                    self.bhkshapehelper.export_collision_helper(b_obj, node)
-                    break
-                except ValueError:  # adding collision failed
-                    continue
-            else:  # all nodes failed so add new one
-                node = self.objecthelper.create_ninode(b_obj)
-                node.set_transform(self.IDENTITY44)
-                node.name = 'collisiondummy%i' % parent_block.num_children
-                if b_obj.niftools.objectflags != 0:
-                    node_flag_hex = hex(b_obj.niftools.objectflags)
-                else:
-                    node_flag_hex = 0x000E  # default
-                node.flags = node_flag_hex
-                parent_block.add_child(node)
-                self.bhkshapehelper.export_collision_helper(b_obj, node)
-
-        else:
-            NifLog.warn("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '{0}'".format(b_obj.name))
