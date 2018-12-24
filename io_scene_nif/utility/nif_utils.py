@@ -99,20 +99,20 @@ def decompose_srt(matrix):
     return [scale_vec[0], rot_quat.to_matrix(), trans_vec]
 
 
-def find_property(niBlock, property_type):
+def find_property(ni_block, property_type):
     """Find a property."""
-    for prop in niBlock.properties:
+    for prop in ni_block.properties:
         if isinstance(prop, property_type):
             return prop
-    for prop in niBlock.bs_properties:
+    for prop in ni_block.bs_properties:
         if isinstance(prop, property_type):
             return prop
     return None
 
 
-def find_controller(niBlock, controller_type):
+def find_controller(ni_block, controller_type):
     """Find a controller."""
-    ctrl = niBlock.controller
+    ctrl = ni_block.controller
     while ctrl:
         if isinstance(ctrl, controller_type):
             break
@@ -120,12 +120,12 @@ def find_controller(niBlock, controller_type):
     return ctrl
 
 
-def find_extra(niBlock, extratype):
+def find_extra(ni_block, extratype):
     # TODO [object] 3.0 - Optimise
     
     """Find extra data."""
     # pre-10.x.x.x system: extra data chain
-    extra = niBlock.extra_data
+    extra = ni_block.extra_data
     while extra:
         if isinstance(extra, extratype):
             break
@@ -134,7 +134,7 @@ def find_extra(niBlock, extratype):
         return extra
 
     # post-10.x.x.x system: extra data list
-    for extra in niBlock.extra_data_list:
+    for extra in ni_block.extra_data_list:
         if isinstance(extra, extratype):
             return extra
     return None
