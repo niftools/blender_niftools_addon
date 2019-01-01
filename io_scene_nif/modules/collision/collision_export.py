@@ -38,7 +38,8 @@
 # ***** END LICENSE BLOCK *****
 from io_scene_nif.modules import obj
 from io_scene_nif.modules.collision.havok import BHKShape
-from io_scene_nif.modules.obj.object_export import ObjectHelper, BlockRegistry
+from io_scene_nif.modules.obj import object_export
+from io_scene_nif.modules.obj.blocks import BlockRegistry
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -47,7 +48,6 @@ from io_scene_nif.utility.nif_logging import NifLog
 class Collision:
 
     def __init__(self):
-        self.object_helper = ObjectHelper()
         self.bhkshapehelper = BHKShape()
 
     def export_collision(self, b_obj, parent_block):
@@ -58,9 +58,8 @@ class Collision:
             node = BlockRegistry.create_block("RootCollisionNode", b_obj)
             parent_block.add_child(node)
             node.flags = 0x0003  # default
-            self.object_helper.set_object_matrix(b_obj, 'localspace', node)
-            for child in b_obj.children:
-                ObjectHelper.export_node(child, 'localspace', node, None)
+            object_export.set_object_matrix(b_obj, 'localspace', node)
+            return node
 
         elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             nodes = [parent_block]
