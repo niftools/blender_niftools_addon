@@ -43,8 +43,8 @@ from io_scene_nif.modules import collision, geometry
 import bpy
 import mathutils
 
+from io_scene_nif.modules.obj import object_export
 from io_scene_nif.modules.obj.blocks import BlockRegistry
-from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
@@ -248,7 +248,7 @@ class BHKShape:
             #     raise ValueError('not a packed list of collisions')
 
         mesh = b_obj.data
-        transform = mathutils.Matrix(ObjectHelper().get_object_matrix(b_obj, 'localspace').as_list())
+        transform = mathutils.Matrix(object_export.get_object_matrix(b_obj, 'localspace').as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
@@ -330,7 +330,7 @@ class BHKShape:
             coltf.unknown_8_bytes[5] = 9
             coltf.unknown_8_bytes[6] = 253
             coltf.unknown_8_bytes[7] = 4
-            hktf = mathutils.Matrix(ObjectHelper().get_object_matrix(b_obj, 'localspace').as_list())
+            hktf = mathutils.Matrix(object_export.get_object_matrix(b_obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
@@ -419,7 +419,7 @@ class BHKShape:
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
             b_mesh = b_obj.data
-            b_transform_mat = mathutils.Matrix(ObjectHelper.get_object_matrix(b_obj, 'localspace').as_list())
+            b_transform_mat = mathutils.Matrix(object_export.get_object_matrix(b_obj, 'localspace').as_list())
 
             b_rot_quat = b_transform_mat.decompose()[1]
             b_scale_vec = b_transform_mat.decompose()[0]
