@@ -43,6 +43,7 @@ from io_scene_nif.modules import collision, geometry
 import bpy
 import mathutils
 
+from io_scene_nif.modules.obj.blocks import BlockRegistry
 from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
@@ -107,12 +108,12 @@ class BHKShape:
             # note: collision settings are taken from lowerclasschair01.nif
             if layer == "OL_BIPED":
                 # special collision object for creatures
-                n_col_obj = ObjectHelper.create_block("bhkBlendCollisionObject", b_obj)
+                n_col_obj = BlockRegistry.create_block("bhkBlendCollisionObject", b_obj)
                 n_col_obj.flags = 9
                 n_col_obj.unknown_float_1 = 1.0
                 n_col_obj.unknown_float_2 = 1.0
                 # also add a controller for it
-                blendctrl = ObjectHelper.create_block("bhkBlendController", b_obj)
+                blendctrl = BlockRegistry.create_block("bhkBlendController", b_obj)
                 blendctrl.flags = 12
                 blendctrl.frequency = 1.0
                 blendctrl.phase = 0.0
@@ -121,7 +122,7 @@ class BHKShape:
                 parent_block.add_controller(blendctrl)
             else:
                 # usual collision object
-                n_col_obj = ObjectHelper.create_block("bhkCollisionObject", b_obj)
+                n_col_obj = BlockRegistry.create_block("bhkCollisionObject", b_obj)
                 if layer == "OL_ANIM_STATIC" and col_filter != 128:
                     # animated collision requires flags = 41
                     # unless it is a constrained but not keyframed object
@@ -132,7 +133,7 @@ class BHKShape:
 
             parent_block.collision_object = n_col_obj
             n_col_obj.target = parent_block
-            n_bhkrigidbody = ObjectHelper.create_block("bhkRigidBody", b_obj)
+            n_bhkrigidbody = BlockRegistry.create_block("bhkRigidBody", b_obj)
             n_col_obj.body = n_bhkrigidbody
             n_bhkrigidbody.layer = getattr(NifFormat.OblivionLayer, layer)
             n_bhkrigidbody.col_filter = col_filter
@@ -203,7 +204,7 @@ class BHKShape:
 
         if not n_col_body.shape:
 
-            n_col_mopp = ObjectHelper.create_block("bhkMoppBvTreeShape", b_obj)
+            n_col_mopp = BlockRegistry.create_block("bhkMoppBvTreeShape", b_obj)
             n_col_body.shape = n_col_mopp
             n_col_mopp.material = n_havok_mat
             n_col_mopp.unknown_8_bytes[0] = 160
@@ -217,7 +218,7 @@ class BHKShape:
             n_col_mopp.unknown_float = 1.0
 
             # the mopp origin, scale, and data are written later
-            n_col_shape = ObjectHelper.create_block("bhkPackedNiTriStripsShape", b_obj)
+            n_col_shape = BlockRegistry.create_block("bhkPackedNiTriStripsShape", b_obj)
             n_col_mopp.shape = n_col_shape
 
             n_col_shape.unknown_int_1 = 0
@@ -283,7 +284,7 @@ class BHKShape:
         # (this works in all cases, can be simplified just before
         # the file is written)
         if not n_col_body.shape:
-            n_col_shape = ObjectHelper.create_block("bhkListShape")
+            n_col_shape = BlockRegistry.create_block("bhkListShape")
             n_col_body.shape = n_col_shape
             n_col_shape.material = n_havok_mat
         else:
@@ -318,7 +319,7 @@ class BHKShape:
 
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
-            coltf = ObjectHelper.create_block("bhkConvexTransformShape", b_obj)
+            coltf = BlockRegistry.create_block("bhkConvexTransformShape", b_obj)
             coltf.material = n_havok_mat
             coltf.unknown_float_1 = 0.1
             coltf.unknown_8_bytes[0] = 96
@@ -347,7 +348,7 @@ class BHKShape:
             coltf.transform.m_43 /= self.HAVOK_SCALE
 
             if b_obj.game.collision_bounds_type == 'BOX':
-                colbox = ObjectHelper.create_block("bhkBoxShape", b_obj)
+                colbox = BlockRegistry.create_block("bhkBoxShape", b_obj)
                 coltf.shape = colbox
                 colbox.material = n_havok_mat
                 colbox.radius = radius
@@ -366,7 +367,7 @@ class BHKShape:
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
 
             elif b_obj.game.collision_bounds_type == 'SPHERE':
-                colsphere = ObjectHelper.create_block("bhkSphereShape", b_obj)
+                colsphere = BlockRegistry.create_block("bhkSphereShape", b_obj)
                 coltf.shape = colsphere
                 colsphere.material = n_havok_mat
                 # take average radius and
@@ -393,7 +394,7 @@ class BHKShape:
                 return self.export_collision_object(b_obj, layer, n_havok_mat)
 
             # end points are ok, so export as capsule
-            colcaps = ObjectHelper.create_block("bhkCapsuleShape", b_obj)
+            colcaps = BlockRegistry.create_block("bhkCapsuleShape", b_obj)
             colcaps.material = n_havok_mat
             colcaps.first_point.x = vert1[0] / self.HAVOK_SCALE
             colcaps.first_point.y = vert1[1] / self.HAVOK_SCALE
@@ -463,7 +464,7 @@ class BHKShape:
             if len(f_norm_list) > 65535 or len(vert_list) > 65535:
                 raise nif_utils.NifError("ERROR%t|Too many polygons/vertices.\nDecimate/split your b_mesh and try again.")
 
-            col_hull = ObjectHelper.create_block("bhkConvexVerticesShape", b_obj)
+            col_hull = BlockRegistry.create_block("bhkConvexVerticesShape", b_obj)
             col_hull.material = n_havok_mat
             col_hull.radius = radius
             col_hull.unknown_6_floats[2] = -0.0  # enables arrow detection

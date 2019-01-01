@@ -39,9 +39,9 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.animation_export import AnimationHelper
-from io_scene_nif.modules.obj.object_export import ObjectHelper
+from io_scene_nif.modules.obj import blocks
+from io_scene_nif.modules.obj.blocks import BlockRegistry
 from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
@@ -93,7 +93,7 @@ class TextureHelper:
         self.export_nitextureprop_tex_descs(texprop)
 
         # search for duplicate
-        for block in armature.DICT_BLOCKS:
+        for block in blocks.DICT_BLOCKS:
             if isinstance(block, NifFormat.NiTexturingProperty) and block.get_hash() == texprop.get_hash():
                 return block
 
@@ -224,7 +224,7 @@ class TextureHelper:
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()
         texeff.unknown_vector.x = 1.0
-        return ObjectHelper.register_block(texeff)
+        return BlockRegistry.register_block(texeff)
 
     def export_uv_offset(self, shader):
         shader.uv_offset.u = self.base_mtex.offset.x

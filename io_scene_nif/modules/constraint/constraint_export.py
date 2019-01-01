@@ -38,7 +38,8 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature, collision
+from io_scene_nif.modules import collision
+from io_scene_nif.modules.obj import blocks
 from io_scene_nif.utility import nif_utils
 
 import bpy
@@ -76,7 +77,7 @@ class Constraint:
                     NifLog.warn("Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {0}.".format(b_constr))
                     continue
                 # check that the object is a rigid body
-                for otherbody, otherobj in armature.DICT_BLOCKS.items():
+                for otherbody, otherobj in blocks.DICT_BLOCKS.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj is b_obj:
                         hkbody = otherbody
                         break
@@ -150,7 +151,7 @@ class Constraint:
                     NifLog.warn("Constraint {0} has no target, skipped".format(b_constr))
                     continue
                 # find target's bhkRigidBody
-                for otherbody, otherobj in armature.DICT_BLOCKS.items():
+                for otherbody, otherobj in blocks.DICT_BLOCKS.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj == targetobj:
                         hk_constraint.entities[1] = otherbody
                         break

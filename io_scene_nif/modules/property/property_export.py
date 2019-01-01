@@ -40,6 +40,7 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.obj import blocks
 from io_scene_nif.modules.property.material.material_export import Material
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -105,7 +106,7 @@ class ObjectProperty:
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
         # search for duplicate
-        for block in armature.DICT_BLOCKS:
+        for block in blocks.DICT_BLOCKS:
             if isinstance(block, NifFormat.NiAlphaProperty) and block.flags == flags and block.threshold == threshold:
                 return block
 
@@ -119,7 +120,7 @@ class ObjectProperty:
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
-        for block in armature.DICT_BLOCKS:
+        for block in blocks.DICT_BLOCKS:
             if isinstance(block, NifFormat.NiSpecularProperty) and block.flags == flags:
                 return block
 
@@ -132,7 +133,7 @@ class ObjectProperty:
         """Return existing wire property with given flags, or create new one
         if an wire property with required flags is not found."""
         # search for duplicate
-        for block in armature.DICT_BLOCKS:
+        for block in blocks.DICT_BLOCKS:
             if isinstance(block, NifFormat.NiWireframeProperty) and block.flags == flags:
                 return block
 
@@ -145,7 +146,7 @@ class ObjectProperty:
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
         # search for duplicate
-        for block in armature.DICT_BLOCKS:
+        for block in blocks.DICT_BLOCKS:
             if isinstance(block, NifFormat.NiStencilProperty):
                 # all these blocks have the same setting, no further check
                 # is needed

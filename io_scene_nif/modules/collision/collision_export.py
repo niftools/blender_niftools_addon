@@ -36,8 +36,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from io_scene_nif.modules import obj
 from io_scene_nif.modules.collision.havok import BHKShape
-from io_scene_nif.modules.obj.object_export import ObjectHelper
+from io_scene_nif.modules.obj.object_export import ObjectHelper, BlockRegistry
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -54,7 +55,7 @@ class Collision:
         if NifOp.props.game == 'MORROWIND':
             if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
                 raise nif_utils.NifError("Morrowind only supports Triangle Mesh collisions.")
-            node = ObjectHelper.create_block("RootCollisionNode", b_obj)
+            node = BlockRegistry.create_block("RootCollisionNode", b_obj)
             parent_block.add_child(node)
             node.flags = 0x0003  # default
             self.object_helper.set_object_matrix(b_obj, 'localspace', node)
@@ -71,8 +72,8 @@ class Collision:
                 except ValueError:  # adding collision failed
                     continue
             else:  # all nodes failed so add new one
-                node = ObjectHelper.create_ninode(b_obj)
-                node.set_transform(self.IDENTITY44)
+                node = BlockRegistry.create_ninode(b_obj)
+                node.set_transform(obj.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 if b_obj.niftools.objectflags != 0:
                     node_flag_hex = hex(b_obj.niftools.objectflags)

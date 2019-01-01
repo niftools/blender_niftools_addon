@@ -36,14 +36,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.obj.object_export import ObjectHelper
+from io_scene_nif.modules.obj.blocks import BlockRegistry
 
 
 def export_range_lod_data(n_node, b_obj):
     """Export range lod data for for the children of b_obj, as an NiRangeLODData block on n_node."""
 
     # create range lod data object
-    n_range_data = ObjectHelper.create_block("NiRangeLODData", b_obj)
+    n_range_data = BlockRegistry.create_block("NiRangeLODData", b_obj)
     n_node.lod_level_data = n_range_data
 
     # get the children

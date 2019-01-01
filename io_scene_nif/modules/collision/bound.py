@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.obj.object_export import ObjectHelper
+from io_scene_nif.modules.obj.object_export import BlockRegistry, ObjectHelper
 
 
 class Bound:
@@ -54,7 +54,7 @@ class Bound:
         max_z = max([b_vert[2] for b_vert in b_vert_list])
 
         if bsbound:
-            n_bbox = ObjectHelper.create_block("BSBound")
+            n_bbox = BlockRegistry.create_block("BSBound")
             # ... the following incurs double scaling because it will be added in
             # both the extra data list and in the old extra data sequence!!!
             # block_parent.add_extra_data(n_bbox)
@@ -73,7 +73,7 @@ class Bound:
             n_bbox.dimensions.z = (max_z - min_z) * b_obj.scale[2] * 0.5
 
         else:
-            n_bbox = ObjectHelper.create_ninode()
+            n_bbox = ObjectHelper().create_ninode()
             block_parent.add_child(n_bbox)
             # set name, flags, translation, and radius
             n_bbox.name = "Bounding Box"

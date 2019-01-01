@@ -43,7 +43,7 @@ from pyffi.formats.egm import EgmFormat
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.io.egm import EGMFile
-from io_scene_nif.modules.obj.object_export import ObjectHelper
+from io_scene_nif.modules.obj.blocks import BlockRegistry
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
@@ -73,7 +73,7 @@ class GeoMorph:
                         raise ValueError("Can only export relative shape keys.")
 
                     # create geometry morph controller
-                    morph_ctrl = ObjectHelper.create_block("NiGeomMorpherController", keyipo)
+                    morph_ctrl = BlockRegistry.create_block("NiGeomMorpherController", keyipo)
                     morph_ctrl.target = trishape
                     morph_ctrl.frequency = 1.0
                     morph_ctrl.phase = 0.0
@@ -83,7 +83,7 @@ class GeoMorph:
                     ctrl_flags = 0x000c
 
                     # create geometry morph data
-                    morph_data = ObjectHelper.create_block("NiMorphData", keyipo)
+                    morph_data = BlockRegistry.create_block("NiMorphData", keyipo)
                     morph_ctrl.data = morph_data
                     morph_data.num_morphs = len(keys.key_blocks)
                     morph_data.num_vertices = len(vertlist)
@@ -127,7 +127,7 @@ class GeoMorph:
                         curve = keyipo[keyblock.name]
 
                         # create interpolator for shape keys (needs to be there even if there is no curve)
-                        interpol = ObjectHelper.create_block("NiFloatInterpolator")
+                        interpol = BlockRegistry.create_block("NiFloatInterpolator")
                         interpol.value = 0
                         morph_ctrl.interpolators[keyblocknum] = interpol
                         # fallout 3 stores interpolators inside the interpolator_weights block
@@ -141,7 +141,7 @@ class GeoMorph:
                         # note: we set data on morph for older nifs and on floatdata for newer nifs
                         # of course only one of these will be actually written to the file
                         NifLog.info("Exporting morph {0}: curve".format(keyblock.name))
-                        interpol.data = ObjectHelper.create_block("NiFloatData", curve)
+                        interpol.data = BlockRegistry.create_block("NiFloatData", curve)
                         floatdata = interpol.data.data
                         if curve.getExtrapolation() == "Constant":
                             ctrl_flags = 0x000c
