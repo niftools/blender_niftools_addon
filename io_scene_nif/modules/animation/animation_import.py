@@ -43,6 +43,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.obj import blocks
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
@@ -460,7 +461,7 @@ class ArmatureAnimation:
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
             NifLog.debug('Importing animation for bone %s'.format(bone_name))
-            niBone = armature.DICT_BLOCKS[bone_name]
+            niBone = blocks.DICT_BLOCKS[bone_name]
 
             # get bind matrix (NIF format stores full transformations in keyframes,
             # but Blender wants relative transformations, hence we need to know

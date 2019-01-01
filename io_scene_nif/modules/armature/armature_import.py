@@ -46,6 +46,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature, obj
 from io_scene_nif.modules.animation.animation_import import AnimationHelper
+# TODO [object] Move to a class or module
 from io_scene_nif.modules.obj.object_import import is_grouping_node
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
@@ -61,12 +62,6 @@ class Armature:
         mathutils.Matrix([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]),
         mathutils.Matrix([[-1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, 1.0]]),
         mathutils.Matrix([[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]))
-
-    # identity matrix, for comparisons
-    IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
-                                   [0.0, 1.0, 0.0, 0.0],
-                                   [0.0, 0.0, 1.0, 0.0],
-                                   [0.0, 0.0, 0.0, 1.0]])
 
     def __init__(self, parent):
         self.nif_import = parent
@@ -115,7 +110,7 @@ class Armature:
             # find bone nif block
             if bone_name.startswith("InvMarker"):
                 bone_name = "InvMarker"
-            ni_bone = armature.DICT_BLOCKS[bone_name]
+            ni_bone = blocks.DICT_BLOCKS[bone_name]
             # store bone priority, if applicable
             if ni_bone.name in armature.DICT_BONE_PRIORITIES:
                 constr = b_posebone.constraints.append(bpy.types.ConstraintNULL)
@@ -249,7 +244,7 @@ class Armature:
 
     def find_correction_matrix(self, n_block, n_armature):
         """Returns the correction matrix for a bone."""
-        m_correction = self.IDENTITY44.to_3x3()
+        m_correction = obj.IDENTITY44.to_3x3()
         if (NifOp.props.import_realign_bones == 2) and self.is_bone(n_block):
             armature_space_matrix = nif_utils.import_matrix(n_block, relative_to=n_armature)
 
@@ -367,6 +362,7 @@ class Armature:
                     # down to the armature NiNode are marked as bones
                     self.complete_bone_tree(boneBlock, skelroot)
 
+                # TODO [property] Move to dedicated NifOp.props member
                 # mark all nodes as bones if asked
                 if self.nif_import.IMPORT_EXTRANODES:
                     # add bones
@@ -491,7 +487,7 @@ class Armature:
         # write correction matrices to text buffer
         for niBone, correction_matrix in armature.DICT_BONES_EXTRA_MATRIX.items():
             # skip identity transforms
-            if sum(sum(abs(x) for x in row) for row in (correction_matrix - self.IDENTITY44)) < NifOp.props.epsilon:
+            if sum(sum(abs(x) for x in row) for row in (correction_matrix - obj.IDENTITY44)) < NifOp.props.epsilon:
                 continue
             # 'pickle' the correction matrix
             line = ''

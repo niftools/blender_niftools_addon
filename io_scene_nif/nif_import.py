@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 from io_scene_nif.modules.geometry.mesh.mesh_import import Mesh
-from io_scene_nif.modules.obj import object_import
+from io_scene_nif.modules.obj import object_import, blocks
 from io_scene_nif.modules.property import texture
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
@@ -87,7 +87,6 @@ class NifImport(NifCommon):
 
         # TODO resets here for now
         animation.FPS = 30
-        armature.DICT_BLOCKS = {}
         armature.DICT_ARMATURES = {}
         armature.DICT_BONES_EXTRA_MATRIX = {}
         armature.DICT_BONES_EXTRA_MATRIX_INV = {}
@@ -95,6 +94,7 @@ class NifImport(NifCommon):
         collision.DICT_HAVOK_OBJECTS = {}
         obj.DICT_NAMES = {}
         obj.BLOCK_NAMES_LIST = []
+        blocks.DICT_BLOCKS = {}
         texture.DICT_TEXTURES = {}
 
         # catch nif import errors

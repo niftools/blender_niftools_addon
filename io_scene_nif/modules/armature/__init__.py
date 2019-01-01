@@ -60,8 +60,6 @@ DICT_BONES_EXTRA_MATRIX_INV = {}
 # import_armature
 DICT_BONE_PRIORITIES = {}
 
-DICT_BLOCKS = {}
-
 
 def get_bone_name_for_blender(name):
     """Convert a bone name to a name that can be used by Blender: turns

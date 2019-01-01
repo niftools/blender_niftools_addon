@@ -43,6 +43,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature, obj
+from io_scene_nif.modules.obj import blocks
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
@@ -99,7 +100,7 @@ def import_name(n_block, max_length=63):
     obj.DICT_NAMES[n_block] = short_name
 
     # Blender name shortName corresponds to niBlock
-    armature.DICT_BLOCKS[short_name] = n_block
+    blocks.DICT_BLOCKS[short_name] = n_block
     NifLog.debug("Selected unique name {0}".format(short_name))
     return short_name
 

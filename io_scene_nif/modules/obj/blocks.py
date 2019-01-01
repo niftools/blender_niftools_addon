@@ -34,6 +34,43 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 
 DICT_BLOCKS = {}
+
+
+class BlockRegistry:
+
+    # TODO [object] Decide what to do with object registry for export
+    @staticmethod
+    def register_block(block, b_obj=None):
+        """Helper function to register a newly created block in the list of
+        exported blocks and to associate it with a Blender object.
+
+        @param block: The nif block.
+        @param b_obj: The Blender object.
+        @return: C{block}"""
+        if b_obj is None:
+            NifLog.info("Exporting {0} block".format(block.__class__.__name__))
+        else:
+            NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
+        DICT_BLOCKS[block] = b_obj
+        return block
+
+    @staticmethod
+    def create_block(blocktype, b_obj=None):
+        """Helper function to create a new block, register it in the list of
+        exported blocks, and associate it with a Blender object.
+
+        @param blocktype: The nif block type (for instance "NiNode").
+        @type blocktype: C{str}
+        @param b_obj: The Blender object.
+        @return: The newly created block."""
+        try:
+            block = getattr(NifFormat, blocktype)()
+        except AttributeError:
+            raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(blocktype))
+        return BlockRegistry.register_block(block, b_obj)
