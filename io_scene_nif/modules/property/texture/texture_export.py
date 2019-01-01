@@ -39,7 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.animation.animation_export import AnimationHelper
+from io_scene_nif.modules.animation.animation_export import TextureAnimation
 from io_scene_nif.modules.obj import blocks
 from io_scene_nif.modules.obj.blocks import BlockRegistry
 from io_scene_nif.modules.property import texture
@@ -58,6 +58,7 @@ class TextureHelper:
 
     def __init__(self):
         self.texture_writer = TextureWriter()
+        self.texture_animation = TextureAnimation()
         # TODO [texture] Not a dictionary lookup
         self.MESH_UVLAYERS_LIST = list()
 
@@ -115,7 +116,7 @@ class TextureHelper:
                 pass
             else:
                 # texture slot 0 = base
-                AnimationHelper(parent=self).texture_animation.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
+                self.texture_animation.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
 
         if self.glow_mtex:
             texprop.has_glow_texture = True
@@ -418,6 +419,17 @@ class TextureHelper:
             else:
                 NifLog.warn("Non-UV texture in mesh '{0}', material '{1}'.\nEither delete all non-UV textures or "
                             "create a UV map for every texture associated with selected object and run the script again.".format(b_obj.name, b_mat.name))
+
+    def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
+        if b_blend_type == "LIGHTEN":
+            return NifFormat.ApplyMode.APPLY_HILIGHT
+        elif b_blend_type == "MULTIPLY":
+            return NifFormat.ApplyMode.APPLY_HILIGHT2
+        elif b_blend_type == "MIX":
+            return NifFormat.ApplyMode.APPLY_MODULATE
+
+        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
+        return NifFormat.ApplyMode.APPLY_MODULATE
 
     # TODO [texture] Decide whether or not to use this caching, implementation is borked as no b_mat hash store.
     def has_diffuse_textures(self, b_mat):
