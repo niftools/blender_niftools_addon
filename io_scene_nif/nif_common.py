@@ -70,25 +70,3 @@ class NifCommon:
 
         # find and store this list now of selected objects as creating new objects adds them to the selection list
         self.selected_objects = bpy.context.selected_objects[:]
-
-    def get_n_ipol_from_b_ipol(self, b_ipol):
-        if b_ipol == Blender.IpoCurve.InterpTypes.LINEAR:
-            return NifFormat.KeyType.LINEAR_KEY
-        elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
-            return NifFormat.KeyType.QUADRATIC_KEY
-        elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
-            return NifFormat.KeyType.CONST_KEY
-
-        NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
-        return NifFormat.KeyType.QUADRATIC_KEY
-
-    def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
-        if b_blend_type == "LIGHTEN":
-            return NifFormat.ApplyMode.APPLY_HILIGHT
-        elif b_blend_type == "MULTIPLY":
-            return NifFormat.ApplyMode.APPLY_HILIGHT2
-        elif b_blend_type == "MIX":
-            return NifFormat.ApplyMode.APPLY_MODULATE
-
-        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
-        return NifFormat.ApplyMode.APPLY_MODULATE
