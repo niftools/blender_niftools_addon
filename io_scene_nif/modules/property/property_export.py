@@ -41,21 +41,19 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.obj import blocks
+from io_scene_nif.modules.obj.blocks import BlockRegistry
 from io_scene_nif.modules.property.material.material_export import Material
 from io_scene_nif.utility.nif_global import NifOp
 
 
 class PropertyHelper:
     
-    def __init__(self, parent):
-        self.object_property = ObjectProperty(parent)
-        self.material_property = Material(parent)
+    def __init__(self):
+        self.object_property = ObjectProperty()
+        self.material_property = Material()
         
         
 class ObjectProperty:
-    
-    def __init__(self, parent):
-        self.nif_export = parent
         
     def export_vertex_color_property(self, block_parent, flags=1,
                                      vertex_mode=0, lighting_mode=1):
@@ -69,7 +67,7 @@ class ObjectProperty:
         @return: The new property block.
         """
         # create new vertex color property block
-        vcol_prop = self.nif_export.objecthelper.create_block("NiVertexColorProperty")
+        vcol_prop = BlockRegistry.create_block("NiVertexColorProperty")
     
         # make it a property of the parent
         block_parent.add_property(vcol_prop)
@@ -91,7 +89,7 @@ class ObjectProperty:
         @return: The new property block.
         """
         # create new z-buffer property block
-        zbuf = self.nif_export.objecthelper.create_block("NiZBufferProperty")
+        zbuf = BlockRegistry.create_block("NiZBufferProperty")
 
         # make it a property of the parent
         block_parent.add_property(zbuf)
@@ -111,7 +109,7 @@ class ObjectProperty:
                 return block
 
         # no alpha property with given flag found, so create new one
-        alpha_prop = self.nif_export.objecthelper.create_block("NiAlphaProperty")
+        alpha_prop = BlockRegistry.create_block("NiAlphaProperty")
         alpha_prop.flags = flags
         alpha_prop.threshold = threshold
         return alpha_prop
@@ -125,7 +123,7 @@ class ObjectProperty:
                 return block
 
         # no specular property with given flag found, so create new one
-        spec_prop = self.nif_export.objecthelper.create_block("NiSpecularProperty")
+        spec_prop = BlockRegistry.create_block("NiSpecularProperty")
         spec_prop.flags = flags
         return spec_prop
 
@@ -138,7 +136,7 @@ class ObjectProperty:
                 return block
 
         # no wire property with given flag found, so create new one
-        wire_prop = self.nif_export.objecthelper.create_block("NiWireframeProperty")
+        wire_prop = BlockRegistry.create_block("NiWireframeProperty")
         wire_prop.flags = flags
         return wire_prop
 
@@ -153,7 +151,7 @@ class ObjectProperty:
                 return block
 
         # no stencil property found, so create new one
-        stencil_prop = self.nif_export.objecthelper.create_block("NiStencilProperty")
+        stencil_prop = BlockRegistry.create_block("NiStencilProperty")
         if NifOp.props.game == 'FALLOUT_3':
             stencil_prop.flags = 19840
         return stencil_prop
