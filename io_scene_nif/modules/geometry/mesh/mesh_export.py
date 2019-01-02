@@ -264,13 +264,13 @@ class MeshHelper:
                 if b_mat:
                     bsshader = BSShaderProperty().export_bs_shader_property(b_obj, b_mat)
 
-                    BlockRegistry.create_block(bsshader)
+                    BlockRegistry.register_block(bsshader)
                     trishape.add_property(bsshader)
             elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
                     bsshader = BSShaderProperty().export_bs_shader_property(b_obj, b_mat)
 
-                    BlockRegistry.create_block(bsshader)
+                    BlockRegistry.register_block(bsshader)
                     num_props = trishape.num_properties
                     trishape.num_properties = num_props + 1
                     trishape.bs_properties.update_size()
@@ -299,7 +299,7 @@ class MeshHelper:
                         flags=0x0001,  # standard
                         applymode=self.texturehelper.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
-                    BlockRegistry.create_block(n_nitextureprop)
+                    BlockRegistry.register_block(n_nitextureprop)
                     trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceeding child of the trishape)
@@ -369,7 +369,7 @@ class MeshHelper:
                     alpha=mesh_mat_transparency,
                     emitmulti=mesh_mat_emitmulti)
 
-                BlockRegistry.create_block(trimatprop)
+                BlockRegistry.register_block(trimatprop)
 
                 # refer to the material property in the trishape block
                 trishape.add_property(trimatprop)
