@@ -44,9 +44,6 @@ from io_scene_nif.utility.nif_global import NifOp
 
 
 class Material:
-    
-    def __init__(self, parent):
-        self.nif_export = parent
         
     def export_material_property(self, name, flags, ambient, diffuse, specular, emissive, gloss, alpha, emitmulti):
         """Return existing material property with given settings, or create
@@ -104,7 +101,7 @@ class Material:
                 continue
 
             # when optimization is enabled, ignore material name
-            if self.nif_export.EXPORT_OPTIMIZE_MATERIALS:
+            if NifOp.props.optimise_materials:
                 ignore_strings = not(block.name in specialnames)
             else:
                 ignore_strings = False

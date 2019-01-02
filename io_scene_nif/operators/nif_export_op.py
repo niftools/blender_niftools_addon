@@ -1,4 +1,4 @@
-'''Blender Nif Plugin Main Export operators, function called through Export Menu'''
+"""Blender Nif Plugin Main Export operators, function called through Export Menu"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -56,20 +56,20 @@ def _game_to_enum(game):
 class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
     """Operator for saving a nif file."""
 
-    #: Name of function for calling the nif export operators.
+    # Name of function for calling the nif export operators.
     bl_idname = "export_scene.nif"
 
-    #: How the nif export operators is labelled in the user interface.
+    # How the nif export operators is labelled in the user interface.
     bl_label = "Export NIF"
 
-    #: Number of blender units per nif unit.
+    # Number of blender units per nif unit.
     scale_correction_export = bpy.props.FloatProperty(
         name="Scale Correction Export",
         description="Changes size of mesh from Blender default to nif default.",
         default=1.0,
         min=0.01, max=100.0, precision=2)
 
-    #: For which game to export.
+    # For which game to export.
     game = bpy.props.EnumProperty(
         items=[
             (_game_to_enum(game), game, "Export for " + game)
@@ -82,7 +82,7 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         description="For which game to export.",
         default='OBLIVION')
 
-    #: How to export animation.
+    # How to export animation.
     animation = bpy.props.EnumProperty(
         items=[
             ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
@@ -94,70 +94,76 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         description="Selects which parts of the blender file to export.",
         default='ALL_NIF')
 
-    #: Smoothen inter-object seams.
+    # Smoothen inter-object seams.
     smooth_object_seams = bpy.props.BoolProperty(
         name="Smooth Inter-Object Seams",
         description="Smooth normal data along inter-object seams.",
         default=True)
 
-    #: Use BSAnimationNode (for Morrowind).
+    # Use BSAnimationNode (for Morrowind).
     bs_animation_node = bpy.props.BoolProperty(
         name="Use NiBSAnimationNode",
         description="Use NiBSAnimationNode (for Morrowind).",
         default=False)
 
-    #: Stripify geometries. Deprecate? (Strips are slower than triangle shapes.)
+    # Stripify geometries. Deprecate? (Strips are slower than triangle shapes.)
     stripify = bpy.props.BoolProperty(
         name="Stripify Geometries",
         description="Stripify geometries.",
         default=False,
         options={'HIDDEN'})
 
-    #: Stitch strips. Deprecate? (Strips are slower than triangle shapes.)
+    # Stitch strips. Deprecate? (Strips are slower than triangle shapes.)
     stitch_strips = bpy.props.BoolProperty(
         name="Stitch Strips",
         description="Stitch strips.",
         default=True,
         options={'HIDDEN'})
 
-    #: Flatten skin.
+    # Flatten skin.
     flatten_skin = bpy.props.BoolProperty(
         name="Flatten Skin",
         description="Flatten skin.",
         default=False)
 
-    #: Export skin partition.
+    # Export skin partition.
     skin_partition = bpy.props.BoolProperty(
         name="Skin Partition",
         description="Export skin partition.",
         default=True)
 
-    #: Pad and sort bones.
+    # Pad and sort bones.
     pad_bones = bpy.props.BoolProperty(
         name="Pad & Sort Bones",
         description="Pad and sort bones.",
         default=False)
 
-    #: Maximum number of bones per skin partition.
+    # Maximum number of bones per skin partition.
     max_bones_per_partition = bpy.props.IntProperty(
         name="Max Partition Bones",
         description="Maximum number of bones per skin partition.",
         default=18, min=4, max=63)
 
-    #: Maximum number of bones per vertex in skin partitions.
+    # Maximum number of bones per vertex in skin partitions.
     max_bones_per_vertex = bpy.props.IntProperty(
         name="Max Vertex Bones",
         description="Maximum number of bones per vertex in skin partitions.",
         default=4, min=1,
         )
 
-    #: Pad and sort bones.
+    # Pad and sort bones.
     force_dds = bpy.props.BoolProperty(
         name="Force DDS",
         description="Force texture .dds extension.",
         default=True)
 
-    #: Map game enum to nif version.
+    #
+    optimise_materials = bpy.props.BoolProperty(
+        name="Optimise Materials",
+        description="",
+        default=True)
+
+    # Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
         for game, versions in NifFormat.games.items() if game != '?'

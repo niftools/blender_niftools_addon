@@ -412,8 +412,7 @@ class TextureHelper:
                 else:
                     raise nif_utils.NifError("Do not know how to export texture '%s', in mesh '%s', material '%s'.\n"
                                              "Either delete it, or if this texture is to be your base texture.\n"
-                                             "Go to the Shading Panel Material Buttons, and set texture 'Map To' to 'COL'."
-                        % (b_mat_texslot.texture.name, b_obj.name, b_mat.name))
+                                             "Go to the Shading Panel Material Buttons, and set texture 'Map To' to 'COL'." % (b_mat_texslot.texture.name, b_obj.name, b_mat.name))
 
             # nif only support UV-mapped textures
             else:
