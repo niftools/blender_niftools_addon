@@ -195,4 +195,6 @@ class GeoMorph:
                 relative_vertices.append(key_vert - vert)
             morph.set_relative_vertices(relative_vertices)
 
+        # TODO [morph] Scale application should probably happen at this point.
+        egm_data.apply_scale(NifOp.props.scale_correction_export)
         EGMFile.write_egm(egm_data)
