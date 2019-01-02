@@ -39,29 +39,34 @@
 
 import bpy
 
+from io_scene_nif.utility.nif_global import NifOp
+
+# TODO [scene] Use this as global import and export values and remove from operator
 user_version = {
     'OBLIVION': 11,
     'FALLOUT_3': 11,
+    'SKYRIM': 12,
     'DIVINITY_2': 131072
 }
 
 user_version_2 = {
     'OBLIVION': 11,
-    'FALLOUT_3': 34
+    'FALLOUT_3': 34,
+    'SKYRIM': 83,
 }
 
 
-def get_version_info(properties):
+def get_version_info():
     # set user version and user version 2 for export
     b_scene = bpy.context.scene.niftools_scene
 
     if b_scene.user_version == 0:
-        NIF_USER_VERSION = user_version.get(properties.game, 0)
+        NIF_USER_VERSION = user_version.get(NifOp.props.game, 0)
     else:
         NIF_USER_VERSION = b_scene.user_version
 
     if b_scene.user_version_2 == 0:
-        NIF_USER_VERSION_2 = user_version_2.get(properties.game, 0)
+        NIF_USER_VERSION_2 = user_version_2.get(NifOp.props.game, 0)
     else:
         NIF_USER_VERSION_2 = b_scene.user_version_2
 
