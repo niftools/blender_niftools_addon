@@ -68,7 +68,6 @@ class NifImport(NifCommon):
     D2R = 3.14159265358979 / 180.0
     IMPORT_EXTRANODES = True
 
-
     # noinspection PyUnusedLocal
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)

@@ -1,4 +1,4 @@
-'''Nif Operators, nif specific operators to update nif properties''' 
+"""Nif Operators, nif specific operators to update nif properties"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -40,4 +40,3 @@
 
 def register():
     from . import object, geometry, nif_import_op, nif_export_op, nif_common_op
-

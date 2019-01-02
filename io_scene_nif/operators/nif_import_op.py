@@ -47,13 +47,15 @@ from .nif_common_op import NifOperatorCommon
 class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a nif file."""
 
-    #: Name of function for calling the nif export operators.
+    # Name of function for calling the nif export operators.
     bl_idname = "import_scene.nif"
 
-    #: How the nif import operators is labelled in the user interface.
+    # How the nif import operators is labelled in the user interface.
     bl_label = "Import NIF"
 
-    #: Number of nif units per blender unit.
+    bl_options = {'REGISTER'}
+
+    # Number of nif units per blender unit.
     scale_correction_import = bpy.props.FloatProperty(
         name="Scale Correction Import",
         description="Changes size of mesh to fit onto Blender's default grid.",
@@ -66,7 +68,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         description="This will overwrite any previously stored scene information with the Nif header info.",
         default=True)
 
-    #: Keyframe file for animations.
+    # Keyframe file for animations.
     keyframe_file = bpy.props.StringProperty(
         name="Keyframe File",
         description="Keyframe file for animations.",
@@ -74,7 +76,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         default="",
         subtype="FILE_PATH")
 
-    #: FaceGen EGM file for morphs.
+    # FaceGen EGM file for morphs.
     egm_file = bpy.props.StringProperty(
         name="FaceGen EGM File",
         description="FaceGen EGM file for morphs.",
@@ -82,43 +84,43 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         default="",
         subtype="FILE_PATH")
 
-    #: Import animation.
+    # Import animation.
     animation = bpy.props.BoolProperty(
         name="Animation",
         description="Import animation.",
         default=False)
 
-    #: Merge skeleton roots.
+    # Merge skeleton roots.
     merge_skeleton_roots = bpy.props.BoolProperty(
         name="Merge Skeleton Roots",
         description="Merge skeleton roots.",
         default=False)
 
-    #: Send all geometries to their bind position.
+    # Send all geometries to their bind position.
     send_geoms_to_bind_pos = bpy.props.BoolProperty(
         name="Send Geometries To Bind Position",
         description="Send all geometries to their bind position.",
         default=False)
 
-    #: Send all detached geometries to the position of their parent node.
+    # Send all detached geometries to the position of their parent node.
     send_detached_geoms_to_node_pos = bpy.props.BoolProperty(
         name="Send Detached Geometries To Node Position",
         description="Send all detached geometries to the position of their parent node.",
         default=False)
 
-    #: Send all bones to their bind position.
+    # Send all bones to their bind position.
     send_bones_to_bind_position = bpy.props.BoolProperty(
         name="Send Bones To Bind Position",
         description="Send all bones to their bind position.",
         default=False)
 
-    #: Apply skin deformation to all skinned geometries.
+    # Apply skin deformation to all skinned geometries.
     apply_skin_deformation = bpy.props.BoolProperty(
         name="Apply Skin Deformation",
         description="Apply skin deformation to all skinned geometries.",
         default=False)
 
-    #: Re-align Tail bones on import
+    # Re-align Tail bones on import
     import_realign_bones = bpy.props.EnumProperty(
         items=(
             ("1", "Re-Align Tail Bone", "Re-Aligns bone tail on import."),
@@ -142,13 +144,13 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         description="Parts of nif to be imported.",
         default="EVERYTHING")
 
-    #: Import multi-material shapes as a single mesh.
+    # Import multi-material shapes as a single mesh.
     combine_shapes = bpy.props.BoolProperty(
         name="Combine Shapes",
         description="Import multi-material shapes as a single mesh.",
         default=False)
 
-    #: Merge vertices that have identical location and normal values.
+    # Merge vertices that have identical location and normal values.
     combine_vertices = bpy.props.BoolProperty(
         name="Combine Vertices",
         description="Merge vertices that have identical location and normal values.",

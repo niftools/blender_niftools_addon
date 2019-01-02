@@ -58,7 +58,7 @@ class NifOp:
         NifOp.context = context
         
         # init loggers logging level
-        NifLog.op = operator
+        NifLog.init(operator)
 
 
 class NifData:

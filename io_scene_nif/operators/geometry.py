@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom geometry properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom geometry properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,11 +37,10 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Operator
-from io_scene_nif import properties
 
-class BsInvMarkerAdd(bpy.types.Operator):
+
+class BsInvMarkerAdd(Operator):
     """Adds BsInvMarker set"""
     bl_idname = "object.niftools_bs_invmarker_add"
     bl_label = "Add Inventory Marker"
@@ -57,7 +56,8 @@ class BsInvMarkerAdd(bpy.types.Operator):
         b_obj_invmarker.bs_inv_zoom = 1
         return {'FINISHED'}
 
-class BsInvMarkerRemove(bpy.types.Operator):
+
+class BsInvMarkerRemove(Operator):
     """Removes BsInvMarker set"""
     bl_idname = "object.niftools_bs_invmarker_remove"
     bl_label = "Remove Inventory Marker"
@@ -70,7 +70,7 @@ class BsInvMarkerRemove(bpy.types.Operator):
         return {'FINISHED'}
     
     
-class NfTlPartFlagRemove(bpy.types.Operator):
+class NfTlPartFlagRemove(Operator):
     """Removes Dismember partition Flag set"""
     bl_idname = "object.niftools_part_flags_remove"
     bl_label = "Remove Dismember Flags"
@@ -82,4 +82,3 @@ class NfTlPartFlagRemove(bpy.types.Operator):
         obj.niftools_part_flags.remove(item)
         obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
         return {'FINISHED'}
-
