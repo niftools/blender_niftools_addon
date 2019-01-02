@@ -41,18 +41,16 @@ import bpy
 import mathutils
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.obj import object_export
+from io_scene_nif.modules.obj.blocks import BlockRegistry
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
-from pyffi.formats.nif import NifFormat
-
 
 class Armature:
-    
-    def __init__(self, parent):
-        self.nif_export = parent
 
+    # TODO [armature] Replace with a native implementation
     def rebuild_bones_extra_matrices(self):
         """Recover bone extra matrices."""
         
@@ -87,13 +85,15 @@ class Armature:
                 matrix.invert()
                 self.set_bone_extra_matrix_inv(b, matrix)
                 
-    def set_bone_extra_matrix_inv(self, bone_name, matrix):
+    @staticmethod
+    def set_bone_extra_matrix_inv(bone_name, matrix):
         """Set bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
         armature.DICT_BONES_EXTRA_MATRIX_INV[armature.get_bone_name_for_nif(bone_name)] = matrix
 
-    def get_bone_extra_matrix_inv(self, bone_name):
+    @staticmethod
+    def get_bone_extra_matrix_inv(bone_name):
         """Get bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
@@ -129,12 +129,12 @@ class Armature:
         # ok, let's create the bone NiNode blocks
         for bone in list(bones.values()):
             # create a new block for this bone
-            node = self.nif_export.objecthelper.create_ninode(bone)
+            node = BlockRegistry.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.nif_export.objecthelper.get_full_name(bone.name)
+            node.name = object_export.get_full_name(bone.name)
             
             if bone.niftools_bone.boneflags != 0:
                 node.flags = bone.niftools_bone.boneflags
@@ -162,7 +162,7 @@ class Armature:
                 else:
                     node.flags = 0x0002  # default for Morrowind bones
 
-            self.nif_export.objecthelper.set_object_matrix(bone, 'localspace', node)  # rest pose
+            object_export.set_object_matrix(bone, 'localspace', node)  # rest pose
 
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
@@ -196,46 +196,8 @@ class Armature:
             if not bone.parent:
                 parent_block.add_child(bones_node[bone.name])
 
-    def export_children(self, b_obj, parent_block):
-        """Export all children of blender object b_obj as children of
-        parent_block."""
-        # loop over all obj's children
-        for b_obj_child in b_obj.children:
-            # is it a regular node?
-            if b_obj_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
-                if b_obj.type != 'ARMATURE':
-                    # not parented to an armature
-                    self.nif_export.objecthelper.export_node(b_obj_child, 'localspace', parent_block, b_obj_child.name)
-                else:
-                    # this object is parented to an armature
-                    # we should check whether it is really parented to the
-                    # armature using vertex weights
-                    # or whether it is parented to some bone of the armature
-                    parent_bone_name = b_obj_child.parent_bone
-                    if parent_bone_name == "":
-                        self.nif_export.objecthelper.export_node(b_obj_child, 'localspace', parent_block, b_obj_child.name)
-                    else:
-                        # we should parent the object to the bone instead of
-                        # to the armature
-                        # so let's find that bone!
-                        nif_bone_name = self.nif_export.objecthelper.get_full_name(parent_bone_name)
-                        for bone_block in armature.DICT_BLOCKS:
-                            if isinstance(bone_block, NifFormat.NiNode) and bone_block.name.decode() == nif_bone_name:
-                                # ok, we should parent to block
-                                # instead of to parent_block
-                                # two problems to resolve:
-                                #   - blender bone matrix is not the exported
-                                #     bone matrix!
-                                #   - blender objects parented to bone have
-                                #     extra translation along the Y axis
-                                #     with length of the bone ("tail")
-                                # this is handled in the get_object_srt function
-                                self.nif_export.objecthelper.export_node(b_obj_child, 'localspace', bone_block, b_obj_child.name)
-                                break
-                        else:
-                            assert False  # BUG!
-                            
-    def get_bone_rest_matrix(self, bone, space, extra=True, tail=False):
+    @staticmethod
+    def get_bone_rest_matrix(bone, space, extra=True, tail=False):
         """Get bone matrix in rest position ("bind pose"). Space can be
         ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
         is BONESPACE (translation is bone head plus tail from parent bone).
@@ -244,11 +206,12 @@ class Armature:
         correction_matrix = mathutils.Matrix()
         if extra:
             try:
-                correction_matrix = mathutils.Matrix(self.get_bone_extra_matrix_inv(bone.name))
+                correction_matrix = mathutils.Matrix(Armature.get_bone_extra_matrix_inv(bone.name))
             except KeyError:
                 correction_matrix.identity()
         else:
             correction_matrix.identity()
+
         if space == 'ARMATURESPACE':
             matrix = mathutils.Matrix(bone.matrix_local)
             if tail:
@@ -260,12 +223,11 @@ class Armature:
         elif space == 'BONESPACE':
             if bone.parent:
                 # not sure why extra = True is required here
-                # but if extra = extra then transforms are messed up, so keep
-                # for now
-                parinv = self.get_bone_rest_matrix(bone.parent, 'ARMATURESPACE', extra=True, tail=False)
+                # but if extra = extra then transforms are messed up, so keep for now
+                parinv = Armature.get_bone_rest_matrix(bone.parent, 'ARMATURESPACE', extra=True, tail=False)
                 parinv.invert()
-                return self.get_bone_rest_matrix(bone, 'ARMATURESPACE', extra=extra, tail=tail) * parinv
+                return Armature.get_bone_rest_matrix(bone, 'ARMATURESPACE', extra=extra, tail=tail) * parinv
             else:
-                return self.get_bone_rest_matrix(bone, 'ARMATURESPACE', extra=extra, tail=tail)
+                return Armature.get_bone_rest_matrix(bone, 'ARMATURESPACE', extra=extra, tail=tail)
         else:
             assert False  # bug!
