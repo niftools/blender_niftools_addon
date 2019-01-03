@@ -98,8 +98,8 @@ class MeshProperty:
         Material().import_material(self.n_block, b_mat, prop)
 
     def process_nitexturing_property(self, prop):
-        """Import a NiMaterialProperty based material"""
-        NifLog.debug("NiMaterialProperty property found " + str(prop))
+        """Import a NiTexturingProperty based material"""
+        NifLog.debug("NiTexturingProperty property found " + str(prop))
         b_mat = self._find_or_create_material()
         NiTextureProp.get().import_nitextureprop_textures(self.n_block, b_mat, prop)
 
