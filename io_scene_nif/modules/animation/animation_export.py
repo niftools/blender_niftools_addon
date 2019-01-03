@@ -59,15 +59,15 @@ def get_flags_from_extend(extend):
     return 4
 
 
-def get_n_ipol_from_b_ipol(b_ipol):
-    if b_ipol == Blender.IpoCurve.InterpTypes.LINEAR:
+def get_n_curve_from_b_curve(b_ipo_type):
+    if b_ipo_type == bpy.types.Keyframe.interpolation.LINEAR:
         return NifFormat.KeyType.LINEAR_KEY
-    elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
+    elif b_ipo_type == bpy.types.Keyframe.interpolation.BEZIER:
         return NifFormat.KeyType.QUADRATIC_KEY
-    elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
+    elif b_ipo_type == bpy.types.Keyframe.interpolation.CONST:
         return NifFormat.KeyType.CONST_KEY
 
-    NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
+    NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipo_type))
     return NifFormat.KeyType.QUADRATIC_KEY
 
 
@@ -211,8 +211,7 @@ class Animation:
             bind_quat = mathutils.Quaternion(1, 0, 0, 0)
             bind_trans = mathutils.Vector()
         if extra_mat_inv:
-            extra_scale_inv, extra_rot_inv, extra_trans_inv = \
-                nif_utils.decompose_srt(extra_mat_inv)
+            extra_scale_inv, extra_rot_inv, extra_trans_inv = nif_utils.decompose_srt(extra_mat_inv)
             extra_quat_inv = extra_rot_inv.toQuat()
         else:
             extra_scale_inv = 1.0
@@ -221,7 +220,7 @@ class Animation:
             extra_trans_inv = mathutils.Vector()
 
         # sometimes we need to export an empty keyframe... this will take care of that
-        if (ipo == None):
+        if ipo is None:
             scale_curve = {}
             rot_curve = {}
             trans_curve = {}
@@ -474,7 +473,7 @@ class Animation:
                 continue
             # parse line
             t = s.split('/')
-            if (len(t) < 2):
+            if len(t) < 2:
                 raise nif_utils.NifError("Syntax error in Anim buffer ('%s')" % s)
             f = int(t[0])
             if (f < bpy.context.scene.frame_start) or (f > bpy.context.scene.frame_end):
@@ -590,7 +589,7 @@ class MaterialAnimation:
         n_floatdata = BlockRegistry.create_block("NiFloatData", b_curve)
         n_times = []  # track all times (used later in start time and end time)
         n_floatdata.data.num_keys = len(b_curve.bezierPoints)
-        n_floatdata.data.interpolation = get_n_ipol_from_b_ipol(b_curve.interpolation)
+        n_floatdata.data.interpolation = get_n_curve_from_b_curve(b_curve.interpolation)
         n_floatdata.data.keys.update_size()
         for b_point, n_key in zip(b_curve.bezierPoints, n_floatdata.data.keys):
             # add each point of the curve
@@ -621,8 +620,7 @@ class MaterialAnimation:
                     " before exporting alpha controller")
             n_matprop.add_controller(n_alphactrl)
 
-    def export_material_color_controller(
-            self, b_material, b_channels, n_geom, n_target_color):
+    def export_material_color_controller(self, b_material, b_channels, n_geom, n_target_color):
         """Export the material color controller data."""
         b_ipo = b_material.animation_data
         if not b_ipo:
@@ -639,7 +637,7 @@ class MaterialAnimation:
         # track all nif times: used later in start time and end time
         n_times = []
         n_posdata.data.num_keys = len(b_times)
-        n_posdata.data.interpolation = get_n_ipol_from_b_ipol(b_curves[0].interpolation)
+        n_posdata.data.interpolation = get_n_curve_from_b_curve(b_curves[0].interpolation)
         n_posdata.data.keys.update_size()
         for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
             # add each point of the curves
@@ -653,10 +651,8 @@ class MaterialAnimation:
         # if alpha data is present (check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
-            n_matcolor_ctrl = BlockRegistry.create_block(
-                "NiMaterialColorController", b_ipo)
-            n_matcolor_ipol = BlockRegistry.create_block(
-                "NiPoint3Interpolator", b_ipo)
+            n_matcolor_ctrl = BlockRegistry.create_block("NiMaterialColorController", b_ipo)
+            n_matcolor_ipol = BlockRegistry.create_block("NiPoint3Interpolator", b_ipo)
             n_matcolor_ctrl.interpolator = n_matcolor_ipol
             n_matcolor_ctrl.flags = 8  # active
             n_matcolor_ctrl.flags |= get_flags_from_extend(b_curve.extend)
@@ -690,7 +686,7 @@ class MaterialAnimation:
             if b_curve:
                 NifLog.info("Exporting {0} as NiUVData".format(b_curve))
                 n_uvgroup.num_keys = len(b_curve.bezierPoints)
-                n_uvgroup.interpolation = get_n_ipol_from_b_ipol(b_curve.interpolation)
+                n_uvgroup.interpolation = get_n_curve_from_b_curve(b_curve.interpolation)
                 n_uvgroup.keys.update_size()
                 for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
                     # add each point of the curve
@@ -719,7 +715,7 @@ class MaterialAnimation:
             n_geom.add_controller(n_uvctrl)
 
 
-class ObjectAnimation():
+class ObjectAnimation:
 
     def export_object_vis_controller(self, b_obj, n_node):
         """Export the material alpha controller data."""
@@ -736,8 +732,7 @@ class ObjectAnimation():
         n_times = []  # track all times (used later in start time and end time)
         # we just leave interpolation at constant
         n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
-        # n_bool_data.data.interpolation = self.get_n_ipol_from_b_ipol(
-        #    b_curve.interpolation)
+        # n_bool_data.data.interpolation = get_n_curve_from_b_curve(b_curve.interpolation)
         n_vis_data.num_keys = len(b_curve.bezierPoints)
         n_bool_data.data.num_keys = len(b_curve.bezierPoints)
         n_vis_data.keys.update_size()
