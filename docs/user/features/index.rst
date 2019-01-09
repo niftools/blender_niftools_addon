@@ -8,9 +8,9 @@ Features
    It would be a good habit to document every feature we have,
    and quick instructions for how to use them.
    
-   Split this up into seperate files mimicing test framework structure.
+   Split this up into separate files mimicking test framework structure.
 
-All features of our Blender plugin are described here.
+All the features of our Blender plugin are described here.
 
 If in need of a guide to make sure your model is complete please visit the :ref:`workflow page <user-workflow>`.
 

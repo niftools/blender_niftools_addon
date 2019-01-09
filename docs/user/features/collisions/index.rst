@@ -10,10 +10,10 @@ The following section deals with the various collision systems that the Blender 
    collision_objects
    collision_settings
 
-.. _collison-worflow:
+.. _collison-workflow:
 
-Worflow
--------
+Workflow
+--------
 
 Here it is explained how to add collision to your mesh.
 

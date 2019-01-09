@@ -10,7 +10,7 @@ Notes
 ~~~~~
 
 * The nif format only supports UV mapped textures, so only those will be exported.
-* GLSL mode is enabled on import/export, but should be enabled manually otherwise to give correct viewport preview.
+* GLSL mode is enabled on import/export but should be enabled manually otherwise to give correct viewport preview.
 * Relative paths for textures are often used, eg. /Texture/../.. which should be adjusted so Blender can render in the viewport.
 
 Requirements
