@@ -3,10 +3,10 @@
 Before creating a new issue, ensure that
  - [ ] Read the user documentation.
  - [ ] Check that the issue hasn't already been reported.
- - [ ] Read through the list of `Helpful resources` links on the right hand side.
+ - [ ] Read through the list of `Helpful resources` links on the right-hand side.
  - [ ] Talk with the developers to ensure its a valid issue
 
-Issue will get closed off immediately as invalid if
+The issue will get closed off immediately as invalid if
  - [ ] Looking for support where the forums, chat or documentation is more appropriate.
  - [ ] Goes off topic, loses focus or turns into a discussion.
  - [ ] Removing parts of the template the issue.
@@ -14,7 +14,7 @@ Issue will get closed off immediately as invalid if
 Fill out the template below to the best of your ability, including .blend files, nifs, logs; help us to help you.
 
 # Issue Overview
-[Provide general introduction to the issue and why it is relevant to this repository]
+[Provide a general introduction to the issue and why it is relevant to this repository]
 
 ## Version Information
 ### Blender Nif Plugin Version Info
@@ -55,7 +55,7 @@ Fill out the template below to the best of your ability, including .blend files,
 [Set the logging level to 'Debug' and attach the output of the console. Enable via Window -> Toggle Console]
 
 ### Blend File
-[Attach the blend file if issue is reproducible]
+[Attach the blend file if the issue is reproducible]
 
 ### Nif File
 [Attach input or output files, samples of what the expected output should be and reproducing the issue]

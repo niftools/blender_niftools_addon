@@ -3,21 +3,21 @@ Workflow
 
 .. _user-workflow:
 
-This section will explain the general workflow used to import/export .nif files to/from blender.
+This section will explain the general workflow used to import/export .nif files to/from Blender.
 
-* The nif importer and exporter is show under 
+* The nif importer and exporter is shown under 
    **File > Import** and **File > Export**.
 
 .. note::
-   This assumes at least begginer level skills with blender.
    If you need an introduction consider reading `the Blender Manual <https://http://blender.org/manual/>`_.
+   This assumes at least beginner level skills with Blender.
 
 .. _user-workflow-import:
 
 Import
 ------
 
-You now can import the nif directly into blender! 
+You now can import the nif directly into Blender! 
 These settings are explained at :ref:`I/O Settings Section <user-features-iosettings-import>`.
 
 .. _user-workflow-export:
@@ -48,7 +48,7 @@ Advanced Modeling
 -----------------
 
 The following are advanced topics and optional for most models.
-You should only attempt the following when you are compentent in the basics.
+You should only attempt the following when you are competent in the basics.
 
 +----------------+----------------------------------------------------------------------------------------------------------------------------------+
 | **Collisions** | Create collision objects and update their collision settings, refer to the :ref:`Collision Section <collison-system>`.           |

@@ -22,7 +22,7 @@ Source Code
 
 Once you have created the directories, time to grab the source code.
 See :ref:`source code <development-setup-sourcecode>` to setup source control and download the code repositories.
-You will also need to download buildenv, it used to manage dependancies, needs to be updated for nix platforms.
+You will also need to download buildenv, it used to manage dependencies, needs to be updated for nix platforms.
  
 Install Python 3.4
 ------------------
@@ -58,7 +58,7 @@ Install Blender
 ---------------
 
 See :ref:`user docs <user-getblender>`.
-Alternatively you can build blender from source :ref:`Building Blender from Source <development-setup-buildblender>`
+Alternatively, you can build Blender from source :ref:`Building Blender from Source <development-setup-buildblender>`
 
 Install Sphinx and Nose
 -----------------------
@@ -87,7 +87,7 @@ Using software management:
 Check Installation
 ------------------
 
-To verify everything is installed correctly, start blender, open the internal Python console,
+To verify everything is installed correctly, start Blender, open the internal Python console,
 and type::
 
    import sphinx

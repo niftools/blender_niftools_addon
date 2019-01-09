@@ -39,7 +39,7 @@ extensions = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'blender': ('https://www.blender.org/api/blender_python_api_2_72_release/', None),
-    'pyffi': ('http://pyffi.elitekast.com', None)
+    'pyffi': ('https://pyffi.readthedocs.io', None)
 }
 
 # Add any paths that contain templates here, relative to this directory.

@@ -37,7 +37,7 @@ This is used by the havok system for collision detection.
 .. warning::
 
    * For Cylinder Export, we need to fix them to show how the user would create the objects. We are using a Meta Capsule
-   * Some of the collision types lack viewport rendering, see workaround for visulisations below.
+   * Some of the collision types lack viewport rendering, see the workaround for visualisations below.
 
 .. _collisionobject-notes:
 
@@ -132,7 +132,7 @@ Capsule Collision
 **Notes:**
 
 
-* If the lenght is less than or equal to the radius, then a :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape` is generated instead.
+* If the length is less than or equal to the radius, then a :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape` is generated instead.
 
 * Currently Capsule bounds lack viewport preview, awaiting Bullet Physic integration
 
@@ -141,7 +141,7 @@ Capsule Collision
  - In the **Object Tab**, under the **Display** section enable **Bounds**
  - Set the **Type** to **Cylinder**.
  
-* This shape best represents the capsule, but visually missing the end caps which are hemi-spheres. 
+* This shape best represents the capsule, but visually missing the end caps which are hemispheres. 
 
 .. _collision-convex-hull:
 
@@ -162,7 +162,7 @@ Convex Hull Collision
 
 **Notes:**
 
-* It is advisable to use a convex hull generator to create the collision-mesh.
+* It is advisable to use a convex hull generator to create the collision mesh.
 
 .. _collision-triangle-mesh:
 
@@ -191,7 +191,7 @@ Triangle Mesh Collision
 Rigid Body
 ~~~~~~~~~~
 
-.. small intro on what it is is needed. Maybe not needed since it is just mass
+.. small intro on what it is needed. Maybe not needed since it is just mass
 
 #. Go to the **Physics** tab in the **Properties** area.
 #. Click on **Rigid Body** to enable this modifier.
