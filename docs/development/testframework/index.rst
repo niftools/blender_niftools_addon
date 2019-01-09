@@ -47,7 +47,7 @@ To run a particular test only, specify the file as an argument; for instance::
   blender-nosetests.bat test/geometry/trishape/test_geometry.py
 
 Actually, all command line arguments of ``nosetests`` apply.
-For example, to abort on first failure::
+For example, to abort on the first failure::
 
   blender-nosetests.bat -x
 
@@ -58,7 +58,7 @@ For more details, run::
 * The tests will run on the currently installed plugin (*not* your checked out version!) so usually ensure you re-install after making edits to add-on files.
 * Beware that the output can be rather verbose, so you may have to scroll quite a bit to see the relevant backtrace.
 
-Also see the
+Also, see the
 `nose manual <http://readthedocs.org/docs/nose/en/latest/usage.html#options>`_.
 
 .. toctree::

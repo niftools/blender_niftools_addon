@@ -14,7 +14,7 @@ Mesh Geometry
 #. Give the Object an appropriate name.
 
   - In the **Object Tab** 
-  - Generic names are automatically generated, unique names helps distingush objects, 
+  - Generic names are automatically generated, unique names help distinguish objects, 
 
 .. Notes:
 
@@ -27,11 +27,11 @@ Mesh Geometry
   
 .. _geometry-doubleside:
 
-Double Sided Mesh
+Double-Sided Mesh
 -----------------
 
 * Each triangle is composed of 3 vertices, edges and a face.
-* To decide which way the face is pointing a vector(normal), perpendecular to the face is used.
+* To decide which way the face is pointing a vector(normal), perpendicular to the face is used.
 * This normal vector can be flipped to either side of the triangle; a common source for triangles appearing to not render. 
 
 Sometimes you want to allow the mesh to ignore the normal and render both sides, eg a cloak.
@@ -73,33 +73,33 @@ Vertex Color
 **Example:**
 
 #. :ref:`Create a mesh-object <geometry-mesh>`.
-#. Switch to Vertex Paint mode, this automatically adds a base vertex color layer.
-#. Apply the desired vertex colors evenly to the vertex.
+#. Switch to Vertex Paint mode, this automatically adds a base vertex colour layer.
+#. Apply the desired vertex colours evenly to the vertex.
 #. Ensure you have added a :ref:`material<properties-material-settings>`.
 
 **Notes:**
 
-* The Nif format only supports a single color per vertex, whereas Blender vertex color per face vertex.
-* Blender treats the vertex as if the faces had been split apart, each face can have a different color for that vertex.
-* `This image should clarify per-face vertes coloring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
-* On export the scripts will take an average of colors. 
+* The Nif format only supports a single colour per vertex, whereas Blender vertex colour per face vertex.
+* Blender treats the vertex as if the faces had been split apart, each face can have a different colour for that vertex.
+* `This image should clarify per-face vertex colouring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
+* On export, the scripts will take an average of colours. 
 
 .. _geometry-vertexalpha:
 
 Vertex Alpha
 ------------
 
-Vertex alpha is handled in the same way as vertex color. The only difference is that vertex alpha use grey scale.
+Vertex alpha is handled in the same way as vertex colour. The only difference is that vertex alpha use the grey scale.
    
 **Example:**
 
 #. :ref:`Create a mesh-object <geometry-mesh>`.
-#. Switch to Vertex Paint mode, If there are no vertex color layers this will create a new layer.
 	you will need to add a second layer manually by clicking the + button in the vertex colors 
 	control panel located in the object data menu.
-#. In the brush menu on the left side of the screen, leave the color selector in the center and 
 	use the slider on the right side to change the level of shading with white being fully visible
 	and black being fully transparent.
+#. Switch to Vertex Paint mode, If there are no vertex colour layers this will create a new layer.
+#. In the brush menu on the left side of the screen, leave the colour selector in the centre and 
 #. Apply the shading to the vertices just as you would for :ref:`Vertex Color <geometry-vertexcolor>`
 
 **Notes:**

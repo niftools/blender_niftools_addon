@@ -5,7 +5,7 @@ Building Blender from Source
 
 As a developer, there are a number of advantages that come from building from source.
  * Avoid having to wait for bug fixes from full releases
- * Building the latest version to test compatability early
+ * Building the latest version to test compatibility early
  * Testing new features and how we can integrate with them
  * Blender can be built as a python module, which can improve IDE integration.
 

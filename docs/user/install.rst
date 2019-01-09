@@ -30,7 +30,7 @@ Install and Register the Addon
 #. Download the `blender nif plugin .zip release
    <https://github.com/niftools/blender_nif_plugin/releases>`_.
 
-#. Start blender.
+#. Start Blender.
 
 #. Go to: **File > User Preferences > Add-Ons**.
 
@@ -49,5 +49,5 @@ Install and Register the Addon
    **File > Import** and **File > Export**.
 
 #. Do: **File > Save User Settings** (unless you enjoy enabling the
-   addon every time when blender starts :-) ).
+   addon every time when Blender starts :-) ).
 

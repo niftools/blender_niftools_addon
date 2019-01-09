@@ -12,11 +12,11 @@ Scale correction
 ----------------
 .. _user-features-iosettings-import-scale:
 
-This value is used to globally re-scale the input Nif data to map correctly to Blender's unit of measurement system.
+This value is used to globally re-scale the input Nif data to map correctly to Blender's unit of the measurement system.
 The default setting ensures the imported model fits into the view Blender viewport
 When importing large-scale nif models, such as structures, a user can edit this value so that the nif is easier to work with.
 
-* The Unit of measurement in Blender is the Blender Unit (BU). The default value is 1 BU = 1 meter, but can be remapped to any measurement system.
+* The Unit of measurement in Blender is the Blender Unit (BU). The default value is 1 BU = 1 meter but can be remapped to any measurement system.
 * The ratio of a Nif Units (NU) to Blender Units (BU) is 1Nu:10Bu, so we need reduce the nif by a factor of 10.
 * The Blender Nif Plugin applies a default correction of 0.1
 
@@ -32,7 +32,7 @@ Keyframe File
 -------------
 .. _user-features-iosettings-import-keyframe:
 
-Keyframe File ( .kf ) is an animation file using key frame markers
+Keyframe File ( .kf ) is an animation file using keyframe markers
 A more complex animation file introduced with Skyrim ( .hkx ) is a havok based animation file, not supported by the plugin.
 
 
@@ -53,12 +53,12 @@ Align
 -----
 .. _user-features-iosettings-import-align:
 
-Align selects how to align the tail position of non parented bones to the root location.
+Align selects how to align the tail position of non-parented bones to the root location.
 
 Options are:
 
-* Re-Align Tail Bone - Aligns the tail of non parented bones to a uniform direction.
-* Re-Align Tail Bone + roll - Sets a 90 degree roll to the tail after aligning. 
+* Re-Align Tail Bone - Aligns the tail of non-parented bones to a uniform direction.
+* Re-Align Tail Bone + roll - Sets a 90-degree roll to the tail after aligning. 
 
 Process
 -------
@@ -84,6 +84,6 @@ Combine Vertices
 .. _user-features-iosettings-import-combinevertex:
 
 This options will combine vertices that contain the same x,y,z location and normal data into a single vertex.
-* Select this when vertex ordering is not critical, non animated objects or animated objects that use a skeleton for the animations, but do not contain morph animations.
+* Select this when vertex ordering is not critical, non-animated objects or animated objects that use a skeleton for the animations, but do not contain morph animations.
 * Do not use this for any object that uses morph type animations.
 
