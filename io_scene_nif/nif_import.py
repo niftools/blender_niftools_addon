@@ -92,8 +92,8 @@ class NifImport(NifCommon):
         """Main import function."""
 
         self.dict_armatures = {}
-        self.dict_bones_extra_matrix = {}
-        self.dict_bones_extra_matrix_inv = {}
+        # self.dict_bones_extra_matrix = {}
+        # self.dict_bones_extra_matrix_inv = {}
         self.dict_bone_priorities = {}
         self.dict_havok_objects = {}
         self.dict_names = {}
@@ -302,9 +302,9 @@ class NifImport(NifCommon):
 
         if self.root_ninode:
             b_obj.niftools.rootnode = self.root_ninode
-        # store bone matrix offsets for re-export
-        if self.dict_bones_extra_matrix:
-            self.armaturehelper.store_bones_extra_matrix()
+        # # store bone matrix offsets for re-export
+        # if self.dict_bones_extra_matrix:
+            # self.armaturehelper.store_bones_extra_matrix()
 
         # store original names for re-export
         if self.dict_names:
@@ -516,56 +516,16 @@ class NifImport(NifCommon):
                 
                 # TODO: MOVE TO ANIMATIONHELPER
                 
-                # bone parentship, is a bit more complicated
-                # go to rest position
-                
-                # b_armature.data.restPosition = True
-                bpy.context.scene.objects.active = b_armature
-                
                 # set up transforms
                 for n_child, b_child in object_children:
-                    # save transform
-                    
-                    # FIXME:
-                    matrix = mathutils.Matrix(b_child.matrix_local)
-                    # fix transform
-                    # the bone has in the nif file an armature space transform
-                    # given by niBlock.get_transform(relative_to=n_armature)
-                    #
-                    # in detail:
-                    # a vertex in the collision object has global
-                    # coordinates
-                    #   v * Z * B
-                    # with v the vertex, Z the object transform
-                    # (currently b_obj_matrix)
-                    # and B the nif bone matrix
-
-                    # in Blender however a vertex has coordinates
-                    #   v * O * T * B'
-                    # with B' the Blender bone matrix
-                    # so we need that
-                    #   Z * B = O * T * B' or equivalently
-                    #   O = Z * B * B'^{-1} * T^{-1}
-                    #     = Z * X^{-1} * T^{-1}
-                    # since
-                    #   B' = X * B
-                    # with X = self.dict_bones_extra_matrix[B]
-
-                    # post multiply Z with X^{-1}
-                    extra = mathutils.Matrix(
-                        self.dict_bones_extra_matrix[niBlock])
-                    extra.invert()
-                    matrix = matrix * extra
-                    # cancel out the tail translation T
-                    # (the tail causes a translation along
-                    # the local Y axis)
-                    matrix[1][3] -= b_obj.length
-                    b_child.matrix_local = matrix
                     
                     b_child.parent = b_armature
                     b_child.parent_type = 'BONE'
                     b_child.parent_bone = b_obj.name
-                
+					#multiply with inverse parent matrix
+                    b_child.matrix_local =  b_obj.matrix_local.inverted() * b_child.matrix_basis
+					#move to bone's head position instead of tail
+                    b_child.location.y -= b_obj.length
             else:
                 raise RuntimeError(
                     "Unexpected object type %s" % b_obj.__class__)

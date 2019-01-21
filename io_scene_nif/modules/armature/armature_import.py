@@ -41,6 +41,7 @@ import os
 
 import bpy
 import mathutils
+import math
 
 from pyffi.formats.nif import NifFormat
 
@@ -49,22 +50,66 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
 
-class Armature():
-	
-	# correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
-	BONE_CORRECTION_MATRICES = (
-		mathutils.Matrix([[ 0.0, -1.0, 0.0], [ 1.0, 0.0, 0.0], [ 0.0, 0.0, 1.0]]),
-		mathutils.Matrix([[ 1.0, 0.0, 0.0], [ 0.0, 1.0, 0.0], [ 0.0, 0.0, 1.0]]),
-		mathutils.Matrix([[ 1.0, 0.0, 0.0], [ 0.0, 0.0, 1.0], [ 0.0, -1.0, 0.0]]),
-		mathutils.Matrix([[ 0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [ 0.0, 0.0, 1.0]]),
-		mathutils.Matrix([[-1.0, 0.0, 0.0], [ 0.0, -1.0, 0.0], [ 0.0, 0.0, 1.0]]),
-		mathutils.Matrix([[ 1.0, 0.0, 0.0], [ 0.0, 0.0, -1.0], [ 0.0, 1.0, 0.0]]))
+correction_local = mathutils.Euler((math.radians(90), 0, math.radians(90))).to_matrix().to_4x4()
+correction_global = mathutils.Euler((math.radians(-90), math.radians(-90), 0)).to_matrix().to_4x4()
 
-	# identity matrix, for comparisons
-	IDENTITY44 = mathutils.Matrix([[ 1.0, 0.0, 0.0, 0.0],
-								   [ 0.0, 1.0, 0.0, 0.0],
-								   [ 0.0, 0.0, 1.0, 0.0],
-								   [ 0.0, 0.0, 0.0, 1.0]])
+def vec_roll_to_mat3(vec, roll):
+	#port of the updated C function from armature.c
+	#https://developer.blender.org/T39470
+	#note that C accesses columns first, so all matrix indices are swapped compared to the C version
+	
+	nor = vec.normalized()
+	THETA_THRESHOLD_NEGY = 1.0e-9
+	THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5
+	
+	#create a 3x3 matrix
+	bMatrix = mathutils.Matrix().to_3x3()
+
+	theta = 1.0 + nor[1]
+
+	if (theta > THETA_THRESHOLD_NEGY_CLOSE) or ((nor[0] or nor[2]) and theta > THETA_THRESHOLD_NEGY):
+
+		bMatrix[1][0] = -nor[0]
+		bMatrix[0][1] = nor[0]
+		bMatrix[1][1] = nor[1]
+		bMatrix[2][1] = nor[2]
+		bMatrix[1][2] = -nor[2]
+		if theta > THETA_THRESHOLD_NEGY_CLOSE:
+			#If nor is far enough from -Y, apply the general case.
+			bMatrix[0][0] = 1 - nor[0] * nor[0] / theta
+			bMatrix[2][2] = 1 - nor[2] * nor[2] / theta
+			bMatrix[0][2] = bMatrix[2][0] = -nor[0] * nor[2] / theta
+		
+		else:
+			#If nor is too close to -Y, apply the special case.
+			theta = nor[0] * nor[0] + nor[2] * nor[2]
+			bMatrix[0][0] = (nor[0] + nor[2]) * (nor[0] - nor[2]) / -theta
+			bMatrix[2][2] = -bMatrix[0][0]
+			bMatrix[0][2] = bMatrix[2][0] = 2.0 * nor[0] * nor[2] / theta
+
+	else:
+		#If nor is -Y, simple symmetry by Z axis.
+		bMatrix = mathutils.Matrix().to_3x3()
+		bMatrix[0][0] = bMatrix[1][1] = -1.0
+
+	#Make Roll matrix
+	rMatrix = mathutils.Matrix.Rotation(roll, 3, nor)
+	
+	#Combine and output result
+	mat = rMatrix * bMatrix
+	return mat
+
+def mat3_to_vec_roll(mat):
+	#this hasn't changed
+	vec = mat.col[1]
+	vecmat = vec_roll_to_mat3(mat.col[1], 0)
+	vecmatinv = vecmat.inverted()
+	rollmat = vecmatinv * mat
+	roll = math.atan2(rollmat[0][2], rollmat[2][2])
+	return vec, roll
+
+
+class Armature():
 	
 	def __init__(self, parent):
 		self.nif_import = parent
@@ -98,7 +143,23 @@ class Armature():
 		for niBone in niChildBones:
 			self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
-			
+
+		#fix the bone length
+		for bone in b_armatureData.edit_bones:
+			#don't change Bip01
+			if bone.parent:
+				if bone.children:
+					childheads = mathutils.Vector()
+					for child in bone.children:
+						childheads += child.head
+					bone_length = (bone.head - childheads/len(bone.children)).length
+					if bone_length < 0.01:
+						bone_length = 0.25
+				# end of a chain
+				else:
+					bone_length = bone.parent.length
+				bone.length = bone_length
+				
 		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		scn = bpy.context.scene
 		scn.objects.active = b_armature
@@ -136,10 +197,9 @@ class Armature():
 		# check that niBlock is indeed a bone
 		if not self.is_bone(niBlock):
 			return None
-
-		# bone length for nubs and zero length bones
-		nub_length = 5.0
-		scale = NifOp.props.scale_correction_import
+		
+		#todo: implement scale correction
+		# scale = NifOp.props.scale_correction_import
 		# bone name
 		bone_name = self.nif_import.import_name(niBlock)
 		niChildBones = [ child for child in niBlock.children
@@ -151,146 +211,19 @@ class Armature():
 		# head: get position from niBlock
 		armature_space_matrix = nif_utils.import_matrix(niBlock,
 												   relative_to=niArmature)
-
-		b_bone_head_x = armature_space_matrix[0][3]
-		b_bone_head_y = armature_space_matrix[1][3]
-		b_bone_head_z = armature_space_matrix[2][3]
-		# temporarily sets the tail as for a 0 length bone
-		b_bone_tail_x = b_bone_head_x
-		b_bone_tail_y = b_bone_head_y
-		b_bone_tail_z = b_bone_head_z
-		is_zero_length = True
-		# tail: average of children location
-		if len(niChildBones) > 0:
-			m_correction = self.find_correction_matrix(niBlock, niArmature)
-			child_matrices = [ nif_utils.import_matrix(child,
-												  relative_to=niArmature)
-							   for child in niChildBones ]
-			b_bone_tail_x = sum(child_matrix[0][3]
-								for child_matrix
-								in child_matrices) / len(child_matrices)
-			b_bone_tail_y = sum(child_matrix[1][3]
-								for child_matrix
-								in child_matrices) / len(child_matrices)
-			b_bone_tail_z = sum(child_matrix[2][3]
-								for child_matrix
-								in child_matrices) / len(child_matrices)
-			# checking bone length
-			dx = b_bone_head_x - b_bone_tail_x
-			dy = b_bone_head_y - b_bone_tail_y
-			dz = b_bone_head_z - b_bone_tail_z
-			is_zero_length = abs(dx + dy + dz) * 200 < NifOp.props.epsilon
-		elif NifOp.props.import_realign_bones == "2":
-			# The correction matrix value is based on the childrens' head
-			# positions.
-			# If there are no children then set it as the same as the
-			# parent's correction matrix.
-			m_correction = self.find_correction_matrix(niBlock._parent,
-													   niArmature)
-		
-		if is_zero_length:
-			# this is a 0 length bone, to avoid it being removed
-			# set a default minimum length
-			if (NifOp.props.import_realign_bones == "2") \
-			   or not self.is_bone(niBlock._parent):
-				# no parent bone, or bone is realigned with correction
-				# set one random direction
-				b_bone_tail_x = b_bone_head_x + (nub_length * scale)
-			else:
-				# to keep things neat if bones aren't realigned on import
-				# orient it as the vector between this
-				# bone's head and the parent's tail
-				parent_tail = b_armatureData.edit_bones[
-					self.nif_import.dict_names[niBlock._parent]].tail
-				dx = b_bone_head_x - parent_tail[0]
-				dy = b_bone_head_y - parent_tail[1]
-				dz = b_bone_head_z - parent_tail[2]
-				if abs(dx + dy + dz) * 200 < NifOp.props.epsilon:
-					# no offset from the parent: follow the parent's
-					# orientation
-					parent_head = b_armatureData.edit_bones[
-						self.nif_import.dict_names[niBlock._parent]].head
-					dx = parent_tail[0] - parent_head[0]
-					dy = parent_tail[1] - parent_head[1]
-					dz = parent_tail[2] - parent_head[2]
-				direction = mathutils.Vector((dx, dy, dz))
-				direction.normalize()
-				b_bone_tail_x = b_bone_head_x + (direction[0] * nub_length * scale)
-				b_bone_tail_y = b_bone_head_y + (direction[1] * nub_length * scale)
-				b_bone_tail_z = b_bone_head_z + (direction[2] * nub_length * scale)
-				
-		# sets the bone heads & tails
-		b_bone.head = mathutils.Vector((b_bone_head_x, b_bone_head_y, b_bone_head_z))
-		b_bone.tail = mathutils.Vector((b_bone_tail_x, b_bone_tail_y, b_bone_tail_z))
-				
-		if NifOp.props.import_realign_bones == "2":
-			# applies the corrected matrix explicitly
-			b_bone.matrix = armature_space_matrix * m_correction.resize_4x4()
-		elif NifOp.props.import_realign_bones == "1":
-			# do not do anything, keep unit matrix
-			pass
-		else:
-			# no realign, so use original matrix
-			b_bone.matrix = armature_space_matrix
-		
-		# calculate bone difference matrix; we will need this when
-		# importing animation
-		old_bone_matrix_inv = mathutils.Matrix(armature_space_matrix)
-		old_bone_matrix_inv.invert()
-		new_bone_matrix = mathutils.Matrix(b_bone.matrix)
-		new_bone_matrix.resize_4x4()
-		new_bone_matrix[0][3] = b_bone_head_x
-		new_bone_matrix[1][3] = b_bone_head_y
-		new_bone_matrix[2][3] = b_bone_head_z
-		# stores any correction or alteration applied to the bone matrix
-		# new * inverse(old)
-		self.nif_import.dict_bones_extra_matrix[niBlock] = old_bone_matrix_inv * new_bone_matrix
+		#set transformation
+		bind = correction_global * correction_local * armature_space_matrix * correction_local.inverted()
+		tail, roll = mat3_to_vec_roll(bind.to_3x3())
+		b_bone.head = bind.to_translation()
+		b_bone.tail = tail + b_bone.head
+		b_bone.roll = roll
 		# set bone children
 		for niBone in niChildBones:
-			b_child_bone = self.import_bone(
-				niBone, b_armature, b_armatureData, niArmature)
+			b_child_bone = self.import_bone(niBone, b_armature, b_armatureData, niArmature)
 			b_child_bone.parent = b_bone
-		
 		return b_bone
 
-
-	def find_correction_matrix(self, niBlock, niArmature):
-		"""Returns the correction matrix for a bone."""
-		m_correction = self.IDENTITY44.to_3x3()
-		if (NifOp.props.import_realign_bones == "2") and self.is_bone(niBlock):
-			armature_space_matrix = nif_utils.import_matrix(niBlock,
-													   relative_to=niArmature)
-
-			niChildBones = [ child for child in niBlock.children
-							 if self.is_bone(child) ]
-			(sum_x, sum_y, sum_z, dummy) = (armature_space_matrix[0][3],
-							armature_space_matrix[1][3],
-							armature_space_matrix[2][3],
-							armature_space_matrix[3][3])
-			if len(niChildBones) > 0:
-				child_local_matrices = [ nif_utils.import_matrix(child)
-										 for child in niChildBones ]
-				sum_x = sum(cm[0][3] for cm in child_local_matrices)
-				sum_y = sum(cm[1][3] for cm in child_local_matrices)
-				sum_z = sum(cm[2][3] for cm in child_local_matrices)
-			list_xyz = [ int(c * 200)
-						 for c in (sum_x, sum_y, sum_z,
-								   - sum_x, -sum_y, -sum_z) ]
-			idx_correction = list_xyz.index(max(list_xyz))
-			alignment_offset = 0.0
-			if (idx_correction == 0 or idx_correction == 3) and abs(sum_x) > 0:
-				alignment_offset = float(abs(sum_y) + abs(sum_z)) / abs(sum_x)
-			elif (idx_correction == 1 or idx_correction == 4) and abs(sum_y) > 0:
-				alignment_offset = float(abs(sum_z) + abs(sum_x)) / abs(sum_y)
-			elif abs(sum_z) > 0:
-				alignment_offset = float(abs(sum_x) + abs(sum_y)) / abs(sum_z)
-			# if alignment is good enough, use the (corrected) NIF matrix
-			# this gives nice ortogonal matrices
-			if alignment_offset < 0.25:
-				m_correction = self.BONE_CORRECTION_MATRICES[idx_correction]
-		return m_correction
-
-
+		
 	def append_armature_modifier(self, b_obj, b_armature):
 		"""Append an armature modifier for the object."""
 		armature_name = b_armature.name
@@ -481,35 +414,6 @@ class Armature():
 			return armatureObject.data.bones[bone_name]
 		else:
 			return bpy.types.Object(self.nif_import.dict_names[niBlock])
-
-	
-	def store_bones_extra_matrix(self):
-		"""Stores correction matrices in a text buffer so that the original
-		alignment can be re-exported. In order for this to work it is necessary
-		to mantain the imported names unaltered. Since the text buffer is
-		cleared on each import only the last import will be exported
-		correctly."""
-		# clear the text buffer, or create new buffer
-		try:
-			bonetxt = bpy.data.texts["BoneExMat"]
-			bonetxt.clear()
-		except KeyError:
-			bonetxt = bpy.data.texts.new("BoneExMat")
-		# write correction matrices to text buffer
-		for niBone, correction_matrix in self.nif_import.dict_bones_extra_matrix.items():
-			# skip identity transforms
-			if sum(sum(abs(x) for x in row)
-				   for row in (correction_matrix - self.IDENTITY44)) \
-				< NifOp.props.epsilon:
-				continue
-			# 'pickle' the correction matrix
-			line = ''
-			for row in correction_matrix:
-				line = '%s;%s,%s,%s,%s' % (line, row[0], row[1], row[2], row[3])
-			# we write the bone names with their blender name!
-			blender_bone_name = self.nif_import.dict_names[niBone] # NOT niBone.name !!
-			# write it to the text buffer
-			bonetxt.write('%s/%s\n' % (blender_bone_name, line[1:]))
 
 
 	def store_names(self):
