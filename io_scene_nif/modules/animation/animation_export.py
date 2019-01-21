@@ -584,7 +584,7 @@ class MaterialAnimation():
         n_floatdata = self.nif_export.objecthelper.create_block("NiFloatData", b_curve)
         n_times = [] # track all times (used later in start time and end time)
         n_floatdata.data.num_keys = len(b_curve.bezierPoints)
-        n_floatdata.data.interpolation = self.get_n_ipol_from_b_ipol(
+        n_floatdata.data.interpolation = self.get_n_curve_from_b_curve(
             b_curve.interpolation)
         n_floatdata.data.keys.update_size()
         for b_point, n_key in zip(b_curve.bezierPoints, n_floatdata.data.keys):
@@ -635,7 +635,7 @@ class MaterialAnimation():
         # track all nif times: used later in start time and end time
         n_times = []
         n_posdata.data.num_keys = len(b_times)
-        n_posdata.data.interpolation = self.get_n_ipol_from_b_ipol(
+        n_posdata.data.interpolation = self.get_n_curve_from_b_curve(
             b_curves[0].interpolation)
         n_posdata.data.keys.update_size()
         for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
@@ -688,7 +688,7 @@ class MaterialAnimation():
             if b_curve:
                 NifLog.info("Exporting {0} as NiUVData".format(b_curve))
                 n_uvgroup.num_keys = len(b_curve.bezierPoints)
-                n_uvgroup.interpolation = self.get_n_ipol_from_b_ipol(
+                n_uvgroup.interpolation = self.get_n_curve_from_b_curve(
                     b_curve.interpolation)
                 n_uvgroup.keys.update_size()
                 for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
@@ -738,7 +738,7 @@ class ObjectAnimation():
         n_times = [] # track all times (used later in start time and end time)
         # we just leave interpolation at constant
         n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
-        #n_bool_data.data.interpolation = self.get_n_ipol_from_b_ipol(
+        #n_bool_data.data.interpolation = self.get_n_curve_from_b_curve(
         #    b_curve.interpolation)
         n_vis_data.num_keys = len(b_curve.bezierPoints)
         n_bool_data.data.num_keys = len(b_curve.bezierPoints)
