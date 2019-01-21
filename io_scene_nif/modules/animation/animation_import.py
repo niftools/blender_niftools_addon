@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 import bpy
+import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
@@ -50,6 +51,7 @@ class AnimationHelper():
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
         self.armature_animation = ArmatureAnimation(parent)
+        self.FPS = 30
     
 
     def import_kf_root(self, kf_root, root):
@@ -78,7 +80,7 @@ class AnimationHelper():
                 NifLog.info("Animation for {0} but no such node found in nif tree".format(nodename))
                 continue
             # node found, now find the controller
-            controllertype = controlledblock.get_controller_type()
+            controllertype = controlledblock.get_controller_type().decode()
             if not controllertype:
                 NifLog.info("Animation for {0} without controller type, so skipping".format(nodename))
                 continue
@@ -127,8 +129,9 @@ class AnimationHelper():
                 # ignore scale, usually contains invalid data in interpolator
 
             # save priority for future reference
-            # (priorities will be stored into the name of a NULL constraint on
+            # (priorities will be stored into the name of a TRANSFORM constraint on
             # bones, see import_armature function)
+            # This name is a bytestring, not a string
             self.nif_import.dict_bone_priorities[nodename] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
@@ -164,8 +167,8 @@ class AnimationHelper():
                 animtxt.write('%i/%s\n'%(frame, newkey))
 
             # set start and end frames
-            bpy.context.scene.getRenderingContext().startFrame(1)
-            bpy.context.scene.getRenderingContext().endFrame(frame)
+            bpy.context.scene.frame_start = 1
+            bpy.context.scene.frame_end = frame
 
     def get_frames_per_second(self, roots):
         """Scan all blocks and return a reasonable number for FPS."""
@@ -198,7 +201,7 @@ class AnimationHelper():
         fps = 30
         lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
                           for time in key_times)
-        # for fps in range(1,120): #disabled, used for testing
+        # for test_fps in range(1,120): #disabled, used for testing
         for test_fps in [20, 25, 35]:
             diff = sum(abs(int(time * test_fps + 0.5)-(time * test_fps))
                        for time in key_times)
@@ -258,20 +261,23 @@ class AnimationHelper():
         NifLog.info("Animation")
         NifLog.info("Importing animation data for {0}".format(b_obj.name))
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
-        # create an Ipo for this object
-        b_ipo = ObjectAnimation.get_object_ipo(b_obj)
         # get the animation keys
         translations = kfd.translations
         scales = kfd.scales
         # add the keys
+
+        #Create curve structure
+        if b_obj.animation_data == None:
+            b_obj.animation_data_create()
+        b_obj_action = bpy.data.actions.new(str(b_obj.name) + "-Anim")
+        b_obj.animation_data.action = b_obj_action
+
         NifLog.debug('Scale keys...')
         for key in scales.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            b_obj.SizeX = key.value
-            b_obj.SizeY = key.value
-            b_obj.SizeZ = key.value
-            b_obj.insertIpoKey(Blender.Object.SIZE)
+            bpy.context.scene.frame_set(frame)
+            b_obj.scale = (key.value,key.value,key.value)
+            b_obj.keyframe_insert('scale')
 
         # detect the type of rotation keys
         rotation_type = kfd.rotation_type
@@ -284,37 +290,31 @@ class AnimationHelper():
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
-                Blender.Set('curframe', frame)
+                bpy.context.scene.frame_set(frame)
                 # both in radians, no conversion needed
-                b_obj.RotX = xkey.value
-                b_obj.RotY = ykey.value
-                b_obj.RotZ = zkey.value
-                b_obj.insertIpoKey(Blender.Object.ROT)
+                b_obj.rotation_euler = (xkey.value, ykey.value, zkey.value)
+                b_obj.keyframe_insert('rotation_euler')
         else:
             # uses quaternions
             if kfd.quaternion_keys:
                 NifLog.debug('Rotation keys...(quaternions)')
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                Blender.Set('curframe', frame)
-                rot = mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
-                # Blender euler is in degrees, object RotXYZ is in radians
-                b_obj.RotX = rot.x * self.D2R
-                b_obj.RotY = rot.y * self.D2R
-                b_obj.RotZ = rot.z * self.D2R
-                b_obj.insertIpoKey(Blender.Object.ROT)
+                bpy.context.scene.frame_set(frame)
+                #Blender euler is now in radians, not degrees
+                rot = mathutils.Quaternion((key.value.w, key.value.x, key.value.y, key.value.z)).toEuler()
+                b_obj.rotation_euler = (rot.x, rot.y, rot.z)
+                b_obj.keyframe_insert('rotation_euler')
 
         if translations.keys:
             NifLog.debug('Translation keys...')
         for key in translations.keys:
             frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            b_obj.LocX = key.value.x
-            b_obj.LocY = key.value.y
-            b_obj.LocZ = key.value.z
-            b_obj.insertIpoKey(Blender.Object.LOC)
+            bpy.context.scene.frame_set(frame)
+            b_obj.location = (key.value.x, key.value.y, key.value.z)
+            b_obj.keyframe_insert('location')
 
-        Blender.Set('curframe', 1)
+        bpy.context.scene.frame_set(1)
 
 
 class ObjectAnimation():
@@ -386,7 +386,7 @@ class MaterialAnimation():
         b_channel = "Alpha"
         b_ipo = self.get_material_ipo(b_material)
         b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+        b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
             n_alphactrl.data.data.interpolation)
         b_curve.extend = self.nif_import.get_extend_from_flags(n_alphactrl.flags)
         for n_key in n_alphactrl.data.data.keys:
@@ -410,7 +410,7 @@ class MaterialAnimation():
         b_ipo = self.get_material_ipo(b_material)
         for i, b_channel in enumerate(b_channels):
             b_curve = b_ipo.addCurve(b_channel)
-            b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+            b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
                 n_matcolor_ctrl.data.data.interpolation)
             b_curve.extend = self.nif_import.get_extend_from_flags(n_matcolor_ctrl.flags)
             for n_key in n_matcolor_ctrl.data.data.keys:
@@ -431,7 +431,7 @@ class MaterialAnimation():
                 # create curve in material ipo
                 b_ipo = self.get_material_ipo(b_material)
                 b_curve = b_ipo.addCurve(b_channel)
-                b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+                b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
                     n_uvgroup.interpolation)
                 b_curve.extend = self.nif_import.get_extend_from_flags(n_ctrl.flags)
                 for n_key in n_uvgroup.keys:
@@ -457,11 +457,16 @@ class ArmatureAnimation():
         
         
     def import_armature_animation(self, b_armature):
+        #current blender adds pose_bone keyframes to an fcurve in the armature's OBJECT
+        #data block, not the ARMATURE's data block. So, rna path (data_path) for fcurves
+        #will be  "pose.bones["bone name"].fcurvetype" with implicit "object." at front.
+        #Get object with bpy.data.objects[b_armature.name]
         # create an action
-        action = bpy.data.actions.new(b_armature.name)
-        bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
+        b_armature_object = bpy.data.objects[b_armature.name]
+        b_armature_object.animation_data_create()
+        b_armature_action = bpy.data.actions.new(str(b_armature.name) + "-kfAnim")
+        b_armature_object.animation_data.action = b_armature_action
         # go through all armature pose bones
-        # see http://www.elysiun.com/forum/viewtopic.php?t=58693
         NifLog.info('Importing Animations')
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
@@ -482,7 +487,7 @@ class ArmatureAnimation():
             # Rchannel = Rtotal * inverse(Rbind)
             # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
             bone_bm = nif_utils.import_matrix(niBone) # base pose
-            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
+            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(bone_bm)
             niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
             niBone_bind_rot_inv.invert()
             niBone_bind_quat_inv = niBone_bind_rot_inv.to_quaternion()
@@ -507,7 +512,7 @@ class ArmatureAnimation():
             # SC' = SX * SC / SX = SC
             # RC' = RX * RC * inverse(RX)
             # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.nif_import.dict_bones_extra_matrix[niBone])
+            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = nif_utils.decompose_srt(self.nif_import.dict_bones_extra_matrix[niBone])
             extra_matrix_quat = extra_matrix_rot.to_quaternion()
             extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
             extra_matrix_rot_inv.invert()
@@ -548,6 +553,7 @@ class ArmatureAnimation():
 
                 # scales: ignore for now, implement later
                 #         should come here
+                # TODO: Was this skipped for a reason? Just copy from keyframe type below?
                 scales = None
 
                 # rotations
@@ -557,14 +563,13 @@ class ArmatureAnimation():
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
                         quat = mathutils.Quaternion(
                             [quat[0], quat[1], quat[2], quat[3]])
-                        # beware, CrossQuats takes arguments in a
-                        # counter-intuitive order:
-                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                        b_posebone.quat = rot
-                        b_posebone.insertKey(b_armature, frame,
-                                             [Blender.Object.Pose.ROT])
+
+                        quatVal = niBone_bind_quat_inv.cross(quat)
+                        rot = extra_matrix_quat_inv.cross(quatVal)
+                        rot = rot.cross(extra_matrix_quat)
+
+                        b_posebone.rotation_quaternion = rot
+                        b_posebone.keyframe_insert(data_path="rotation_quaternion", frame=frame, group=bone_name)
                         # fill optimizer dictionary
                         if translations:
                             rot_keys_dict[frame] = mathutils.Quaternion(rot)
@@ -576,7 +581,7 @@ class ArmatureAnimation():
                         # time 0.0 is frame 1
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
                         trans = mathutils.Vector(*translation)
-                        locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+                        locVal = (1.0/niBone_bind_scale) * niBone_bind_rot_inv * (trans - niBone_bind_trans)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                         # the rotation matrix is needed at this frame (that's
                         # why the other keys are inserted first)
                         if rot_keys_dict:
@@ -584,12 +589,16 @@ class ArmatureAnimation():
                                 rot = rot_keys_dict[frame].to_matrix()
                             except KeyError:
                                 # fall back on slow method
-                                ipo = action.getChannelIpo(bone_name)
+                                # apparently, spline interpolators only have quaternion (?)
+                                fcurves = b_armature_action.groups[bone_name].channels
                                 quat = mathutils.Quaternion()
-                                quat.x = ipo.getCurve('QuatX').evaluate(frame)
-                                quat.y = ipo.getCurve('QuatY').evaluate(frame)
-                                quat.z = ipo.getCurve('QuatZ').evaluate(frame)
-                                quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                                #If there are no rotation keys, the quaternion will just be 1,0,0,0  so fine anyway
+                                for fc in fcurves:
+                                    if "rotation_quaternion" in fc.data_path:
+                                        if fc.array_index == 0: quat.w = fc.evaluate(frame)
+                                        if fc.array_index == 1: quat.x = fc.evaluate(frame)
+                                        if fc.array_index == 2: quat.y = fc.evaluate(frame)
+                                        if fc.array_index == 3: quat.z = fc.evaluate(frame)
                                 rot = quat.to_matrix()
                         else:
                             rot = mathutils.Matrix([[1.0, 0.0, 0.0],
@@ -600,9 +609,10 @@ class ArmatureAnimation():
                             try:
                                 sizeVal = scale_keys_dict[frame]
                             except KeyError:
-                                ipo = action.getChannelIpo(bone_name)
-                                if ipo.getCurve('SizeX'):
-                                    sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                                fcurves = bpy.data.actions[str(b_armature.name)+"Action"].groups[bone_name].channels
+                                for fc in fcurves:
+                                    if fc.data_path == "scale":
+                                        sizeVal = fc.evaluate(frame)
                                 else:
                                     sizeVal = 1.0
                         else:
@@ -610,10 +620,11 @@ class ArmatureAnimation():
                         size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
                                                  [0.0, sizeVal, 0.0],
                                                  [0.0, 0.0, sizeVal]])
+
                         # now we can do the final calculation
-                        loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
-                        b_posebone.loc = loc
-                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+                        loc = (extra_matrix_rot_inv * (1.0/extra_matrix_scale)) * (rot * size * extra_matrix_trans + locVal - extra_matrix_trans) # C' = X * C * inverse(X)
+                        b_posebone.location = loc
+                        b_posebone.keyframe_insert(data_path="location", frame=frame, group=bone_name)
 
                 # delete temporary dictionaries
                 if translations:
@@ -636,16 +647,16 @@ class ArmatureAnimation():
                 # Scaling
                 if scales.keys:
                     NifLog.debug('Scale keys...')
-                for scaleKey in scales.keys:
-                    # time 0.0 is frame 1
-                    frame = 1 + int(scaleKey.time * self.nif_import.fps + 0.5)
-                    sizeVal = scaleKey.value
-                    size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
-                    b_posebone.size = mathutils.Vector(size, size, size)
-                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE]) # this is very slow... :(
-                    # fill optimizer dictionary
-                    if translations:
-                        scale_keys_dict[frame] = size
+                    for scaleKey in scales.keys:
+                        # time 0.0 is frame 1
+                        frame = 1 + int(scaleKey.time * self.nif_import.fps + 0.5)
+                        sizeVal = scaleKey.value
+                        size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
+                        b_posebone.scale = mathutils.Vector(size, size, size)
+                        b_posebone.keyframe_insert(data_path="scale", frame=frame, group=bone_name)
+                        # fill optimizer dictionary
+                        if translations:
+                            scale_keys_dict[frame] = size
 
                 # detect the type of rotation keys
                 rotation_type = kfd.rotation_type
@@ -655,115 +666,129 @@ class ArmatureAnimation():
                     # uses xyz rotation
                     if kfd.xyz_rotations[0].keys:
                         NifLog.debug('Rotation keys...(euler)')
-                    for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
-                                                 kfd.xyz_rotations[1].keys,
-                                                 kfd.xyz_rotations[2].keys):
-                        # time 0.0 is frame 1
-                        # XXX it is assumed that all the keys have the
-                        # XXX same times!!!
-                        if (abs(xkey.time - ykey.time) > self.properties.epsilon
-                            or abs(xkey.time - zkey.time) > self.properties.epsilon):
-                            NifLog.warn("XYZ key times do not correspond, animation may not be correctly imported")
-                        frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
-                        euler = mathutils.Euler(
-                            [xkey.value * 180.0 / math.pi,
-                             ykey.value * 180.0 / math.pi,
-                             zkey.value * 180.0 / math.pi])
-                        quat = euler.toQuat()
+                        for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
+                                                     kfd.xyz_rotations[1].keys,
+                                                     kfd.xyz_rotations[2].keys):
+                            # time 0.0 is frame 1
+                            # XXX it is assumed that all the keys have the
+                            # XXX same times!!!
+                            if (abs(xkey.time - ykey.time) > self.properties.epsilon
+                                or abs(xkey.time - zkey.time) > self.properties.epsilon):
+                                NifLog.warn("XYZ key times do not correspond, animation may not be correctly imported")
+                            frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
+                            #blender now uses radians for euler
+                            euler = mathutils.Euler(xkey.value, ykey.value, zkey.value)
+                            quat = euler.to_quaternion()
 
-                        # beware, CrossQuats takes arguments in a counter-intuitive order:
-                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
+                            quatVal = quat.cross(niBone_bind_quat_inv)
+                            rot = extra_matrix_quat_inv.cross(quatVal)
+                            rot = rot.cross(extra_matrix_quat)
 
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                        b_posebone.quat = rot
-                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
-                        # fill optimizer dictionary
-                        if translations:
-                            rot_keys_dict[frame] = mathutils.Quaternion(rot) 
+                            b_posebone.rotation_quaternion = rot
+                            b_posebone.keyframe_insert(data_path="rotation_euler", frame=frame, group=bone_name)
+                            # fill optimizer dictionary
+                            if translations:
+                                rot_keys_dict[frame] = mathutils.Quaternion(rot) 
 
                 # Quaternion Rotations
                 else:
                     # TODO:take rotation type into account for interpolation
                     if kfd.quaternion_keys:
                         NifLog.debug('Rotation keys...(quaternions)')
-                    quaternion_keys = kfd.quaternion_keys
-                    for key in quaternion_keys:
-                        frame = 1 + int(key.time * self.nif_import.fps + 0.5)
-                        keyVal = key.value
-                        quat = mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
-                        # beware, CrossQuats takes arguments in a
-                        # counter-intuitive order:
-                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                        b_posebone.quat = rot
-                        b_posebone.insertKey(b_armature, frame,
-                                             [Blender.Object.Pose.ROT])
-                        # fill optimizer dictionary
-                        if translations:
-                            rot_keys_dict[frame] = mathutils.Quaternion(rot)
-                    #else:
-                    #    print("Rotation keys...(unknown)" + 
-                    #          "WARNING: rotation animation data of type" +
-                    #          " %i found, but this type is not yet supported; data has been skipped""" % rotation_type)                        
+                        quaternion_keys = kfd.quaternion_keys
+                        for key in quaternion_keys:
+                            frame = 1 + int(key.time * self.nif_import.fps + 0.5)
+                            keyVal = key.value
+                            quat = mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
+
+                            quatVal = niBone_bind_quat_inv.cross(quat)
+                            rot = extra_matrix_quat_inv.cross(quatVal)
+                            rot = rot.cross(extra_matrix_quat)
+
+                            b_posebone.rotation_quaternion = rot
+                            b_posebone.keyframe_insert(data_path="rotation_quaternion", frame=frame, group=bone_name)
+                            # fill optimizer dictionary
+                            if translations:
+                                rot_keys_dict[frame] = mathutils.Quaternion(rot)
+                        #else:
+                        #    print("Rotation keys...(unknown)" + 
+                        #          "WARNING: rotation animation data of type" +
+                        #          " %i found, but this type is not yet supported; data has been skipped""" % rotation_type)                       
     
                 # Translations
                 if translations.keys:
                     NifLog.debug('Translation keys...')
-                for key in translations.keys:
-                    # time 0.0 is frame 1
-                    frame = 1 + int(key.time * self.nif_import.fps + 0.5)
-                    keyVal = key.value
-                    trans = mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
-                    locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-                    # the rotation matrix is needed at this frame (that's
-                    # why the other keys are inserted first)
-                    if rot_keys_dict:
-                        try:
-                            rot = rot_keys_dict[frame].to_matrix()
-                        except KeyError:
-                            # fall back on slow method
-                            ipo = action.getChannelIpo(bone_name)
-                            quat = mathutils.Quaternion()
-                            quat.x = ipo.getCurve('QuatX').evaluate(frame)
-                            quat.y = ipo.getCurve('QuatY').evaluate(frame)
-                            quat.z = ipo.getCurve('QuatZ').evaluate(frame)
-                            quat.w = ipo.getCurve('QuatW').evaluate(frame)
-                            rot = quat.to_matrix()
-                    else:
-                        rot = mathutils.Matrix([[1.0, 0.0, 0.0],
-                                                [0.0, 1.0, 0.0],
-                                                [0.0, 0.0, 1.0]])
-                    # we also need the scale at this frame
-                    if scale_keys_dict:
-                        try:
-                            sizeVal = scale_keys_dict[frame]
-                        except KeyError:
-                            ipo = action.getChannelIpo(bone_name)
-                            if ipo.getCurve('SizeX'):
-                                sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
-                            else:
+                    for key in translations.keys:
+                        # time 0.0 is frame 1
+                        frame = 1 + int(key.time * self.nif_import.fps + 0.5)
+                        keyVal = key.value
+                        trans = mathutils.Vector((keyVal.x, keyVal.y, keyVal.z))
+                        locVal = (niBone_bind_rot_inv * (1.0/niBone_bind_scale)) * (trans - niBone_bind_trans)
+                        # the rotation matrix is needed at this frame (that's
+                        # why the other keys are inserted first)
+                        if rot_keys_dict:
+                            try:
+                                rot = rot_keys_dict[frame].to_matrix()
+                            except KeyError:
+                                # fall back on slow method
+                                fcurves = b_armature_action.groups[bone_name].channels
+                                quat = mathutils.Quaternion()
+                                euler = None
+                                #If there are no rotation keys, the quaternion will just be 1,0,0,0  so fine anyway
+                                for fc in fcurves:
+                                    if "rotation_quaternion" in fc.data_path:
+                                        if fc.array_index == 0: quat.w = fc.evaluate(frame)
+                                        if fc.array_index == 1: quat.x = fc.evaluate(frame)
+                                        if fc.array_index == 2: quat.y = fc.evaluate(frame)
+                                        if fc.array_index == 3: quat.z = fc.evaluate(frame)
+                                    elif "rotation_euler" in fc.data_path:
+                                        euler = mathutils.Euler()
+                                        if fc.array_index == 0: euler.x = fc.evaluate(frame)
+                                        if fc.array_index == 1: euler.y = fc.evaluate(frame)
+                                        if fc.array_index == 2: euler.z = fc.evaluate(frame)
+                                if euler != None:
+                                   quat = euler.to_quaternion()
+                                rot = quat.to_matrix()
+                        else:
+                            rot = mathutils.Matrix([[1.0, 0.0, 0.0],
+                                                    [0.0, 1.0, 0.0],
+                                                    [0.0, 0.0, 1.0]])
+                        # we also need the scale at this frame
+                        if scale_keys_dict:
+                            try:
+                                sizeVal = scale_keys_dict[frame]
+                            except KeyError:
+                                fcurves = bpy.data.actions[str(b_armature.name)+"-kfAnim"].groups[bone_name].channels
+                                #If there is no fcurve, size will just be 1.0
                                 sizeVal = 1.0
-                    else:
-                        sizeVal = 1.0
-                    size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
-                                             [0.0, sizeVal, 0.0],
-                                             [0.0, 0.0, sizeVal]])
-                    # now we can do the final calculation
-                    loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
-                    b_posebone.loc = loc
-                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+                                for fc in fcurves:
+                                    if fc.data_path == "scale":
+                                        sizeVal = fc.evaluate(frame)
+                        else:
+                            sizeVal = 1.0
+                        size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
+                                                 [0.0, sizeVal, 0.0],
+                                                 [0.0, 0.0, sizeVal]])
+                        # now we can do the final calculation
+                        loc = (extra_matrix_rot_inv * (1.0/extra_matrix_scale)) * (rot * size * extra_matrix_trans + locVal - extra_matrix_trans) # C' = X * C * inverse(X)
+                        b_posebone.location = loc
+                        b_posebone.keyframe_insert(data_path="location", frame=frame, group=bone_name)
+
                 if translations:
                     del scale_keys_dict
                     del rot_keys_dict
-            # set extend mode for all ipo curves
+
+            # set extend mode for all fcurves
             if kfc:
-                try:
-                    ipo = action.getChannelIpo(bone_name)
-                except ValueError:
-                    # no channel for bone_name
-                    pass
-                else:
-                    for b_curve in ipo:
-                        b_curve.extend = self.nif_import.get_extend_from_flags(kfc.flags)
+                if bone_name in b_armature_action.groups:
+                    bone_fcurves = b_armature_action.groups[bone_name].channels
+                    f_curve_extend_type = self.nif_import.get_extend_from_flags(kfc.flags)
+                    if f_curve_extend_type == "CONST":
+                        for fcurve in bone_fcurves:
+                            fcurve.extrapolation = 'CONSTANT'
+                    elif f_curve_extend_type == "CYCLIC":
+                        for fcurve in bone_fcurves:
+                            fcurve.modifiers.new('CYCLES')
+                    else:
+                        for fcurve in bone_fcurves:
+                            fcurve.extrapolation = 'CONSTANT'
