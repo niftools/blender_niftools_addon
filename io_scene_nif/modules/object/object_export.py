@@ -470,45 +470,24 @@ class ObjectHelper:
         # now write out spaces
         if isinstance(b_obj, bpy.types.Bone):
             # bones, get the rest matrix
-            matrix = self.nif_export.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
+            # matrix = self.nif_export.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
+            matrix = self.nif_export.armaturehelper.get_bind_matrix(b_obj)
 
         else:
             # TODO MOVE TO ARMATUREHELPER
 
             matrix = b_obj.matrix_local.copy()
-            bone_parent_name = b_obj.parent_bone
 
             # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
-            if bone_parent_name:
-                # so v * O * T * B' = v * Z * B
-                # where B' is the Blender bone matrix in armature
-                # space, T is the bone tail translation, O is the object
-                # matrix (relative to the head), and B is the nif bone matrix;
-                # we wish to find Z
-
-                # b_obj.getMatrix('localspace')
-                # gets the object local transform matrix, relative
-                # to the armature!! (not relative to the bone)
-                # so at this point, matrix = O * T * B'
-                # hence it must hold that matrix = Z * B,
-                # or equivalently Z = matrix * B^{-1}
-
-                # now, B' = X * B, so B^{-1} = B'^{-1} * X
-                # hence Z = matrix * B'^{-1} * X
-
+            if b_obj.parent_bone:
+			
                 # first multiply with inverse of the Blender bone matrix
-                bone_parent = b_obj.parent.data.bones[bone_parent_name]
-                boneinv = mathutils.Matrix(bone_parent.matrix['ARMATURESPACE'])
-                boneinv.invert()
-                matrix = matrix * boneinv
-                # now multiply with the bone correction matrix X
-                try:
-                    extra = mathutils.Matrix(self.nif_export.armaturehelper.get_bone_extra_matrix_inv(bone_parent_name))
-                    extra.invert()
-                    matrix = matrix * extra
-                except KeyError:
-                    # no extra local transform
-                    pass
+                parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
+				
+				#undo the calculations from import
+                matrix =  parent_bone.matrix_local.to_3x3().to_4x4() * b_obj.matrix_local
+				#but here we add to the X loc instead of Y due to the coordinate changes
+                matrix.translation.x += parent_bone.length
 
         try:
             return nif_utils.decompose_srt(matrix)
