@@ -45,7 +45,28 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
+import math
 
+correction_local = mathutils.Euler((math.radians(90), 0, math.radians(90))).to_matrix().to_4x4()
+correction_local_inv = correction_local.inverted()
+correction_global = mathutils.Euler((math.radians(-90), math.radians(-90), 0)).to_matrix().to_4x4()
+
+### also useful for export  
+
+def get_bind_matrix(bone):
+    """
+    Get a nif armature-space matrix from a blender bone matrix.
+    """
+    bind = correction_global.inverted() *  correction_local.inverted() * bone.matrix_local *  correction_local
+    if bone.parent:
+        p_bind_restored = correction_global.inverted() *  correction_local.inverted() * bone.parent.matrix_local *  correction_local
+        bind = p_bind_restored.inverted() * bind
+    return bind
+
+def export_keymat(rest_rot, key_matrix):
+    key_matrix = correction_local_inv * key_matrix * correction_local
+    return rest_rot * key_matrix
+    
 class AnimationHelper():
     
     def __init__(self, parent):
@@ -54,18 +75,23 @@ class AnimationHelper():
         self.material_animation = MaterialAnimation(parent)
         self.texture_animation = TextureAnimation(parent)
     
-    def get_flags_from_extend(self, extend):
-        if extend == bpy.types.IpoCurve.ExtendTypes.CONST:
-            return 4 # 0b100
-        elif extend == bpy.types.IpoCurve.ExtendTypes.CYCLIC:
+    def get_flags_from_extend(self, cyclic):
+        if cyclic:
             return 0
+        else:
+            return 4 # 0b100
 
-        NifLog.warn("Unsupported extend type in blend, using clamped.")
-        return 4
     
-    def export_keyframes(self, ipo, parent_block, bind_matrix = None):
-    
-    
+    def export_keyframes(self, arm, bone, parent_block):
+        print("export_keyframes",bone.name)
+        action = arm.animation_data.action
+        if not action:
+            return
+        if bone.name in action.groups:
+            action_group = action.groups[bone.name]
+        else:
+            action_group = None
+        self.fps = bpy.context.scene.render.fps
         if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
@@ -78,10 +104,10 @@ class AnimationHelper():
         # add a keyframecontroller block, and refer to this block in the
         # parent's time controller
         if self.nif_export.version < 0x0A020000:
-            kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", ipo)
+            kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", action_group)
         else:
-            kfc = self.nif_export.objecthelper.create_block("NiTransformController", ipo)
-            kfi = self.nif_export.objecthelper.create_block("NiTransformInterpolator", ipo)
+            kfc = self.nif_export.objecthelper.create_block("NiTransformController", action_group)
+            kfi = self.nif_export.objecthelper.create_block("NiTransformInterpolator", action_group)
             # link interpolator from the controller
             kfc.interpolator = kfi
             # set interpolator default data
@@ -103,36 +129,28 @@ class AnimationHelper():
         # while we're at it, we also determine the
         # start and stop frames
         extend = None
-        if ipo:
-            start_frame = +1000000
-            stop_frame = -1000000
-            for curve in ipo:
-                # get cycle mode
-                if extend is None:
-                    extend = curve.extend
-                elif extend != curve.extend:
-                    NifLog.warn("Inconsistent extend type in {0}, will use {1}.".format(ipo, extend))
-                # get start and stop frames
-                start_frame = min(
-                    start_frame,
-                    min(btriple.pt[0] for btriple in curve.bezierPoints))
-                stop_frame = max(
-                    stop_frame,
-                    max(btriple.pt[0] for btriple in curve.bezierPoints))
+        
+        #TODO: or use the extent of each fcurve - fcu.range()?
+        start_frame, stop_frame = action.frame_range
+        cyclic = False
+        #see if there are cyclic extrapolation modifiers on the fcurves
+        if action_group:
+            for fcu in action_group.channels:
+                for mod in fcu.modifiers:
+                    if mod.type == "CYCLES":
+                        cyclic = True
+                        break
         else:
-            # dummy ipo
-            # default extend, start, and end
-            extend = bpy.IpoCurve.ExtendTypes.CYCLIC
             start_frame = bpy.context.scene.frame_start
             stop_frame = bpy.context.scene.frame_end
     
         # fill in the non-trivial values
         kfc.flags = 8 # active
-        kfc.flags |= self.get_flags_from_extend(extend)
+        kfc.flags |= self.get_flags_from_extend(cyclic)
         kfc.frequency = 1.0
         kfc.phase = 0.0
-        kfc.start_time = (start_frame - 1) * bpy.context.scene.render.fps
-        kfc.stop_time = (stop_frame - 1) * bpy.context.scene.render.fps
+        kfc.start_time = start_frame / self.fps
+        kfc.stop_time = stop_frame / self.fps
     
         if NifOp.props.animation == 'GEOM_NIF':
             # keyframe data is not present in geometry files
@@ -141,163 +159,87 @@ class AnimationHelper():
         # -> get keyframe information
     
         # some calculations
-        if bind_matrix:
-            bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
-            bind_quat = bind_rot.toQuat()
-        else:
-            bind_scale = 1.0
-            bind_rot = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
-            bind_quat = mathutils.Quaternion(1,0,0,0)
-            bind_trans = mathutils.Vector()
-
-        # TODO: delete completely
-        extra_scale_inv = 1.0
-        extra_rot_inv = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
-        extra_quat_inv = mathutils.Quaternion(1,0,0,0)
-        extra_trans_inv = mathutils.Vector()
+        bind_matrix = get_bind_matrix(bone)
+        bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
+        bind_rot = bind_rot.to_4x4()
+        # bind_quat = bind_rot.toQuat()
     
-        # sometimes we need to export an empty keyframe... this will take care of that
-        if (ipo == None):
-            scale_curve = {}
-            rot_curve = {}
-            trans_curve = {}
-        # the usual case comes now...
-        else:
+        # sometimes we need to export an empty keyframe... 
+        scale_curve = []
+        quat_curve = []
+        euler_curve = []
+        trans_curve = []
+        if action_group:
+            quaternions = [fcu for fcu in action_group.channels if fcu.data_path.endswith("quaternion")]
+            translations = [fcu for fcu in action_group.channels if fcu.data_path.endswith("location")]
+            eulers = [fcu for fcu in action_group.channels if fcu.data_path.endswith("euler")]
+            scales = [fcu for fcu in action_group.channels if fcu.data_path.endswith("scale")]
             # merge the animation curves into a rotation vector and translation vector curve
-            scale_curve = {}
-            rot_curve = {}
-            trans_curve = {}
-            # the following code makes these assumptions
-            assert(Ipo.PO_SCALEX == Ipo.OB_SCALEX)
-            assert(Ipo.PO_LOCX == Ipo.OB_LOCX)
-            # check validity of curves
-            for curvecollection in (
-                (Ipo.PO_SCALEX, Ipo.PO_SCALEY, Ipo.PO_SCALEZ),
-                (Ipo.PO_LOCX, Ipo.PO_LOCY, Ipo.PO_LOCZ),
-                (Ipo.PO_QUATX, Ipo.PO_QUATY, Ipo.PO_QUATZ, Ipo.PO_QUATW),
-                (Ipo.OB_ROTX, Ipo.OB_ROTY, Ipo.OB_ROTZ)):
-                # skip invalid curves
-                try:
-                    ipo[curvecollection[0]]
-                except KeyError:
-                    continue
-                # check that if any curve is defined in the collection
-                # then all curves are defined in the collection
-                if (any(ipo[curve] for curve in curvecollection)
-                    and not all(ipo[curve] for curve in curvecollection)):
-                    keytype = {Ipo.PO_SCALEX: "SCALE",
-                               Ipo.PO_LOCX: "LOC",
-                               Ipo.PO_QUATX: "ROT",
-                               Ipo.OB_ROTX: "ROT"}
-                    raise nif_utils.NifError(
-                        "missing curves in %s; insert %s key at frame 1"
-                        " and try again"
-                        % (ipo, keytype[curvecollection[0]]))
-            # go over all curves
-            ipo_curves = list(ipo.curveConsts.values())
-            for curve in ipo_curves:
-                # skip empty curves
-                if ipo[curve] is None:
-                    continue
-                # non-empty curve: go over all frames of the curve
-                for btriple in ipo[curve].bezierPoints:
-                    frame = btriple.pt[0]
-                    if (frame < bpy.context.scene.frame_start) or (frame > bpy.context.scene.frame_end):
-                        continue
-                    # PO_SCALEX == OB_SCALEX, so this does both pose and object
-                    # scale
-                    if curve in (Ipo.PO_SCALEX, Ipo.PO_SCALEY, Ipo.PO_SCALEZ):
-                        # support only uniform scaling... take the mean
-                        scale_curve[frame] = (ipo[Ipo.PO_SCALEX][frame]
-                                              + ipo[Ipo.PO_SCALEY][frame]
-                                              + ipo[Ipo.PO_SCALEZ][frame]) / 3.0
-                        # SC' * SB' / SX
-                        scale_curve[frame] = \
-                            scale_curve[frame] * bind_scale * extra_scale_inv
-                    # object rotation
-                    elif curve in (Ipo.OB_ROTX, Ipo.OB_ROTY, Ipo.OB_ROTZ):
-                        rot_curve[frame] = mathutils.Euler(
-                            [10 * ipo[Ipo.OB_ROTX][frame],
-                             10 * ipo[Ipo.OB_ROTY][frame],
-                             10 * ipo[Ipo.OB_ROTZ][frame]])
-                        # use quat if we have bind matrix and/or extra matrix
-                        # XXX maybe we should just stick with eulers??
-                        if bind_matrix or extra_mat_inv:
-                            rot_curve[frame] = rot_curve[frame].toQuat()
-                            # beware, CrossQuats takes arguments in a counter-intuitive order:
-                            # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                            rot_curve[frame] = mathutils.CrossQuats(mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
-                    # pose rotation
-                    elif curve in (Ipo.PO_QUATX, Ipo.PO_QUATY,
-                                   Ipo.PO_QUATZ, Ipo.PO_QUATW):
-                        rot_curve[frame] = mathutils.Quaternion()
-                        rot_curve[frame].x = ipo[Ipo.PO_QUATX][frame]
-                        rot_curve[frame].y = ipo[Ipo.PO_QUATY][frame]
-                        rot_curve[frame].z = ipo[Ipo.PO_QUATZ][frame]
-                        rot_curve[frame].w = ipo[Ipo.PO_QUATW][frame]
-                        # beware, CrossQuats takes arguments in a counter-intuitive order:
-                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                        rot_curve[frame] = mathutils.CrossQuats(mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
-                    # PO_LOCX == OB_LOCX, so this does both pose and object
-                    # location
-                    elif curve in (Ipo.PO_LOCX, Ipo.PO_LOCY, Ipo.PO_LOCZ):
-                        trans_curve[frame] = mathutils.Vector(
-                            [ipo[Ipo.PO_LOCX][frame],
-                             ipo[Ipo.PO_LOCY][frame],
-                             ipo[Ipo.PO_LOCZ][frame]])
-                        # T = - TX * inverse(RX) * RC' * RB' * SC' * SB' / SX + TC' * SB' * RB' + TB'
-                        trans_curve[frame] *= bind_scale
-                        trans_curve[frame] *= bind_rot
-                        trans_curve[frame] += bind_trans
-                        # we need RC' and SC'
-                        if Ipo.OB_ROTX in ipo_curves and ipo[Ipo.OB_ROTX]:
-                            rot_c = mathutils.Euler(
-                                [10 * ipo[Ipo.OB_ROTX][frame],
-                                 10 * ipo[Ipo.OB_ROTY][frame],
-                                 10 * ipo[Ipo.OB_ROTZ][frame]]).to_matrix()
-                        elif Ipo.PO_QUATX in ipo_curves and ipo[Ipo.PO_QUATX]:
-                            rot_c = mathutils.Quaternion()
-                            rot_c.x = ipo[Ipo.PO_QUATX][frame]
-                            rot_c.y = ipo[Ipo.PO_QUATY][frame]
-                            rot_c.z = ipo[Ipo.PO_QUATZ][frame]
-                            rot_c.w = ipo[Ipo.PO_QUATW][frame]
-                            rot_c = rot_c.to_matrix()
-                        else:
-                            rot_c = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
-                        # note, PO_SCALEX == OB_SCALEX, so this does both
-                        if ipo[Ipo.PO_SCALEX]:
-                            # support only uniform scaling... take the mean
-                            scale_c = (ipo[Ipo.PO_SCALEX][frame]
-                                       + ipo[Ipo.PO_SCALEY][frame]
-                                       + ipo[Ipo.PO_SCALEZ][frame]) / 3.0
-                        else:
-                            scale_c = 1.0
-                        trans_curve[frame] += \
-                            extra_trans_inv * rot_c * bind_rot * \
-                            scale_c * bind_scale
+            
+            #scales
+            if scales:
+                num_keys = len(scales[0].keyframe_points)
+                for i in range(num_keys):
+                    frame = scales[0].keyframe_points[i].co[0]
+                    scale = scales[0].keyframe_points[i].co[1]
+                    scale_curve.append( (frame, scale) )
+            
+            #quaternions
+            if quaternions:
+                if len(quaternions) != 4:
+                    raise nif_utils.NifError("Incomplete ROT key set in bone "+bone.name+" for action "+action.name)
+                else:
+                    num_keys = len(quaternions[0].keyframe_points)
+                    for i in range(num_keys):
+                        frame = quaternions[0].keyframe_points[i].co[0]
+                        quat = export_keymat(bind_rot, mathutils.Quaternion([fcurve.keyframe_points[i].co[1] for fcurve in quaternions]).to_matrix().to_4x4()).to_quaternion()
+                        quat_curve.append( (frame, quat) )
+                    
+            #eulers
+            if eulers:
+                if len(eulers) != 3:
+                    raise nif_utils.NifError("Incomplete Euler key set in bone "+bone.name+" for action "+action.name)
+                else:
+                    num_keys = len(eulers[0].keyframe_points)
+                    for i in range(num_keys):
+                        frame = eulers[0].keyframe_points[i].co[0]
+                        euler = export_keymat(bind_rot, mathutils.Euler([fcurve.keyframe_points[i].co[1] for fcurve in eulers]).to_matrix().to_4x4() ).to_euler()
+                        euler_curve.append( (frame, euler) )
+            #translations
+            if translations:
+                if len(translations) != 3:
+                    raise nif_utils.NifError("Incomplete LOC key set in bone "+bone.name+" for action "+action.name)
+                else:
+                    num_keys = len(translations[0].keyframe_points)
+                    for i in range(num_keys):
+                        frame = translations[0].keyframe_points[i].co[0]
+                        trans = export_keymat(bind_rot, mathutils.Matrix.Translation( [fcurve.keyframe_points[i].co[1] for fcurve in translations] ) ).to_translation() + bind_trans
+                        trans_curve.append( (frame, trans) )
+        # # -> now comes the real export
     
-        # -> now comes the real export
-    
-        if (max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1
+        if (max(len(quat_curve), len(euler_curve), len(trans_curve), len(scale_curve)) <= 1
             and self.nif_export.version >= 0x0A020000):
             # only add data if number of keys is > 1
             # (see importer comments with import_kf_root: a single frame
             # keyframe denotes an interpolator without further data)
             # insufficient keys, so set the data and we're done!
             if trans_curve:
-                trans = list(trans_curve.values())[0]
+                trans = trans_curve[0][1]
                 kfi.translation.x = trans[0]
                 kfi.translation.y = trans[1]
                 kfi.translation.z = trans[2]
-            if rot_curve:
-                rot = list(rot_curve.values())[0]
-                # XXX blender weirdness... Euler() is a function!!
-                if isinstance(rot, mathutils.Euler().__class__):
-                    rot = rot.toQuat()
-                kfi.rotation.x = rot.x
-                kfi.rotation.y = rot.y
-                kfi.rotation.z = rot.z
-                kfi.rotation.w = rot.w
+            if quat_curve:
+                quat = quat_curve[0][1]
+                kfi.rotation.x = quat.x
+                kfi.rotation.y = quat.y
+                kfi.rotation.z = quat.z
+                kfi.rotation.w = quat.w
+            elif euler_curve:
+                quat = euler_curve[0][1].to_quaternion()
+                kfi.rotation.x = quat.x
+                kfi.rotation.y = quat.y
+                kfi.rotation.z = quat.z
+                kfi.rotation.w = quat.w
             # ignore scale for now...
             kfi.scale = 1.0
             # done!
@@ -305,78 +247,49 @@ class AnimationHelper():
     
         # add the keyframe data
         if self.nif_export.version < 0x0A020000:
-            kfd = self.nif_export.objecthelper.create_block("NiKeyframeData", ipo)
+            kfd = self.nif_export.objecthelper.create_block("NiKeyframeData", action_group)
             kfc.data = kfd
         else:
             # number of frames is > 1, so add transform data
-            kfd = self.nif_export.objecthelper.create_block("NiTransformData", ipo)
+            kfd = self.nif_export.objecthelper.create_block("NiTransformData", action_group)
             kfi.data = kfd
     
-        frames = list(rot_curve.keys())
-        frames.sort()
-        # XXX blender weirdness... Euler() is a function!!
-        if (frames
-            and isinstance(list(rot_curve.values())[0],
-                           mathutils.Euler().__class__)):
-            # eulers
+        if euler_curve:
             kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
             kfd.num_rotation_keys = 1 # *NOT* len(frames) this crashes the engine!
-            kfd.xyz_rotations[0].num_keys = len(frames)
-            kfd.xyz_rotations[1].num_keys = len(frames)
-            kfd.xyz_rotations[2].num_keys = len(frames)
-            # XXX todo: quadratic interpolation?
-            kfd.xyz_rotations[0].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyz_rotations[1].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyz_rotations[2].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyz_rotations[0].keys.update_size()
-            kfd.xyz_rotations[1].keys.update_size()
-            kfd.xyz_rotations[2].keys.update_size()
-            for i, frame in enumerate(frames):
-                # XXX todo: speed up by not recalculating stuff
-                rot_frame_x = kfd.xyz_rotations[0].keys[i]
-                rot_frame_y = kfd.xyz_rotations[1].keys[i]
-                rot_frame_z = kfd.xyz_rotations[2].keys[i]
-                rot_frame_x.time = (frame - 1) * bpy.context.scene.render.fps
-                rot_frame_y.time = (frame - 1) * bpy.context.scene.render.fps
-                rot_frame_z.time = (frame - 1) * bpy.context.scene.render.fps
-                rot_frame_x.value = rot_curve[frame].x * 3.14159265358979323846 / 180.0
-                rot_frame_y.value = rot_curve[frame].y * 3.14159265358979323846 / 180.0
-                rot_frame_z.value = rot_curve[frame].z * 3.14159265358979323846 / 180.0
-        else:
-            # quaternions
+            for i, coord in enumerate(kfd.xyz_rotations):
+                coord.num_keys = len(euler_curve)
+                # XXX todo: quadratic interpolation?
+                coord.interpolation = NifFormat.KeyType.LINEAR_KEY
+                coord.keys.update_size()
+                for key, (frame, euler) in zip(coord.keys, euler_curve):
+                    key.time = frame / self.fps
+                    key.value = euler[i]
+        elif quat_curve:
             # XXX todo: quadratic interpolation?
             kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
-            kfd.num_rotation_keys = len(frames)
+            kfd.num_rotation_keys = len(quat_curve)
             kfd.quaternion_keys.update_size()
-            for i, frame in enumerate(frames):
-                rot_frame = kfd.quaternion_keys[i]
-                rot_frame.time = (frame - 1) * bpy.context.scene.render.fps
-                rot_frame.value.w = rot_curve[frame].w
-                rot_frame.value.x = rot_curve[frame].x
-                rot_frame.value.y = rot_curve[frame].y
-                rot_frame.value.z = rot_curve[frame].z
+            for key, (frame, quat) in zip(kfd.quaternion_keys, quat_curve):
+                key.time = frame / self.fps
+                key.value.w = quat.w
+                key.value.x = quat.x
+                key.value.y = quat.y
+                key.value.z = quat.z
     
-        frames = list(trans_curve.keys())
-        frames.sort()
         kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
-        kfd.translations.num_keys = len(frames)
+        kfd.translations.num_keys = len(trans_curve)
         kfd.translations.keys.update_size()
-        for i, frame in enumerate(frames):
-            trans_frame = kfd.translations.keys[i]
-            trans_frame.time = (frame - 1) * bpy.context.scene.render.fps
-            trans_frame.value.x = trans_curve[frame][0]
-            trans_frame.value.y = trans_curve[frame][1]
-            trans_frame.value.z = trans_curve[frame][2]
+        for key, (frame, trans) in zip(kfd.translations.keys, trans_curve):
+            key.time = frame / self.fps
+            key.value.x, key.value.y, key.value.z = trans
     
-        frames = list(scale_curve.keys())
-        frames.sort()
         kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
-        kfd.scales.num_keys = len(frames)
+        kfd.scales.num_keys = len(scale_curve)
         kfd.scales.keys.update_size()
-        for i, frame in enumerate(frames):
-            scale_frame = kfd.scales.keys[i]
-            scale_frame.time = (frame - 1) * bpy.context.scene.render.fps
-            scale_frame.value = scale_curve[frame]
+        for key, (frame, scale) in zip(kfd.scales.keys, scale_curve):
+            key.time = frame / self.fps
+            key.value = scale
             
 
     def export_anim_groups(self, animtxt, block_parent):

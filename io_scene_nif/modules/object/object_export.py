@@ -265,7 +265,8 @@ class ObjectHelper:
         if b_obj:
             # export animation
             if b_obj_ipo:
-				# no anim support here for now!
+                # no anim support here for now!
+                print(b_obj,"has anims")
                 pass
                 # if any(b_obj_ipo[b_channel] for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
                     # self.nif_export.animationhelper.export_keyframes(b_obj_ipo, node)
@@ -451,7 +452,7 @@ class ObjectHelper:
 
         Note: for objects parented to bones, this will return the transform
         relative to the bone parent head including bone correction.
-		"""
+        """
 
         if isinstance(b_obj, bpy.types.Bone):
             matrix = self.nif_export.armaturehelper.get_bind_matrix(b_obj)
@@ -463,13 +464,13 @@ class ObjectHelper:
 
             # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
             if b_obj.parent_bone:
-			
+            
                 # first multiply with inverse of the Blender bone matrix
                 parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
-				
-				#undo the calculations from import
+                
+                #undo the calculations from import
                 matrix =  parent_bone.matrix_local.to_3x3().to_4x4() * matrix
-				#but here we add to the X loc instead of Y due to the coordinate changes
+                #but here we add to the X loc instead of Y due to the coordinate changes
                 matrix.translation.x += parent_bone.length
 
         try:
