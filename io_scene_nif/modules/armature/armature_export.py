@@ -73,11 +73,6 @@ class Armature():
             if root_bones.count(root_bone) == 0:
                 root_bones.append(root_bone)
 
-        if bpy.types.Action(arm):
-            bones_ipo = bpy.types.ActionGroups(arm) # dictionary of Bone Ipos (name -> ipo)
-        else:
-            bones_ipo = {} # no ipos
-
         bones_node = {} # maps bone names to NiNode blocks
 
         # here all the bones are added
@@ -119,15 +114,11 @@ class Armature():
                         node.flags = 0x0196
                 else:
                     node.flags = 0x0002 # default for Morrowind bones
-
-            self.nif_export.objecthelper.set_object_matrix(bone, node) # rest pose
-
+            # rest pose
+            self.nif_export.objecthelper.set_object_matrix(bone, node)
 
             # TODO: once per-node animation is implemented, it should look kinda like this
-            # if bone.name in bones_ipo:
-                # self.nif_export.animationhelper.export_keyframes(
-                    # bones_ipo[bone.name], node,
-                    # bind_matrix = bone_rest_matrix)
+            self.nif_export.animationhelper.export_keyframes(arm, bone, node)
 
             # does bone have priority value in NULL constraint?
             for constr in arm.pose.bones[bone.name].constraints:
