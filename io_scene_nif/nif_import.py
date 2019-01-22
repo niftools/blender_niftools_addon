@@ -216,9 +216,9 @@ class NifImport(NifCommon):
 
     def import_root(self, root_block):
         """Main import function."""
-        # check that this is not a kf file
-        if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
-            raise nif_utils.NifError("direct .kf import not supported")
+        # # check that this is not a kf file
+        # if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
+            # raise nif_utils.NifError("direct .kf import not supported")
 
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
@@ -522,9 +522,9 @@ class NifImport(NifCommon):
                     b_child.parent = b_armature
                     b_child.parent_type = 'BONE'
                     b_child.parent_bone = b_obj.name
-					#multiply with inverse parent matrix
-                    b_child.matrix_local =  b_obj.matrix_local.inverted() * b_child.matrix_basis
-					#move to bone's head position instead of tail
+                    #multiply with rotation component of inverse parent matrix
+                    b_child.matrix_local =  b_obj.matrix_local.to_3x3().to_4x4().inverted() * b_child.matrix_basis
+                    #move to bone's head position instead of tail
                     b_child.location.y -= b_obj.length
             else:
                 raise RuntimeError(
@@ -1368,3 +1368,24 @@ class NifImport(NifCommon):
                  if (isinstance(child, NifFormat.NiTriBasedGeom)
                      and child.name.find(node_name) != -1) ]
 
+
+import os
+class KfImport(NifCommon):
+
+    def __init__(self, operator, context):
+        NifCommon.__init__(self, operator)
+        
+        # Helper systems
+        self.animationhelper = AnimationHelper(parent=self)
+             
+    def execute(self):
+        """Main import function."""
+
+        dirname = os.path.dirname(NifOp.props.filepath)
+        kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
+        for kf_file in kf_files:
+			#TODO: rearrange this so that bone data is only loaded once from the blender armature
+            self.kfdata = KFFile.load_kf(kf_file)
+            for kf_root in self.kfdata.roots:
+                self.animationhelper.import_kf_standalone(kf_root)
+        return {'FINISHED'}
