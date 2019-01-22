@@ -248,7 +248,7 @@ class bhkshape_export():
 
         mesh = b_obj.data
         transform = mathutils.Matrix(
-            self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').as_list())
+            self.nif_export.objecthelper.get_object_matrix(b_obj).as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
@@ -337,7 +337,7 @@ class bhkshape_export():
             coltf.unknown_8_bytes[6] = 253
             coltf.unknown_8_bytes[7] = 4
             hktf = mathutils.Matrix(
-                self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').as_list())
+                self.nif_export.objecthelper.get_object_matrix(b_obj).as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
@@ -431,7 +431,7 @@ class bhkshape_export():
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
             b_mesh = b_obj.data
-            b_transform_mat = mathutils.Matrix(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').as_list())
+            b_transform_mat = mathutils.Matrix(self.nif_export.objecthelper.get_object_matrix(b_obj).as_list())
 
             b_rot_quat = b_transform_mat.decompose()[1]
             b_scale_vec = b_transform_mat.decompose()[0]

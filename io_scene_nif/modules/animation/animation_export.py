@@ -54,50 +54,6 @@ class AnimationHelper():
         self.material_animation = MaterialAnimation(parent)
         self.texture_animation = TextureAnimation(parent)
     
-    # Export the animation of blender Ipo as keyframe controller and
-    # keyframe data. Extra quaternion is multiplied prior to keyframe
-    # rotation, and dito for translation. These extra fields come in handy
-    # when exporting bone ipo's, which are relative to the rest pose, so
-    # we can pass the rest pose through these extra transformations.
-    #
-    # bind_matrix is the original Blender bind matrix (the B' matrix below)
-    # extra_mat_inv is the inverse matrix which transforms the Blender bone matrix
-    # to the NIF bone matrix (the inverse of the X matrix below)
-    #
-    # Explanation of extra transformations:
-    # Final transformation matrix is vec * Rchannel * Tchannel * Rbind * Tbind
-    # So we export:
-    # [ SRchannel 0 ]    [ SRbind 0 ]   [ SRchannel * SRbind        0 ]
-    # [ Tchannel  1 ] *  [ Tbind  1 ] = [ Tchannel * SRbind + Tbind 1 ]
-    # or, in detail,
-    # Stotal = Schannel * Sbind
-    # Rtotal = Rchannel * Rbind
-    # Ttotal = Tchannel * Sbind * Rbind + Tbind
-    # We also need the conversion of the new bone matrix to the original matrix, say X,
-    # B' = X * B
-    # (with B' the Blender matrix and B the NIF matrix) because we need that
-    # C' * B' = X * C * B
-    # and therefore
-    # C * B = inverse(X) * C' * B'
-    # (we need to write out C * B, the NIF format stores total transformation in keyframes).
-    # In detail:
-    #          [ SRX 0 ]     [ SRC' 0 ]   [ SRB' 0 ]
-    # inverse( [ TX  1 ] ) * [ TC'  1 ] * [ TB'  1 ] =
-    # [ inverse(SRX)         0 ]   [ SRC' * SRB'         0 ]
-    # [ -TX * inverse(SRX)   1 ] * [ TC' * SRB' + TB'    1 ] =
-    # [ inverse(SRX) * SRC' * SRB'                       0 ]
-    # [ (-TX * inverse(SRX) * SRC' + TC') * SRB' + TB'    1 ]
-    # Hence
-    # S = SC' * SB' / SX
-    # R = inverse(RX) * RC' * RB'
-    # T = - TX * inverse(RX) * RC' * RB' * SC' * SB' / SX + TC' * SB' * RB' + TB'
-    #
-    # Finally, note that
-    # - TX * inverse(RX) / SX = translation part of inverse(X)
-    # inverse(RX) = rotation part of inverse(X)
-    # 1 / SX = scale part of inverse(X)
-    # so having inverse(X) around saves on calculations
-    
     def get_flags_from_extend(self, extend):
         if extend == bpy.types.IpoCurve.ExtendTypes.CONST:
             return 4 # 0b100
@@ -107,7 +63,7 @@ class AnimationHelper():
         NifLog.warn("Unsupported extend type in blend, using clamped.")
         return 4
     
-    def export_keyframes(self, ipo, space, parent_block, bind_matrix = None, extra_mat_inv = None):
+    def export_keyframes(self, ipo, parent_block, bind_matrix = None):
     
     
         if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
@@ -115,9 +71,6 @@ class AnimationHelper():
             # for more recent versions, the controller and interpolators are
             # present, only the data is not present (see further on)
             return
-    
-        # only localspace keyframes need to be exported
-        assert(space == 'localspace')
     
         # make sure the parent is of the right type
         assert(isinstance(parent_block, NifFormat.NiNode))
@@ -196,15 +149,12 @@ class AnimationHelper():
             bind_rot = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
             bind_quat = mathutils.Quaternion(1,0,0,0)
             bind_trans = mathutils.Vector()
-        if extra_mat_inv:
-            extra_scale_inv, extra_rot_inv, extra_trans_inv = \
-                nif_utils.decompose_srt(extra_mat_inv)
-            extra_quat_inv = extra_rot_inv.toQuat()
-        else:
-            extra_scale_inv = 1.0
-            extra_rot_inv = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
-            extra_quat_inv = mathutils.Quaternion(1,0,0,0)
-            extra_trans_inv = mathutils.Vector()
+
+        # TODO: delete completely
+        extra_scale_inv = 1.0
+        extra_rot_inv = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
+        extra_quat_inv = mathutils.Quaternion(1,0,0,0)
+        extra_trans_inv = mathutils.Vector()
     
         # sometimes we need to export an empty keyframe... this will take care of that
         if (ipo == None):
