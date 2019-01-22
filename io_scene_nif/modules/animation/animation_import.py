@@ -121,6 +121,12 @@ def get_bind_data(armature):
             bones_data[bone.name] = (rest_scale, rest_rot.inverted().to_4x4(), rest_trans)
         return bones_data
 
+def create_ob_fcurves(action, dtype, dlen):
+    """
+    Create fcurves for object in action.
+    """
+    return [action.fcurves.new(data_path = dtype, index = i, action_group = "LocRotScale") for i in range(dlen)]
+    
 def create_fcurves(action, bonename, dtype, dlen):
     """
     Create fcurves for bonename in action.
@@ -383,7 +389,12 @@ class AnimationHelper():
 
         
     def set_animation(self, niBlock, b_obj):
-        """Load basic animation info for this object."""
+        """
+        Load animation attached to (Scene Root) object.
+        Becomes the object level animation of the object.
+        """
+		
+        # TODO: remove code duplication with import_keyframe_controller
         kfc = nif_utils.find_controller(niBlock, NifFormat.NiKeyframeController)
         if not kfc:
             # no animation data: do nothing
@@ -405,60 +416,53 @@ class AnimationHelper():
         NifLog.info("Animation")
         NifLog.info("Importing animation data for {0}".format(b_obj.name))
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
-        # get the animation keys
-        translations = kfd.translations
-        scales = kfd.scales
-        # add the keys
 
+        #get the interpolation modes
+        interp_rot = get_interp_mode(kfd)
+        interp_loc = get_interp_mode(kfd.translations)
+        interp_scale = get_interp_mode(kfd.scales)
+        
         #Create curve structure
         if b_obj.animation_data == None:
             b_obj.animation_data_create()
         b_obj_action = bpy.data.actions.new(str(b_obj.name) + "-Anim")
         b_obj.animation_data.action = b_obj_action
 
-        NifLog.debug('Scale keys...')
-        for key in scales.keys:
-            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-            bpy.context.scene.frame_set(frame)
-            b_obj.scale = (key.value,key.value,key.value)
-            b_obj.keyframe_insert('scale')
-
+        if kfd.scales.keys:
+            NifLog.debug('Scale keys...')
+            fcurves = create_ob_fcurves(b_obj_action, "scale", 3)
+            for key in kfd.scales.keys:
+                v = (key.value, key.value, key.value)
+                add_key(fcurves, key.time, self.fps, v, interp_scale)
+            
         # detect the type of rotation keys
-        rotation_type = kfd.rotation_type
-        if rotation_type == 4:
-            # uses xyz rotation
-            xkeys = kfd.xyz_rotations[0].keys
-            ykeys = kfd.xyz_rotations[1].keys
-            zkeys = kfd.xyz_rotations[2].keys
-            NifLog.debug('Rotation keys...(euler)')
-            for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
-                frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
-                # XXX we assume xkey.time == ykey.time == zkey.time
-                bpy.context.scene.frame_set(frame)
-                # both in radians, no conversion needed
-                b_obj.rotation_euler = (xkey.value, ykey.value, zkey.value)
-                b_obj.keyframe_insert('rotation_euler')
-        else:
-            # uses quaternions
-            if kfd.quaternion_keys:
-                NifLog.debug('Rotation keys...(quaternions)')
+        if kfd.rotation_type == 4:
+            NifLog.debug('Rotation keys...(eulers)')
+            b_obj.rotation_mode = "XYZ"
+            #Eulers are a bit different here, we can import them regardless of their timing
+            #because they need no correction math in object space
+            fcurves = create_ob_fcurves(b_obj_action, "rotation_euler", 3)
+            keys = (kfd.xyz_rotations[0].keys, kfd.xyz_rotations[1].keys, kfd.xyz_rotations[2].keys)
+            for fcu, keys_dim in zip(fcurves, keys):
+                for key in keys_dim:
+                    add_key((fcu, ), key.time, self.fps, (key.value,), interp_rot)
+        # uses quaternions
+        elif kfd.quaternion_keys:
+            NifLog.debug('Rotation keys...(quaternions)')
+            b_obj.rotation_mode = "QUATERNION"
+            fcurves = create_ob_fcurves(b_obj_action, "rotation_quaternion", 4)
             for key in kfd.quaternion_keys:
-                frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                bpy.context.scene.frame_set(frame)
-                #Blender euler is now in radians, not degrees
-                rot = mathutils.Quaternion((key.value.w, key.value.x, key.value.y, key.value.z)).toEuler()
-                b_obj.rotation_euler = (rot.x, rot.y, rot.z)
-                b_obj.keyframe_insert('rotation_euler')
+                v = (key.value.w, key.value.x, key.value.y, key.value.z)
+                add_key(fcurves, key.time, self.fps, v, interp_rot)
 
-        if translations.keys:
+        if kfd.translations.keys:
             NifLog.debug('Translation keys...')
-        for key in translations.keys:
-            frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
-            bpy.context.scene.frame_set(frame)
-            b_obj.location = (key.value.x, key.value.y, key.value.z)
-            b_obj.keyframe_insert('location')
-
-        bpy.context.scene.frame_set(1)
+            fcurves = create_ob_fcurves(b_obj_action, "location", 3)
+            for key in kfd.translations.keys:
+                v = (key.value.x, key.value.y, key.value.z)
+                add_key(fcurves, key.time, self.fps, v, interp_rot)
+                
+        bpy.context.scene.frame_set(0)
 
 
 class ObjectAnimation():
@@ -602,105 +606,103 @@ class ArmatureAnimation():
 
     
     def import_keyframe_controller(self, kfc, b_armature_object, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans):
-        b_armature_action = b_armature_object.animation_data.action
-        # old style: data directly on controller
-        kfd = kfc.data if kfc else None
-        # new style: data via interpolator
-        kfi = kfc.interpolator if kfc else None
-
-        
-        #TODO: test interpolators
-        # B-spline curve import
-        if isinstance(kfi, NifFormat.NiBSplineInterpolator):
-            times = list(kfi.get_times())
+        if kfc:
+            b_armature_action = b_armature_object.animation_data.action
+            # old style: data directly on controller
+            kfd = kfc.data
+            # new style: data via interpolator
+            kfi = kfc.interpolator
             
-            translations = zip( times, list(kfi.get_translations()) )
-            scales = zip( times, list(kfi.get_scales()) )
-            rotations = zip( times, list(kfi.get_rotations()) )
-            eulers = []
-            
-            #TODO: get these from interpolator?
-            interp_rot = "LINEAR"
-            interp_loc = "LINEAR"
-            interp_scale = "LINEAR"
-        # next is a quick hack to make the new transform
-        # interpolator work as if it is an old style keyframe data
-        # block parented directly on the controller
-        if isinstance(kfi, NifFormat.NiTransformInterpolator):
-            kfd = kfi.data
-            # for now, in this case, ignore interpolator
-            kfi = None
-        if isinstance(kfd, NifFormat.NiKeyframeData):
             translations = []
             scales = []
             rotations = []
             eulers = []
+
+            #TODO: test interpolators
+            # B-spline curve import
+            if isinstance(kfi, NifFormat.NiBSplineInterpolator):
+                times = list(kfi.get_times())
+                
+                translations = zip( times, list(kfi.get_translations()) )
+                scales = zip( times, list(kfi.get_scales()) )
+                rotations = zip( times, list(kfi.get_rotations()) )
+                
+                #TODO: get these from interpolator?
+                interp_rot = "LINEAR"
+                interp_loc = "LINEAR"
+                interp_scale = "LINEAR"
+            # next is a quick hack to make the new transform
+            # interpolator work as if it is an old style keyframe data
+            # block parented directly on the controller
+            if isinstance(kfi, NifFormat.NiTransformInterpolator):
+                kfd = kfi.data
+                # for now, in this case, ignore interpolator
+                kfi = None
+            if isinstance(kfd, NifFormat.NiKeyframeData):
+                interp_rot = get_interp_mode(kfd)
+                interp_loc = get_interp_mode(kfd.translations)
+                interp_scale = get_interp_mode(kfd.scales)
+                if kfd.rotation_type == 4:
+                    b_armature_object.pose.bones[bone_name].rotation_mode = "XYZ"
+                    # uses xyz rotation
+                    if kfd.xyz_rotations[0].keys:
+                        
+                        #euler keys need not be sampled at the same time in KFs
+                        #but we need complete key sets to do the space conversion
+                        #so perform linear interpolation to import all keys properly
+                        
+                        #get all the keys' times
+                        times_x = [key.time for key in kfd.xyz_rotations[0].keys]
+                        times_y = [key.time for key in kfd.xyz_rotations[1].keys]
+                        times_z = [key.time for key in kfd.xyz_rotations[2].keys]
+                        #the unique time stamps we have to sample all curves at
+                        times_all = sorted( set(times_x + times_y + times_z) )
+                        #the actual resampling
+                        x_r = interpolate(times_all, times_x, [key.value for key in kfd.xyz_rotations[0].keys])
+                        y_r = interpolate(times_all, times_y, [key.value for key in kfd.xyz_rotations[1].keys])
+                        z_r = interpolate(times_all, times_z, [key.value for key in kfd.xyz_rotations[2].keys])
+                    eulers = zip(times_all, zip(x_r, y_r, z_r) )
+                else:
+                    rotations = [(key.time, key.value) for key in kfd.quaternion_keys]
             
-            interp_rot = get_interp_mode(kfd)
-            interp_loc = get_interp_mode(kfd.translations)
-            interp_scale = get_interp_mode(kfd.scales)
-            if kfd.rotation_type == 4:
-                b_armature_object.pose.bones[bone_name].rotation_mode = "XYZ"
-                # uses xyz rotation
-                if kfd.xyz_rotations[0].keys:
+                if kfd.scales.keys:
+                    scales = [(key.time, key.value) for key in kfd.scales.keys]
                     
-                    #euler keys need not be sampled at the same time in KFs
-                    #but we need complete key sets to do the space conversion
-                    #so perform linear interpolation to import all keys properly
+                if kfd.translations.keys:
+                    translations = [(key.time, key.value) for key in kfd.translations.keys]
                     
-                    #get all the keys' times
-                    times_x = [key.time for key in kfd.xyz_rotations[0].keys]
-                    times_y = [key.time for key in kfd.xyz_rotations[1].keys]
-                    times_z = [key.time for key in kfd.xyz_rotations[2].keys]
-                    #the unique time stamps we have to sample all curves at
-                    times_all = sorted( set(times_x + times_y + times_z) )
-                    #the actual resampling
-                    x_r = interpolate(times_all, times_x, [key.value for key in kfd.xyz_rotations[0].keys])
-                    y_r = interpolate(times_all, times_y, [key.value for key in kfd.xyz_rotations[1].keys])
-                    z_r = interpolate(times_all, times_z, [key.value for key in kfd.xyz_rotations[2].keys])
-                eulers = zip(times_all, zip(x_r, y_r, z_r) )
-            else:
-                rotations = [(key.time, key.value) for key in kfd.quaternion_keys]
-        
-            if kfd.scales.keys:
-                scales = [(key.time, key.value) for key in kfd.scales.keys]
-                
-            if kfd.translations.keys:
-                translations = [(key.time, key.value) for key in kfd.translations.keys]
-                
-        #todo: move frame conversion into function
-        
-        if eulers:
-            NifLog.debug('Rotation keys...(euler)')
-            fcurves = create_fcurves(b_armature_action, bone_name, "rotation_euler", 3)
-            for t, val in eulers:
-                euler = mathutils.Euler( val )
-                key = get_keymat(niBone_bind_rot_inv, euler.to_matrix().to_4x4() ).to_euler()
-                add_key(fcurves, t, self.fps, key, interp_rot)
-        elif rotations:
-            NifLog.debug('Rotation keys...(quaternions)')
-            fcurves = create_fcurves(b_armature_action, bone_name, "rotation_quaternion", 4)
-            for t, val in rotations:
-                quat = mathutils.Quaternion([val.w, val.x, val.y, val.z])
-                key = get_keymat(niBone_bind_rot_inv, quat.to_matrix().to_4x4() ).to_quaternion()
-                add_key(fcurves, t, self.fps, key, interp_rot)
-        
-        if scales:
-            NifLog.debug('Scale keys...')
-            fcurves = create_fcurves(b_armature_action, bone_name, "scale", 3)
-            for t, val in scales:
-                key = (val, val, val)
-                add_key(fcurves, t, self.fps, key, interp_scale)
-                    
-        if translations:
-            NifLog.debug('Translation keys...')
-            fcurves = create_fcurves(b_armature_action, bone_name, "location", 3)
-            for t, val in translations:
-                vec = mathutils.Vector([val.x, val.y, val.z])
-                key = get_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()
-                add_key(fcurves, t, self.fps, key, interp_loc)
-        
-        if kfc:
+            #todo: move frame conversion into function
+            
+            if eulers:
+                NifLog.debug('Rotation keys...(euler)')
+                fcurves = create_fcurves(b_armature_action, bone_name, "rotation_euler", 3)
+                for t, val in eulers:
+                    euler = mathutils.Euler( val )
+                    key = get_keymat(niBone_bind_rot_inv, euler.to_matrix().to_4x4() ).to_euler()
+                    add_key(fcurves, t, self.fps, key, interp_rot)
+            elif rotations:
+                NifLog.debug('Rotation keys...(quaternions)')
+                fcurves = create_fcurves(b_armature_action, bone_name, "rotation_quaternion", 4)
+                for t, val in rotations:
+                    quat = mathutils.Quaternion([val.w, val.x, val.y, val.z])
+                    key = get_keymat(niBone_bind_rot_inv, quat.to_matrix().to_4x4() ).to_quaternion()
+                    add_key(fcurves, t, self.fps, key, interp_rot)
+            
+            if scales:
+                NifLog.debug('Scale keys...')
+                fcurves = create_fcurves(b_armature_action, bone_name, "scale", 3)
+                for t, val in scales:
+                    key = (val, val, val)
+                    add_key(fcurves, t, self.fps, key, interp_scale)
+                        
+            if translations:
+                NifLog.debug('Translation keys...')
+                fcurves = create_fcurves(b_armature_action, bone_name, "location", 3)
+                for t, val in translations:
+                    vec = mathutils.Vector([val.x, val.y, val.z])
+                    key = get_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()
+                    add_key(fcurves, t, self.fps, key, interp_loc)
+            
             #probably a superfluous check
             if bone_name in b_armature_action.groups:
                 bone_fcurves = b_armature_action.groups[bone_name].channels
@@ -716,9 +718,9 @@ class ArmatureAnimation():
                         fcurve.extrapolation = 'CONSTANT'        
         
     def import_armature_animation(self, b_armature):
-		"""
-		Imports an animation contained in the NIF itself.
-		"""
+        """
+        Imports an animation contained in the NIF itself.
+        """
         # create an action
         b_armature_object = bpy.data.objects[b_armature.name]
         b_armature_object.animation_data_create()
