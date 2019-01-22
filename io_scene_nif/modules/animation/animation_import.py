@@ -716,6 +716,9 @@ class ArmatureAnimation():
                         fcurve.extrapolation = 'CONSTANT'        
         
     def import_armature_animation(self, b_armature):
+		"""
+		Imports an animation contained in the NIF itself.
+		"""
         # create an action
         b_armature_object = bpy.data.objects[b_armature.name]
         b_armature_object.animation_data_create()
@@ -730,7 +733,7 @@ class ArmatureAnimation():
 
             bone_bm = nif_utils.import_matrix(niBone) # base pose
             niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(bone_bm)
-            niBone_bind_rot_inv = niBone_bind_rot.inverted()
+            niBone_bind_rot_inv = niBone_bind_rot.to_4x4().inverted()
             
             # get controller, interpolator, and data
             # note: the NiKeyframeController check also includes
