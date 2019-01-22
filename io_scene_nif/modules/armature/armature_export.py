@@ -40,7 +40,6 @@
 import bpy
 import mathutils
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
 from pyffi.formats.nif import NifFormat
