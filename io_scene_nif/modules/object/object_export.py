@@ -96,18 +96,15 @@ class ObjectHelper:
         self.nif_export.dict_blocks[block] = b_obj
         return block
 
-    def export_node(self, b_obj, space, parent_block, node_name):
+    def export_node(self, b_obj, parent_block, node_name):
         """Export a mesh/armature/empty object b_obj as child of parent_block.
         Export also all children of b_obj.
 
-        - space is 'none', 'worldspace', or 'localspace', and determines
-          relative to what object the transformation should be stored.
         - parent_block is the parent nif block of the object (None for the
           root node)
         - for the root node, b_obj is None, and node_name is usually the base
           filename (either with or without extension)
 
-        :param space:
         :param parent_block:
         :param b_obj:
         :param node_name: The name of the node to be exported.
@@ -187,7 +184,7 @@ class ObjectHelper:
             # -> mesh data.
             # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
             is_collision = b_obj.game.use_collision_bounds
-            has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
+            has_ipo = b_obj_ipo and b_obj_ipo.fcurves
             has_children = len(b_obj_children) > 0
             is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
 
@@ -212,7 +209,7 @@ class ObjectHelper:
                     node = self.create_block('NiBillboardNode', b_obj)
             else:
                 # don't create intermediate ninode for this guy
-                self.mesh_helper.export_tri_shapes(b_obj, space, parent_block, node_name)
+                self.mesh_helper.export_tri_shapes(b_obj, parent_block, node_name)
                 # we didn't create a ninode, return nothing
                 return None
 
@@ -233,10 +230,6 @@ class ObjectHelper:
                     NifLog.warn("Mesh {0} is skinned but also has object animation. "
                                 "The nif format does not support this, ignoring object animation.".format(b_obj.name))
                     b_obj_ipo = None
-                trishape_space = space
-                space = 'none'
-            else:
-                trishape_space = 'none'
 
         # make it child of its parent in the nif, if it has one
         if parent_block:
@@ -267,18 +260,20 @@ class ObjectHelper:
                 else:
                     node.flags = 0x000C  # morrowind
 
-        self.set_object_matrix(b_obj, space, node)
+        self.set_object_matrix(b_obj, node)
 
         if b_obj:
             # export animation
             if b_obj_ipo:
-                if any(b_obj_ipo[b_channel] for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    self.nif_export.animationhelper.export_keyframes(b_obj_ipo, space, node)
-                self.export_object_vis_controller(b_obj, node)
+				# no anim support here for now!
+                pass
+                # if any(b_obj_ipo[b_channel] for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
+                    # self.nif_export.animationhelper.export_keyframes(b_obj_ipo, node)
+                # self.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of this ninode
             if b_obj.type == 'MESH':
                 # see definition of trishape_space above
-                self.mesh_helper.export_tri_shapes(b_obj, trishape_space, node)
+                self.mesh_helper.export_tri_shapes(b_obj, node)
 
             # if it is an armature, export the bones as ninode children of this ninode
             elif b_obj.type == 'ARMATURE':
@@ -391,10 +386,10 @@ class ObjectHelper:
             n_rd_lod_level.near_extent = n_lod_level.near_extent
             n_rd_lod_level.far_extent = n_lod_level.far_extent
 
-    def set_object_matrix(self, b_obj, space, block):
+    def set_object_matrix(self, b_obj, block):
         """Set a block's transform matrix to an object's transformation matrix in rest pose."""
         # decompose
-        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
+        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj)
 
         # and fill in the values
         block.translation.x = n_trans_vec[0]
@@ -416,14 +411,14 @@ class ObjectHelper:
 
         return n_scale, n_rot_mat33, n_trans_vec
 
-    def get_object_matrix(self, b_obj, space):
+    def get_object_matrix(self, b_obj):
         """Get an object's matrix as NifFormat.Matrix44
 
         Note: for objects parented to bones, this will return the transform
         relative to the bone parent head in nif coordinates (that is, including
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
-        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
+        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj)
         matrix = NifFormat.Matrix44()
 
         matrix.m_11 = n_rot_mat33[0][0] * n_scale
@@ -446,31 +441,19 @@ class ObjectHelper:
 
         return matrix
 
-    def get_object_srt(self, b_obj, space='localspace'):
+    def get_object_srt(self, b_obj):
         """Find scale, rotation, and translation components of an object in
-        the rest pose. Returns a triple (bs, br, bt), where bs
+        the nif's rest pose. Returns a triple (bs, br, bt), where bs
         is a scale float, br is a 3x3 rotation matrix, and bt is a
         translation vector. It should hold that
 
-        ob.getMatrix(space) == bs * br * bt
+        nif_matrix == bs * br * bt
 
         Note: for objects parented to bones, this will return the transform
         relative to the bone parent head including bone correction.
+		"""
 
-        space is either 'none' (gives identity transform) or 'localspace'"""
-        # TODO: remove the space argument, always do local space
-        # handle the trivial case first
-        if space == 'none':
-            return (1.0,
-                    mathutils.Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
-                    mathutils.Vector([0, 0, 0]))
-
-        assert (space == 'localspace')
-
-        # now write out spaces
         if isinstance(b_obj, bpy.types.Bone):
-            # bones, get the rest matrix
-            # matrix = self.nif_export.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
             matrix = self.nif_export.armaturehelper.get_bind_matrix(b_obj)
 
         else:
@@ -485,13 +468,13 @@ class ObjectHelper:
                 parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
 				
 				#undo the calculations from import
-                matrix =  parent_bone.matrix_local.to_3x3().to_4x4() * b_obj.matrix_local
+                matrix =  parent_bone.matrix_local.to_3x3().to_4x4() * matrix
 				#but here we add to the X loc instead of Y due to the coordinate changes
                 matrix.translation.x += parent_bone.length
 
         try:
             return nif_utils.decompose_srt(matrix)
-        except nif_utils.NifError:  # non-uniform scaling
+        except nif_utils.NifError:
             raise nif_utils.NifError("Non-uniform scaling on bone '%s' not supported. "
                                      "This could be a bug... No workaround. :-( Post your blend!" % b_obj.name)
 
@@ -501,7 +484,7 @@ class MeshHelper:
     def __init__(self, parent):
         self.nif_export = parent
 
-    def export_tri_shapes(self, b_obj, space, parent_block, trishape_name=None):
+    def export_tri_shapes(self, b_obj, parent_block, trishape_name=None):
         NifLog.info("Exporting {0}".format(b_obj))
 
         assert (b_obj.type == 'MESH')
@@ -695,7 +678,7 @@ class MeshHelper:
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1  # default
 
-            self.nif_export.objecthelper.set_object_matrix(b_obj, space, trishape)
+            self.nif_export.objecthelper.set_object_matrix(b_obj, trishape)
 
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
@@ -1104,9 +1087,8 @@ class MeshHelper:
                         skininst.data = skindata
 
                         skindata.has_vertex_weights = True
-                        # fix geometry rest pose: transform relative to
-                        # skeleton root
-                        skindata.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').get_inverse())
+                        # fix geometry rest pose: transform relative to skeleton root
+                        skindata.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj).get_inverse())
 
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}

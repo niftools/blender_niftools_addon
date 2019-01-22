@@ -53,21 +53,6 @@ class NifCommon:
     # dictionary of bones that belong to a certain armature
     # maps NIF armature name to list of NIF bone name
     dict_armatures = {}
-    # dictionary of bones, maps Blender bone name to matrix that maps the
-    # NIF bone matrix on the Blender bone matrix
-    # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
-    dict_bones_extra_matrix = {}
-
-    # dictionary of bones, maps Blender bone name to matrix that maps the
-    # NIF bone matrix on the Blender bone matrix
-    # Recall from the import script
-    #   B' = X * B,
-    # where B' is the Blender bone matrix, and B is the NIF bone matrix,
-    # both in armature space. So to restore the NIF matrices we need to do
-    #   B = X^{-1} * B'
-    # Hence, we will restore the X's, invert them, and store those inverses in the
-    # following dictionary.
-    dict_bones_extra_matrix_inv = {}
 
     # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
     # we use this dictionary to set the physics constraints (ragdoll etc)

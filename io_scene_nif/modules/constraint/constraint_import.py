@@ -302,20 +302,21 @@ class constraint_import():
                 axis_z = axis_z * transform
                 axis_x = axis_x * transform
 
-            # next, cancel out bone matrix correction
-            # note that B' = X * B with X = self.nif_import.dict_bones_extra_matrix[B]
-            # so multiply with the inverse of X
-            for niBone in self.nif_import.dict_bones_extra_matrix:
-                if niBone.collision_object \
-                   and niBone.collision_object.body is hkbody:
-                    transform = mathutils.Matrix(
-                        self.nif_import.dict_bones_extra_matrix[niBone])
-                    transform.invert()
-                    pivot = pivot * transform
-                    transform = transform.to_3x3()
-                    axis_z = axis_z * transform
-                    axis_x = axis_x * transform
-                    break
+            # TODO: update this to use the new bone system	
+            # # next, cancel out bone matrix correction
+            # # note that B' = X * B with X = self.nif_import.dict_bones_extra_matrix[B]
+            # # so multiply with the inverse of X
+            # for niBone in self.nif_import.dict_bones_extra_matrix:
+                # if niBone.collision_object \
+                   # and niBone.collision_object.body is hkbody:
+                    # transform = mathutils.Matrix(
+                        # self.nif_import.dict_bones_extra_matrix[niBone])
+                    # transform.invert()
+                    # pivot = pivot * transform
+                    # transform = transform.to_3x3()
+                    # axis_z = axis_z * transform
+                    # axis_x = axis_x * transform
+                    # break
 
             # cancel out bone tail translation
             if b_hkobj.parent_bone:

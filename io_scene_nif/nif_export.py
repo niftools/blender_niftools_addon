@@ -120,8 +120,6 @@ class NifExport(NifCommon):
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
         self.dict_armatures = {}
-        self.dict_bones_extra_matrix = {}
-        self.dict_bones_extra_matrix_inv = {}
         self.dict_bone_priorities = {}
         self.dict_havok_objects = {}
         self.dict_names = {}
@@ -201,9 +199,6 @@ class NifExport(NifCommon):
             except NameError:
                 animtxt = None
 
-            # rebuild the bone extra matrix dictionary from the 'BoneExMat' text buffer
-            self.armaturehelper.rebuild_bones_extra_matrices()
-
             # rebuild the full name dictionary from the 'FullNames' text buffer
             self.objecthelper.rebuild_full_names()
 
@@ -220,7 +215,7 @@ class NifExport(NifCommon):
 
             # export the root node (the name is fixed later to avoid confusing the
             # exporter with duplicate names)
-            root_block = self.objecthelper.export_node(None, 'none', None, '')
+            root_block = self.objecthelper.export_node(None, None, '')
 
             # TODO Move to object system and redo
             # export objects
@@ -243,9 +238,7 @@ class NifExport(NifCommon):
 
                 # export the root objects as a NiNodes; their children are
                 # exported as well
-                # note that localspace = worldspace, because root objects have
-                # no parents
-                self.objecthelper.export_node(root_object, 'localspace', root_block, root_object.name)
+                self.objecthelper.export_node(root_object, root_block, root_object.name)
 
             # post-processing:
             # ----------------
@@ -280,7 +273,7 @@ class NifExport(NifCommon):
                     and (not NifOp.props.bs_animation_node)):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.export_keyframes(None, 'localspace', root_block)
+                    self.animationhelper.export_keyframes(None, root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
                 for block in self.dict_blocks:
@@ -800,9 +793,9 @@ class NifExport(NifCommon):
             node = self.objecthelper.create_block("RootCollisionNode", b_obj)
             parent_block.add_child(node)
             node.flags = 0x0003  # default
-            self.objecthelper.set_object_matrix(b_obj, 'localspace', node)
+            self.objecthelper.set_object_matrix(b_obj, node)
             for child in b_obj.children:
-                self.objecthelper.export_node(child, 'localspace', node, None)
+                self.objecthelper.export_node(child, node, None)
 
         elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
