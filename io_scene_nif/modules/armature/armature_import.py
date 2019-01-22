@@ -108,7 +108,6 @@ def mat3_to_vec_roll(mat):
 	roll = math.atan2(rollmat[0][2], rollmat[2][2])
 	return vec, roll
 
-
 class Armature():
 	
 	def __init__(self, parent):
@@ -123,8 +122,8 @@ class Armature():
 		b_armatureData = bpy.data.armatures.new(armature_name)
 		#b_armatureData.use_vertex_groups = True
 		#b_armatureData.use_bone_envelopes = False
-		b_armatureData.show_names = True
-		b_armatureData.show_axes = True
+		# b_armatureData.show_names = True
+		# b_armatureData.show_axes = True
 		b_armatureData.draw_type = 'STICK'
 		b_armature = bpy.data.objects.new(armature_name, b_armatureData)
 		b_armature.select = True

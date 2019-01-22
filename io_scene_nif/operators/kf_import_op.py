@@ -1,4 +1,4 @@
-'''Nif Operators, nif specific operators to update nif properties''' 
+'''Blender Nif Plugin Main Import operators, function called through Import Menu'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,5 +37,43 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from . import object, geometry, nif_import_op, nif_export_op, nif_common_op, kf_import_op
+import bpy
+from bpy_extras.io_utils import ImportHelper
 
+from .nif_common_op import NifOperatorCommon
+
+from io_scene_nif import nif_import
+
+class KfImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
+    """Operator for loading a kf file."""
+        
+    #: Name of function for calling the nif export operators.
+    bl_idname = "import_scene.kf"
+
+    #: How the nif import operators is labelled in the user interface.
+    bl_label = "Import KF"
+
+    #: File name filter for file select dialog.
+    filter_glob = bpy.props.StringProperty(
+        default="*.kf", options={'HIDDEN'})
+        
+    files = bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
+    
+    #: Number of nif units per blender unit.
+    scale_correction_import = bpy.props.FloatProperty(
+        name="Scale Correction Import",
+        description="Changes size of mesh to fit onto Blender's default grid.",
+        default=1.0,
+        min=0.01, max=100.0, precision=2)
+    
+
+    def execute(self, context):
+        """Execute the import operators: first constructs a
+        :class:`~io_scene_nif.nif_import.NifImport` instance and then
+        calls its :meth:`~io_scene_nif.nif_import.NifImport.execute`
+        method.
+        """
+        
+        
+        return nif_import.KfImport(self, context).execute()
+    
