@@ -44,6 +44,11 @@ from io_scene_nif.utility.nif_logging import NifLog
 
 from pyffi.formats.nif import NifFormat
 
+import math
+
+correction_local = mathutils.Euler((math.radians(90), 0, math.radians(90))).to_matrix().to_4x4()
+correction_global = mathutils.Euler((math.radians(-90), math.radians(-90), 0)).to_matrix().to_4x4()
+
 class Armature():
     
 
@@ -247,7 +252,18 @@ class Armature():
                         else:
                             assert(False) # BUG!
                             
-                            
+             
+    def get_bind_matrix(self, bone):
+        """
+        Get a nif armature-space matrix from a blender bone matrix.
+        """
+        bind = correction_global.inverted() *  correction_local.inverted() * bone.matrix_local *  correction_local
+        if bone.parent:
+            p_bind_restored = correction_global.inverted() *  correction_local.inverted() * bone.parent.matrix_local *  correction_local
+            bind = p_bind_restored.inverted() * bind
+        return bind     
+
+        
     def get_bone_rest_matrix(self, bone, space, extra = True, tail = False):
         """Get bone matrix in rest position ("bind pose"). Space can be
         ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
