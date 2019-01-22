@@ -92,8 +92,6 @@ class NifImport(NifCommon):
         """Main import function."""
 
         self.dict_armatures = {}
-        # self.dict_bones_extra_matrix = {}
-        # self.dict_bones_extra_matrix_inv = {}
         self.dict_bone_priorities = {}
         self.dict_havok_objects = {}
         self.dict_names = {}
@@ -302,9 +300,6 @@ class NifImport(NifCommon):
 
         if self.root_ninode:
             b_obj.niftools.rootnode = self.root_ninode
-        # # store bone matrix offsets for re-export
-        # if self.dict_bones_extra_matrix:
-            # self.armaturehelper.store_bones_extra_matrix()
 
         # store original names for re-export
         if self.dict_names:

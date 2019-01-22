@@ -55,55 +55,6 @@ class Armature():
     def __init__(self, parent):
         self.nif_export = parent
         
-        
-    def rebuild_bones_extra_matrices(self):
-        """Recover bone extra matrices."""
-        
-        try:
-            bonetxt = bpy.data.texts["BoneExMat"]
-        except KeyError:
-            return
-        # Blender bone names are unique so we can use them as keys.
-        for b_textline in bonetxt.lines:
-            line = b_textline.body
-            if len(line) > 0:
-                # reconstruct matrix from text
-                b, m = line.split('/')
-                try:
-                    matrix = mathutils.Matrix(
-                        [[float(f) for f in row.split(',')]
-                         for row in m.split(';')])
-                except:
-                    raise nif_utils.NifError('Syntax error in BoneExMat buffer.')
-                # Check if matrices are clean, and if necessary fix them.
-                quat = matrix.to_3x3().to_quaternion()
-                if sum(sum(abs(x) for x in vec)
-                       for vec in matrix.to_3x3() - quat.to_matrix()) > 0.01:
-                    NifLog.warn("Bad bone extra matrix for bone {0}.\n"
-                                   "Attempting to fix... but bone transform may be incompatible with existing animations.".format(b))
-                    NifLog.debug("Old invalid matrix:\n{0}".format(str(matrix)))
-                    trans = matrix.to_translation()
-                    matrix = quat.to_matrix().resize_4x4()
-                    matrix[0][3] = trans[0]
-                    matrix[1][3] = trans[1]
-                    matrix[2][3] = trans[2]
-                    NifLog.debug("New valid matrix:\n{0}".format(matrix))
-                # Matrices are stored inverted for easier math later on.
-                matrix.invert()
-                self.set_bone_extra_matrix_inv(b, matrix)
-                
-    def set_bone_extra_matrix_inv(self, bone_name, matrix):
-        """Set bone extra matrix, inverted. The bone_name is first converted
-        to blender style (to ensure compatibility with older imports).
-        """
-        self.nif_export.dict_bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)] = matrix
-
-    def get_bone_extra_matrix_inv(self, bone_name):
-        """Get bone extra matrix, inverted. The bone_name is first converted
-        to blender style (to ensure compatibility with older imports).
-        """
-        return self.nif_export.dict_bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)]
-    
     
     def export_bones(self, arm, parent_block):
         """Export the bones of an armature."""
@@ -168,23 +119,14 @@ class Armature():
                 else:
                     node.flags = 0x0002 # default for Morrowind bones
 
-            self.nif_export.objecthelper.set_object_matrix(bone, 'localspace', node) # rest pose
+            self.nif_export.objecthelper.set_object_matrix(bone, node) # rest pose
 
-            # bone rotations are stored in the IPO relative to the rest position
-            # so we must take the rest position into account
-            # (need original one, without extra transforms, so extra = False)
-            bone_rest_matrix = self.get_bone_rest_matrix(bone, 'BONESPACE',
-                                                    extra = False)
-            try:
-                bonexmat_inv = mathutils.Matrix(
-                    self.get_bone_extra_matrix_inv(bone.name))
-            except KeyError:
-                bonexmat_inv = mathutils.Matrix()
-                bonexmat_inv.identity()
-            if bone.name in bones_ipo:
-                self.nif_export.animationhelper.export_keyframes(
-                    bones_ipo[bone.name], 'localspace', node,
-                    bind_matrix = bone_rest_matrix, extra_mat_inv = bonexmat_inv)
+
+            # TODO: once per-node animation is implemented, it should look kinda like this
+            # if bone.name in bones_ipo:
+                # self.nif_export.animationhelper.export_keyframes(
+                    # bones_ipo[bone.name], node,
+                    # bind_matrix = bone_rest_matrix)
 
             # does bone have priority value in NULL constraint?
             for constr in arm.pose.bones[bone.name].constraints:
@@ -218,8 +160,7 @@ class Armature():
             if b_obj_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
                 if (b_obj.type != 'ARMATURE'):
                     # not parented to an armature
-                    self.nif_export.objecthelper.export_node(b_obj_child, 'localspace',
-                                     parent_block, b_obj_child.name)
+                    self.nif_export.objecthelper.export_node(b_obj_child, parent_block, b_obj_child.name)
                 else:
                     # this object is parented to an armature
                     # we should check whether it is really parented to the
@@ -227,8 +168,7 @@ class Armature():
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = b_obj_child.parent_bone
                     if parent_bone_name == "":
-                        self.nif_export.objecthelper.export_node(b_obj_child, 'localspace',
-                                         parent_block, b_obj_child.name)
+                        self.nif_export.objecthelper.export_node(b_obj_child, parent_block, b_obj_child.name)
                     else:
                         # we should parent the object to the bone instead of
                         # to the armature
@@ -246,8 +186,7 @@ class Armature():
                                 #     extra translation along the Y axis
                                 #     with length of the bone ("tail")
                                 # this is handled in the get_object_srt function
-                                self.nif_export.objecthelper.export_node(b_obj_child, 'localspace',
-                                                 bone_block, b_obj_child.name)
+                                self.nif_export.objecthelper.export_node(b_obj_child, bone_block, b_obj_child.name)
                                 break
                         else:
                             assert(False) # BUG!
@@ -262,47 +201,3 @@ class Armature():
             p_bind_restored = correction_global.inverted() *  correction_local.inverted() * bone.parent.matrix_local *  correction_local
             bind = p_bind_restored.inverted() * bind
         return bind     
-
-        
-    def get_bone_rest_matrix(self, bone, space, extra = True, tail = False):
-        """Get bone matrix in rest position ("bind pose"). Space can be
-        ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
-        is BONESPACE (translation is bone head plus tail from parent bone).
-        If tail is True then the matrix translation includes the bone tail."""
-        # Retrieves the offset from the original NIF matrix, if existing
-        correction_matrix = mathutils.Matrix()
-        if extra:
-            try:
-                correction_matrix = mathutils.Matrix(
-                    self.get_bone_extra_matrix_inv(bone.name))
-            except KeyError:
-                correction_matrix.identity()
-        else:
-            correction_matrix.identity()
-        if (space == 'ARMATURESPACE'):
-            matrix = mathutils.Matrix(bone.matrix_local)
-            if tail:
-                tail_pos = bone.tail_local
-                matrix[0][3] = tail_pos[0]
-                matrix[1][3] = tail_pos[1]
-                matrix[2][3] = tail_pos[2]
-            return correction_matrix * matrix
-        elif (space == 'BONESPACE'):
-            if bone.parent:
-                # not sure why extra = True is required here
-                # but if extra = extra then transforms are messed up, so keep
-                # for now
-                parinv = self.get_bone_rest_matrix(bone.parent, 'ARMATURESPACE',
-                                                   extra = True, tail = False)
-                parinv.invert()
-                return self.get_bone_rest_matrix(bone,
-                                                 'ARMATURESPACE',
-                                                 extra = extra,
-                                                 tail = tail) * parinv
-            else:
-                return self.get_bone_rest_matrix(bone, 'ARMATURESPACE',
-                                                 extra = extra, tail = tail)
-        else:
-            assert(False) # bug!
-
-
