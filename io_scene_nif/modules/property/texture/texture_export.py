@@ -298,6 +298,13 @@ class TextureHelper:
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = self.texture_writer.export_source_texture(texture=self.ref_mtex.texture)
 
+        if self.decal_0_mtex:
+            # print(texprop)
+            texprop.has_decal_0_texture = True
+            self.texture_writer.export_tex_desc(texdesc=texprop.decal_0_texture,
+                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                b_mat_texslot=self.decal_0_mtex)
+                
     def export_texture_shader_effect(self, texprop):
         # export extra shader textures
         if NifOp.props.game == 'SID_MEIER_S_RAILROADS':
@@ -408,6 +415,7 @@ class TextureHelper:
         self.glow_mtex = None
         self.normal_mtex = None
         self.ref_mtex = None
+        self.decal_0_mtex = None
 
         for b_mat_texslot in used_slots:
             # check REFL-mapped textures
@@ -495,13 +503,27 @@ class TextureHelper:
                     # got the dark map
                     self.dark_mtex = b_mat_texslot
 
-                # diffuse
+                # detail
+                elif b_mat_texslot.use_map_color_diffuse and b_mat_texslot.blend_type == 'OVERLAY':
+                    if self.detail_mtex:
+                        raise nif_utils.NifError("Multiple detail textures in mesh '%s', material '%s'.\n" 
+                                                 " Make sure there is only one texture with Influence Diffuse > color" % (b_obj.name, b_mat.name))
+                    # extra diffuse consider as detail texture
+
+                    # check if alpha channel is enabled for this texture
+                    if b_mat_texslot.use_map_alpha:
+                        mesh_hasalpha = True
+                    self.detail_mtex = b_mat_texslot
+					
+                # diffuse & decal_0
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.base_mtex:
-                        raise nif_utils.NifError("Multiple Diffuse textures in mesh '%s', material '%s'.\n"
+                        if self.decal_0_mtex:
+                            raise nif_utils.NifError("Multiple Diffuse textures in mesh '%s', material '%s'.\n"
                                                  "Make sure there is only one texture with Influence > Diffuse > color" % (b_obj.name, b_mat.name))
-
-                    self.base_mtex = b_mat_texslot
+                        self.decal_0_mtex = b_mat_texslot
+                    else:
+                        self.base_mtex = b_mat_texslot
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -535,18 +557,6 @@ class TextureHelper:
     
                         mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
                         '''
-
-                # detail
-                elif b_mat_texslot.use_map_color_diffuse:
-                    if self.detail_mtex:
-                        raise nif_utils.NifError("Multiple detail textures in mesh '%s', material '%s'.\n" 
-                                                 " Make sure there is only one texture with Influence Diffuse > color" % (b_obj.name, b_mat.name))
-                    # extra diffuse consider as detail texture
-
-                    # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
-                    self.detail_mtex = b_mat_texslot
 
                 # reflection
                 elif b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir:
