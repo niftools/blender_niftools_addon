@@ -62,9 +62,7 @@ class KfImport(NifCommon):
             self.kfdata = KFFile.load_kf(kf_file)
             for kf_root in self.kfdata.roots:
                 # calculate and set frames per second
-                self.fps = self.animationhelper.get_frames_per_second( self.kfdata.roots )
-                bpy.context.scene.render.fps = self.fps
-                #TODO [animation] pass the self.fps value directly and not get it from blender; even bpy.context.scene.update() does not help to get the updated fps value
+                self.animationhelper.set_frames_per_second( self.kfdata.roots )
 
                 self.animationhelper.import_kf_standalone(kf_root)
         return {'FINISHED'}
