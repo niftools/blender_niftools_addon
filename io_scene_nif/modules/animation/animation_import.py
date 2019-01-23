@@ -38,17 +38,14 @@
 # ***** END LICENSE BLOCK *****
 import bpy
 import mathutils
+from bisect import bisect_left
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
-
-### todo: this should probably be moved to utils?
-### or maybe use numpy - np.interp() is equivalent but probably way too much overhead for just that one function
-
-from bisect import bisect_left
+### TODO [animation/util] interpolate() should perhaps be moved to utils?
 def interpolate(x_out, x_in, y_in):
     """
     sample (x_in I y_in) at x coordinates x_out
@@ -92,25 +89,15 @@ def get_bind_data(armature):
             bones_data[bone.name] = (rest_scale, rest_rot.inverted().to_4x4(), rest_trans)
         return bones_data
 
-def create_ob_fcurves(action, dtype, dlen):
-    """
-    Create fcurves for object in action.
-    """
-    return [action.fcurves.new(data_path = dtype, index = i, action_group = "LocRotScale") for i in range(dlen)]
-    
-def create_fcurves(action, bonename, dtype, dlen):
+def create_fcurves(action, dtype, dlen, bonename = None):
     """
     Create fcurves for bonename in action.
     """
-    return [action.fcurves.new(data_path = 'pose.bones["'+bonename+'"].'+dtype, index = i, action_group = bonename) for i in range(dlen)]
-    
-def add_key(fcurves, t, fps, key, interp):
-    """
-    Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
-    """
-    frame = round(t * fps)
-    for fcurve, k in zip(fcurves, key):
-        fcurve.keyframe_points.insert(frame, k).interpolation = interp
+    if bonename:
+        return [action.fcurves.new(data_path = 'pose.bones["'+bonename+'"].'+dtype, index = i, action_group = bonename) for i in range(dlen)]
+    else:
+        return [action.fcurves.new(data_path = dtype, index = i, action_group = "LocRotScale") for i in range(dlen)]
+        
     
 def get_interp_mode(kf_element, ):
     """
@@ -139,10 +126,18 @@ class AnimationHelper():
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
         self.armature_animation = ArmatureAnimation(parent)
-        #they have been set already in nif_import.py via get_frames_per_second
-        self.fps = bpy.context.scene.render.fps
+        #set a dummy here, update via set_frames_per_second
+        self.fps = 30
 
- 
+     
+    def add_key(self, fcurves, t, key, interp):
+        """
+        Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
+        """
+        frame = round(t * self.fps)
+        for fcurve, k in zip(fcurves, key):
+            fcurve.keyframe_points.insert(frame, k).interpolation = interp
+        
     def import_kf_standalone(self, kf_root):
         """
         Import a kf animation. Needs a suitable armature in blender scene.
@@ -292,8 +287,8 @@ class AnimationHelper():
             bpy.context.scene.frame_start = 0
             bpy.context.scene.frame_end = frame
 
-    def get_frames_per_second(self, roots):
-        """Scan all blocks and return a reasonable number for FPS."""
+    def set_frames_per_second(self, roots):
+        """Scan all blocks and set a reasonable number for FPS to this class and the scene."""
         # find all key times
         key_times = []
         for root in roots:
@@ -316,10 +311,10 @@ class AnimationHelper():
             for uvdata in root.tree(block_type=NifFormat.NiUVData):
                 for uvgroup in uvdata.uv_groups:
                     key_times.extend(key.time for key in uvgroup.keys)
-        fps = 30
+        fps = self.fps
         # not animated, return a reasonable default
         if not key_times:
-            return fps
+            return
         # calculate FPS
         key_times = sorted(set(key_times))
         lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
@@ -332,7 +327,9 @@ class AnimationHelper():
                 lowest_diff = diff
                 fps = test_fps
         NifLog.info("Animation estimated at %i frames per second." % fps)
-        return fps
+        self.fps = fps
+        bpy.context.scene.render.fps = fps
+        bpy.context.scene.frame_set(0)
 
     def store_animation_data(self, rootBlock):
         return
@@ -403,10 +400,10 @@ class AnimationHelper():
 
         if kfd.scales.keys:
             NifLog.debug('Scale keys...')
-            fcurves = create_ob_fcurves(b_obj_action, "scale", 3)
+            fcurves = create_fcurves(b_obj_action, "scale", 3)
             for key in kfd.scales.keys:
                 v = (key.value, key.value, key.value)
-                add_key(fcurves, key.time, self.fps, v, interp_scale)
+                self.add_key(fcurves, key.time, v, interp_scale)
             
         # detect the type of rotation keys
         if kfd.rotation_type == 4:
@@ -414,29 +411,26 @@ class AnimationHelper():
             b_obj.rotation_mode = "XYZ"
             #Eulers are a bit different here, we can import them regardless of their timing
             #because they need no correction math in object space
-            fcurves = create_ob_fcurves(b_obj_action, "rotation_euler", 3)
+            fcurves = create_fcurves(b_obj_action, "rotation_euler", 3)
             keys = (kfd.xyz_rotations[0].keys, kfd.xyz_rotations[1].keys, kfd.xyz_rotations[2].keys)
             for fcu, keys_dim in zip(fcurves, keys):
                 for key in keys_dim:
-                    add_key((fcu, ), key.time, self.fps, (key.value,), interp_rot)
+                    self.add_key((fcu, ), key.time, (key.value,), interp_rot)
         # uses quaternions
         elif kfd.quaternion_keys:
             NifLog.debug('Rotation keys...(quaternions)')
             b_obj.rotation_mode = "QUATERNION"
-            fcurves = create_ob_fcurves(b_obj_action, "rotation_quaternion", 4)
+            fcurves = create_fcurves(b_obj_action, "rotation_quaternion", 4)
             for key in kfd.quaternion_keys:
                 v = (key.value.w, key.value.x, key.value.y, key.value.z)
-                add_key(fcurves, key.time, self.fps, v, interp_rot)
+                self.add_key(fcurves, key.time, v, interp_rot)
 
         if kfd.translations.keys:
             NifLog.debug('Translation keys...')
-            fcurves = create_ob_fcurves(b_obj_action, "location", 3)
+            fcurves = create_fcurves(b_obj_action, "location", 3)
             for key in kfd.translations.keys:
                 v = (key.value.x, key.value.y, key.value.z)
-                add_key(fcurves, key.time, self.fps, v, interp_rot)
-                
-        bpy.context.scene.frame_set(0)
-
+                self.add_key(fcurves, key.time, v, interp_rot)
 
 class ObjectAnimation():
     
@@ -575,9 +569,6 @@ class ArmatureAnimation():
     
     def __init__(self, parent):
         self.nif_import = parent
-        #they have been set already in nif_import.py via get_frames_per_second
-        self.fps = bpy.context.scene.render.fps
-
     
     def import_keyframe_controller(self, kfc, b_armature_object, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans):
         if kfc:
@@ -645,37 +636,35 @@ class ArmatureAnimation():
                 if kfd.translations.keys:
                     translations = [(key.time, key.value) for key in kfd.translations.keys]
                     
-            #todo: move frame conversion into function
-            
             if eulers:
                 NifLog.debug('Rotation keys...(euler)')
-                fcurves = create_fcurves(b_armature_action, bone_name, "rotation_euler", 3)
+                fcurves = create_fcurves(b_armature_action, "rotation_euler", 3, bone_name)
                 for t, val in eulers:
                     euler = mathutils.Euler( val )
                     key = nif_utils.import_keymat(niBone_bind_rot_inv, euler.to_matrix().to_4x4() ).to_euler()
-                    add_key(fcurves, t, self.fps, key, interp_rot)
+                    self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
             elif rotations:
                 NifLog.debug('Rotation keys...(quaternions)')
-                fcurves = create_fcurves(b_armature_action, bone_name, "rotation_quaternion", 4)
+                fcurves = create_fcurves(b_armature_action, "rotation_quaternion", 4, bone_name)
                 for t, val in rotations:
                     quat = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                     key = nif_utils.import_keymat(niBone_bind_rot_inv, quat.to_matrix().to_4x4() ).to_quaternion()
-                    add_key(fcurves, t, self.fps, key, interp_rot)
+                    self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
             
             if scales:
                 NifLog.debug('Scale keys...')
-                fcurves = create_fcurves(b_armature_action, bone_name, "scale", 3)
+                fcurves = create_fcurves(b_armature_action, "scale", 3, bone_name)
                 for t, val in scales:
                     key = (val, val, val)
-                    add_key(fcurves, t, self.fps, key, interp_scale)
+                    self.nif_import.animationhelper.add_key(fcurves, t, key, interp_scale)
                         
             if translations:
                 NifLog.debug('Translation keys...')
-                fcurves = create_fcurves(b_armature_action, bone_name, "location", 3)
+                fcurves = create_fcurves(b_armature_action, "location", 3, bone_name)
                 for t, val in translations:
                     vec = mathutils.Vector([val.x, val.y, val.z])
                     key = nif_utils.import_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()
-                    add_key(fcurves, t, self.fps, key, interp_loc)
+                    self.nif_import.animationhelper.add_key(fcurves, t, key, interp_loc)
             
             #probably a superfluous check
             if bone_name in b_armature_action.groups:

@@ -135,12 +135,10 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                self.fps = self.animationhelper.get_frames_per_second(
-                    self.data.roots
-                    + (self.kfdata.roots if self.kfdata else []))
-                bpy.context.scene.render.fps = self.fps
-                #TODO [animation] pass the self.fps value directly and not get it from blender; even bpy.context.scene.update() does not help to get the updated fps value
-
+                self.animationhelper.set_frames_per_second(
+                self.data.roots
+                + (self.kfdata.roots if self.kfdata else []) )
+            
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
                 pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=self.data).recurse()
@@ -215,9 +213,9 @@ class NifImport(NifCommon):
 
     def import_root(self, root_block):
         """Main import function."""
-        # # check that this is not a kf file
-        # if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
-            # raise nif_utils.NifError("direct .kf import not supported")
+        # check that this is not a kf file
+        if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
+            raise nif_utils.NifError("Use the KF import operator to load KF files.")
 
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
@@ -1161,6 +1159,7 @@ class NifImport(NifCommon):
             if morphCtrl:
                 morphData = morphCtrl.data
                 if morphData.num_morphs:
+                    fps = bpy.context.scene.render.fps
                     # insert base key at frame 1, using relative keys
                     b_mesh.insertKey(1, 'relative')
                     # get name for base key
@@ -1219,7 +1218,7 @@ class NifImport(NifCommon):
                             morphkeys = morphCtrl.interpolators[idxMorph].data.data.keys
                         for key in morphkeys:
                             x = key.value
-                            frame = 1 + int(key.time * self.fps + 0.5)
+                            frame = 1 + int(key.time * fps + 0.5)
                             b_curve.addBezier((frame, x))
                         # finally: return to base position
                         for bv, b_v_index in zip(baseverts, v_map):
