@@ -139,6 +139,7 @@ class NifImport(NifCommon):
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
                 bpy.context.scene.render.fps = self.fps
+                #TODO [animation] pass the self.fps value directly and not get it from blender; even bpy.context.scene.update() does not help to get the updated fps value
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -1385,6 +1386,7 @@ class KfImport(NifCommon):
                 # calculate and set frames per second
                 self.fps = self.animationhelper.get_frames_per_second( self.kfdata.roots )
                 bpy.context.scene.render.fps = self.fps
+                #TODO [animation] pass the self.fps value directly and not get it from blender; even bpy.context.scene.update() does not help to get the updated fps value
 
                 self.animationhelper.import_kf_standalone(kf_root)
         return {'FINISHED'}
