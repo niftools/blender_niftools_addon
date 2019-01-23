@@ -114,8 +114,7 @@ class ObjectHelper:
         #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
         # b_obj_anim_data:  object animation ipo
         # node:    contains new NifFormat.NiNode instance
-		
-        has_anim = False
+        
         export_types = ('EMPTY', 'MESH', 'ARMATURE')
         if b_obj is None:
             selected_exportable_objects = [b_obj for b_obj in bpy.context.selected_objects if b_obj.type in export_types]
@@ -163,6 +162,7 @@ class ObjectHelper:
         else:
             return None
 
+        has_anim = True if b_obj_anim_data and b_obj_anim_data.action.fcurves else False
         if node_name == 'RootCollisionNode':
             # -> root collision node (can be mesh or empty)
             # TODO: do we need to fix this stuff on export?
@@ -186,7 +186,6 @@ class ObjectHelper:
             # -> mesh data.
             # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
             is_collision = b_obj.game.use_collision_bounds
-            has_anim = True if b_obj_anim_data and b_obj_anim_data.action.fcurves else False
             has_children = len(b_obj_children) > 0
             is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
 
@@ -268,8 +267,7 @@ class ObjectHelper:
             # export object animation
             if has_anim:
                 self.nif_export.animationhelper.export_keyframes(node, b_obj)
-				#TODO: what is this?
-                # self.nif_export.animationhelper.object_animation.export_object_vis_controller(b_obj, node)
+                self.nif_export.animationhelper.object_animation.export_object_vis_controller(node, b_obj)
             # if it is a mesh, export the mesh as trishape children of this ninode
             if b_obj.type == 'MESH':
                 self.mesh_helper.export_tri_shapes(b_obj, node)
@@ -455,7 +453,7 @@ class ObjectHelper:
         if isinstance(b_obj, bpy.types.Bone):
             matrix = nif_utils.get_bind_matrix(b_obj)
 
-        else:
+        elif isinstance(b_obj, bpy.types.Object):
             # TODO MOVE TO ARMATUREHELPER
 
             matrix = b_obj.matrix_local.copy()
@@ -470,7 +468,9 @@ class ObjectHelper:
                 matrix =  parent_bone.matrix_local.to_3x3().to_4x4() * matrix
                 #but here we add to the X loc instead of Y due to the coordinate changes
                 matrix.translation.x += parent_bone.length
-
+        #Nonetype, maybe other weird stuff
+        else:
+            matrix = mathutils.Matrix()
         try:
             return nif_utils.decompose_srt(matrix)
         except nif_utils.NifError:
