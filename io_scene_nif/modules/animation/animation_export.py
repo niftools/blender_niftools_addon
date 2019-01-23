@@ -162,8 +162,10 @@ class AnimationHelper():
         bind_matrix = get_bind_matrix(bone)
         bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
         bind_rot = bind_rot.to_4x4()
-        # bind_quat = bind_rot.toQuat()
     
+        #just create a dummy euler so we can make all following eulers compatible to each other
+        euler = mathutils.Euler((0.0, math.radians(45.0), 0.0), 'XYZ')
+        
         # sometimes we need to export an empty keyframe... 
         scale_curve = []
         quat_curve = []
@@ -203,8 +205,10 @@ class AnimationHelper():
                     num_keys = len(eulers[0].keyframe_points)
                     for i in range(num_keys):
                         frame = eulers[0].keyframe_points[i].co[0]
-                        euler = export_keymat(bind_rot, mathutils.Euler([fcurve.keyframe_points[i].co[1] for fcurve in eulers]).to_matrix().to_4x4() ).to_euler()
+                        # important: make new euler compatible to the previous euler in to_euler()
+                        euler = export_keymat(bind_rot, mathutils.Euler([fcurve.keyframe_points[i].co[1] for fcurve in eulers]).to_matrix().to_4x4() ).to_euler("XYZ", euler)
                         euler_curve.append( (frame, euler) )
+                        
             #translations
             if translations:
                 if len(translations) != 3:
