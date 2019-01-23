@@ -139,7 +139,8 @@ class AnimationHelper():
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
         self.armature_animation = ArmatureAnimation(parent)
-        self.fps = 30
+        #they have been set already in nif_import.py via get_frames_per_second
+        self.fps = bpy.context.scene.render.fps
 
  
     def import_kf_standalone(self, kf_root):
@@ -315,15 +316,16 @@ class AnimationHelper():
             for uvdata in root.tree(block_type=NifFormat.NiUVData):
                 for uvgroup in uvdata.uv_groups:
                     key_times.extend(key.time for key in uvgroup.keys)
+        fps = 30
         # not animated, return a reasonable default
         if not key_times:
-            return 30
+            return fps
         # calculate FPS
-        fps = 30
+        key_times = sorted(set(key_times))
         lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
                           for time in key_times)
         # for test_fps in range(1,120): #disabled, used for testing
-        for test_fps in [20, 25, 35]:
+        for test_fps in [20, 24, 25, 35]:
             diff = sum(abs(int(time * test_fps + 0.5)-(time * test_fps))
                        for time in key_times)
             if diff < lowest_diff:
@@ -364,7 +366,7 @@ class AnimationHelper():
         Load animation attached to (Scene Root) object.
         Becomes the object level animation of the object.
         """
-		
+        
         # TODO: remove code duplication with import_keyframe_controller
         kfc = nif_utils.find_controller(niBlock, NifFormat.NiKeyframeController)
         if not kfc:
@@ -573,7 +575,8 @@ class ArmatureAnimation():
     
     def __init__(self, parent):
         self.nif_import = parent
-        self.fps = 30
+        #they have been set already in nif_import.py via get_frames_per_second
+        self.fps = bpy.context.scene.render.fps
 
     
     def import_keyframe_controller(self, kfc, b_armature_object, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans):
