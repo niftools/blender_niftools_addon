@@ -56,7 +56,14 @@ class AnimationHelper():
         self.texture_animation = TextureAnimation(parent)
         self.fps = bpy.context.scene.render.fps
     
-    def get_flags_from_extend(self, cyclic):
+    def get_flags_from_fcurves(self, fcurves):
+        #see if there are cyclic extrapolation modifiers on exp_fcurves
+        cyclic = False
+        for fcu in fcurves:
+            for mod in fcu.modifiers:
+                if mod.type == "CYCLES":
+                    cyclic = True
+                    break
         if cyclic:
             return 0
         else:
@@ -110,13 +117,6 @@ class AnimationHelper():
                 bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
                 bind_rot = bind_rot.to_4x4()
         
-        #see if there are cyclic extrapolation modifiers on exp_fcurves
-        cyclic = False
-        for fcu in exp_fcurves:
-            for mod in fcu.modifiers:
-                if mod.type == "CYCLES":
-                    cyclic = True
-                    break
         if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
@@ -152,7 +152,7 @@ class AnimationHelper():
     
         # fill in the non-trivial values
         kfc.flags = 8 # active
-        kfc.flags |= self.get_flags_from_extend(cyclic)
+        kfc.flags |= self.get_flags_from_fcurves(exp_fcurves)
         kfc.frequency = 1.0
         kfc.phase = 0.0
         kfc.start_time = start_frame / self.fps
@@ -576,56 +576,49 @@ class ObjectAnimation():
     def __init__(self, parent):
         self.nif_export = parent
     
-    def export_object_vis_controller(self, b_obj, n_node):
-        """Export the material alpha controller data."""
-        b_ipo = b_obj.ipo
-        if not b_ipo:
+    def export_object_vis_controller(self, n_node, b_obj):
+        """Export the visibility controller data."""
+        
+        if not b_obj.animation_data and b_obj.animation_data.action.fcurves:
             return
         # get the alpha curve and translate it into nif data
-        b_curve = b_ipo[Blender.Ipo.OB_LAYER]
-        if not b_curve:
+        fcurves = [fcu for fcu in b_obj.animation_data.action.fcurves if "hide" in fcu.data_path]
+        if not fcurves:
             return
+        
+        ### TODO [animation] which sort of controller should be exported?
+        ###                  should this be driven by version number?
+        ###                  we probably don't want both at the same time
         # NiVisData = old style, NiBoolData = new style
-        n_vis_data = self.nif_export.objecthelper.create_block("NiVisData", b_curve)
-        n_bool_data = self.nif_export.objecthelper.create_block("NiBoolData", b_curve)
-        n_times = [] # track all times (used later in start time and end time)
+        n_vis_data = self.nif_export.objecthelper.create_block("NiVisData", fcurves)
+        n_bool_data = self.nif_export.objecthelper.create_block("NiBoolData", fcurves)
+        
         # we just leave interpolation at constant
         n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
-        #n_bool_data.data.interpolation = self.get_n_curve_from_b_curve(
-        #    b_curve.interpolation)
-        n_vis_data.num_keys = len(b_curve.bezierPoints)
-        n_bool_data.data.num_keys = len(b_curve.bezierPoints)
+        n_vis_data.num_keys = len(fcurves[0].keyframe_points)
         n_vis_data.keys.update_size()
+        n_bool_data.data.num_keys = len(fcurves[0].keyframe_points)
         n_bool_data.data.keys.update_size()
-        visible_layer = 2 ** (min(bpy.context.scene.getLayers()) - 1)
-        for b_point, n_vis_key, n_bool_key in zip(
-            b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
+        for b_point, n_vis_key, n_bool_key in zip(fcurves[0].keyframe_points, n_vis_data.keys, n_bool_data.data.keys):
             # add each point of the curve
-            b_time, b_value = b_point.pt
+            b_frame, b_value = b_point.co
             n_vis_key.arg = n_bool_data.data.interpolation # n_vis_data has no interpolation stored
-            n_vis_key.time = (b_time - 1) * bpy.context.scene.render.fps
-            n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
+            n_vis_key.time = b_frame / bpy.context.scene.render.fps
+            n_vis_key.value = b_value
             n_bool_key.arg = n_bool_data.data.interpolation
             n_bool_key.time = n_vis_key.time
             n_bool_key.value = n_vis_key.value
-            # track time
-            n_times.append(n_vis_key.time)
         # if alpha data is present (check this by checking if times were added)
         # then add the controller so it is exported
-        if n_times:
-            n_vis_ctrl = self.nif_export.objecthelper.create_block("NiVisController", b_ipo)
-            n_vis_ipol = self.nif_export.objecthelper.create_block("NiBoolInterpolator", b_ipo)
+        if fcurves[0].keyframe_points:
+            n_vis_ctrl = self.nif_export.objecthelper.create_block("NiVisController", fcurves)
+            n_vis_ipol = self.nif_export.objecthelper.create_block("NiBoolInterpolator", fcurves)
             n_vis_ctrl.interpolator = n_vis_ipol
             n_vis_ctrl.flags = 8 # active
-            n_vis_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
+            n_vis_ctrl.flags |= self.nif_export.animationhelper.get_flags_from_fcurves(fcurves)
             n_vis_ctrl.frequency = 1.0
-            n_vis_ctrl.start_time = min(n_times)
-            n_vis_ctrl.stop_time = max(n_times)
+            n_vis_ctrl.start_time, n_vis_ctrl.stop_time = fcurves[0].range() / bpy.context.scene.render.fps
             n_vis_ctrl.data = n_vis_data
             n_vis_ipol.data = n_bool_data
             # attach block to node
             n_node.add_controller(n_vis_ctrl)
-
-
-
-
