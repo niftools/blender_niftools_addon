@@ -39,6 +39,7 @@
 # ***** END LICENSE BLOCK *****
 
 import mathutils
+import math
 
 from io_scene_nif.utility.nif_logging import NifLog
 
@@ -47,6 +48,93 @@ class NifError(Exception):
     """A simple custom exception class for export errors."""
     pass
 
+
+### do all NIFs use the same coordinate system?
+correction_local = mathutils.Euler((math.radians(90), 0, math.radians(90))).to_matrix().to_4x4()
+correction_local_inv = correction_local.inverted()
+correction_global = mathutils.Euler((math.radians(-90), math.radians(-90), 0)).to_matrix().to_4x4()
+correction_global_inv = correction_global.inverted()
+
+
+def import_keymat(rest_rot_inv, key_matrix):
+    """
+    Handles space conversions for imported keys
+    """
+    return correction_local * (rest_rot_inv * key_matrix) * correction_local_inv
+	
+def export_keymat(rest_rot, key_matrix):
+    """
+    Handles space conversions for exported keys
+    """
+    return rest_rot * (correction_local_inv * key_matrix * correction_local)
+
+def get_bind_matrix(bone):
+    """
+    Get a nif armature-space matrix from a blender bone.
+    """
+    bind = correction_global_inv *  correction_local_inv * bone.matrix_local *  correction_local
+    if bone.parent:
+        p_bind_restored = correction_global_inv *  correction_local_inv * bone.parent.matrix_local *  correction_local
+        bind = p_bind_restored.inverted() * bind
+    return bind
+
+def nif_bind_to_blender_bind(nif_armature_space_matrix):
+    return correction_global * correction_local * nif_armature_space_matrix * correction_local_inv
+
+def vec_roll_to_mat3(vec, roll):
+    #port of the updated C function from armature.c
+    #https://developer.blender.org/T39470
+    #note that C accesses columns first, so all matrix indices are swapped compared to the C version
+    
+    nor = vec.normalized()
+    THETA_THRESHOLD_NEGY = 1.0e-9
+    THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5
+    
+    #create a 3x3 matrix
+    bMatrix = mathutils.Matrix().to_3x3()
+
+    theta = 1.0 + nor[1]
+
+    if (theta > THETA_THRESHOLD_NEGY_CLOSE) or ((nor[0] or nor[2]) and theta > THETA_THRESHOLD_NEGY):
+
+        bMatrix[1][0] = -nor[0]
+        bMatrix[0][1] = nor[0]
+        bMatrix[1][1] = nor[1]
+        bMatrix[2][1] = nor[2]
+        bMatrix[1][2] = -nor[2]
+        if theta > THETA_THRESHOLD_NEGY_CLOSE:
+            #If nor is far enough from -Y, apply the general case.
+            bMatrix[0][0] = 1 - nor[0] * nor[0] / theta
+            bMatrix[2][2] = 1 - nor[2] * nor[2] / theta
+            bMatrix[0][2] = bMatrix[2][0] = -nor[0] * nor[2] / theta
+        
+        else:
+            #If nor is too close to -Y, apply the special case.
+            theta = nor[0] * nor[0] + nor[2] * nor[2]
+            bMatrix[0][0] = (nor[0] + nor[2]) * (nor[0] - nor[2]) / -theta
+            bMatrix[2][2] = -bMatrix[0][0]
+            bMatrix[0][2] = bMatrix[2][0] = 2.0 * nor[0] * nor[2] / theta
+
+    else:
+        #If nor is -Y, simple symmetry by Z axis.
+        bMatrix = mathutils.Matrix().to_3x3()
+        bMatrix[0][0] = bMatrix[1][1] = -1.0
+
+    #Make Roll matrix
+    rMatrix = mathutils.Matrix.Rotation(roll, 3, nor)
+    
+    #Combine and output result
+    mat = rMatrix * bMatrix
+    return mat
+
+def mat3_to_vec_roll(mat):
+    #this hasn't changed
+    vec = mat.col[1]
+    vecmat = vec_roll_to_mat3(mat.col[1], 0)
+    vecmatinv = vecmat.inverted()
+    rollmat = vecmatinv * mat
+    roll = math.atan2(rollmat[0][2], rollmat[2][2])
+    return vec, roll
 
 def import_matrix(niBlock, relative_to=None):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""

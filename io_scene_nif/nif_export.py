@@ -180,7 +180,7 @@ class NifExport(NifCommon):
             for root_object in exportable_objects:
                 while root_object.parent:
                     root_object = root_object.parent
-                if NifOp.props.game in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3'):
+                if NifOp.props.game in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3', 'ZOO_TYCOON_2'):
                     if (root_object.type == 'ARMATURE') or (root_object.name.lower() == "bip01"):
                         root_name = 'Scene Root'
                 # TODO remove as already filtered
