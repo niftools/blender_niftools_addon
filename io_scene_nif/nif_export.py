@@ -273,7 +273,7 @@ class NifExport(NifCommon):
                     and (not NifOp.props.bs_animation_node)):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.export_keyframes(None, root_block)
+                    self.animationhelper.export_keyframes(None, None, root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
                 for block in self.dict_blocks:
