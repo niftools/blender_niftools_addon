@@ -1363,30 +1363,3 @@ class NifImport(NifCommon):
         return [ child for child in niBlock.children
                  if (isinstance(child, NifFormat.NiTriBasedGeom)
                      and child.name.find(node_name) != -1) ]
-
-
-import os
-class KfImport(NifCommon):
-
-    def __init__(self, operator, context):
-        NifCommon.__init__(self, operator)
-        
-        # Helper systems
-        self.animationhelper = AnimationHelper(parent=self)
-             
-    def execute(self):
-        """Main import function."""
-
-        dirname = os.path.dirname(NifOp.props.filepath)
-        kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
-        for kf_file in kf_files:
-            #TODO: rearrange this so that bone data is only loaded once from the blender armature
-            self.kfdata = KFFile.load_kf(kf_file)
-            for kf_root in self.kfdata.roots:
-                # calculate and set frames per second
-                self.fps = self.animationhelper.get_frames_per_second( self.kfdata.roots )
-                bpy.context.scene.render.fps = self.fps
-                #TODO [animation] pass the self.fps value directly and not get it from blender; even bpy.context.scene.update() does not help to get the updated fps value
-
-                self.animationhelper.import_kf_standalone(kf_root)
-        return {'FINISHED'}
