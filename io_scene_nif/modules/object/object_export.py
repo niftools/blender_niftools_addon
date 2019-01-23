@@ -112,8 +112,10 @@ class ObjectHelper:
         """
         # b_obj_type: determine the block type
         #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
-        # b_obj_ipo:  object animation ipo
+        # b_obj_anim_data:  object animation ipo
         # node:    contains new NifFormat.NiNode instance
+		
+        has_anim = False
         export_types = ('EMPTY', 'MESH', 'ARMATURE')
         if b_obj is None:
             selected_exportable_objects = [b_obj for b_obj in bpy.context.selected_objects if b_obj.type in export_types]
@@ -133,12 +135,12 @@ class ObjectHelper:
                 assert parent_block is None  # debug
                 node = self.create_ninode()
                 b_obj_type = None
-                b_obj_ipo = None
+                b_obj_anim_data = None
             else:
                 b_obj_type = b_obj.type
                 assert (b_obj_type in export_types)  # debug
                 assert (parent_block is None)  # debug
-                b_obj_ipo = b_obj.animation_data  # get animation data
+                b_obj_anim_data = b_obj.animation_data  # get animation data
                 b_obj_children = b_obj.children
                 node_name = b_obj.name
 
@@ -147,7 +149,7 @@ class ObjectHelper:
             b_obj_type = b_obj.type
             assert (b_obj_type in export_types)  # debug
             assert parent_block  # debug
-            b_obj_ipo = b_obj.animation_data  # get animation data
+            b_obj_anim_data = b_obj.animation_data  # get animation data
             b_obj_children = b_obj.children
 
         elif b_obj.name != parent_block.name.decode() and b_obj.type != 'ARMATURE':
@@ -155,7 +157,7 @@ class ObjectHelper:
             b_obj_type = b_obj.type
             assert b_obj_type in ['EMPTY', 'MESH']  # debug
             assert parent_block  # debug
-            b_obj_ipo = b_obj.animation_data  # get animation data
+            b_obj_anim_data = b_obj.animation_data  # get animation data
             b_obj_children = b_obj.children
 
         else:
@@ -184,7 +186,7 @@ class ObjectHelper:
             # -> mesh data.
             # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
             is_collision = b_obj.game.use_collision_bounds
-            has_ipo = b_obj_ipo and b_obj_ipo.fcurves
+            has_anim = True if b_obj_anim_data and b_obj_anim_data.action.fcurves else False
             has_children = len(b_obj_children) > 0
             is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
 
@@ -201,7 +203,7 @@ class ObjectHelper:
             if is_collision:
                 self.nif_export.export_collision(b_obj, parent_block)
                 return None  # done; stop here
-            elif has_ipo or has_children or is_multimaterial or has_track:
+            elif has_anim or has_children or is_multimaterial or has_track:
                 # mesh ninode for the hierarchy to work out
                 if not has_track:
                     node = self.create_block('NiNode', b_obj)
@@ -225,11 +227,11 @@ class ObjectHelper:
         # this fixes an issue with clothing slots
         if b_obj_type == 'MESH':
             if b_obj.parent and b_obj.parent.type == 'ARMATURE':
-                if b_obj_ipo:
+                if b_obj_anim_data:
                     # mesh with armature parent should not have animation!
                     NifLog.warn("Mesh {0} is skinned but also has object animation. "
                                 "The nif format does not support this, ignoring object animation.".format(b_obj.name))
-                    b_obj_ipo = None
+                    has_anim = False
 
         # make it child of its parent in the nif, if it has one
         if parent_block:
@@ -263,17 +265,13 @@ class ObjectHelper:
         self.set_object_matrix(b_obj, node)
 
         if b_obj:
-            # export animation
-            if b_obj_ipo:
-                # no anim support here for now!
-                print(b_obj,"has anims")
-                pass
-                # if any(b_obj_ipo[b_channel] for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    # self.nif_export.animationhelper.export_keyframes(b_obj_ipo, node)
-                # self.export_object_vis_controller(b_obj, node)
+            # export object animation
+            if has_anim:
+                self.nif_export.animationhelper.export_keyframes(b_obj, None, node)
+				#TODO: what is this?
+                # self.nif_export.animationhelper.object_animation.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of this ninode
             if b_obj.type == 'MESH':
-                # see definition of trishape_space above
                 self.mesh_helper.export_tri_shapes(b_obj, node)
 
             # if it is an armature, export the bones as ninode children of this ninode
