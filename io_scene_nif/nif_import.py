@@ -560,8 +560,7 @@ class NifImport(NifCommon):
                     # import the extras
                     self.animationhelper.import_text_keys(niBlock)
                     # import vis controller
-                    self.animationhelper.object_animation.import_object_vis_controller(
-                        b_object=b_obj, n_node=niBlock)
+                    self.animationhelper.object_animation.import_object_vis_controller(niBlock, b_obj)
 
             # import extra node data, such as node type
             # (other types should be added here too)
