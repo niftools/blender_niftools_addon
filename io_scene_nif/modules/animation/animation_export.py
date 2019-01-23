@@ -63,7 +63,7 @@ class AnimationHelper():
             return 4 # 0b100
 
     
-    def export_keyframes(self, b_obj, bone, parent_block):
+    def export_keyframes(self, parent_block, b_obj = None, bone = None ):
         """
         If called on b_obj=None and bone=None it should save an empty controller.
         If called on an b_obj = type(armature), it expects a bone too.

@@ -267,7 +267,7 @@ class ObjectHelper:
         if b_obj:
             # export object animation
             if has_anim:
-                self.nif_export.animationhelper.export_keyframes(b_obj, None, node)
+                self.nif_export.animationhelper.export_keyframes(node, b_obj)
 				#TODO: what is this?
                 # self.nif_export.animationhelper.object_animation.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of this ninode

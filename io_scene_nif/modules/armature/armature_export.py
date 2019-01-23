@@ -60,23 +60,18 @@ class Armature():
         assert( arm.type == 'ARMATURE' )
 
         # find the root bones
-        # dictionary of bones (name -> bone)
-        bones = dict(list(arm.data.bones.items()))
-        root_bones = []
-        for root_bone in list(bones.values()):
-            while root_bone.parent in list(bones.values()):
-                root_bone = root_bone.parent
-            if root_bones.count(root_bone) == 0:
-                root_bones.append(root_bone)
-
-        bones_node = {} # maps bone names to NiNode blocks
+        # list of all bones
+        bones = arm.data.bones.values()
+        
+        # maps bone names to NiNode blocks
+        bones_node = {}
 
         # here all the bones are added
         # first create all bones with their keyframes
         # and then fix the links in a second run
 
         # ok, let's create the bone NiNode blocks
-        for bone in list(bones.values()):
+        for bone in bones:
             # create a new block for this bone
             node = self.nif_export.objecthelper.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
@@ -113,8 +108,8 @@ class Armature():
             # rest pose
             self.nif_export.objecthelper.set_object_matrix(bone, node)
 
-            # TODO: once per-node animation is implemented, it should look kinda like this
-            self.nif_export.animationhelper.export_keyframes(arm, bone, node)
+            # per-node animation
+            self.nif_export.animationhelper.export_keyframes(node, arm, bone)
 
             # does bone have priority value in NULL constraint?
             for constr in arm.pose.bones[bone.name].constraints:
@@ -125,15 +120,11 @@ class Armature():
                         ] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
-        for bone in list(bones.values()):
+        for bone in bones:
             # link the bone's children to the bone
-            if bone.children:
-                NifLog.debug("Linking children of bone {0}".format(bone.name))
-                for child in bone.children:
-                    # bone.children returns also grandchildren etc.
-                    # we only want immediate children, so do a parent check
-                    if child.parent.name == bone.name:
-                        bones_node[bone.name].add_child(bones_node[child.name])
+            NifLog.debug("Linking children of bone {0}".format(bone.name))
+            for child in bone.children:
+                bones_node[bone.name].add_child(bones_node[child.name])
             # if it is a root bone, link it to the armature
             if not bone.parent:
                 parent_block.add_child(bones_node[bone.name])
