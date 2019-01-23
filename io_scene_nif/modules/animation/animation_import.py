@@ -38,13 +38,11 @@
 # ***** END LICENSE BLOCK *****
 import bpy
 import mathutils
-import math
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
-
 
 
 ### todo: this should probably be moved to utils?
@@ -67,26 +65,6 @@ def interpolate(x_out, x_in, y_in):
         y_out.append(y_in[i] + slopes[i] * (x - x_in[i]) )
     return y_out
 
-### do all NIFs use the same coordinate system?
-### this should probably be moved to utils
-    
-correction_local = mathutils.Euler((math.radians(90), 0, math.radians(90))).to_matrix().to_4x4()
-correction_local_inv = correction_local.inverted()
-correction_global = mathutils.Euler((math.radians(-90), math.radians(-90), 0)).to_matrix().to_4x4()
-
-### also useful for export  
-
-def get_bind_matrix(bone):
-    """
-    Get a nif armature-space matrix from a blender bone matrix.
-    """
-    bind = correction_global.inverted() *  correction_local.inverted() * bone.matrix_local *  correction_local
-    if bone.parent:
-        p_bind_restored = correction_global.inverted() *  correction_local.inverted() * bone.parent.matrix_local *  correction_local
-        bind = p_bind_restored.inverted() * bind
-    return bind
-
-### also useful for export  
 
 def get_armature():
     """
@@ -102,13 +80,6 @@ def get_armature():
             if sel_armatures:
                 return sel_armatures[0]
         return src_armatures[0]
-
-def get_keymat(rest_rot_inv, key_matrix):
-    """
-    Handles space conversions for imported keys
-    """
-    key_matrix = rest_rot_inv * key_matrix
-    return correction_local * key_matrix * correction_local_inv
         
 def get_bind_data(armature):
     """
@@ -117,7 +88,7 @@ def get_bind_data(armature):
     if armature:
         bones_data = {}
         for bone in armature.data.bones:
-            rest_scale, rest_rot, rest_trans = nif_utils.decompose_srt( get_bind_matrix(bone) )
+            rest_scale, rest_rot, rest_trans = nif_utils.decompose_srt( nif_utils.get_bind_matrix(bone) )
             bones_data[bone.name] = (rest_scale, rest_rot.inverted().to_4x4(), rest_trans)
         return bones_data
 
@@ -678,14 +649,14 @@ class ArmatureAnimation():
                 fcurves = create_fcurves(b_armature_action, bone_name, "rotation_euler", 3)
                 for t, val in eulers:
                     euler = mathutils.Euler( val )
-                    key = get_keymat(niBone_bind_rot_inv, euler.to_matrix().to_4x4() ).to_euler()
+                    key = nif_utils.import_keymat(niBone_bind_rot_inv, euler.to_matrix().to_4x4() ).to_euler()
                     add_key(fcurves, t, self.fps, key, interp_rot)
             elif rotations:
                 NifLog.debug('Rotation keys...(quaternions)')
                 fcurves = create_fcurves(b_armature_action, bone_name, "rotation_quaternion", 4)
                 for t, val in rotations:
                     quat = mathutils.Quaternion([val.w, val.x, val.y, val.z])
-                    key = get_keymat(niBone_bind_rot_inv, quat.to_matrix().to_4x4() ).to_quaternion()
+                    key = nif_utils.import_keymat(niBone_bind_rot_inv, quat.to_matrix().to_4x4() ).to_quaternion()
                     add_key(fcurves, t, self.fps, key, interp_rot)
             
             if scales:
@@ -700,7 +671,7 @@ class ArmatureAnimation():
                 fcurves = create_fcurves(b_armature_action, bone_name, "location", 3)
                 for t, val in translations:
                     vec = mathutils.Vector([val.x, val.y, val.z])
-                    key = get_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()
+                    key = nif_utils.import_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()
                     add_key(fcurves, t, self.fps, key, interp_loc)
             
             #probably a superfluous check

@@ -45,27 +45,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
-import math
 
-correction_local = mathutils.Euler((math.radians(90), 0, math.radians(90))).to_matrix().to_4x4()
-correction_local_inv = correction_local.inverted()
-correction_global = mathutils.Euler((math.radians(-90), math.radians(-90), 0)).to_matrix().to_4x4()
-
-### also useful for export  
-
-def get_bind_matrix(bone):
-    """
-    Get a nif armature-space matrix from a blender bone matrix.
-    """
-    bind = correction_global.inverted() *  correction_local.inverted() * bone.matrix_local *  correction_local
-    if bone.parent:
-        p_bind_restored = correction_global.inverted() *  correction_local.inverted() * bone.parent.matrix_local *  correction_local
-        bind = p_bind_restored.inverted() * bind
-    return bind
-
-def export_keymat(rest_rot, key_matrix):
-    key_matrix = correction_local_inv * key_matrix * correction_local
-    return rest_rot * key_matrix
     
 class AnimationHelper():
     
@@ -74,6 +54,7 @@ class AnimationHelper():
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
         self.texture_animation = TextureAnimation(parent)
+        self.fps = bpy.context.scene.render.fps
     
     def get_flags_from_extend(self, cyclic):
         if cyclic:
@@ -91,7 +72,6 @@ class AnimationHelper():
             action_group = action.groups[bone.name]
         else:
             action_group = None
-        self.fps = bpy.context.scene.render.fps
         if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
@@ -159,12 +139,12 @@ class AnimationHelper():
         # -> get keyframe information
     
         # some calculations
-        bind_matrix = get_bind_matrix(bone)
+        bind_matrix = nif_utils.get_bind_matrix(bone)
         bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
         bind_rot = bind_rot.to_4x4()
     
         #just create a dummy euler so we can make all following eulers compatible to each other
-        euler = mathutils.Euler((0.0, math.radians(45.0), 0.0), 'XYZ')
+        euler = mathutils.Euler((0.0, 1.0, 0.0), 'XYZ')
         
         # sometimes we need to export an empty keyframe... 
         scale_curve = []
@@ -194,7 +174,7 @@ class AnimationHelper():
                     num_keys = len(quaternions[0].keyframe_points)
                     for i in range(num_keys):
                         frame = quaternions[0].keyframe_points[i].co[0]
-                        quat = export_keymat(bind_rot, mathutils.Quaternion([fcurve.keyframe_points[i].co[1] for fcurve in quaternions]).to_matrix().to_4x4()).to_quaternion()
+                        quat = nif_utils.export_keymat(bind_rot, mathutils.Quaternion([fcurve.keyframe_points[i].co[1] for fcurve in quaternions]).to_matrix().to_4x4()).to_quaternion()
                         quat_curve.append( (frame, quat) )
                     
             #eulers
@@ -206,7 +186,7 @@ class AnimationHelper():
                     for i in range(num_keys):
                         frame = eulers[0].keyframe_points[i].co[0]
                         # important: make new euler compatible to the previous euler in to_euler()
-                        euler = export_keymat(bind_rot, mathutils.Euler([fcurve.keyframe_points[i].co[1] for fcurve in eulers]).to_matrix().to_4x4() ).to_euler("XYZ", euler)
+                        euler = nif_utils.export_keymat(bind_rot, mathutils.Euler([fcurve.keyframe_points[i].co[1] for fcurve in eulers]).to_matrix().to_4x4() ).to_euler("XYZ", euler)
                         euler_curve.append( (frame, euler) )
                         
             #translations
@@ -217,7 +197,7 @@ class AnimationHelper():
                     num_keys = len(translations[0].keyframe_points)
                     for i in range(num_keys):
                         frame = translations[0].keyframe_points[i].co[0]
-                        trans = export_keymat(bind_rot, mathutils.Matrix.Translation( [fcurve.keyframe_points[i].co[1] for fcurve in translations] ) ).to_translation() + bind_trans
+                        trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation( [fcurve.keyframe_points[i].co[1] for fcurve in translations] ) ).to_translation() + bind_trans
                         trans_curve.append( (frame, trans) )
         # # -> now comes the real export
     
@@ -349,7 +329,7 @@ class AnimationHelper():
         textextra.num_text_keys = len(flist)
         textextra.text_keys.update_size()
         for i, key in enumerate(textextra.text_keys):
-            key.time = bpy.context.scene.render.fps * (flist[i]-1)
+            key.time =  flist[i] / self.fps
             key.value = dlist[i]
 
         return textextra
