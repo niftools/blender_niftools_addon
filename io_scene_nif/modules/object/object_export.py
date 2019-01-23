@@ -455,7 +455,7 @@ class ObjectHelper:
         """
 
         if isinstance(b_obj, bpy.types.Bone):
-            matrix = self.nif_export.armaturehelper.get_bind_matrix(b_obj)
+            matrix = nif_utils.get_bind_matrix(b_obj)
 
         else:
             # TODO MOVE TO ARMATUREHELPER
