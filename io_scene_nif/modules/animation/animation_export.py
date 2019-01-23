@@ -63,31 +63,78 @@ class AnimationHelper():
             return 4 # 0b100
 
     
-    def export_keyframes(self, arm, bone, parent_block):
-        print("export_keyframes",bone.name)
-        action = arm.animation_data.action
-        if not action:
-            return
-        if bone.name in action.groups:
-            action_group = action.groups[bone.name]
+    def export_keyframes(self, b_obj, bone, parent_block):
+        """
+        If called on b_obj=None and bone=None it should save an empty controller.
+        If called on an b_obj = type(armature), it expects a bone too.
+        If called on an object, with bone=None, it exports object level animation.
+        """
+        
+        #just create a dummy euler so we can make all following eulers compatible to each other
+        euler = mathutils.Euler((0.0, 1.0, 0.0), 'XYZ')
+        
+        # sometimes we need to export an empty keyframe... 
+        scale_curve = []
+        quat_curve = []
+        euler_curve = []
+        trans_curve = []
+        
+        exp_fcurves = []
+        
+        #TODO: or use the extent of each fcurve - fcu.range()?
+        
+        #we are supposed to export an empty controller
+        if not b_obj:
+            start_frame = bpy.context.scene.frame_start
+            stop_frame = bpy.context.scene.frame_end
+        #we have either skeletal or object animation
         else:
-            action_group = None
+            action = b_obj.animation_data.action
+            if not action:
+                return
+            start_frame, stop_frame = action.frame_range
+        
+            #skeletal animation
+            #with bone correction
+            if bone and bone.name in action.groups:
+                exp_fcurves = action.groups[bone.name].channels
+                # some calculations
+                bind_matrix = nif_utils.get_bind_matrix(bone)
+            #object level animation
+            #no coordinate corrections
+            elif not bone:
+                #we save some code if we just let the object anims go through the bone path
+                bind_matrix = mathutils.Matrix()
+                exp_fcurves = [fcu for fcu in action.fcurves if fcu.data_path in ("rotation_quaternion", "rotation_euler", "location", "scale")]
+            if exp_fcurves:
+                bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
+                bind_rot = bind_rot.to_4x4()
+        
+        #see if there are cyclic extrapolation modifiers on exp_fcurves
+        cyclic = False
+        for fcu in exp_fcurves:
+            for mod in fcu.modifiers:
+                if mod.type == "CYCLES":
+                    cyclic = True
+                    break
         if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
             # present, only the data is not present (see further on)
             return
     
+        #TODO: what if one wanted to add an animation directly to something else like a NiTriShape?
+        #      in other places of the code, that seems like it should be allowed for non-skeletal meshes
         # make sure the parent is of the right type
         assert(isinstance(parent_block, NifFormat.NiNode))
     
         # add a keyframecontroller block, and refer to this block in the
         # parent's time controller
         if self.nif_export.version < 0x0A020000:
-            kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", action_group)
+            kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", exp_fcurves)
         else:
-            kfc = self.nif_export.objecthelper.create_block("NiTransformController", action_group)
-            kfi = self.nif_export.objecthelper.create_block("NiTransformInterpolator", action_group)
+            kfc = self.nif_export.objecthelper.create_block("NiTransformController", exp_fcurves)
+            kfi = self.nif_export.objecthelper.create_block("NiTransformInterpolator", exp_fcurves)
             # link interpolator from the controller
             kfc.interpolator = kfi
             # set interpolator default data
@@ -101,28 +148,7 @@ class AnimationHelper():
             kfi.rotation.z = quat.z
             kfi.rotation.w = quat.w
             kfi.scale = scale
-    
         parent_block.add_controller(kfc)
-    
-        # determine cycle mode for this controller
-        # this is stored in the blender ipo curves
-        # while we're at it, we also determine the
-        # start and stop frames
-        extend = None
-        
-        #TODO: or use the extent of each fcurve - fcu.range()?
-        start_frame, stop_frame = action.frame_range
-        cyclic = False
-        #see if there are cyclic extrapolation modifiers on the fcurves
-        if action_group:
-            for fcu in action_group.channels:
-                for mod in fcu.modifiers:
-                    if mod.type == "CYCLES":
-                        cyclic = True
-                        break
-        else:
-            start_frame = bpy.context.scene.frame_start
-            stop_frame = bpy.context.scene.frame_end
     
         # fill in the non-trivial values
         kfc.flags = 8 # active
@@ -136,69 +162,49 @@ class AnimationHelper():
             # keyframe data is not present in geometry files
             return
     
-        # -> get keyframe information
-    
-        # some calculations
-        bind_matrix = nif_utils.get_bind_matrix(bone)
-        bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
-        bind_rot = bind_rot.to_4x4()
-    
-        #just create a dummy euler so we can make all following eulers compatible to each other
-        euler = mathutils.Euler((0.0, 1.0, 0.0), 'XYZ')
+        # get the desired fcurves for each data type from exp_fcurves
+        quaternions = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("quaternion")]
+        translations = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("location")]
+        eulers = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("euler")]
+        scales = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("scale")]
         
-        # sometimes we need to export an empty keyframe... 
-        scale_curve = []
-        quat_curve = []
-        euler_curve = []
-        trans_curve = []
-        if action_group:
-            quaternions = [fcu for fcu in action_group.channels if fcu.data_path.endswith("quaternion")]
-            translations = [fcu for fcu in action_group.channels if fcu.data_path.endswith("location")]
-            eulers = [fcu for fcu in action_group.channels if fcu.data_path.endswith("euler")]
-            scales = [fcu for fcu in action_group.channels if fcu.data_path.endswith("scale")]
-            # merge the animation curves into a rotation vector and translation vector curve
-            
-            #scales
-            if scales:
-                num_keys = len(scales[0].keyframe_points)
+        if scales:
+            num_keys = len(scales[0].keyframe_points)
+            for i in range(num_keys):
+                frame = scales[0].keyframe_points[i].co[0]
+                scale = scales[0].keyframe_points[i].co[1]
+                scale_curve.append( (frame, scale) )
+        
+        if quaternions:
+            if len(quaternions) != 4:
+                raise nif_utils.NifError("Incomplete ROT key set in bone "+bone.name+" for action "+action.name)
+            else:
+                num_keys = len(quaternions[0].keyframe_points)
                 for i in range(num_keys):
-                    frame = scales[0].keyframe_points[i].co[0]
-                    scale = scales[0].keyframe_points[i].co[1]
-                    scale_curve.append( (frame, scale) )
-            
-            #quaternions
-            if quaternions:
-                if len(quaternions) != 4:
-                    raise nif_utils.NifError("Incomplete ROT key set in bone "+bone.name+" for action "+action.name)
-                else:
-                    num_keys = len(quaternions[0].keyframe_points)
-                    for i in range(num_keys):
-                        frame = quaternions[0].keyframe_points[i].co[0]
-                        quat = nif_utils.export_keymat(bind_rot, mathutils.Quaternion([fcurve.keyframe_points[i].co[1] for fcurve in quaternions]).to_matrix().to_4x4()).to_quaternion()
-                        quat_curve.append( (frame, quat) )
+                    frame = quaternions[0].keyframe_points[i].co[0]
+                    quat = nif_utils.export_keymat(bind_rot, mathutils.Quaternion([fcurve.keyframe_points[i].co[1] for fcurve in quaternions]).to_matrix().to_4x4()).to_quaternion()
+                    quat_curve.append( (frame, quat) )
+                
+        if eulers:
+            if len(eulers) != 3:
+                raise nif_utils.NifError("Incomplete Euler key set in bone "+bone.name+" for action "+action.name)
+            else:
+                num_keys = len(eulers[0].keyframe_points)
+                for i in range(num_keys):
+                    frame = eulers[0].keyframe_points[i].co[0]
+                    # important: make new euler compatible to the previous euler in to_euler()
+                    euler = nif_utils.export_keymat(bind_rot, mathutils.Euler([fcurve.keyframe_points[i].co[1] for fcurve in eulers]).to_matrix().to_4x4() ).to_euler("XYZ", euler)
+                    euler_curve.append( (frame, euler) )
                     
-            #eulers
-            if eulers:
-                if len(eulers) != 3:
-                    raise nif_utils.NifError("Incomplete Euler key set in bone "+bone.name+" for action "+action.name)
-                else:
-                    num_keys = len(eulers[0].keyframe_points)
-                    for i in range(num_keys):
-                        frame = eulers[0].keyframe_points[i].co[0]
-                        # important: make new euler compatible to the previous euler in to_euler()
-                        euler = nif_utils.export_keymat(bind_rot, mathutils.Euler([fcurve.keyframe_points[i].co[1] for fcurve in eulers]).to_matrix().to_4x4() ).to_euler("XYZ", euler)
-                        euler_curve.append( (frame, euler) )
-                        
-            #translations
-            if translations:
-                if len(translations) != 3:
-                    raise nif_utils.NifError("Incomplete LOC key set in bone "+bone.name+" for action "+action.name)
-                else:
-                    num_keys = len(translations[0].keyframe_points)
-                    for i in range(num_keys):
-                        frame = translations[0].keyframe_points[i].co[0]
-                        trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation( [fcurve.keyframe_points[i].co[1] for fcurve in translations] ) ).to_translation() + bind_trans
-                        trans_curve.append( (frame, trans) )
+        if translations:
+            if len(translations) != 3:
+                raise nif_utils.NifError("Incomplete LOC key set in bone "+bone.name+" for action "+action.name)
+            else:
+                num_keys = len(translations[0].keyframe_points)
+                for i in range(num_keys):
+                    frame = translations[0].keyframe_points[i].co[0]
+                    trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation( [fcurve.keyframe_points[i].co[1] for fcurve in translations] ) ).to_translation() + bind_trans
+                    trans_curve.append( (frame, trans) )
         # # -> now comes the real export
     
         if (max(len(quat_curve), len(euler_curve), len(trans_curve), len(scale_curve)) <= 1
@@ -231,11 +237,11 @@ class AnimationHelper():
     
         # add the keyframe data
         if self.nif_export.version < 0x0A020000:
-            kfd = self.nif_export.objecthelper.create_block("NiKeyframeData", action_group)
+            kfd = self.nif_export.objecthelper.create_block("NiKeyframeData", exp_fcurves)
             kfc.data = kfd
         else:
             # number of frames is > 1, so add transform data
-            kfd = self.nif_export.objecthelper.create_block("NiTransformData", action_group)
+            kfd = self.nif_export.objecthelper.create_block("NiTransformData", exp_fcurves)
             kfi.data = kfd
     
         if euler_curve:
