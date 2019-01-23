@@ -1379,8 +1379,12 @@ class KfImport(NifCommon):
         dirname = os.path.dirname(NifOp.props.filepath)
         kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
         for kf_file in kf_files:
-			#TODO: rearrange this so that bone data is only loaded once from the blender armature
+            #TODO: rearrange this so that bone data is only loaded once from the blender armature
             self.kfdata = KFFile.load_kf(kf_file)
             for kf_root in self.kfdata.roots:
+                # calculate and set frames per second
+                self.fps = self.animationhelper.get_frames_per_second( self.kfdata.roots )
+                bpy.context.scene.render.fps = self.fps
+
                 self.animationhelper.import_kf_standalone(kf_root)
         return {'FINISHED'}
