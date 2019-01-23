@@ -1,27 +1,27 @@
-'''Blender Nif Plugin Main Import operators, function called through Import Menu'''
+"""This script imports Netimmerse/Gamebryo nif files to Blender."""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -37,35 +37,34 @@
 #
 # ***** END LICENSE BLOCK *****
 
+from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.io.kf import KFFile
+from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.utility.nif_global import NifOp
 import bpy
-from bpy_extras.io_utils import ImportHelper
+import os
 
-from .nif_common_op import NifOperatorCommon
+class KfImport(NifCommon):
 
-from io_scene_nif import kf_import
-
-class KfImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
-    """Operator for loading a kf file."""
+    def __init__(self, operator, context):
+        NifCommon.__init__(self, operator)
         
-    #: Name of function for calling the nif export operators.
-    bl_idname = "import_scene.kf"
+        # Helper systems
+        self.animationhelper = AnimationHelper(parent=self)
+             
+    def execute(self):
+        """Main import function."""
 
-    #: How the nif import operators is labelled in the user interface.
-    bl_label = "Import KF"
+        dirname = os.path.dirname(NifOp.props.filepath)
+        kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
+        for kf_file in kf_files:
+            #TODO: rearrange this so that bone data is only loaded once from the blender armature
+            self.kfdata = KFFile.load_kf(kf_file)
+            for kf_root in self.kfdata.roots:
+                # calculate and set frames per second
+                self.fps = self.animationhelper.get_frames_per_second( self.kfdata.roots )
+                bpy.context.scene.render.fps = self.fps
+                #TODO [animation] pass the self.fps value directly and not get it from blender; even bpy.context.scene.update() does not help to get the updated fps value
 
-    #: File name filter for file select dialog.
-    filter_glob = bpy.props.StringProperty(
-        default="*.kf", options={'HIDDEN'})
-        
-    files = bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
-    
-
-    def execute(self, context):
-        """Execute the import operators: first constructs a
-        :class:`~io_scene_nif.kf_import.KfImport` instance and then
-        calls its :meth:`~io_scene_nif.kf_import.KfImport.execute`
-        method.
-        """
-        
-        return kf_import.KfImport(self, context).execute()
-    
+                self.animationhelper.import_kf_standalone(kf_root)
+        return {'FINISHED'}
