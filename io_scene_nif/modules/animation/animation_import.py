@@ -113,7 +113,7 @@ def get_interp_mode(kf_element, ):
     Get an appropriate interpolation mode for blender's fcurves from the KF interpolation mode
     """
     
-    #TODO: join / make compatible with nif_common.get_b_interp_from_n_interp?
+    ### TODO [animation] join / make compatible with get_b_interp_from_n_interp?
     
     #rotation mode interpolation
     if isinstance(kf_element, NifFormat.NiKeyframeData):
@@ -161,8 +161,19 @@ class AnimationHelper():
         b_obj.animation_data.action = b_action
         return b_action
     
+    # TODO [animation]: Is there a better way to this than return a string,
+    #                   since handling requires different code per type?
+    def get_extend_from_flags(self, flags):
+        if flags & 6 == 4: # 0b100
+            return "CONST"
+        elif flags & 6 == 0: # 0b000
+            return "CYCLIC"
+
+        NifLog.warn("Unsupported cycle mode in nif, using clamped.")
+        return "CONST"
+    
     def set_extrapolation(self, flags, fcurves):
-        f_curve_extend_type = self.nif_import.get_extend_from_flags(flags)
+        f_curve_extend_type = self.get_extend_from_flags(flags)
         if f_curve_extend_type == "CONST":
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
@@ -491,6 +502,84 @@ class ObjectAnimation():
         #get extrapolation from flags and set it to fcurves
         self.nif_import.animationhelper.set_extrapolation(n_vis_ctrl.flags, fcurves)
 
+    def import_mesh_controllers(self, n_node, b_obj ):
+        """Import mesh controller for blender object."""
+        
+        morphCtrl = nif_utils.find_controller(n_node, NifFormat.NiGeomMorpherController)
+        if morphCtrl:
+            b_mesh = b_obj.data
+            morphData = morphCtrl.data
+            if morphData.num_morphs:
+                fps = bpy.context.scene.render.fps
+                # insert base key at frame 1, using relative keys
+                b_mesh.insertKey(1, 'relative')
+                # get name for base key
+                keyname = morphData.morphs[0].frame_name
+                if not keyname:
+                    keyname = 'Base'
+                # set name for base key
+                b_mesh.key.blocks[0].name = keyname
+                # get base vectors and import all morphs
+                baseverts = morphData.morphs[0].vectors
+                b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
+                b_mesh.key.ipo = b_ipo
+                for idxMorph in range(1, morphData.num_morphs):
+                    # get name for key
+                    keyname = morphData.morphs[idxMorph].frame_name
+                    if not keyname:
+                        keyname = 'Key %i' % idxMorph
+                    NifLog.info("Inserting key '{0}'".format(keyname))
+                    # get vectors
+                    morphverts = morphData.morphs[idxMorph].vectors
+                    # for each vertex calculate the key position from base
+                    # pos + delta offset
+                    assert(len(baseverts) == len(morphverts) == len(v_map))
+                    for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
+                        base = mathutils.Vector(bv.x, bv.y, bv.z)
+                        delta = mathutils.Vector(mv.x, mv.y, mv.z)
+                        v = base + delta
+                        if applytransform:
+                            v *= transform
+                        b_mesh.vertices[b_v_index].co[0] = v.x
+                        b_mesh.vertices[b_v_index].co[1] = v.y
+                        b_mesh.vertices[b_v_index].co[2] = v.z
+                    # update the mesh and insert key
+                    b_mesh.insertKey(idxMorph, 'relative')
+                    # set name for key
+                    b_mesh.key.blocks[idxMorph].name = keyname
+                    # set up the ipo key curve
+                    try:
+                        b_curve = b_ipo.addCurve(keyname)
+                    except ValueError:
+                        # this happens when two keys have the same name
+                        # an instance of this is in fallout 3
+                        # meshes/characters/_male/skeleton.nif HeadAnims:0
+                        NifLog.warn("Skipped duplicate of key '{0}'".format(keyname))
+                    # no idea how to set up the bezier triples -> switching
+                    # to linear instead
+                    b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+                    # select extrapolation
+                    b_curve.extend = self.get_extend_from_flags(morphCtrl.flags)
+                    # set up the curve's control points
+                    # first find the keys
+                    # older versions store keys in the morphData
+                    morphkeys = morphData.morphs[idxMorph].keys
+                    # newer versions store keys in the controller
+                    if (not morphkeys) and morphCtrl.interpolators:
+                        morphkeys = morphCtrl.interpolators[idxMorph].data.data.keys
+                    for key in morphkeys:
+                        x = key.value
+                        frame = 1 + int(key.time * fps + 0.5)
+                        b_curve.addBezier((frame, x))
+                    # finally: return to base position
+                    for bv, b_v_index in zip(baseverts, v_map):
+                        base = mathutils.Vector(bv.x, bv.y, bv.z)
+                        if applytransform:
+                            base *= transform
+                        b_mesh.vertices[b_v_index].co[0] = base.x
+                        b_mesh.vertices[b_v_index].co[1] = base.y
+                        b_mesh.vertices[b_v_index].co[2] = base.z
+    
 class MaterialAnimation():
     
     def __init__(self, parent):
