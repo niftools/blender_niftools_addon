@@ -39,6 +39,7 @@
 
 import bpy
 import mathutils
+from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -116,7 +117,7 @@ class Armature():
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
                     self.nif_export.dict_bone_priorities[
-                        self.get_bone_name_for_nif(bone.name)
+                        armature.get_bone_name_for_nif(bone.name)
                         ] = int(constr.name[9:])
 
         # now fix the linkage between the blocks

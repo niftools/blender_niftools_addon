@@ -44,6 +44,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
@@ -206,7 +207,7 @@ class Armature():
             self.nif_import.dict_armatures[skelroot] = []
             for bone_name in self.nif_import.selected_objects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
-                nif_bone_name = self.nif_import.get_bone_name_for_nif(bone_name)
+                nif_bone_name = armature.get_bone_name_for_nif(bone_name)
                 # find a block with bone name
                 bone_block = skelroot.find(block_name=nif_bone_name)
                 # add it to the name list if there is a bone with that name
