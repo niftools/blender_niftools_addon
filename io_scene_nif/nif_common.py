@@ -170,16 +170,6 @@ class NifCommon:
 
         return name
 
-    # TODO: Is there a better way to this than return a string,
-    #       since handling requires different code per type?
-    def get_extend_from_flags(self, flags):
-        if flags & 6 == 4: # 0b100
-            return "CONST"
-        elif flags & 6 == 0: # 0b000
-            return "CYCLIC"
-
-        NifLog.warn("Unsupported cycle mode in nif, using clamped.")
-        return "CONST"
 
 
     def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
