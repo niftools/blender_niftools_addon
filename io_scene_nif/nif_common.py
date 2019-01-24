@@ -181,28 +181,6 @@ class NifCommon:
         NifLog.warn("Unsupported cycle mode in nif, using clamped.")
         return "CONST"
 
-    def get_b_curve_from_n_curve(self, n_ipol):
-        if n_ipol == NifFormat.KeyType.LINEAR_KEY:
-            return bpy.types.Keyframe.interpolation.LINEAR
-        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
-            return bpy.types.Keyframe.interpolation.BEZIER
-        elif n_ipol == 0:
-            # guessing, not documented in nif.xml
-            return bpy.types.Keyframe.interpolation.CONST
-        
-        NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
-        return bpy.types.Keyframe.interpolation.BEZIER
-
-    def get_n_curve_from_b_curve(self, b_ipol):
-        if b_ipol == bpy.types.Keyframe.interpolation.LINEAR:
-            return NifFormat.KeyType.LINEAR_KEY
-        elif b_ipol == bpy.types.Keyframe.interpolation.BEZIER:
-            return NifFormat.KeyType.QUADRATIC_KEY
-        elif b_ipol == bpy.types.Keyframe.interpolation.CONST:
-            return NifFormat.KeyType.CONST_KEY
-        
-        NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
-        return NifFormat.KeyType.QUADRATIC_KEY
 
     def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
         if b_blend_type == "LIGHTEN":
