@@ -39,8 +39,10 @@
 
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.io.kf import KFFile
+from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.animation_import import AnimationHelper
 from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility import nif_utils
 import bpy
 import os
 
@@ -57,12 +59,16 @@ class KfImport(NifCommon):
 
         dirname = os.path.dirname(NifOp.props.filepath)
         kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
+        b_armature = armature.get_armature()
+        if not b_armature:
+            raise nif_utils.NifError("No armature was found in scene, can not import KF animation!")
+        
+        #get nif space bind pose of armature here for all anims
+        bind_data = armature.get_bind_data(b_armature)
         for kf_file in kf_files:
-            #TODO: rearrange this so that bone data is only loaded once from the blender armature
             self.kfdata = KFFile.load_kf(kf_file)
             for kf_root in self.kfdata.roots:
                 # calculate and set frames per second
                 self.animationhelper.set_frames_per_second( self.kfdata.roots )
-
-                self.animationhelper.import_kf_standalone(kf_root)
+                self.animationhelper.import_kf_standalone( kf_root, b_armature, bind_data )
         return {'FINISHED'}

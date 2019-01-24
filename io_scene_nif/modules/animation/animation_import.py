@@ -41,6 +41,7 @@ import mathutils
 from bisect import bisect_left
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
@@ -62,32 +63,6 @@ def interpolate(x_out, x_in, y_in):
         y_out.append(y_in[i] + slopes[i] * (x - x_in[i]) )
     return y_out
 
-
-def get_armature():
-    """
-    Get an armature.
-    If there is more than one armature in the scene and some armatures are selected, return the first of the selected armatures.
-    """
-    src_armatures = [ob for ob in bpy.data.objects if type(ob.data) == bpy.types.Armature]
-    #do we have armatures?
-    if src_armatures:
-        #see if one of these is selected -> get only that one
-        if len(src_armatures) > 1:
-            sel_armatures = [ob for ob in src_armatures if ob.select]
-            if sel_armatures:
-                return sel_armatures[0]
-        return src_armatures[0]
-        
-def get_bind_data(armature):
-    """
-    Get the required bind data of an armature.
-    """
-    if armature:
-        bones_data = {}
-        for bone in armature.data.bones:
-            rest_scale, rest_rot, rest_trans = nif_utils.decompose_srt( nif_utils.get_bind_matrix(bone) )
-            bones_data[bone.name] = (rest_scale, rest_rot.inverted().to_4x4(), rest_trans)
-        return bones_data
 
 def create_fcurves(action, dtype, drange, bonename = None):
     """
@@ -193,7 +168,7 @@ class AnimationHelper():
         for fcurve, k in zip(fcurves, key):
             fcurve.keyframe_points.insert(frame, k).interpolation = interp
         
-    def import_kf_standalone(self, kf_root):
+    def import_kf_standalone(self, kf_root, b_armature_obj, bind_data):
         """
         Import a kf animation. Needs a suitable armature in blender scene.
         """
@@ -204,11 +179,6 @@ class AnimationHelper():
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
             raise nif_utils.NifError("non-Oblivion .kf import not supported")
 
-        b_armature_obj = get_armature()
-        bind_data = get_bind_data(b_armature_obj)
-        if not bind_data:
-            raise nif_utils.NifError("No armature was found in scene")
-        
         # import text keys
         self.import_text_keys(kf_root)
         
@@ -217,11 +187,10 @@ class AnimationHelper():
         for controlledblock in kf_root.controlled_blocks:
             # nb: this yielded just an empty bytestring
             # nodename = controlledblock.get_node_name()
-            bone_name = self.nif_import.get_bone_name_for_blender( controlledblock.target_name )
+            kfc = controlledblock.controller
+            bone_name = armature.get_bone_name_for_blender( controlledblock.target_name )
             if bone_name in bind_data:
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
-                
-                kfc = controlledblock.controller
                 self.armature_animation.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
                 
 
