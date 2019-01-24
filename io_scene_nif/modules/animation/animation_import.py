@@ -89,18 +89,23 @@ def get_bind_data(armature):
             bones_data[bone.name] = (rest_scale, rest_rot.inverted().to_4x4(), rest_trans)
         return bones_data
 
-def create_fcurves(action, dtype, dlen, bonename = None):
+def create_fcurves(action, dtype, drange, bonename = None):
     """
-    Create fcurves for bonename in action.
+    Create fcurves in action for desired conditions.
     """
+    # armature pose bone animation
     if bonename:
-        return [action.fcurves.new(data_path = 'pose.bones["'+bonename+'"].'+dtype, index = i, action_group = bonename) for i in range(dlen)]
+        return [action.fcurves.new(data_path = 'pose.bones["'+bonename+'"].'+dtype, index = i, action_group = bonename) for i in drange]
     else:
-        if any(s in dtype for s in ("rotation","location","scale")):
+        # Object animation (non-skeletal)
+        # any() is intended here, as the fcurve should be lumped into the "LocRotScale" action_group if it is any of the given subtypes. It can never be all at once.
+        # nb. "rotation" catches both rotation_euler and rotation_quaternion
+        if any(subtype in dtype for subtype in ("rotation", "location", "scale")):
             action_group = "LocRotScale"
+        # Non-transformaing animations (eg. visibility or material anims) use no action groups
         else:
             action_group = ""
-        return [action.fcurves.new(data_path = dtype, index = i, action_group = action_group) for i in range(dlen)]
+        return [action.fcurves.new(data_path = dtype, index = i, action_group = action_group) for i in drange]
         
     
 def get_interp_mode(kf_element, ):
@@ -108,7 +113,7 @@ def get_interp_mode(kf_element, ):
     Get an appropriate interpolation mode for blender's fcurves from the KF interpolation mode
     """
     
-    #TODO: join / make compatible with nif_common.get_b_curve_from_n_curve?
+    #TODO: join / make compatible with nif_common.get_b_interp_from_n_interp?
     
     #rotation mode interpolation
     if isinstance(kf_element, NifFormat.NiKeyframeData):
@@ -133,11 +138,25 @@ class AnimationHelper():
         #set a dummy here, update via set_frames_per_second
         self.fps = 30
     
+    def get_b_interp_from_n_interp(self, n_ipol):
+        if n_ipol == NifFormat.KeyType.LINEAR_KEY:
+            return "LINEAR"
+        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
+            return "BEZIER"
+        elif n_ipol == 0:
+            # guessing, not documented in nif.xml
+            return "CONSTANT"
+        NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
+        return "BEZIER"
+        
     def create_action(self, b_obj, action_name):
         #could probably skip this test and create always
         if not b_obj.animation_data:
             b_obj.animation_data_create()
-        b_action = bpy.data.actions.new( action_name )
+        if action_name in bpy.data.actions:
+            b_action = bpy.data.actions[action_name]
+        else:
+            b_action = bpy.data.actions.new( action_name )
         #set as active action on object
         b_obj.animation_data.action = b_action
         return b_action
@@ -419,7 +438,7 @@ class AnimationHelper():
 
         if kfd.scales.keys:
             NifLog.debug('Scale keys...')
-            fcurves = create_fcurves(b_obj_action, "scale", 3)
+            fcurves = create_fcurves(b_obj_action, "scale", range(3))
             for key in kfd.scales.keys:
                 v = (key.value, key.value, key.value)
                 self.add_key(fcurves, key.time, v, interp_scale)
@@ -430,7 +449,7 @@ class AnimationHelper():
             b_obj.rotation_mode = "XYZ"
             #Eulers are a bit different here, we can import them regardless of their timing
             #because they need no correction math in object space
-            fcurves = create_fcurves(b_obj_action, "rotation_euler", 3)
+            fcurves = create_fcurves(b_obj_action, "rotation_euler", range(3))
             keys = (kfd.xyz_rotations[0].keys, kfd.xyz_rotations[1].keys, kfd.xyz_rotations[2].keys)
             for fcu, keys_dim in zip(fcurves, keys):
                 for key in keys_dim:
@@ -439,14 +458,14 @@ class AnimationHelper():
         elif kfd.quaternion_keys:
             NifLog.debug('Rotation keys...(quaternions)')
             b_obj.rotation_mode = "QUATERNION"
-            fcurves = create_fcurves(b_obj_action, "rotation_quaternion", 4)
+            fcurves = create_fcurves(b_obj_action, "rotation_quaternion", range(4))
             for key in kfd.quaternion_keys:
                 v = (key.value.w, key.value.x, key.value.y, key.value.z)
                 self.add_key(fcurves, key.time, v, interp_rot)
 
         if kfd.translations.keys:
             NifLog.debug('Translation keys...')
-            fcurves = create_fcurves(b_obj_action, "location", 3)
+            fcurves = create_fcurves(b_obj_action, "location", range(3))
             for key in kfd.translations.keys:
                 v = (key.value.x, key.value.y, key.value.z)
                 self.add_key(fcurves, key.time, v, interp_rot)
@@ -464,9 +483,9 @@ class ObjectAnimation():
             return
         NifLog.info("Importing vis controller")
         
-        b_obj_action = self.nif_import.animationhelper.create_action( b_obj, b_obj.name + "-Visibility")
+        b_obj_action = self.nif_import.animationhelper.create_action( b_obj, b_obj.name + "-Anim")
 
-        fcurves = create_fcurves(b_obj_action, "hide", 1)
+        fcurves = create_fcurves(b_obj_action, "hide", (0,))
         for key in n_vis_ctrl.data.keys:
             self.nif_import.animationhelper.add_key(fcurves, key.time, (key.value, ), "CONSTANT")
         #get extrapolation from flags and set it to fcurves
@@ -485,17 +504,17 @@ class MaterialAnimation():
         self.import_material_alpha_controller(b_material, n_geom)
         self.import_material_color_controller(
             b_material=b_material,
-            b_channels=("MirR", "MirG", "MirB"),
+            b_channel="niftools.ambient_color",
             n_geom=n_geom,
             n_target_color=NifFormat.TargetColor.TC_AMBIENT)
         self.import_material_color_controller(
             b_material=b_material,
-            b_channels=("R", "G", "B"),
+            b_channel="diffuse_color",
             n_geom=n_geom,
             n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
         self.import_material_color_controller(
             b_material=b_material,
-            b_channels=("SpecR", "SpecG", "SpecB"),
+            b_channel="specular_color",
             n_geom=n_geom,
             n_target_color=NifFormat.TargetColor.TC_SPECULAR)
         self.import_material_uv_controller(b_material, n_geom)
@@ -510,17 +529,16 @@ class MaterialAnimation():
         if not(n_alphactrl and n_alphactrl.data):
             return
         NifLog.info("Importing alpha controller")
-        b_channel = "Alpha"
-        b_ipo = self.get_material_ipo(b_material)
-        b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
-            n_alphactrl.data.data.interpolation)
-        b_curve.extend = self.nif_import.get_extend_from_flags(n_alphactrl.flags)
-        for n_key in n_alphactrl.data.data.keys:
-            b_curve[1 + n_key.time * self.fps] = n_key.value
+        
+        b_mat_action = self.nif_import.animationhelper.create_action( b_material, "MaterialAction")
+        fcurves = create_fcurves(b_mat_action, "alpha", (0,))
+        interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( n_alphactrl.data.data.interpolation)
+        self.nif_import.animationhelper.set_extrapolation(n_alphactrl.flags, fcurves)
+        for key in n_alphactrl.data.data.keys:
+            self.nif_import.animationhelper.add_key(fcurves, key.time, (key.value, ), interp)
 
     def import_material_color_controller(
-        self, b_material, b_channels, n_geom, n_target_color):
+        self, b_material, b_channel, n_geom, n_target_color):
         # find material color controller with matching target color
         n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
         if not n_matprop:
@@ -532,16 +550,15 @@ class MaterialAnimation():
                     break
         else:
             return
-        NifLog.info("Importing material color controller for target color {0} into blender channels {0}".format(n_target_color, b_channels))
+        NifLog.info("Importing material color controller for target color {0} into blender channel {0}".format(n_target_color, b_channel))
         # import data as curves
-        b_ipo = self.get_material_ipo(b_material)
-        for i, b_channel in enumerate(b_channels):
-            b_curve = b_ipo.addCurve(b_channel)
-            b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
-                n_matcolor_ctrl.data.data.interpolation)
-            b_curve.extend = self.nif_import.get_extend_from_flags(n_matcolor_ctrl.flags)
-            for n_key in n_matcolor_ctrl.data.data.keys:
-                b_curve[1 + n_key.time * self.fps] = n_key.value.as_list()[i]
+        b_mat_action = self.nif_import.animationhelper.create_action( b_material, "MaterialAction")
+        
+        fcurves = create_fcurves(b_mat_action, b_channel, range(3))
+        interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( n_matcolor_ctrl.data.data.interpolation)
+        self.nif_import.animationhelper.set_extrapolation(n_matcolor_ctrl.flags, fcurves)
+        for key in n_matcolor_ctrl.data.data.keys:
+            self.nif_import.animationhelper.add_key(fcurves, key.time, key.value.as_list(), interp)
 
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
@@ -551,31 +568,25 @@ class MaterialAnimation():
         if not(n_ctrl and n_ctrl.data):
             return
         NifLog.info("Importing UV controller")
-        b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
-        for b_channel, n_uvgroup in zip(b_channels,
-                                        n_ctrl.data.uv_groups):
+        
+        b_mat_action = self.nif_import.animationhelper.create_action( b_material, "MaterialAction")
+        
+        dtypes = ("offset", 0), ("offset", 1), ("scale", 0), ("scale", 1), 
+        for n_uvgroup, (data_path, array_ind) in zip(n_ctrl.data.uv_groups, dtypes):
             if n_uvgroup.keys:
-                # create curve in material ipo
-                b_ipo = self.get_material_ipo(b_material)
-                b_curve = b_ipo.addCurve(b_channel)
-                b_curve.interpolation = self.nif_import.get_b_curve_from_n_curve(
-                    n_uvgroup.interpolation)
-                b_curve.extend = self.nif_import.get_extend_from_flags(n_ctrl.flags)
-                for n_key in n_uvgroup.keys:
-                    if b_channel.startswith("Ofs"):
-                        # offsets are negated
-                        b_curve[1 + n_key.time * self.fps] = -n_key.value
-                    else:
-                        b_curve[1 + n_key.time * self.fps] = n_key.value    
-    
-
-    def get_material_ipo(self, b_material):
-        """Return existing material ipo data, or if none exists, create one
-        and return that.
-        """
-        if not b_material.ipo:
-            b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
-        return b_material.ipo
+                interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( n_uvgroup.interpolation )
+                #in blender, UV offset is stored per texture slot
+                #so we have to repeat the import for each used tex slot
+                for i, texture_slot in enumerate(b_material.texture_slots):
+                    if texture_slot:
+                        fcurves = create_fcurves(b_mat_action, "texture_slots["+str(i)+"]."+data_path, (array_ind,) )
+                        for key in n_uvgroup.keys:
+                            if "offset" in data_path:
+                                self.nif_import.animationhelper.add_key(fcurves, key.time, (-key.value, ), interp)
+                            else:
+                                self.nif_import.animationhelper.add_key(fcurves, key.time, (key.value, ), interp)
+                        self.nif_import.animationhelper.set_extrapolation( n_ctrl.flags, fcurves)
+                            
 
 class ArmatureAnimation():
     
@@ -650,14 +661,14 @@ class ArmatureAnimation():
                     
             if eulers:
                 NifLog.debug('Rotation keys...(euler)')
-                fcurves = create_fcurves(b_action, "rotation_euler", 3, bone_name)
+                fcurves = create_fcurves(b_action, "rotation_euler", range(3), bone_name)
                 for t, val in eulers:
                     euler = mathutils.Euler( val )
                     key = nif_utils.import_keymat(niBone_bind_rot_inv, euler.to_matrix().to_4x4() ).to_euler()
                     self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
             elif rotations:
                 NifLog.debug('Rotation keys...(quaternions)')
-                fcurves = create_fcurves(b_action, "rotation_quaternion", 4, bone_name)
+                fcurves = create_fcurves(b_action, "rotation_quaternion", range(4), bone_name)
                 for t, val in rotations:
                     quat = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                     key = nif_utils.import_keymat(niBone_bind_rot_inv, quat.to_matrix().to_4x4() ).to_quaternion()
@@ -665,14 +676,14 @@ class ArmatureAnimation():
             
             if scales:
                 NifLog.debug('Scale keys...')
-                fcurves = create_fcurves(b_action, "scale", 3, bone_name)
+                fcurves = create_fcurves(b_action, "scale", range(3), bone_name)
                 for t, val in scales:
                     key = (val, val, val)
                     self.nif_import.animationhelper.add_key(fcurves, t, key, interp_scale)
                         
             if translations:
                 NifLog.debug('Translation keys...')
-                fcurves = create_fcurves(b_action, "location", 3, bone_name)
+                fcurves = create_fcurves(b_action, "location", range(3), bone_name)
                 for t, val in translations:
                     vec = mathutils.Vector([val.x, val.y, val.z])
                     key = nif_utils.import_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()

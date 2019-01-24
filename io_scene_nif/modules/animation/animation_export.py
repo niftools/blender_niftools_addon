@@ -56,6 +56,18 @@ class AnimationHelper():
         self.texture_animation = TextureAnimation(parent)
         self.fps = bpy.context.scene.render.fps
     
+
+    def get_n_interp_from_b_interp(self, b_ipol):
+        if b_ipol == "LINEAR":
+            return NifFormat.KeyType.LINEAR_KEY
+        elif b_ipol == "BEZIER":
+            return NifFormat.KeyType.QUADRATIC_KEY
+        elif b_ipol == "CONSTANT":
+            return NifFormat.KeyType.CONST_KEY
+        
+        NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
+        return NifFormat.KeyType.QUADRATIC_KEY
+		
     def get_flags_from_fcurves(self, fcurves):
         #see if there are cyclic extrapolation modifiers on exp_fcurves
         cyclic = False
@@ -282,14 +294,16 @@ class AnimationHelper():
             key.value = scale
             
 
-    def export_anim_groups(self, animtxt, block_parent):
+    def export_text_keys(self, block_parent, ):
         """Parse the animation groups buffer and write an extra string
         data block, and attach it to an existing block (typically, the root
         of the nif tree)."""
         if NifOp.props.animation == 'GEOM_NIF':
             # animation group extra data is not present in geometry only files
             return
-
+        if "Anim" not in bpy.data.texts:
+            return
+        animtxt = bpy.data.texts["Anim"]
         NifLog.info("Exporting animation groups")
         # -> get animation groups information
 
@@ -317,9 +331,9 @@ class AnimationHelper():
             f = int(t[0])
             if ((f < bpy.context.scene.frame_start) or (f > bpy.context.scene.frame_end)):
                 NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(str(f), str(bpy.context.scene.frame_start), str(bpy.context.scene.frame_end)))
-            d = t[1].strip(' ')
+            d = t[1].strip()
             for i in range(2, len(t)):
-                d = d + '\r\n' + t[i].strip(' ')
+                d = d + '\r\n' + t[i].strip()
             #print 'frame %d'%f + ' -> \'%s\''%d # debug
             flist.append(f)
             dlist.append(d)
@@ -437,7 +451,7 @@ class MaterialAnimation():
         n_floatdata = self.nif_export.objecthelper.create_block("NiFloatData", b_curve)
         n_times = [] # track all times (used later in start time and end time)
         n_floatdata.data.num_keys = len(b_curve.bezierPoints)
-        n_floatdata.data.interpolation = self.get_n_curve_from_b_curve(
+        n_floatdata.data.interpolation = self.get_n_interp_from_b_interp(
             b_curve.interpolation)
         n_floatdata.data.keys.update_size()
         for b_point, n_key in zip(b_curve.bezierPoints, n_floatdata.data.keys):
@@ -488,7 +502,7 @@ class MaterialAnimation():
         # track all nif times: used later in start time and end time
         n_times = []
         n_posdata.data.num_keys = len(b_times)
-        n_posdata.data.interpolation = self.get_n_curve_from_b_curve(
+        n_posdata.data.interpolation = self.get_n_interp_from_b_interp(
             b_curves[0].interpolation)
         n_posdata.data.keys.update_size()
         for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
@@ -541,7 +555,7 @@ class MaterialAnimation():
             if b_curve:
                 NifLog.info("Exporting {0} as NiUVData".format(b_curve))
                 n_uvgroup.num_keys = len(b_curve.bezierPoints)
-                n_uvgroup.interpolation = self.get_n_curve_from_b_curve(
+                n_uvgroup.interpolation = self.get_n_interp_from_b_interp(
                     b_curve.interpolation)
                 n_uvgroup.keys.update_size()
                 for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
