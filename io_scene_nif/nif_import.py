@@ -45,6 +45,7 @@ from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile 
 
 from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules import armature
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import bhkshape_import, bound_import
 from io_scene_nif.modules.constraint.constraint_import import constraint_import
@@ -317,7 +318,7 @@ class NifImport(NifCommon):
             for b_child_obj in self.selected_objects:
                 if b_child_obj.type == 'MESH':
                     for oldgroupname in b_child_obj.vertex_groups.items():
-                        newgroupname = self.get_bone_name_for_blender(oldgroupname)
+                        newgroupname = armature.get_bone_name_for_blender(oldgroupname)
                         if oldgroupname != newgroupname:
                             NifLog.info("{0} : renaming vertex group {1} to {2}".format(b_child_obj, oldgroupname, newgroupname))
                             b_child_obj.data.renameVertGroup(oldgroupname, newgroupname)
@@ -652,7 +653,7 @@ class NifImport(NifCommon):
                              % (niName[:max_length - 4],
                                 uniqueInt))
             # bone naming convention for blender
-            shortName = self.get_bone_name_for_blender(shortName)
+            shortName = armature.get_bone_name_for_blender(shortName)
             # make sure it is unique
             if niName == "InvMarker":
                 if niName not in self.dict_names:
