@@ -398,35 +398,10 @@ class ObjectHelper:
         relative to the bone parent head in nif coordinates (that is, including
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
-        bind_matrix = self.get_object_bind(b_obj)
-        
-        try:
-            n_scale, n_rot_mat33, n_trans_vec = nif_utils.decompose_srt(bind_matrix)
-        except nif_utils.NifError:
-            raise nif_utils.NifError("Non-uniform scaling on bone '%s' not supported. "
-                                     "This could be a bug... No workaround. :-( Post your blend!" % b_obj.name)
+        # transpose to swap columns for rows so we can use pyffi's set_rows() directly
+        bind_matrix = self.get_object_bind(b_obj).transposed()
         matrix = NifFormat.Matrix44()
-
-        matrix.m_11 = n_rot_mat33[0][0] * n_scale
-        matrix.m_21 = n_rot_mat33[0][1] * n_scale
-        matrix.m_31 = n_rot_mat33[0][2] * n_scale
-        matrix.m_12 = n_rot_mat33[1][0] * n_scale
-        matrix.m_22 = n_rot_mat33[1][1] * n_scale
-        matrix.m_32 = n_rot_mat33[1][2] * n_scale
-        matrix.m_13 = n_rot_mat33[2][0] * n_scale
-        matrix.m_23 = n_rot_mat33[2][1] * n_scale
-        matrix.m_33 = n_rot_mat33[2][2] * n_scale
-        
-        #this was broken, matrix indices now match pyffi's Matrix44.get_translation()
-        matrix.m_41 = n_trans_vec[0]
-        matrix.m_42 = n_trans_vec[1]
-        matrix.m_43 = n_trans_vec[2]
-
-        matrix.m_14 = 0.0
-        matrix.m_24 = 0.0
-        matrix.m_34 = 0.0
-        matrix.m_44 = 1.0
-
+        matrix.set_rows( *bind_matrix )
         return matrix
 
     def get_object_bind(self, b_obj):
