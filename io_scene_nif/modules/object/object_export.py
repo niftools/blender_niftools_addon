@@ -385,19 +385,11 @@ class ObjectHelper:
             n_rd_lod_level.far_extent = n_lod_level.far_extent
 
     def set_object_matrix(self, b_obj, block):
-        """Set a block's transform matrix to an object's transformation matrix in rest pose."""
-        block.velocity.x = 0.0
-        block.velocity.y = 0.0
-        block.velocity.z = 0.0
+        """Set a blender object's transform matrix to a NIF object's transformation matrix in rest pose."""
         block.set_transform( self.get_object_matrix(b_obj) )
 
     def get_object_matrix(self, b_obj):
-        """Get an object's matrix as NifFormat.Matrix44
-
-        Note: for objects parented to bones, this will return the transform
-        relative to the bone parent head in nif coordinates (that is, including
-        the bone correction); this differs from getMatrix which
-        returns the transform relative to the armature."""
+        """Get a blender object's matrix as NifFormat.Matrix44"""
         # transpose to swap columns for rows so we can use pyffi's set_rows() directly
         bind_matrix = self.get_object_bind(b_obj).transposed()
         matrix = NifFormat.Matrix44()
@@ -405,15 +397,11 @@ class ObjectHelper:
         return matrix
 
     def get_object_bind(self, b_obj):
-        """Find scale, rotation, and translation components of an object in
-        the nif's rest pose. Returns a triple (bs, br, bt), where bs
-        is a scale float, br is a 3x3 rotation matrix, and bt is a
-        translation vector. It should hold that
-
-        nif_matrix == bs * br * bt
-
-        Note: for objects parented to bones, this will return the transform
-        relative to the bone parent head including bone correction.
+        """Get the bind matrix of a blender object.
+        
+        Returns the final NIF matrix for the given blender object.
+        Blender space and axes order are corrected for the NIF.
+        Returns a 4x4 mathutils.Matrix()
         """
 
         if isinstance(b_obj, bpy.types.Bone):
