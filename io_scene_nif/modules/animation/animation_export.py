@@ -67,7 +67,7 @@ class AnimationHelper():
         
         NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
         return NifFormat.KeyType.QUADRATIC_KEY
-		
+        
     def get_flags_from_fcurves(self, fcurves):
         #see if there are cyclic extrapolation modifiers on exp_fcurves
         cyclic = False
@@ -102,15 +102,9 @@ class AnimationHelper():
         
         #TODO: or use the extent of each fcurve - fcu.range()?
         
-        #we are supposed to export an empty controller
-        if not b_obj:
-            start_frame = bpy.context.scene.frame_start
-            stop_frame = bpy.context.scene.frame_end
         #we have either skeletal or object animation
-        else:
+        if b_obj and b_obj.animation_data and b_obj.animation_data.action:
             action = b_obj.animation_data.action
-            if not action:
-                return
             start_frame, stop_frame = action.frame_range
         
             #skeletal animation
@@ -128,6 +122,11 @@ class AnimationHelper():
             if exp_fcurves:
                 bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
                 bind_rot = bind_rot.to_4x4()
+        else:
+            #we are supposed to export an empty controller
+            start_frame = bpy.context.scene.frame_start
+            stop_frame = bpy.context.scene.frame_end
+        
         
         if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files

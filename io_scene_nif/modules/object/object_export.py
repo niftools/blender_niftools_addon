@@ -386,28 +386,10 @@ class ObjectHelper:
 
     def set_object_matrix(self, b_obj, block):
         """Set a block's transform matrix to an object's transformation matrix in rest pose."""
-        # decompose
-        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj)
-
-        # and fill in the values
-        block.translation.x = n_trans_vec[0]
-        block.translation.y = n_trans_vec[1]
-        block.translation.z = n_trans_vec[2]
-        block.rotation.m_11 = n_rot_mat33[0][0]
-        block.rotation.m_21 = n_rot_mat33[0][1]
-        block.rotation.m_31 = n_rot_mat33[0][2]
-        block.rotation.m_12 = n_rot_mat33[1][0]
-        block.rotation.m_22 = n_rot_mat33[1][1]
-        block.rotation.m_32 = n_rot_mat33[1][2]
-        block.rotation.m_13 = n_rot_mat33[2][0]
-        block.rotation.m_23 = n_rot_mat33[2][1]
-        block.rotation.m_33 = n_rot_mat33[2][2]
         block.velocity.x = 0.0
         block.velocity.y = 0.0
         block.velocity.z = 0.0
-        block.scale = n_scale
-
-        return n_scale, n_rot_mat33, n_trans_vec
+        block.set_transform( self.get_object_matrix(b_obj) )
 
     def get_object_matrix(self, b_obj):
         """Get an object's matrix as NifFormat.Matrix44
@@ -416,7 +398,13 @@ class ObjectHelper:
         relative to the bone parent head in nif coordinates (that is, including
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
-        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj)
+        bind_matrix = self.get_object_bind(b_obj)
+        
+        try:
+            n_scale, n_rot_mat33, n_trans_vec = nif_utils.decompose_srt(bind_matrix)
+        except nif_utils.NifError:
+            raise nif_utils.NifError("Non-uniform scaling on bone '%s' not supported. "
+                                     "This could be a bug... No workaround. :-( Post your blend!" % b_obj.name)
         matrix = NifFormat.Matrix44()
 
         matrix.m_11 = n_rot_mat33[0][0] * n_scale
@@ -428,18 +416,20 @@ class ObjectHelper:
         matrix.m_13 = n_rot_mat33[2][0] * n_scale
         matrix.m_23 = n_rot_mat33[2][1] * n_scale
         matrix.m_33 = n_rot_mat33[2][2] * n_scale
-        matrix.m_14 = n_trans_vec[0]
-        matrix.m_24 = n_trans_vec[1]
-        matrix.m_34 = n_trans_vec[2]
+        
+        #this was broken, matrix indices now match pyffi's Matrix44.get_translation()
+        matrix.m_41 = n_trans_vec[0]
+        matrix.m_42 = n_trans_vec[1]
+        matrix.m_43 = n_trans_vec[2]
 
-        matrix.m_41 = 0.0
-        matrix.m_42 = 0.0
-        matrix.m_43 = 0.0
+        matrix.m_14 = 0.0
+        matrix.m_24 = 0.0
+        matrix.m_34 = 0.0
         matrix.m_44 = 1.0
 
         return matrix
 
-    def get_object_srt(self, b_obj):
+    def get_object_bind(self, b_obj):
         """Find scale, rotation, and translation components of an object in
         the nif's rest pose. Returns a triple (bs, br, bt), where bs
         is a scale float, br is a 3x3 rotation matrix, and bt is a
@@ -472,11 +462,7 @@ class ObjectHelper:
         #Nonetype, maybe other weird stuff
         else:
             matrix = mathutils.Matrix()
-        try:
-            return nif_utils.decompose_srt(matrix)
-        except nif_utils.NifError:
-            raise nif_utils.NifError("Non-uniform scaling on bone '%s' not supported. "
-                                     "This could be a bug... No workaround. :-( Post your blend!" % b_obj.name)
+        return matrix
 
 
 class MeshHelper:
