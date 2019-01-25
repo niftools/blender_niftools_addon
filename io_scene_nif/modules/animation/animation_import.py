@@ -629,7 +629,7 @@ class MaterialAnimation():
         
         b_mat_action = self.nif_import.animationhelper.create_action( b_material, "MaterialAction")
         
-        dtypes = ("offset", 0), ("offset", 1), ("scale", 0), ("scale", 1), 
+        dtypes = ("offset", 0), ("offset", 1), ("scale", 0), ("scale", 1)
         for n_uvgroup, (data_path, array_ind) in zip(n_ctrl.data.uv_groups, dtypes):
             if n_uvgroup.keys:
                 interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( n_uvgroup.interpolation )

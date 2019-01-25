@@ -72,14 +72,10 @@ class ObjectHelper:
         exported_objects = []
         # iterating over self.nif_export.dict_blocks.itervalues() will count some objects twice
         for b_obj in self.nif_export.dict_blocks.values():
-            # skip empty objects
-            if b_obj is None:
-                continue
-            # detect doubles
-            if b_obj in exported_objects:
-                continue
-            # append new object
-            exported_objects.append(b_obj)
+            # skip empty & known objects
+            if b_obj and b_obj not in exported_objects:
+                # append new object
+                exported_objects.append(b_obj)
         # return the list of unique exported objects
         return exported_objects
 
@@ -546,7 +542,7 @@ class MeshHelper:
                 elif mesh_hasvcola:
                     mesh_hasalpha = True
                 elif b_mat.animation_data and \
-                        b_mat.animation_data.action.fcurves['Alpha']:
+                        'Alpha' in b_mat.animation_data.action.fcurves:
                     mesh_hasalpha = True
 
                 # wire mat
