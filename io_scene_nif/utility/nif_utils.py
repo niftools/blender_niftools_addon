@@ -138,27 +138,7 @@ def mat3_to_vec_roll(mat):
 
 def import_matrix(niBlock, relative_to=None):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-    # return Matrix(*niBlock.get_transform(relative_to).as_list())
-    n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
-
-    # create a location matrix
-    b_loc_vec = mathutils.Vector(n_loc_vec3.as_tuple())
-    b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
-    
-    # create a scale matrix
-    b_scale_mat = mathutils.Matrix.Scale(n_scale, 4)
-
-    # create 3 rotation matrices    
-    n_rot_mat = mathutils.Matrix()
-    n_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_21, n_rot_mat3.m_31
-    n_rot_mat[1].xyz = n_rot_mat3.m_12, n_rot_mat3.m_22, n_rot_mat3.m_32
-    n_rot_mat[2].xyz = n_rot_mat3.m_13, n_rot_mat3.m_23, n_rot_mat3.m_33    
-    # b_rot_mat = n_rot_mat * b_scale_mat.transposed()
-    b_rot_mat = n_rot_mat
-    
-    b_import_matrix = b_loc_vec * b_rot_mat * b_scale_mat
-    return b_import_matrix
-
+    return mathutils.Matrix( niBlock.get_transform(relative_to).as_list() ).transposed()
 
 def decompose_srt(matrix):
     """Decompose Blender transform matrix as a scale, rotation matrix, and
