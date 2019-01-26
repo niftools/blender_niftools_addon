@@ -61,12 +61,16 @@ def import_keymat(rest_rot_inv, key_matrix):
     Handles space conversions for imported keys
     """
     return correction_local * (rest_rot_inv * key_matrix) * correction_local_inv
-	
-def export_keymat(rest_rot, key_matrix):
+    
+def export_keymat(rest_rot, key_matrix, bone):
     """
     Handles space conversions for exported keys
     """
-    return rest_rot * (correction_local_inv * key_matrix * correction_local)
+    if bone:
+        return rest_rot * (correction_local_inv * key_matrix * correction_local)
+    else:
+        return rest_rot * key_matrix
+        
 
 def get_bind_matrix(bone):
     """
