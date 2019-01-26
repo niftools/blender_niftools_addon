@@ -56,6 +56,16 @@ class AnimationHelper():
         self.texture_animation = TextureAnimation(parent)
         self.fps = bpy.context.scene.render.fps
     
+    def set_flags_and_timing(self, kfc, exp_fcurves, start_frame=None, stop_frame=None ):
+        # fill in the non-trivial values
+        kfc.flags = 8 # active
+        kfc.flags |= self.get_flags_from_fcurves(exp_fcurves)
+        kfc.frequency = 1.0
+        kfc.phase = 0.0
+        if not start_frame and not stop_frame:
+            start_frame, stop_frame = fcurves[0].range()
+        kfc.start_time = start_frame / self.fps
+        kfc.stop_time = stop_frame / self.fps
 
     def get_n_interp_from_b_interp(self, b_ipol):
         if b_ipol == "LINEAR":
@@ -83,16 +93,24 @@ class AnimationHelper():
         else:
             return 4 # 0b100
 
-    
+    def iter_frame_key(self, fcurves, mathutils_class):
+        """
+        Iterator that yields a tuple of frame and key for all fcurves.
+        Assumes the fcurves are sampled at the same time and all have the same amount of keys
+        Return the key in the desired mathutils_class
+        """
+        for point in zip( *[fcu.keyframe_points for fcu in fcurves] ):
+            frame = point[0].co[0]
+            key = [k.co[1] for k in point]
+            yield frame, mathutils_class(key)
+        
     def export_keyframes(self, parent_block, b_obj = None, bone = None ):
         """
         If called on b_obj=None and bone=None it should save an empty controller.
         If called on an b_obj = type(armature), it expects a bone too.
         If called on an object, with bone=None, it exports object level animation.
         """
-        
-        #just create a dummy euler so we can make all following eulers compatible to each other
-        euler = mathutils.Euler((0.0, 1.0, 0.0), 'XYZ')
+        print(b_obj.name, bone)
         
         # sometimes we need to export an empty keyframe... 
         scale_curve = []
@@ -102,30 +120,50 @@ class AnimationHelper():
         
         exp_fcurves = []
         
-        #TODO: or use the extent of each fcurve - fcu.range()?
+        #just for more detailed error reporting later on
+        bonestr = ""
+        
+        ### TODO [animation]        test object animation for objects parented to empties
+        ### TODO [object/animation] should object animation for skinned models be supported? export_node says the
+        ###                         "The nif format does not support this, ignoring object animation"
+        ###                         for now it is implemented here but disabled by export_node's has_anim - dropping it would make code a little easier here
+        ### TODO [animation/object] if this is called on a blender model = has_anim is True in object_export.py's export_node)
+        ###                         an intermediate Node is created at the end of export_node which receives this anim controller
+        ###                         the animation is technically correct but the exported NiTrishape retains the same static transformation
+        ###                         that the intermediate node has, so in this case the TriShape should have its transforms cleared
         
         #we have either skeletal or object animation
         if b_obj and b_obj.animation_data and b_obj.animation_data.action:
             action = b_obj.animation_data.action
-            start_frame, stop_frame = action.frame_range
+            
+            # get bind matrix for bone or object
+            bind_matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
         
-            #skeletal animation
-            #with bone correction
+            #skeletal animation - with bone correction & coordinate corrections
             if bone and bone.name in action.groups:
                 exp_fcurves = action.groups[bone.name].channels
-                # some calculations
-                bind_matrix = nif_utils.get_bind_matrix(bone)
-            #object level animation
-            #no coordinate corrections
+                #just for more detailed error reporting later on
+                bonestr = " in bone "+bone.name
+            #object level animation - no coordinate corrections
             elif not bone:
-                #we save some code if we just let the object anims go through the bone path
-                bind_matrix = mathutils.Matrix()
+                # any objects parented to bones need the length of the parent bone
+                if b_obj.parent and b_obj.parent_type == "BONE":
+                    parent_bone_len = b_obj.parent.data.bones[b_obj.parent_bone].length
+                # else we have either a root object (Scene Root), in which case we take the coordinates without modification
+                # or a generic object parented to an empty = node (needs testing!)
+                else:
+                    parent_bone_len = 0
+                    bind_matrix = mathutils.Matrix()
                 exp_fcurves = [fcu for fcu in action.fcurves if fcu.data_path in ("rotation_quaternion", "rotation_euler", "location", "scale")]
+            # decompose the bind matrix
             if exp_fcurves:
                 bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
                 bind_rot = bind_rot.to_4x4()
+            start_frame, stop_frame = action.frame_range
+            
+        # we are supposed to export an empty controller
         else:
-            #we are supposed to export an empty controller
+            # only set frame range
             start_frame = bpy.context.scene.frame_start
             stop_frame = bpy.context.scene.frame_end
         
@@ -136,8 +174,6 @@ class AnimationHelper():
             # present, only the data is not present (see further on)
             return
     
-        #TODO: what if one wanted to add an animation directly to something else like a NiTriShape?
-        #      in other places of the code, that seems like it should be allowed for non-skeletal meshes
         # make sure the parent is of the right type
         assert(isinstance(parent_block, NifFormat.NiNode))
     
@@ -164,12 +200,7 @@ class AnimationHelper():
         parent_block.add_controller(kfc)
     
         # fill in the non-trivial values
-        kfc.flags = 8 # active
-        kfc.flags |= self.get_flags_from_fcurves(exp_fcurves)
-        kfc.frequency = 1.0
-        kfc.phase = 0.0
-        kfc.start_time = start_frame / self.fps
-        kfc.stop_time = stop_frame / self.fps
+        self.set_flags_and_timing(kfc, exp_fcurves, start_frame, stop_frame)
     
         if NifOp.props.animation == 'GEOM_NIF':
             # keyframe data is not present in geometry files
@@ -181,45 +212,43 @@ class AnimationHelper():
         eulers = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("euler")]
         scales = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("scale")]
         
+        # go over all fcurves collected above and transform and store all keys
         if scales:
-            num_keys = len(scales[0].keyframe_points)
-            for i in range(num_keys):
-                frame = scales[0].keyframe_points[i].co[0]
-                scale = scales[0].keyframe_points[i].co[1]
-                scale_curve.append( (frame, scale) )
+            #just use the first scale curve and assume even scale over all curves
+            for frame, scale in self.iter_frame_key(scales, mathutils.Vector):
+                scale_curve.append( (frame, scale[0]) )
         
         if quaternions:
             if len(quaternions) != 4:
-                raise nif_utils.NifError("Incomplete ROT key set in bone "+bone.name+" for action "+action.name)
+                raise nif_utils.NifError("Incomplete ROT key set"+bonestr+" for action "+action.name)
             else:
-                num_keys = len(quaternions[0].keyframe_points)
-                for i in range(num_keys):
-                    frame = quaternions[0].keyframe_points[i].co[0]
-                    quat = nif_utils.export_keymat(bind_rot, mathutils.Quaternion([fcurve.keyframe_points[i].co[1] for fcurve in quaternions]).to_matrix().to_4x4()).to_quaternion()
+                for frame, quat in self.iter_frame_key(quaternions, mathutils.Quaternion):
+                    quat = nif_utils.export_keymat(bind_rot, quat.to_matrix().to_4x4(), bone).to_quaternion()
                     quat_curve.append( (frame, quat) )
                 
         if eulers:
             if len(eulers) != 3:
-                raise nif_utils.NifError("Incomplete Euler key set in bone "+bone.name+" for action "+action.name)
+                raise nif_utils.NifError("Incomplete Euler key set"+bonestr+" for action "+action.name)
             else:
-                num_keys = len(eulers[0].keyframe_points)
-                for i in range(num_keys):
-                    frame = eulers[0].keyframe_points[i].co[0]
-                    # important: make new euler compatible to the previous euler in to_euler()
-                    euler = nif_utils.export_keymat(bind_rot, mathutils.Euler([fcurve.keyframe_points[i].co[1] for fcurve in eulers]).to_matrix().to_4x4() ).to_euler("XYZ", euler)
+                for frame, euler in self.iter_frame_key(eulers, mathutils.Euler):
+                    euler = nif_utils.export_keymat(bind_rot, euler.to_matrix().to_4x4(), bone).to_euler("XYZ", euler)
                     euler_curve.append( (frame, euler) )
                     
         if translations:
             if len(translations) != 3:
-                raise nif_utils.NifError("Incomplete LOC key set in bone "+bone.name+" for action "+action.name)
+                raise nif_utils.NifError("Incomplete LOC key set"+bonestr+" for action "+action.name)
             else:
-                num_keys = len(translations[0].keyframe_points)
-                for i in range(num_keys):
-                    frame = translations[0].keyframe_points[i].co[0]
-                    trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation( [fcurve.keyframe_points[i].co[1] for fcurve in translations] ) ).to_translation() + bind_trans
+                for frame, trans in self.iter_frame_key(translations, mathutils.Vector):
+                    # object parented to bone: remove the parent bone length from the blender fcurve's y coordinate (offset along parent bone)
+                    if not bone:
+                        trans.y += parent_bone_len
+                    trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone).to_translation()
+                    # bones only: add the bind translation back in
+                    if bone:
+                        trans += bind_trans
                     trans_curve.append( (frame, trans) )
-        # # -> now comes the real export
-    
+                    
+        # finally we can export the data calculated above
         if (max(len(quat_curve), len(euler_curve), len(trans_curve), len(scale_curve)) <= 1
             and self.nif_export.version >= 0x0A020000):
             # only add data if number of keys is > 1
@@ -257,19 +286,21 @@ class AnimationHelper():
             kfd = self.nif_export.objecthelper.create_block("NiTransformData", exp_fcurves)
             kfi.data = kfd
     
+        ### TODO [animation] support other interpolation modes, get interpolation from blender?
+        ###                  probably requires additional data like tangents and stuff
+        
+        # save all nif keys
         if euler_curve:
             kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
             kfd.num_rotation_keys = 1 # *NOT* len(frames) this crashes the engine!
             for i, coord in enumerate(kfd.xyz_rotations):
                 coord.num_keys = len(euler_curve)
-                # XXX todo: quadratic interpolation?
                 coord.interpolation = NifFormat.KeyType.LINEAR_KEY
                 coord.keys.update_size()
                 for key, (frame, euler) in zip(coord.keys, euler_curve):
                     key.time = frame / self.fps
                     key.value = euler[i]
         elif quat_curve:
-            # XXX todo: quadratic interpolation?
             kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
             kfd.num_rotation_keys = len(quat_curve)
             kfd.quaternion_keys.update_size()
@@ -473,13 +504,11 @@ class MaterialAnimation():
             n_mat_ctrl = self.nif_export.objecthelper.create_block( controller, fcurves )
             n_mat_ipol = self.nif_export.objecthelper.create_block( interpolator, fcurves )
             n_mat_ctrl.interpolator = n_mat_ipol
-            n_mat_ctrl.flags = 8 # active
-            n_mat_ctrl.flags |= self.nif_export.animationhelper.get_flags_from_fcurves(fcurves)
+            
+            self.set_flags_and_timing(n_mat_ctrl, fcurves)
             #set target color only for color controller
             if n_dtype:
                 n_mat_ctrl.set_target_color(n_dtype)
-            n_mat_ctrl.frequency = 1.0
-            n_mat_ctrl.start_time, n_mat_ctrl.stop_time = fcurves[0].range() / self.fps
             n_mat_ctrl.data = n_keydata
             n_mat_ipol.data = n_keydata
             # attach block to material property
@@ -524,10 +553,7 @@ class MaterialAnimation():
         # then add the controller so it is exported
         if fcurves[0].keyframe_points:
             n_uvctrl = NifFormat.NiUVController()
-            n_uvctrl.flags = 8 # active
-            n_uvctrl.flags |= self.nif_export.animationhelper.get_flags_from_fcurves(fcurves)
-            n_uvctrl.frequency = 1.0
-            n_uvctrl.start_time, n_uvctrl.stop_time = fcurves[0].range() / self.fps
+            self.set_flags_and_timing(n_uvctrl, fcurves)
             n_uvctrl.data = n_uvdata
             # attach block to geometry
             n_geom.add_controller(n_uvctrl)
@@ -575,11 +601,8 @@ class ObjectAnimation():
         if fcurves[0].keyframe_points:
             n_vis_ctrl = self.nif_export.objecthelper.create_block("NiVisController", fcurves)
             n_vis_ipol = self.nif_export.objecthelper.create_block("NiBoolInterpolator", fcurves)
+            self.set_flags_and_timing(n_vis_ctrl, fcurves)
             n_vis_ctrl.interpolator = n_vis_ipol
-            n_vis_ctrl.flags = 8 # active
-            n_vis_ctrl.flags |= self.nif_export.animationhelper.get_flags_from_fcurves(fcurves)
-            n_vis_ctrl.frequency = 1.0
-            n_vis_ctrl.start_time, n_vis_ctrl.stop_time = fcurves[0].range() / bpy.context.scene.render.fps
             n_vis_ctrl.data = n_vis_data
             n_vis_ipol.data = n_bool_data
             # attach block to node
