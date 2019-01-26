@@ -677,6 +677,7 @@ class ArmatureAnimation():
                 interp_rot = "LINEAR"
                 interp_loc = "LINEAR"
                 interp_scale = "LINEAR"
+                return
             # next is a quick hack to make the new transform
             # interpolator work as if it is an old style keyframe data
             # block parented directly on the controller
@@ -746,9 +747,10 @@ class ArmatureAnimation():
                     vec = mathutils.Vector([val.x, val.y, val.z])
                     key = nif_utils.import_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()
                     self.nif_import.animationhelper.add_key(fcurves, t, key, interp_loc)
-        #get extrapolation from kfc and set it to fcurves
-        self.nif_import.animationhelper.set_extrapolation(kfc.flags, b_action.groups[bone_name].channels)
-        
+            #get extrapolation from kfc and set it to fcurves
+            if any( (eulers, rotations, scales, translations) ):
+                self.nif_import.animationhelper.set_extrapolation(kfc.flags, b_action.groups[bone_name].channels)
+            
     def import_armature_animation(self, b_armature_obj):
         """
         Imports an animation contained in the NIF itself.
