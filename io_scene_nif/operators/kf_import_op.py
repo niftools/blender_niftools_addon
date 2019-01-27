@@ -59,7 +59,7 @@ class KfImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         description="Changes size of mesh to fit onto Blender's default grid.",
         default=1.0,
         min=0.01, max=100.0, precision=2)
-		
+        
     #: File name filter for file select dialog.
     filter_glob = bpy.props.StringProperty(
         default="*.kf", options={'HIDDEN'})
