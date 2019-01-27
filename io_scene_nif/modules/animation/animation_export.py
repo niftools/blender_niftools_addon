@@ -145,7 +145,7 @@ class AnimationHelper():
                 if b_obj.parent and b_obj.parent_type == "BONE":
                     parent_bone_len = b_obj.parent.data.bones[b_obj.parent_bone].length
                 # else we have either a root object (Scene Root), in which case we take the coordinates without modification
-                # or a generic object parented to an empty = node (needs testing!)
+                # or a generic object parented to an empty = node
                 else:
                     # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
                     # we want to export matrix_local, and the keyframes are in matrix_basis, so do:
@@ -184,16 +184,8 @@ class AnimationHelper():
             # link interpolator from the controller
             kfc.interpolator = kfi
             # set interpolator default data
-            scale, quat, trans = \
+            kfi.scale, kfi.rotation, kfi.translation = \
                 parent_block.get_transform().get_scale_quat_translation()
-            kfi.translation.x = trans.x
-            kfi.translation.y = trans.y
-            kfi.translation.z = trans.z
-            kfi.rotation.x = quat.x
-            kfi.rotation.y = quat.y
-            kfi.rotation.z = quat.z
-            kfi.rotation.w = quat.w
-            kfi.scale = scale
         parent_block.add_controller(kfc)
     
         # fill in the non-trivial values
@@ -564,9 +556,9 @@ class ObjectAnimation():
     def export_object_vis_controller(self, n_node, b_obj):
         """Export the visibility controller data."""
         
-        if not b_obj.animation_data and b_obj.animation_data.action:
+        if not b_obj.animation_data and not b_obj.animation_data.action:
             return
-        # get the alpha curve and translate it into nif data
+        # get the hide fcurve
         fcurves = [fcu for fcu in b_obj.animation_data.action.fcurves if "hide" in fcu.data_path]
         if not fcurves:
             return
