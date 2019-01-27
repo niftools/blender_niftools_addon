@@ -49,53 +49,35 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
+def create_b_obj(ob_name, b_obj_data):
+    """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""
+    b_obj = bpy.data.objects.new(ob_name, b_obj_data)
+    bpy.context.scene.objects.link(b_obj)
+    bpy.context.scene.objects.active = b_obj
+    b_obj.select = True
+    return b_obj
 
 class Armature():
     
     def __init__(self, parent):
         self.nif_import = parent
         
-    def import_armature(self, niArmature):
+    def import_armature(self, n_armature):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
-        armature_name = self.nif_import.import_name(niArmature)
+        armature_name = self.nif_import.import_name(n_armature)
 
-        b_armatureData = bpy.data.armatures.new(armature_name)
-        # b_armatureData.show_names = True
-        # b_armatureData.show_axes = True
-        b_armatureData.draw_type = 'STICK'
-        b_armature = bpy.data.objects.new(armature_name, b_armatureData)
-        b_armature.select = True
+        b_armature_data = bpy.data.armatures.new(armature_name)
+        b_armature_data.draw_type = 'STICK'
+        b_armature = create_b_obj(armature_name, b_armature_data)
         b_armature.show_x_ray = True
-        
-        #Link object to scene
-        scn = bpy.context.scene
-        scn.objects.link(b_armature)
-        scn.objects.active = b_armature
         
         # make armature editable and create bones
         bpy.ops.object.mode_set(mode='EDIT',toggle=False)
-        niChildBones = [child for child in niArmature.children
-                        if self.is_bone(child)]
-        for niBone in niChildBones:
-            self.import_bone(niBone, b_armatureData, niArmature)
-
-        #fix the bone length
-        for bone in b_armatureData.edit_bones:
-            #don't change Bip01
-            if bone.parent:
-                if bone.children:
-                    childheads = mathutils.Vector()
-                    for child in bone.children:
-                        childheads += child.head
-                    bone_length = (bone.head - childheads/len(bone.children)).length
-                    if bone_length < 0.01:
-                        bone_length = 0.25
-                # end of a chain
-                else:
-                    bone_length = bone.parent.length
-                bone.length = bone_length
+        for n_child in n_armature.children:
+            self.import_bone(n_child, b_armature_data, n_armature)
+        self.fix_bone_lengths(b_armature_data)
         bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 
         # The armature has been created in editmode,
@@ -115,37 +97,53 @@ class Armature():
                 # TODO: Still use constraints to store priorities? Maybe use a property instead.
                 constr = b_posebone.constraints.new('TRANSFORM')
                 constr.name = "priority:%i" % self.nif_import.dict_bone_priorities[niBone.name]
-        return b_armature  
-
-    def import_bone(self, n_block, b_armature_data, n_armature):
+        return b_armature
+        
+    def import_bone(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
         """Adds a bone to the armature in edit mode."""
         # check that n_block is indeed a bone
         if not self.is_bone(n_block):
             return None
-        
         # bone name
         bone_name = self.nif_import.import_name(n_block)
         # create a new bone
         b_edit_bone = b_armature_data.edit_bones.new(bone_name)
-        #Sets active so edit bones are marked selected after import
+        # sets active so edit bones are marked selected after import
         b_armature_data.edit_bones.active = b_edit_bone
         # get the nif bone's armature space matrix
         # (under the hood all bone space matrixes are multiplied together)
         n_bind = nif_utils.import_matrix(n_block, relative_to=n_armature)
-        #get transformation in blender's coordinate space
+        # get transformation in blender's coordinate space
         b_bind = nif_utils.nif_bind_to_blender_bind(n_bind)
-        #the following is a workaround because blender can no longer set matrices to bones directly
+        # the following is a workaround because blender can no longer set matrices to bones directly
         tail, roll = nif_utils.mat3_to_vec_roll(b_bind.to_3x3())
         b_edit_bone.head = b_bind.to_translation()
         b_edit_bone.tail = tail + b_edit_bone.head
         b_edit_bone.roll = roll
+        # link to parent
+        if b_parent_bone:
+            b_edit_bone.parent = b_parent_bone
         # import and parent bone children
         for n_child in n_block.children:
-            if self.is_bone(n_child):
-                b_child_bone = self.import_bone(n_child, b_armature_data, n_armature)
-                b_child_bone.parent = b_edit_bone
-        return b_edit_bone
+            self.import_bone(n_child, b_armature_data, n_armature, b_edit_bone)
 
+    def fix_bone_lengths(self, b_armature_data):
+        """Sets all edit_bones to a suitable length."""
+        for b_edit_bone in b_armature_data.edit_bones:
+            #don't change root bones
+            if b_edit_bone.parent:
+                # take the desired length from the mean of all children's heads
+                if b_edit_bone.children:
+                    childheads = mathutils.Vector()
+                    for b_child in b_edit_bone.children:
+                        childheads += b_child.head
+                    bone_length = (b_edit_bone.head - childheads/len(b_edit_bone.children)).length
+                    if bone_length < 0.01:
+                        bone_length = 0.25
+                # end of a chain
+                else:
+                    bone_length = b_edit_bone.parent.length
+                b_edit_bone.length = bone_length
         
     def append_armature_modifier(self, b_obj, b_armature):
         """Append an armature modifier for the object."""
@@ -310,35 +308,6 @@ class Armature():
             return  niBlock in self.nif_import.dict_armatures
         return False
         
-    def get_closest_bone(self, niBlock, skelroot):
-        """Detect closest bone ancestor."""
-        par = niBlock._parent
-        while par:
-            if par == skelroot:
-                return None
-            if self.is_bone(par):
-                return par
-            par = par._parent
-        return par
-
-
-    def get_blender_object(self, niBlock):
-        """Retrieves the Blender object or Blender bone matching the block."""
-        if self.is_bone(niBlock):
-            bone_name = self.nif_import.dict_names[niBlock]
-            armatureName = None
-            for armatureBlock, boneBlocks in self.nif_import.dict_armatures.items():
-                if niBlock in boneBlocks:
-                    armatureName = self.nif_import.dict_names[armatureBlock]
-                    break
-                else:
-                    raise nif_utils.NifError("cannot find bone '%s'" % bone_name)
-            armatureObject = bpy.types.Object(armatureName)
-            return armatureObject.data.bones[bone_name]
-        else:
-            return bpy.types.Object(self.nif_import.dict_names[niBlock])
-
-
     def store_names(self):
         """Stores the original, long object names so that they can be
         re-exported. In order for this to work it is necessary to mantain the
