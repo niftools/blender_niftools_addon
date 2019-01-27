@@ -192,93 +192,6 @@ class AnimationHelper():
             if bone_name in bind_data:
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
                 self.armature_animation.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
-                
-
-    def import_kf_root(self, kf_root, root):
-        """Merge kf into nif.
-
-        *** Note: this function will eventually move to PyFFI. ***
-        """
-
-        NifLog.info("Merging kf tree into nif tree")
-
-        # check that this is an Oblivion style kf file
-        if not isinstance(kf_root, NifFormat.NiControllerSequence):
-            raise nif_utils.NifError("non-Oblivion .kf import not supported")
-
-        # import text keys
-        self.import_text_keys(kf_root)
-
-
-        # go over all controlled blocks
-        for controlledblock in kf_root.controlled_blocks:
-            # get the name
-            nodename = controlledblock.get_node_name()
-            # match from nif tree?
-            node = root.find(block_name = nodename)
-            if not node:
-                NifLog.info("Animation for {0} but no such node found in nif tree".format(nodename))
-                continue
-            # node found, now find the controller
-            controllertype = controlledblock.get_controller_type().decode()
-            if not controllertype:
-                NifLog.info("Animation for {0} without controller type, so skipping".format(nodename))
-                continue
-            controller = nif_utils.find_controller(node, getattr(NifFormat, controllertype))
-            if not controller:
-                NifLog.info("No {1} Controller found in corresponding animation node {0}, creating one".format(controllertype, nodename))
-                controller = getattr(NifFormat, controllertype)()
-                # TODO:set all the fields of this controller
-                node.add_controller(controller)
-            # yes! attach interpolator
-            controller.interpolator = controlledblock.interpolator
-            # in case of a NiTransformInterpolator without a data block
-            # we still must re-export the interpolator for Oblivion to
-            # accept the file
-            # so simply add dummy keyframe data for this one with just a single
-            # key to flag the exporter to export the keyframe as interpolator
-            # (i.e. length 1 keyframes are simply interpolators)
-            if isinstance(controller.interpolator,
-                          NifFormat.NiTransformInterpolator) \
-                and controller.interpolator.data is None:
-                # create data block
-                kfi = controller.interpolator
-                kfi.data = NifFormat.NiTransformData()
-                # fill with info from interpolator
-                kfd = controller.interpolator.data
-                # copy rotation
-                kfd.num_rotation_keys = 1
-                kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
-                kfd.quaternion_keys.update_size()
-                kfd.quaternion_keys[0].time = 0.0
-                kfd.quaternion_keys[0].value.x = kfi.rotation.x
-                kfd.quaternion_keys[0].value.y = kfi.rotation.y
-                kfd.quaternion_keys[0].value.z = kfi.rotation.z
-                kfd.quaternion_keys[0].value.w = kfi.rotation.w
-                # copy translation
-                if kfi.translation.x < -1000000:
-                    # invalid, happens in fallout 3, e.g. h2haim.kf
-                    NifLog.warn("Ignored NaN in interpolator translation")
-                else:
-                    kfd.translations.num_keys = 1
-                    kfd.translations.keys.update_size()
-                    kfd.translations.keys[0].time = 0.0
-                    kfd.translations.keys[0].value.x = kfi.translation.x
-                    kfd.translations.keys[0].value.y = kfi.translation.y
-                    kfd.translations.keys[0].value.z = kfi.translation.z
-                # ignore scale, usually contains invalid data in interpolator
-
-            # save priority for future reference
-            # (priorities will be stored into the name of a TRANSFORM constraint on
-            # bones, see import_armature function)
-            # This name is a bytestring, not a string
-            self.nif_import.dict_bone_priorities[nodename] = controlledblock.priority
-
-        # DEBUG: save the file for manual inspection
-        #niffile = open("C:\\test.nif", "wb")
-        #NifFormat.write(niffile,
-        #                version = 0x14000005, user_version = 11, roots = [root])
-    
     
     # import animation groups
     def import_text_keys(self, niBlock):
@@ -352,34 +265,7 @@ class AnimationHelper():
         self.fps = fps
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
-
-    def store_animation_data(self, rootBlock):
-        return
-        # very slow, implement later
-        """
-        niBlockList = [block for block in rootBlock.tree() if isinstance(block, NifFormat.NiAVObject)]
-        for niBlock in niBlockList:
-            kfc = nif_utils.find_controller(niBlock, NifFormat.NiKeyframeController)
-            if not kfc: continue
-            kfd = kfc.data
-            if not kfd: continue
-            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.translations.keys])
-            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.scales.keys])
-            if kfd.rotation_type == 4:
-                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyz_rotations.keys])
-            else:
-                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternion_keys])
-
-        # set the frames in the _ANIMATION_DATA list
-        for key in _ANIMATION_DATA:
-            # time 0 is frame 1
-            key['frame'] = 1 + int(key['data'].time * self.fps + 0.5)
-
-        # sort by frame, I need this later
-        _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['frame'], key2['frame']))
-        """
-
-        
+    
     def set_animation(self, niBlock, b_obj):
         """
         Load animation attached to (Scene Root) object.
