@@ -79,8 +79,7 @@ class Armature():
         niChildBones = [child for child in niArmature.children
                         if self.is_bone(child)]
         for niBone in niChildBones:
-            self.import_bone(
-                niBone, b_armature, b_armatureData, niArmature)
+            self.import_bone(niBone, b_armatureData, niArmature)
 
         #fix the bone length
         for bone in b_armatureData.edit_bones:
@@ -118,37 +117,34 @@ class Armature():
                 constr.name = "priority:%i" % self.nif_import.dict_bone_priorities[niBone.name]
         return b_armature  
 
-    def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
+    def import_bone(self, n_block, b_armature_data, n_armature):
         """Adds a bone to the armature in edit mode."""
-        # check that niBlock is indeed a bone
-        if not self.is_bone(niBlock):
+        # check that n_block is indeed a bone
+        if not self.is_bone(n_block):
             return None
         
-        #todo: implement scale correction
-        # scale = NifOp.props.scale_correction_import
         # bone name
-        bone_name = self.nif_import.import_name(niBlock)
-        niChildBones = [ child for child in niBlock.children
-                         if self.is_bone(child) ]
+        bone_name = self.nif_import.import_name(n_block)
         # create a new bone
-        b_bone = b_armatureData.edit_bones.new(bone_name)
+        b_edit_bone = b_armature_data.edit_bones.new(bone_name)
         #Sets active so edit bones are marked selected after import
-        b_armatureData.edit_bones.active = b_bone
+        b_armature_data.edit_bones.active = b_edit_bone
         # get the nif bone's armature space matrix
         # (under the hood all bone space matrixes are multiplied together)
-        n_bind = nif_utils.import_matrix(niBlock, relative_to=niArmature)
+        n_bind = nif_utils.import_matrix(n_block, relative_to=n_armature)
         #get transformation in blender's coordinate space
         b_bind = nif_utils.nif_bind_to_blender_bind(n_bind)
         #the following is a workaround because blender can no longer set matrices to bones directly
         tail, roll = nif_utils.mat3_to_vec_roll(b_bind.to_3x3())
-        b_bone.head = b_bind.to_translation()
-        b_bone.tail = tail + b_bone.head
-        b_bone.roll = roll
-        # set bone children
-        for niBone in niChildBones:
-            b_child_bone = self.import_bone(niBone, b_armature, b_armatureData, niArmature)
-            b_child_bone.parent = b_bone
-        return b_bone
+        b_edit_bone.head = b_bind.to_translation()
+        b_edit_bone.tail = tail + b_edit_bone.head
+        b_edit_bone.roll = roll
+        # import and parent bone children
+        for n_child in n_block.children:
+            if self.is_bone(n_child):
+                b_child_bone = self.import_bone(n_child, b_armature_data, n_armature)
+                b_child_bone.parent = b_edit_bone
+        return b_edit_bone
 
         
     def append_armature_modifier(self, b_obj, b_armature):
