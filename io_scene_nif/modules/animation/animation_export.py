@@ -110,7 +110,6 @@ class AnimationHelper():
         If called on an b_obj = type(armature), it expects a bone too.
         If called on an object, with bone=None, it exports object level animation.
         """
-        print(b_obj.name, bone)
         
         # sometimes we need to export an empty keyframe... 
         scale_curve = []
@@ -122,15 +121,11 @@ class AnimationHelper():
         
         #just for more detailed error reporting later on
         bonestr = ""
+        parent_bone_len = 0
         
-        ### TODO [animation]        test object animation for objects parented to empties
         ### TODO [object/animation] should object animation for skinned models be supported? export_node says the
         ###                         "The nif format does not support this, ignoring object animation"
         ###                         for now it is implemented here but disabled by export_node's has_anim - dropping it would make code a little easier here
-        ### TODO [animation/object] if this is called on a blender model = has_anim is True in object_export.py's export_node)
-        ###                         an intermediate Node is created at the end of export_node which receives this anim controller
-        ###                         the animation is technically correct but the exported NiTrishape retains the same static transformation
-        ###                         that the intermediate node has, so in this case the TriShape should have its transforms cleared
         
         #we have either skeletal or object animation
         if b_obj and b_obj.animation_data and b_obj.animation_data.action:
@@ -152,8 +147,10 @@ class AnimationHelper():
                 # else we have either a root object (Scene Root), in which case we take the coordinates without modification
                 # or a generic object parented to an empty = node (needs testing!)
                 else:
-                    parent_bone_len = 0
-                    bind_matrix = mathutils.Matrix()
+                    # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
+                    # we want to export matrix_local, and the keyframes are in matrix_basis, so do:
+                    # matrix_local = matrix_parent_inverse * matrix_basis
+                    bind_matrix = b_obj.matrix_parent_inverse
                 exp_fcurves = [fcu for fcu in action.fcurves if fcu.data_path in ("rotation_quaternion", "rotation_euler", "location", "scale")]
             # decompose the bind matrix
             if exp_fcurves:
@@ -240,11 +237,11 @@ class AnimationHelper():
             else:
                 for frame, trans in self.iter_frame_key(translations, mathutils.Vector):
                     # object parented to bone: remove the parent bone length from the blender fcurve's y coordinate (offset along parent bone)
-                    if not bone:
+                    if parent_bone_len:
                         trans.y += parent_bone_len
                     trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone).to_translation()
-                    # bones only: add the bind translation back in
-                    if bone:
+                    # bones only + empties: add the bind translation back in
+                    if not parent_bone_len:
                         trans += bind_trans
                     trans_curve.append( (frame, trans) )
                     
