@@ -119,11 +119,11 @@ class NifImport(NifCommon):
             if NifOp.props.override_scene_info:
                 scene_import.import_version_info(self.data)
 
-            kf_path = NifOp.props.keyframe_file
-            if kf_path:
-                self.kfdata = KFFile.load_kf(kf_path)
-            else:
-                self.kfdata = None
+            # kf_path = NifOp.props.keyframe_file
+            # if kf_path:
+                # self.kfdata = KFFile.load_kf(kf_path)
+            # else:
+                # self.kfdata = None
 
             egm_path = NifOp.props.egm_file
             if egm_path:
@@ -136,9 +136,8 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                self.animationhelper.set_frames_per_second(
-                self.data.roots
-                + (self.kfdata.roots if self.kfdata else []) )
+                self.animationhelper.set_frames_per_second(self.data.roots)
+                # + (self.kfdata.roots if self.kfdata else []) )
             
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -194,10 +193,10 @@ class NifImport(NifCommon):
                                 root.remove_child(child)
                 # import this root block
                 NifLog.debug("Root block: {0}".format(root.get_global_display()))
-                # merge animation from kf tree into nif tree
-                if NifOp.props.animation and self.kfdata:
-                    for kf_root in self.kfdata.roots:
-                        self.animationhelper.import_kf_root(kf_root, root)
+                # # merge animation from kf tree into nif tree
+                # if NifOp.props.animation and self.kfdata:
+                    # for kf_root in self.kfdata.roots:
+                        # self.animationhelper.import_kf_root(kf_root, root)
                 # import the nif tree
                 self.import_root(root)
         finally:

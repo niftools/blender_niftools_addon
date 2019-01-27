@@ -168,7 +168,7 @@ class AnimationHelper():
         for fcurve, k in zip(fcurves, key):
             fcurve.keyframe_points.insert(frame, k).interpolation = interp
         
-    def import_kf_standalone(self, kf_root, b_armature_obj, bind_data, scale_correction_import):
+    def import_kf_standalone(self, kf_root, b_armature_obj, bind_data):
         """
         Import a kf animation. Needs a suitable armature in blender scene.
         """
@@ -191,7 +191,7 @@ class AnimationHelper():
             bone_name = armature.get_bone_name_for_blender( controlledblock.target_name )
             if bone_name in bind_data:
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
-                self.armature_animation.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans, scale_correction_import)
+                self.armature_animation.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
                 
 
     def import_kf_root(self, kf_root, root):
@@ -651,7 +651,7 @@ class ArmatureAnimation():
     def __init__(self, parent):
         self.nif_import = parent
     
-    def import_keyframe_controller(self, kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans, scale_correction_import):
+    def import_keyframe_controller(self, kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans):
         if kfc:
             b_action = b_armature_obj.animation_data.action
             # old style: data directly on controller
@@ -686,8 +686,6 @@ class ArmatureAnimation():
                 # for now, in this case, ignore interpolator
                 kfi = None
             if isinstance(kfd, NifFormat.NiKeyframeData):
-                #apply scale via pyffi - but it's as simple as multiplying the kf trans key with the scale scalar
-                kfd.apply_scale(scale_correction_import)
                 interp_rot = get_interp_mode(kfd)
                 interp_loc = get_interp_mode(kfd.translations)
                 interp_scale = get_interp_mode(kfd.scales)

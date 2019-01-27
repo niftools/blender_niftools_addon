@@ -43,6 +43,8 @@ from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.animation_import import AnimationHelper
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility import nif_utils
+import pyffi.spells.nif.fix
+from pyffi.formats.nif import NifFormat
 import bpy
 import os
 
@@ -57,7 +59,6 @@ class KfImport(NifCommon):
     def execute(self):
         """Main import function."""
 
-        scale_correction_import = NifOp.props.scale_correction_import
         dirname = os.path.dirname(NifOp.props.filepath)
         kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
         b_armature = armature.get_armature()
@@ -67,9 +68,13 @@ class KfImport(NifCommon):
         #get nif space bind pose of armature here for all anims
         bind_data = armature.get_bind_data(b_armature)
         for kf_file in kf_files:
-            self.kfdata = KFFile.load_kf(kf_file)
-            for kf_root in self.kfdata.roots:
-                # calculate and set frames per second
-                self.animationhelper.set_frames_per_second( self.kfdata.roots )
-                self.animationhelper.import_kf_standalone( kf_root, b_armature, bind_data, scale_correction_import )
+            kfdata = KFFile.load_kf(kf_file)
+            # use pyffi toaster to scale the tree
+            toaster = pyffi.spells.nif.NifToaster()
+            toaster.scale = NifOp.props.scale_correction_import
+            pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
+            # calculate and set frames per second
+            self.animationhelper.set_frames_per_second( kfdata.roots )
+            for kf_root in kfdata.roots:
+                self.animationhelper.import_kf_standalone( kf_root, b_armature, bind_data )
         return {'FINISHED'}
