@@ -383,15 +383,24 @@ class ObjectHelper:
     def set_object_matrix(self, b_obj, block):
         """Set a blender object's transform matrix to a NIF object's transformation matrix in rest pose."""
         block.set_transform( self.get_object_matrix(b_obj) )
-
+        
     def get_object_matrix(self, b_obj):
         """Get a blender object's matrix as NifFormat.Matrix44"""
-        # transpose to swap columns for rows so we can use pyffi's set_rows() directly
-        bind_matrix = self.get_object_bind(b_obj).transposed()
-        matrix = NifFormat.Matrix44()
-        matrix.set_rows( *bind_matrix )
-        return matrix
+        return self.mathutils_to_nifformat_matrix( self.get_object_bind(b_obj) )
+        
+    def set_b_matrix_to_n_block(self, b_matrix, block):
+        """Set a blender matrix to a NIF object's transformation matrix in rest pose."""
+        ### TODO [object] maybe favor this over the above two methods for more flexibility and transparency?
+        block.set_transform( self.mathutils_to_nifformat_matrix(b_matrix) )
 
+    def mathutils_to_nifformat_matrix(self, b_matrix):
+        """Convert a blender matrix to a NifFormat.Matrix44"""
+        # transpose to swap columns for rows so we can use pyffi's set_rows() directly
+        # instead of setting every single value manually
+        n_matrix = NifFormat.Matrix44()
+        n_matrix.set_rows( *b_matrix.transposed() )
+        return n_matrix
+        
     def get_object_bind(self, b_obj):
         """Get the bind matrix of a blender object.
         
@@ -623,8 +632,13 @@ class MeshHelper:
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1  # default
 
-            self.nif_export.objecthelper.set_object_matrix(b_obj, trishape)
-
+            # if we have an animation of a blender mesh
+            # an intermediate NiNode has been created which holds this b_obj's transform
+            # the trishape itself then needs identity transform (default)
+            if trishape_name is not None:
+                # only export the bind matrix on trishapes that were not animated
+                self.nif_export.objecthelper.set_object_matrix(b_obj, trishape)
+            
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
