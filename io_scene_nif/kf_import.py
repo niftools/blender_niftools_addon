@@ -57,6 +57,7 @@ class KfImport(NifCommon):
     def execute(self):
         """Main import function."""
 
+        scale_correction_import = NifOp.props.scale_correction_import
         dirname = os.path.dirname(NifOp.props.filepath)
         kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
         b_armature = armature.get_armature()
@@ -70,5 +71,5 @@ class KfImport(NifCommon):
             for kf_root in self.kfdata.roots:
                 # calculate and set frames per second
                 self.animationhelper.set_frames_per_second( self.kfdata.roots )
-                self.animationhelper.import_kf_standalone( kf_root, b_armature, bind_data )
+                self.animationhelper.import_kf_standalone( kf_root, b_armature, bind_data, scale_correction_import )
         return {'FINISHED'}

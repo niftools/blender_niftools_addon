@@ -53,6 +53,13 @@ class KfImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     #: How the nif import operators is labelled in the user interface.
     bl_label = "Import KF"
 
+    #: Number of nif units per blender unit.
+    scale_correction_import = bpy.props.FloatProperty(
+        name="Scale Correction Import",
+        description="Changes size of mesh to fit onto Blender's default grid.",
+        default=1.0,
+        min=0.01, max=100.0, precision=2)
+		
     #: File name filter for file select dialog.
     filter_glob = bpy.props.StringProperty(
         default="*.kf", options={'HIDDEN'})
