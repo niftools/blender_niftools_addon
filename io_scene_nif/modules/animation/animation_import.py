@@ -266,7 +266,7 @@ class AnimationHelper():
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
     
-    def set_animation(self, niBlock, b_obj):
+    def import_object_animation(self, niBlock, b_obj):
         """
         Load animation attached to (Scene Root) object.
         Becomes the object level animation of the object.
@@ -636,27 +636,17 @@ class ArmatureAnimation():
             #get extrapolation from kfc and set it to fcurves
             if any( (eulers, rotations, scales, translations) ):
                 self.nif_import.animationhelper.set_extrapolation(kfc.flags, b_action.groups[bone_name].channels)
-            
-    def import_armature_animation(self, b_armature_obj):
+           
+    def import_bone_animation(self, n_block, b_armature_obj, bone_name):
         """
         Imports an animation contained in the NIF itself.
         """
-        # create an action
-        self.nif_import.animationhelper.create_action(b_armature_obj, b_armature_obj.name+"-kfAnim" )
-        # go through all armature pose bones
-        NifLog.info('Importing Animations')
-        for bone_name, b_posebone in b_armature_obj.pose.bones.items():
-            # denote progress
+        if NifOp.props.animation:
             NifLog.debug('Importing animation for bone %s'.format(bone_name))
-            niBone = self.nif_import.dict_blocks[bone_name]
 
-            bone_bm = nif_utils.import_matrix(niBone) # base pose
+            bone_bm = nif_utils.import_matrix(n_block) # base pose
             niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(bone_bm)
             niBone_bind_rot_inv = niBone_bind_rot.to_4x4().inverted()
-            
-            # get controller, interpolator, and data
-            # note: the NiKeyframeController check also includes
-            #       NiTransformController (see hierarchy!)
-            kfc = nif_utils.find_controller(niBone, NifFormat.NiKeyframeController)
+            kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
                                        
             self.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
