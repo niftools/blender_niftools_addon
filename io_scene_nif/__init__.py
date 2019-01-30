@@ -103,6 +103,7 @@ def menu_func_import(self, context):
 # noinspection PyUnusedLocal
 def menu_func_export(self, context):
     self.layout.operator(operators.nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+    # self.layout.operator(operators.kf_export_op.KfExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
 
 
 def register():

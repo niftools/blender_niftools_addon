@@ -45,6 +45,7 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.modules.animation.animation_export import AnimationHelper
 from io_scene_nif.modules.collision.collision_export import bhkshape_export, bound_export
 from io_scene_nif.modules.armature.armature_export import Armature
+from io_scene_nif.modules import armature
 from io_scene_nif.modules.property.property_export import PropertyHelper
 from io_scene_nif.modules.constraint.constraint_export import constraint_export
 from io_scene_nif.modules.property.texture.texture_export import TextureHelper
@@ -638,12 +639,14 @@ class NifExport(NifCommon):
                             ctrl.target = None
                 # oblivion
                 elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
+                    b_armature = armature.get_armature()
+                    # TODO [animation] allow for object kf only
                     # create kf root header
                     kf_root = self.objecthelper.create_block("NiControllerSequence")
-                    if self.EXPORT_ANIMSEQUENCENAME:
-                        kf_root.name = self.EXPORT_ANIMSEQUENCENAME
-                    else:
-                        kf_root.name = filebase
+                    # if self.EXPORT_ANIMSEQUENCENAME:
+                        # kf_root.name = self.EXPORT_ANIMSEQUENCENAME
+                    # else:
+                    kf_root.name = filebase
                     kf_root.unknown_int_1 = 1
                     kf_root.weight = 1.0
                     kf_root.text_keys = anim_textextra
@@ -652,58 +655,58 @@ class NifExport(NifCommon):
                     kf_root.start_time =(bpy.context.scene.frame_start - 1) * bpy.context.scene.render.fps
                     kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
                     # quick hack to set correct target name
-                    if not self.EXPORT_ANIMTARGETNAME:
-                        if "Bip01" in [node.name for node in node_kfctrls.iterkeys()]:
-                            targetname = "Bip01"
-                        elif "Bip02" in [node.name for node in node_kfctrls.iterkeys()]:
-                            targetname = "Bip02"
-                        else:
-                            targetname = root_block.name
+                    if "Bip01" in b_armature.data.bones:
+                        targetname = "Bip01"
+                    elif "Bip02" in b_armature.data.bones:
+                        targetname = "Bip02"
                     else:
-                        targetname = self.EXPORT_ANIMTARGETNAME
+                        targetname = root_block.name
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
-                    for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):
-                        # export a block for every interpolator in every controller
-                        for ctrl in ctrls:
-                            # XXX add get_interpolators to pyffi interface
-                            if isinstance(ctrl, NifFormat.NiSingleInterpController):
-                                interpolators = [ctrl.interpolator]
-                            elif isinstance( ctrl, (NifFormat.NiGeomMorpherController, NifFormat.NiMorphWeightsController)):
-                                interpolators = ctrl.interpolators
+                    for b_bone in b_armature.data.bones:
+                        # per-node animation
+                        self.animationhelper.export_keyframes(kf_root, b_armature, b_bone)
+                    # for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):
+                        # # export a block for every interpolator in every controller
+                        # for ctrl in ctrls:
+                            # # XXX add get_interpolators to pyffi interface
+                            # if isinstance(ctrl, NifFormat.NiSingleInterpController):
+                                # interpolators = [ctrl.interpolator]
+                            # elif isinstance( ctrl, (NifFormat.NiGeomMorpherController, NifFormat.NiMorphWeightsController)):
+                                # interpolators = ctrl.interpolators
 
-                            if isinstance(ctrl, NifFormat.NiGeomMorpherController):
-                                variable_2s = [morph.frame_name for morph in ctrl.data.morphs]
-                            else:
-                                variable_2s = [None for interpolator in interpolators]
-                            for interpolator, variable_2 in zip(interpolators, variable_2s):
-                                # create ControlledLink for each interpolator
-                                controlledblock = kf_root.add_controlled_block()
-                                if self.version < 0x0A020000:
-                                    # older versions need the actual controller blocks
-                                    controlledblock.target_name = node.name
-                                    controlledblock.controller = ctrl
-                                    # erase reference to target node
-                                    ctrl.target = None
-                                else:
-                                    # newer versions need the interpolator blocks
-                                    controlledblock.interpolator = interpolator
-                                # get bone animation priority (previously fetched from the constraints during export_bones)
-                                if not node.name in self.dict_bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
-                                    if self.EXPORT_ANIMPRIORITY != 0:
-                                        priority = self.EXPORT_ANIMPRIORITY
-                                    else:
-                                        priority = 26
-                                        NifLog.warn("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
-                                else:
-                                    priority = self.dict_bone_priorities[node.name]
-                                controlledblock.priority = priority
-                                # set palette, and node and controller type names, and variables
-                                controlledblock.string_palette = kf_root.string_palette
-                                controlledblock.set_node_name(node.name)
-                                controlledblock.set_controller_type(ctrl.__class__.__name__)
-                                if variable_2:
-                                    controlledblock.set_variable_2(variable_2)
+                            # if isinstance(ctrl, NifFormat.NiGeomMorpherController):
+                                # variable_2s = [morph.frame_name for morph in ctrl.data.morphs]
+                            # else:
+                                # variable_2s = [None for interpolator in interpolators]
+                            # for interpolator, variable_2 in zip(interpolators, variable_2s):
+                                # # create ControlledLink for each interpolator
+                                # controlledblock = kf_root.add_controlled_block()
+                                # if self.version < 0x0A020000:
+                                    # # older versions need the actual controller blocks
+                                    # controlledblock.target_name = node.name
+                                    # controlledblock.controller = ctrl
+                                    # # erase reference to target node
+                                    # ctrl.target = None
+                                # else:
+                                    # # newer versions need the interpolator blocks
+                                    # controlledblock.interpolator = interpolator
+                                # # get bone animation priority (previously fetched from the constraints during export_bones)
+                                # if not node.name in self.dict_bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
+                                    # if self.EXPORT_ANIMPRIORITY != 0:
+                                        # priority = self.EXPORT_ANIMPRIORITY
+                                    # else:
+                                        # priority = 26
+                                        # NifLog.warn("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
+                                # else:
+                                    # priority = self.dict_bone_priorities[node.name]
+                                # controlledblock.priority = priority
+                                # # set palette, and node and controller type names, and variables
+                                # controlledblock.string_palette = kf_root.string_palette
+                                # controlledblock.set_node_name(node.name)
+                                # controlledblock.set_controller_type(ctrl.__class__.__name__)
+                                # if variable_2:
+                                    # controlledblock.set_variable_2(variable_2)
                 else:
                     raise nif_utils.NifError("Keyframe export for '%s' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
                                              " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % NifOp.props.game)
