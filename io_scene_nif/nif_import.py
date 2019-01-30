@@ -556,7 +556,7 @@ class NifImport(NifCommon):
 
                 # import the animations
                 if NifOp.props.animation:
-                    self.animationhelper.set_animation(niBlock, b_obj)
+                    self.animationhelper.import_object_animation(niBlock, b_obj)
                     # import the extras
                     self.animationhelper.import_text_keys(niBlock)
                     # import vis controller

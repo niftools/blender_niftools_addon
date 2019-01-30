@@ -70,8 +70,8 @@ class Armature():
 
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
-        b_armature = create_b_obj(armature_name, b_armature_data)
-        b_armature.show_x_ray = True
+        b_armature_obj = create_b_obj(armature_name, b_armature_data)
+        b_armature_obj.show_x_ray = True
         
         # make armature editable and create bones
         bpy.ops.object.mode_set(mode='EDIT',toggle=False)
@@ -79,25 +79,28 @@ class Armature():
             self.import_bone(n_child, b_armature_data, n_armature)
         self.fix_bone_lengths(b_armature_data)
         bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
+        if NifOp.props.animation:
+            self.nif_import.animationhelper.create_action(b_armature_obj, armature_name+"-Anim")
 
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes.
-        if NifOp.props.animation:
-            self.nif_import.animationhelper.armature_animation.import_armature_animation(b_armature)
+        # if NifOp.props.animation:
+            # self.nif_import.animationhelper.armature_animation.import_armature_animation(b_armature_obj)
             
         # constraints (priority)
         # must be done outside edit mode hence after calling
-        for bone_name, b_posebone in b_armature.pose.bones.items():
+        for bone_name, b_posebone in b_armature_obj.pose.bones.items():
+            n_block = self.nif_import.dict_blocks[bone_name]
+            self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj, bone_name)
             # find bone nif block
             if bone_name.startswith("InvMarker"):
                 bone_name = "InvMarker"
-            niBone = self.nif_import.dict_blocks[bone_name]
             # store bone priority, if applicable
-            if niBone.name in self.nif_import.dict_bone_priorities:
+            if n_block.name in self.nif_import.dict_bone_priorities:
                 # TODO: Still use constraints to store priorities? Maybe use a property instead.
                 constr = b_posebone.constraints.new('TRANSFORM')
                 constr.name = "priority:%i" % self.nif_import.dict_bone_priorities[niBone.name]
-        return b_armature
+        return b_armature_obj
         
     def import_bone(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
         """Adds a bone to the armature in edit mode."""

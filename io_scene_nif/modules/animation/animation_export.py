@@ -42,6 +42,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
@@ -121,36 +122,30 @@ class AnimationHelper():
         
         #just for more detailed error reporting later on
         bonestr = ""
-        parent_bone_len = 0
-        
-        ### TODO [object/animation] should object animation for skinned models be supported? export_node says the
-        ###                         "The nif format does not support this, ignoring object animation"
-        ###                         for now it is implemented here but disabled by export_node's has_anim - dropping it would make code a little easier here
         
         #we have either skeletal or object animation
         if b_obj and b_obj.animation_data and b_obj.animation_data.action:
             action = b_obj.animation_data.action
             
-            # get bind matrix for bone or object
-            bind_matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
-        
             #skeletal animation - with bone correction & coordinate corrections
             if bone and bone.name in action.groups:
+                # get bind matrix for bone or object
+                bind_matrix = self.nif_export.objecthelper.get_object_bind(bone)
                 exp_fcurves = action.groups[bone.name].channels
                 #just for more detailed error reporting later on
                 bonestr = " in bone "+bone.name
             #object level animation - no coordinate corrections
             elif not bone:
-                # any objects parented to bones need the length of the parent bone
+                # raise error on any objects parented to bones
                 if b_obj.parent and b_obj.parent_type == "BONE":
-                    parent_bone_len = b_obj.parent.data.bones[b_obj.parent_bone].length
-                # else we have either a root object (Scene Root), in which case we take the coordinates without modification
+                    raise nif_utils.NifError(b_obj.name+" is parented to a bone AND has animations. The nif format does not support this!")
+                    
+                # we have either a root object (Scene Root), in which case we take the coordinates without modification
                 # or a generic object parented to an empty = node
-                else:
-                    # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
-                    # we want to export matrix_local, and the keyframes are in matrix_basis, so do:
-                    # matrix_local = matrix_parent_inverse * matrix_basis
-                    bind_matrix = b_obj.matrix_parent_inverse
+                # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
+                # we want to export matrix_local, and the keyframes are in matrix_basis, so do:
+                # matrix_local = matrix_parent_inverse * matrix_basis
+                bind_matrix = b_obj.matrix_parent_inverse
                 exp_fcurves = [fcu for fcu in action.fcurves if fcu.data_path in ("rotation_quaternion", "rotation_euler", "location", "scale")]
             # decompose the bind matrix
             if exp_fcurves:
@@ -171,9 +166,6 @@ class AnimationHelper():
             # present, only the data is not present (see further on)
             return
     
-        # make sure the parent is of the right type
-        assert(isinstance(parent_block, NifFormat.NiNode))
-    
         # add a keyframecontroller block, and refer to this block in the
         # parent's time controller
         if self.nif_export.version < 0x0A020000:
@@ -186,7 +178,24 @@ class AnimationHelper():
             # set interpolator default data
             kfi.scale, kfi.rotation, kfi.translation = \
                 parent_block.get_transform().get_scale_quat_translation()
-        parent_block.add_controller(kfc)
+        
+        #if parent is a node, attach controller to that node
+        if isinstance(parent_block, NifFormat.NiNode):
+            parent_block.add_controller(kfc)
+        #else ControllerSequence, so create a link
+        elif isinstance(parent_block, NifFormat.NiControllerSequence):
+            controlledblock = parent_block.add_controlled_block()
+            if self.nif_export.version < 0x0A020000:
+                # older versions need the actual controller blocks
+                controlledblock.target_name = armature.get_bone_name_for_nif(bone.name)
+                controlledblock.controller = kfc
+                # erase reference to target node
+                kfc.target = None
+            else:
+                # newer versions need the interpolator blocks
+                controlledblock.interpolator = kfi
+        else:
+            raise nif_utils.NifError("Unsupported KeyframeController parent!")
     
         # fill in the non-trivial values
         self.set_flags_and_timing(kfc, exp_fcurves, start_frame, stop_frame)
@@ -228,13 +237,7 @@ class AnimationHelper():
                 raise nif_utils.NifError("Incomplete LOC key set"+bonestr+" for action "+action.name)
             else:
                 for frame, trans in self.iter_frame_key(translations, mathutils.Vector):
-                    # object parented to bone: remove the parent bone length from the blender fcurve's y coordinate (offset along parent bone)
-                    if parent_bone_len:
-                        trans.y += parent_bone_len
-                    trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone).to_translation()
-                    # bones only + empties: add the bind translation back in
-                    if not parent_bone_len:
-                        trans += bind_trans
+                    trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone).to_translation() + bind_trans
                     trans_curve.append( (frame, trans) )
                     
         # finally we can export the data calculated above
