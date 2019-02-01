@@ -221,7 +221,7 @@ class AnimationHelper():
                 raise nif_utils.NifError("Incomplete ROT key set"+bonestr+" for action "+action.name)
             else:
                 for frame, quat in self.iter_frame_key(quaternions, mathutils.Quaternion):
-                    quat = nif_utils.export_keymat(bind_rot, quat.to_matrix().to_4x4(), bone).to_quaternion()
+                    quat = armature.export_keymat(bind_rot, quat.to_matrix().to_4x4(), bone).to_quaternion()
                     quat_curve.append( (frame, quat) )
                 
         if eulers:
@@ -229,7 +229,7 @@ class AnimationHelper():
                 raise nif_utils.NifError("Incomplete Euler key set"+bonestr+" for action "+action.name)
             else:
                 for frame, euler in self.iter_frame_key(eulers, mathutils.Euler):
-                    euler = nif_utils.export_keymat(bind_rot, euler.to_matrix().to_4x4(), bone).to_euler("XYZ", euler)
+                    euler = armature.export_keymat(bind_rot, euler.to_matrix().to_4x4(), bone).to_euler("XYZ", euler)
                     euler_curve.append( (frame, euler) )
                     
         if translations:
@@ -237,7 +237,7 @@ class AnimationHelper():
                 raise nif_utils.NifError("Incomplete LOC key set"+bonestr+" for action "+action.name)
             else:
                 for frame, trans in self.iter_frame_key(translations, mathutils.Vector):
-                    trans = nif_utils.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone).to_translation() + bind_trans
+                    trans = armature.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone).to_translation() + bind_trans
                     trans_curve.append( (frame, trans) )
                     
         # finally we can export the data calculated above
