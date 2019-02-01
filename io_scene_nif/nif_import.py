@@ -118,12 +118,8 @@ class NifImport(NifCommon):
             self.data = NifFile.load_nif(NifOp.props.filepath)
             if NifOp.props.override_scene_info:
                 scene_import.import_version_info(self.data)
-
-            # kf_path = NifOp.props.keyframe_file
-            # if kf_path:
-                # self.kfdata = KFFile.load_kf(kf_path)
-            # else:
-                # self.kfdata = None
+            #the axes used for bone correction depend on the nif version
+            armature.set_bone_correction_from_version(self.data.version)
 
             egm_path = NifOp.props.egm_file
             if egm_path:

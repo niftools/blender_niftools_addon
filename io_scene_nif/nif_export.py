@@ -211,6 +211,8 @@ class NifExport(NifCommon):
             # TODO Move fully to scene level
             self.version = NifOp.op.version[NifOp.props.game]
             self.user_version, self.user_version_2 = scene_export.get_version_info(NifOp.props)
+            #the axes used for bone correction depend on the nif version
+            armature.set_bone_correction_from_version(self.version)
 
             # create a nif object
 

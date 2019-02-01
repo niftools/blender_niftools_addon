@@ -69,6 +69,8 @@ class KfImport(NifCommon):
         bind_data = armature.get_bind_data(b_armature)
         for kf_file in kf_files:
             kfdata = KFFile.load_kf(kf_file)
+            #the axes used for bone correction depend on the nif version
+            armature.set_bone_correction_from_version(kfdata.version)
             # use pyffi toaster to scale the tree
             toaster = pyffi.spells.nif.NifToaster()
             toaster.scale = NifOp.props.scale_correction_import

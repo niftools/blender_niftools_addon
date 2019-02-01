@@ -39,53 +39,16 @@
 # ***** END LICENSE BLOCK *****
 
 import mathutils
-from bpy_extras.io_utils import axis_conversion
 import math
 
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
 
 
 class NifError(Exception):
     """A simple custom exception class for export errors."""
     pass
 
-
-### do all NIFs use the same coordinate system?
-# ZT2 and other old ones
-correction = axis_conversion( from_forward="X", from_up="Y" ).to_4x4()
-# skyrim
-# correction = axis_conversion( from_forward="Z", from_up="Y" ).to_4x4()
-correction_inv = correction.inverted()
-
-
-def import_keymat(rest_rot_inv, key_matrix):
-    """
-    Handles space conversions for imported keys
-    """
-    return correction * (rest_rot_inv * key_matrix) * correction_inv
-    
-def export_keymat(rest_rot, key_matrix, bone):
-    """
-    Handles space conversions for exported keys
-    """
-    if bone:
-        return rest_rot * (correction_inv * key_matrix * correction)
-    else:
-        return rest_rot * key_matrix
-        
-
-def get_bind_matrix(bone):
-    """
-    Get a nif armature-space matrix from a blender bone.
-    """
-    bind = correction *  correction_inv * bone.matrix_local *  correction
-    if bone.parent:
-        p_bind_restored = correction *  correction_inv * bone.parent.matrix_local *  correction
-        bind = p_bind_restored.inverted() * bind
-    return bind
-
-def nif_bind_to_blender_bind(nif_armature_space_matrix):
-    return correction_inv * correction * nif_armature_space_matrix * correction_inv
 
 def vec_roll_to_mat3(vec, roll):
     #port of the updated C function from armature.c
