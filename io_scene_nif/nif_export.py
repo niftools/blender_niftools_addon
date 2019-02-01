@@ -639,7 +639,6 @@ class NifExport(NifCommon):
                             ctrl.target = None
                 # oblivion
                 elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
-                    b_armature = armature.get_armature()
                     # TODO [animation] allow for object kf only
                     # create kf root header
                     kf_root = self.objecthelper.create_block("NiControllerSequence")
@@ -652,7 +651,7 @@ class NifExport(NifCommon):
                     kf_root.text_keys = anim_textextra
                     kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
                     kf_root.frequency = 1.0
-                    kf_root.start_time =(bpy.context.scene.frame_start - 1) * bpy.context.scene.render.fps
+                    kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
                     kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
                     # quick hack to set correct target name
                     if "Bip01" in b_armature.data.bones:
@@ -663,9 +662,16 @@ class NifExport(NifCommon):
                         targetname = root_block.name
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
-                    for b_bone in b_armature.data.bones:
-                        # per-node animation
-                        self.animationhelper.export_keyframes(kf_root, b_armature, b_bone)
+                    b_armature = armature.get_armature()
+                    # per-node animation
+                    if b_armature:
+                        for b_bone in b_armature.data.bones:
+                            self.animationhelper.export_keyframes(kf_root, b_armature, b_bone)
+                    # per-object animation
+                    else:
+                        for b_obj in bpy.data.objects:
+                            self.animationhelper.export_keyframes(kf_root, b_obj)
+                        
                     # for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):
                         # # export a block for every interpolator in every controller
                         # for ctrl in ctrls:
