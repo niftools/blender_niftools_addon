@@ -66,8 +66,8 @@ class Armature():
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
+        
         armature_name = self.nif_import.import_name(n_armature)
-
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
         b_armature_obj = create_b_obj(armature_name, b_armature_data)
@@ -117,7 +117,7 @@ class Armature():
         # (under the hood all bone space matrixes are multiplied together)
         n_bind = nif_utils.import_matrix(n_block, relative_to=n_armature)
         # get transformation in blender's coordinate space
-        b_bind = nif_utils.nif_bind_to_blender_bind(n_bind)
+        b_bind = armature.nif_bind_to_blender_bind(n_bind)
         # the following is a workaround because blender can no longer set matrices to bones directly
         tail, roll = nif_utils.mat3_to_vec_roll(b_bind.to_3x3())
         b_edit_bone.head = b_bind.to_translation()

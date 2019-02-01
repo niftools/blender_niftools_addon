@@ -36,6 +36,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+from bpy_extras.io_utils import axis_conversion
 from io_scene_nif.utility import nif_utils
 
 # dictionary of bones that belong to a certain armature
@@ -106,7 +107,54 @@ def get_bone_name_for_nif(name):
         return name
     return name
 
+def set_bone_correction_from_version(version):
+    if version in (0x14020007, ):
+        # skyrim
+        from_forward = "Z"
+        from_up = "Y"
+    else:
+        # ZT2 and other old ones
+        from_forward = "X"
+        from_up = "Y"
+    global correction
+    global correction_inv
+    correction = axis_conversion( from_forward, from_up ).to_4x4()
+    correction_inv = correction.inverted()
 
+#set these from outside using set_bone_correction_from_version once we have a version number
+correction = None
+correction_inv = None
+
+
+def import_keymat(rest_rot_inv, key_matrix):
+    """
+    Handles space conversions for imported keys
+    """
+    return correction * (rest_rot_inv * key_matrix) * correction_inv
+    
+def export_keymat(rest_rot, key_matrix, bone):
+    """
+    Handles space conversions for exported keys
+    """
+    if bone:
+        return rest_rot * (correction_inv * key_matrix * correction)
+    else:
+        return rest_rot * key_matrix
+        
+
+def get_bind_matrix(bone):
+    """
+    Get a nif armature-space matrix from a blender bone.
+    """
+    bind = correction *  correction_inv * bone.matrix_local *  correction
+    if bone.parent:
+        p_bind_restored = correction *  correction_inv * bone.parent.matrix_local *  correction
+        bind = p_bind_restored.inverted() * bind
+    return bind
+
+def nif_bind_to_blender_bind(nif_armature_space_matrix):
+    return correction_inv * correction * nif_armature_space_matrix * correction_inv
+    
 def get_armature():
     """
     Get an armature.
@@ -130,6 +178,6 @@ def get_bind_data(b_armature):
     if b_armature:
         bind_data = {}
         for b_bone in b_armature.data.bones:
-            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt( nif_utils.get_bind_matrix(b_bone) )
+            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt( get_bind_matrix(b_bone) )
             bind_data[b_bone.name] = (niBone_bind_scale, niBone_bind_rot.to_4x4().inverted(), niBone_bind_trans)
         return bind_data

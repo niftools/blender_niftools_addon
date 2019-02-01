@@ -609,14 +609,14 @@ class ArmatureAnimation():
                 fcurves = create_fcurves(b_action, "rotation_euler", range(3), bone_name)
                 for t, val in eulers:
                     euler = mathutils.Euler( val )
-                    key = nif_utils.import_keymat(niBone_bind_rot_inv, euler.to_matrix().to_4x4() ).to_euler()
+                    key = armature.import_keymat(niBone_bind_rot_inv, euler.to_matrix().to_4x4() ).to_euler()
                     self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
             elif rotations:
                 NifLog.debug('Rotation keys...(quaternions)')
                 fcurves = create_fcurves(b_action, "rotation_quaternion", range(4), bone_name)
                 for t, val in rotations:
                     quat = mathutils.Quaternion([val.w, val.x, val.y, val.z])
-                    key = nif_utils.import_keymat(niBone_bind_rot_inv, quat.to_matrix().to_4x4() ).to_quaternion()
+                    key = armature.import_keymat(niBone_bind_rot_inv, quat.to_matrix().to_4x4() ).to_quaternion()
                     self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
             
             if scales:
@@ -631,7 +631,7 @@ class ArmatureAnimation():
                 fcurves = create_fcurves(b_action, "location", range(3), bone_name)
                 for t, val in translations:
                     vec = mathutils.Vector([val.x, val.y, val.z])
-                    key = nif_utils.import_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()
+                    key = armature.import_keymat(niBone_bind_rot_inv, mathutils.Matrix.Translation(vec - niBone_bind_trans)).to_translation()
                     self.nif_import.animationhelper.add_key(fcurves, t, key, interp_loc)
             #get extrapolation from kfc and set it to fcurves
             if any( (eulers, rotations, scales, translations) ):

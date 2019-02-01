@@ -52,14 +52,13 @@ class Armature():
 
     def __init__(self, parent):
         self.nif_export = parent
-        
     
     def export_bones(self, arm, parent_block):
         """Export the bones of an armature."""
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
         assert( arm.type == 'ARMATURE' )
-
+        
         # find the root bones
         # list of all bones
         bones = arm.data.bones.values()
