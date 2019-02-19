@@ -508,14 +508,20 @@ class NifImport(NifCommon):
                 
                 # set up transforms
                 for n_child, b_child in object_children:
-                    
                     b_child.parent = b_armature
                     b_child.parent_type = 'BONE'
                     b_child.parent_bone = b_obj.name
-                    #multiply with rotation component of inverse parent matrix
-                    b_child.matrix_local =  b_obj.matrix_local.to_3x3().to_4x4().inverted() * b_child.matrix_basis
-                    #move to bone's head position instead of tail
-                    b_child.location.y -= b_obj.length
+                    
+                    # get the child's final transform in nif coordinate space
+                    n_child_armaturespace_matrix = armature.get_bind_matrix(b_obj) * b_child.matrix_basis
+                    # setting the child's world matrix deals with the bone offset under the hood - very elegant!
+                    b_child.matrix_world = n_child_armaturespace_matrix
+                    
+                    # equivalent to the above but more verbose; keep this here as a reference; might be needed for anims?
+                    # make worldspace matrix relative to blender parent bone and set as child's local matrix
+                    # b_child.matrix_local =  b_obj.matrix_local.inverted() * n_child_armaturespace_matrix
+                    # move child to parent bone's head position instead of tail
+                    # b_child.location.y -= b_obj.length
             else:
                 raise RuntimeError(
                     "Unexpected object type %s" % b_obj.__class__)
