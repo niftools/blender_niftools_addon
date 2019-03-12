@@ -107,15 +107,15 @@ def get_bone_name_for_nif(name):
         return name
     return name
 
-def set_bone_correction_from_version(version):
-    if version in (0x14020007, ):
-        # skyrim
-        from_forward = "Z"
-        from_up = "Y"
-    else:
+def set_bone_orientation(from_forward, from_up):
+    # if version in (0x14020007, ):
+        # # skyrim
+        # from_forward = "Z"
+        # from_up = "Y"
+    # else:
         # ZT2 and other old ones
-        from_forward = "X"
-        from_up = "Y"
+        # from_forward = "X"
+        # from_up = "Y"
     global correction
     global correction_inv
     correction = axis_conversion( from_forward, from_up ).to_4x4()
