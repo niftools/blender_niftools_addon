@@ -38,13 +38,14 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy_extras.io_utils import ImportHelper
+from bpy_extras.io_utils import ImportHelper, orientation_helper_factory
 
 from .nif_common_op import NifOperatorCommon
 
 from io_scene_nif import nif_import
 
-class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
+OrientationHelper = orientation_helper_factory("OrientationHelper", axis_forward='Z', axis_up='Y')
+class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon, OrientationHelper):
     """Operator for loading a nif file."""
 
     #: Name of function for calling the nif export operators.

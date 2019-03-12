@@ -114,12 +114,12 @@ class NifImport(NifCommon):
                         " 'Import Geometry Only + Parent To Selected Armature'"
                         " mode.")
 
+            #the axes used for bone correction depend on the nif version
+            armature.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
 
             self.data = NifFile.load_nif(NifOp.props.filepath)
             if NifOp.props.override_scene_info:
                 scene_import.import_version_info(self.data)
-            #the axes used for bone correction depend on the nif version
-            armature.set_bone_correction_from_version(self.data.version)
 
             egm_path = NifOp.props.egm_file
             if egm_path:
