@@ -40,6 +40,7 @@
 import bpy
 from bpy.props import (PointerProperty,
                        IntProperty,
+                       EnumProperty,
                        )
 from bpy.types import PropertyGroup
 
@@ -60,3 +61,40 @@ class BoneProperty(PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Bone.niftools_bone
+
+class ArmatureProperty(PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Armature.niftools_armature = PointerProperty(
+            name='Niftools Armature Property',
+            description='Additional armature properties used by the Nif File Format',
+            type=cls,
+        )
+
+        cls.axis_forward = EnumProperty(
+                name="Forward",
+                items=(('X', "X Forward", ""),
+                       ('Y', "Y Forward", ""),
+                       ('Z', "Z Forward", ""),
+                       ('-X', "-X Forward", ""),
+                       ('-Y', "-Y Forward", ""),
+                       ('-Z', "-Z Forward", ""),
+                       ),
+                default="X",
+                )
+
+        cls.axis_up = EnumProperty(
+                name="Up",
+                items=(('X', "X Up", ""),
+                       ('Y', "Y Up", ""),
+                       ('Z', "Z Up", ""),
+                       ('-X', "-X Up", ""),
+                       ('-Y', "-Y Up", ""),
+                       ('-Z', "-Z Up", ""),
+                       ),
+                default="Y",
+                )
+
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Armature.niftools_armature
