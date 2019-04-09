@@ -59,6 +59,7 @@ class BonePanel(Panel):
         row = layout.column()
         
         row.prop(nif_bone_props, "boneflags")
+        row.prop(nif_bone_props, "bonepriority")
 
 class ArmaturePanel(Panel):
     bl_label = "Niftools Armature Props"

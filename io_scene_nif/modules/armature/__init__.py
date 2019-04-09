@@ -39,13 +39,6 @@ import bpy
 from bpy_extras.io_utils import axis_conversion
 from io_scene_nif.utility import nif_utils
 
-# bone animation priorities (maps NiNode name to priority number);
-# priorities are set in import_kf_root and are stored into the name
-# of a NULL constraint (for lack of something better) in
-# import_armature
-DICT_BONE_PRIORITIES = {}
-
-
 def get_bone_name_for_blender(name):
     """Convert a bone name to a name that can be used by Blender: turns
     'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.

@@ -57,6 +57,10 @@ class BoneProperty(PropertyGroup):
             name='Bone Flag',
             default=0
         )
+        cls.bonepriority = IntProperty(
+            name='Bone Priority',
+            default=0
+        )
 
     @classmethod
     def unregister(cls):

@@ -93,7 +93,6 @@ class NifImport(NifCommon):
         """Main import function."""
 
         self.dict_armatures = {}
-        self.dict_bone_priorities = {}
         self.dict_havok_objects = {}
         self.dict_names = {}
         self.dict_blocks = {}
@@ -688,11 +687,6 @@ class NifImport(NifCommon):
         bpy.context.scene.objects.link(b_empty)
         b_empty.niftools.bsxflags = self.bsxflags
         b_empty.niftools.objectflags = niBlock.flags
-
-        if niBlock.name in self.dict_bone_priorities:
-            constr = b_empty.constraints.append(
-                bpy.types.Constraint.NULL)
-            constr.name = "priority:%i" % self.dict_bone_priorities[niBlock.name]
         return b_empty
 
     def import_mesh(self, niBlock,
@@ -1232,13 +1226,6 @@ class NifImport(NifCommon):
                 b_mesh.vertices[b_v_index].co[0] = base.x
                 b_mesh.vertices[b_v_index].co[1] = base.y
                 b_mesh.vertices[b_v_index].co[2] = base.z
-
-
-        # import priority if existing
-        if niBlock.name in self.dict_bone_priorities:
-            constr = b_obj.constraints.append(
-                bpy.types.Constraint.NULL)
-            constr.name = "priority:%i" % self.dict_bone_priorities[niBlock.name]
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash
