@@ -90,16 +90,19 @@ class Armature():
         # constraints (priority)
         # must be done outside edit mode hence after calling
         for bone_name, b_posebone in b_armature_obj.pose.bones.items():
-            n_block = self.nif_import.dict_blocks[bone_name]
-            self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj, bone_name)
-            # find bone nif block
-            if bone_name.startswith("InvMarker"):
-                bone_name = "InvMarker"
-            # store bone priority, if applicable
-            if n_block.name in self.nif_import.dict_bone_priorities:
-                # TODO: Still use constraints to store priorities? Maybe use a property instead.
-                constr = b_posebone.constraints.new('TRANSFORM')
-                constr.name = "priority:%i" % self.nif_import.dict_bone_priorities[niBone.name]
+            if bone_name in self.nif_import.dict_blocks:
+                n_block = self.nif_import.dict_blocks[bone_name]
+                self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj, bone_name)
+                # find bone nif block
+                if bone_name.startswith("InvMarker"):
+                    bone_name = "InvMarker"
+                # store bone priority, if applicable
+                if n_block.name in self.nif_import.dict_bone_priorities:
+                    # TODO: Still use constraints to store priorities? Maybe use a property instead.
+                    constr = b_posebone.constraints.new('TRANSFORM')
+                    constr.name = "priority:%i" % self.nif_import.dict_bone_priorities[niBone.name]
+            else:
+                NifLog.info("'%s' can not be found in the NIF - unable to import additional data. This likely means your NIF structure duplicated bones".format(bone_name))
         return b_armature_obj
         
     def import_bone(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
