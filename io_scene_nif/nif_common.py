@@ -63,12 +63,6 @@ class NifCommon:
     # keeps track of names of exported blocks, to make sure they are unique
     dict_block_names = []
 
-    # bone animation priorities (maps NiNode name to priority number);
-    # priorities are set in import_kf_root and are stored into the name
-    # of a NULL constraint (for lack of something better) in
-    # import_armature
-    dict_bone_priorities = {}
-
     # dictionary of materials, to reuse materials
     dict_materials = {}
     

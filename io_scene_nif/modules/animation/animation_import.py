@@ -185,13 +185,15 @@ class AnimationHelper():
         self.create_action(b_armature_obj, kf_root.name.decode() )
         # go over all controlled blocks (NiKeyframeController)
         for controlledblock in kf_root.controlled_blocks:
-            # nb: this yielded just an empty bytestring
-            # nodename = controlledblock.get_node_name()
-            kfc = controlledblock.controller
+            # get bone name
             bone_name = armature.get_bone_name_for_blender( controlledblock.target_name )
+            # import bone priority
+            b_bone = b_armature_obj.data.bones[bone_name]
+            b_bone.niftools_bone.bonepriority = controlledblock.priority
+            # import animation
             if bone_name in bind_data:
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
-                self.armature_animation.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
+                self.armature_animation.import_keyframe_controller(controlledblock.controller, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
     
     # import animation groups
     def import_text_keys(self, niBlock):
@@ -540,6 +542,7 @@ class ArmatureAnimation():
     def import_keyframe_controller(self, kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans):
         if kfc:
             b_action = b_armature_obj.animation_data.action
+            b_pbone = b_armature_obj.pose.bones[bone_name]
             # old style: data directly on controller
             kfd = kfc.data
             # new style: data via interpolator
@@ -576,7 +579,7 @@ class ArmatureAnimation():
                 interp_loc = get_interp_mode(kfd.translations)
                 interp_scale = get_interp_mode(kfd.scales)
                 if kfd.rotation_type == 4:
-                    b_armature_obj.pose.bones[bone_name].rotation_mode = "XYZ"
+                    b_pbone.rotation_mode = "XYZ"
                     # uses xyz rotation
                     if kfd.xyz_rotations[0].keys:
                         
@@ -596,6 +599,7 @@ class ArmatureAnimation():
                         z_r = interpolate(times_all, times_z, [key.value for key in kfd.xyz_rotations[2].keys])
                     eulers = zip(times_all, zip(x_r, y_r, z_r) )
                 else:
+                    b_pbone.rotation_mode = "QUATERNION"
                     rotations = [(key.time, key.value) for key in kfd.quaternion_keys]
             
                 if kfd.scales.keys:
@@ -641,12 +645,11 @@ class ArmatureAnimation():
         """
         Imports an animation contained in the NIF itself.
         """
-        if NifOp.props.animation:
-            NifLog.debug('Importing animation for bone %s'.format(bone_name))
+        NifLog.debug('Importing animation for bone %s'.format(bone_name))
 
-            bone_bm = nif_utils.import_matrix(n_block) # base pose
-            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(bone_bm)
-            niBone_bind_rot_inv = niBone_bind_rot.to_4x4().inverted()
-            kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
-                                       
-            self.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
+        bone_bm = nif_utils.import_matrix(n_block) # base pose
+        niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(bone_bm)
+        niBone_bind_rot_inv = niBone_bind_rot.to_4x4().inverted()
+        kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
+                                   
+        self.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
