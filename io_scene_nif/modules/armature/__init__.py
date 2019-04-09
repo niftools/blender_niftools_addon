@@ -39,10 +39,6 @@ import bpy
 from bpy_extras.io_utils import axis_conversion
 from io_scene_nif.utility import nif_utils
 
-# dictionary of bones that belong to a certain armature
-# maps NIF armature name to list of NIF bone name
-DICT_ARMATURES = {}
-
 # bone animation priorities (maps NiNode name to priority number);
 # priorities are set in import_kf_root and are stored into the name
 # of a NULL constraint (for lack of something better) in
