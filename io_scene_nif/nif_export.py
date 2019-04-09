@@ -169,6 +169,9 @@ class NifExport(NifCommon):
                         raise nif_utils.NifError("Non-uniform scaling not supported.\n "
                                                  "Workaround: apply size and rotation (CTRL-A) on '%s'." % b_obj.name)
 
+            b_armature = armature.get_armature()
+            armature.set_bone_orientation(b_armature.data.niftools_armature.axis_forward, b_armature.data.niftools_armature.axis_up)
+            
             root_name = filebase
             # get the root object from selected object
             # only export empties, meshes, and armatures
@@ -212,7 +215,7 @@ class NifExport(NifCommon):
             self.version = NifOp.op.version[NifOp.props.game]
             self.user_version, self.user_version_2 = scene_export.get_version_info(NifOp.props)
             #the axes used for bone correction depend on the nif version
-            armature.set_bone_correction_from_version(self.version)
+            # armature.set_bone_correction_from_version(self.version)
 
             # create a nif object
 
@@ -664,7 +667,6 @@ class NifExport(NifCommon):
                         targetname = root_block.name
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
-                    b_armature = armature.get_armature()
                     # per-node animation
                     if b_armature:
                         for b_bone in b_armature.data.bones:
