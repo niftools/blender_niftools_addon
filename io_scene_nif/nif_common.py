@@ -49,10 +49,6 @@ class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
     """
-    
-    # dictionary of bones that belong to a certain armature
-    # maps NIF armature name to list of NIF bone name
-    dict_armatures = {}
 
     # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
     # we use this dictionary to set the physics constraints (ragdoll etc)

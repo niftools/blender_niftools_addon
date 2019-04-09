@@ -120,7 +120,6 @@ class NifExport(NifCommon):
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
-        self.dict_armatures = {}
         self.dict_bone_priorities = {}
         self.dict_havok_objects = {}
         self.dict_names = {}
