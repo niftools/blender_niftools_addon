@@ -41,7 +41,7 @@ import bpy
 from bpy.types import Panel
 
 
-class ArmaturePanel(Panel):
+class BonePanel(Panel):
     bl_label = "Niftools Bone Props"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -59,4 +59,23 @@ class ArmaturePanel(Panel):
         row = layout.column()
         
         row.prop(nif_bone_props, "boneflags")
+
+class ArmaturePanel(Panel):
+    bl_label = "Niftools Armature Props"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "data"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+    def draw(self, context):
+        nif_armature_props = context.armature.niftools_armature
+        
+        layout = self.layout
+        row = layout.column()
+        
+        row.prop(nif_armature_props, "axis_forward")
+        row.prop(nif_armature_props, "axis_up")
     
