@@ -297,30 +297,9 @@ class bhkshape_import():
         b_obj.game.collision_bounds_type = 'CAPSULE'
         b_obj.game.radius = bhkshape.radius*self.HAVOK_SCALE
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
-
-        # find transform
-        if length > NifOp.props.epsilon:
-            normal = (bhkshape.first_point - bhkshape.second_point) / length
-            normal = mathutils.Vector((normal.x, normal.y, normal.z))
-        else:
-            NifLog.warn("BhkCapsuleShape with identical points: using arbitrary axis")
-            normal = mathutils.Vector((0, 0, 1))
-            
-        # minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
-        # orthvec = mathutils.Vector([(1 if i == minindex else 0) for i in (0,1,2)])
         
-        # vec1 = mathutils.Vector.cross(normal, orthvec)
-        # vec1.normalize()
-        # vec2 = mathutils.Vector.cross(normal, vec1)
-        
-        # # the rotation matrix should be such that (0,0,1) maps to normal
-        # transform = mathutils.Matrix([vec1, vec2, normal]).transposed()
-        # transform.resize_4x4()
-        # transform[0][3] = (self.HAVOK_SCALE / 2) * (bhkshape.first_point.x + bhkshape.second_point.x)
-        # transform[1][3] = (self.HAVOK_SCALE / 2) * (bhkshape.first_point.y + bhkshape.second_point.y)
-        # transform[2][3] = (self.HAVOK_SCALE / 2) * (bhkshape.first_point.z + bhkshape.second_point.z)
-        # b_obj.matrix_local = transform
-
+        # center around middle; will acount for bone length once it is parented
+        b_obj.location.y = length / 2 * self.HAVOK_SCALE
         return [ b_obj ]
 
 
