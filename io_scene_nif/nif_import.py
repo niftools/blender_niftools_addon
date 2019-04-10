@@ -474,7 +474,7 @@ class NifImport(NifCommon):
             object_children = [
                 (n_child, b_child) for (n_child, b_child) in b_children_list
                 if isinstance(b_child, bpy.types.Object)]
-
+            b_colliders = []
             # if not importing skeleton only
             if NifOp.props.skeleton != "SKELETON_ONLY":
                 # import collision objects
@@ -482,16 +482,11 @@ class NifImport(NifCommon):
                     bhk_body = niBlock.collision_object.body
                     if not isinstance(bhk_body, NifFormat.bhkRigidBody):
                         NifLog.warn("Unsupported collision structure under node {0}".format(niBlock.name))
-
-                    collision_objs = self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
-                    # register children for parentship
-                    object_children += [
-                        (bhk_body, b_child) for b_child in collision_objs]
+                    b_colliders.extend( self.bhkhelper.import_bhk_shape(bhkshape=bhk_body) )
 
                 # import bounding box
                 if bsbound:
-                    object_children += [
-                        (bsbound, self.boundhelper.import_bounding_box(bsbound))]
+                    b_colliders.append( self.boundhelper.import_bounding_box(bsbound) )
 
             # fix parentship
             if isinstance(b_obj, bpy.types.Object):
@@ -502,6 +497,15 @@ class NifImport(NifCommon):
             elif isinstance(b_obj, bpy.types.Bone):
                 
                 # TODO: MOVE TO ANIMATIONHELPER
+                for b_collider in b_colliders:
+                    b_collider.parent = b_armature
+                    b_collider.parent_type = 'BONE'
+                    b_collider.parent_bone = b_obj.name
+                    
+                    # the capsule has been centered, now make it relative to bone head
+                    offset = b_collider.location.y - b_obj.length
+                    b_collider.matrix_basis = armature.nif_bind_to_blender_bind( mathutils.Matrix() )
+                    b_collider.location.y = offset
                 
                 # set up transforms
                 for n_child, b_child in object_children:
@@ -520,8 +524,7 @@ class NifImport(NifCommon):
                     # move child to parent bone's head position instead of tail
                     # b_child.location.y -= b_obj.length
             else:
-                raise RuntimeError(
-                    "Unexpected object type %s" % b_obj.__class__)
+                raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
 
             # track camera for billboard nodes
             if isinstance(niBlock, NifFormat.NiBillboardNode):
