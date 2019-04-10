@@ -602,7 +602,8 @@ class bound_import():
             #    *bbox.bounding_box.rotation.as_list())
             # ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
-        b_obj.niftools.bsxflags = NiObject.import_bsxflag_data(bbox)
+        # this was wrong, import_bsxflag_data should not be called on a 'BSBound' bbox but a root_block
+        # b_obj.niftools.bsxflags = NiObject.import_bsxflag_data(bbox)
         # TODO b_obj.niftools.objectflags = self.nif_import.objectflags
         b_obj.location = n_bbox_center
 
