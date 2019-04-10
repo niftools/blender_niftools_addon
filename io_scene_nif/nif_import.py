@@ -65,9 +65,6 @@ from pyffi.formats.nif import NifFormat
 
 class NifImport(NifCommon):
 
-    # degrees to radians conversion constant
-    D2R = 3.14159265358979 / 180.0
-    IMPORT_EXTRANODES = True
     IMPORT_EXPORTEMBEDDEDTEXTURES = False
 
     def __init__(self, operator, context):
@@ -92,7 +89,6 @@ class NifImport(NifCommon):
     def execute(self):
         """Main import function."""
 
-        self.dict_armatures = {}
         self.dict_havok_objects = {}
         self.dict_names = {}
         self.dict_blocks = {}
@@ -365,12 +361,11 @@ class NifImport(NifCommon):
             children = niBlock.children
             # bounding box child?
             bsbound = nif_utils.find_extra(niBlock, NifFormat.BSBound)
-            if not (children
-                    or niBlock.collision_object
-                    or bsbound or niBlock.has_bounding_box
-                    or self.IMPORT_EXTRANODES):
-                # do not import unless the node is "interesting"
-                return None
+            # if not (children
+                    # or niBlock.collision_object
+                    # or bsbound or niBlock.has_bounding_box):
+                # # do not import unless the node is "interesting"
+                # return None
             # import object
             if self.armaturehelper.is_armature_root(niBlock):
                 # all bones in the tree are also imported by
