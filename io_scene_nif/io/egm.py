@@ -55,7 +55,7 @@ class EGMFile():
         # open keyframe file for binary reading
         with open(file_path, "rb") as egm_stream:
             # check if nif file is valid
-            egm_file.inspect_version_only(egm_stream)
+            egm_file.inspect_quick(egm_stream)
             if egm_file.version >= 0:
                 # it is valid, so read the file
                 NifLog.info("EGM file version: {0}".format(egm_file.version, "x"))

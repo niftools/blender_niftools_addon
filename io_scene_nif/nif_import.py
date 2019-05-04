@@ -1161,12 +1161,13 @@ class NifImport(NifCommon):
                           for morph in self.egmdata.asym_morphs]
 
             # insert base key at frame 1, using relative keys
-            b_mesh.insertKey(1, 'relative')
+            sk_basis = b_obj.shape_key_add("Basis")
+			# b_mesh.shape_keys.use_relative = False
 
-            if self.IMPORT_EGMANIM:
-                # if morphs are animated: create key ipo for mesh
-                b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
-                b_mesh.key.ipo = b_ipo
+            # if self.IMPORT_EGMANIM:
+                # # if morphs are animated: create key ipo for mesh
+                # b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
+                # b_mesh.key.ipo = b_ipo
 
 
             morphs = ([(morph, "EGM SYM %i" % i)
@@ -1183,47 +1184,43 @@ class NifImport(NifCommon):
                 # for each vertex calculate the key position from base
                 # pos + delta offset
                 for bv, mv, b_v_index in zip(n_verts, morphverts, v_map):
-                    base = mathutils.Vector(bv.x, bv.y, bv.z)
-                    delta = mathutils.Vector(mv[0], mv[1], mv[2])
+                    base = mathutils.Vector( (bv.x, bv.y, bv.z) )
+                    delta = mathutils.Vector( (mv[0], mv[1], mv[2]) )
                     v = base + delta
                     if applytransform:
                         v *= transform
-                    b_mesh.vertices[b_v_index].co[0] = v.x
-                    b_mesh.vertices[b_v_index].co[1] = v.y
-                    b_mesh.vertices[b_v_index].co[2] = v.z
+                    b_mesh.vertices[b_v_index].co = v
                 # update the mesh and insert key
-                b_mesh.insertKey(1, 'relative')
-                # set name for key
-                b_mesh.key.blocks[-1].name = keyname
+                shape_key = b_obj.shape_key_add(keyname, from_mix=False)
 
-                if self.IMPORT_EGMANIM:
-                    # set up the ipo key curve
-                    b_curve = b_ipo.addCurve(keyname)
-                    # linear interpolation
-                    b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
-                    # constant extrapolation
-                    b_curve.extend = Blender.IpoCurve.ExtendTypes.CONST
-                    # set up the curve's control points
-                    framestart = 1 + len(b_mesh.key.blocks) * 10
-                    for frame, value in ((framestart, 0),
-                                         (framestart + 5, self.IMPORT_EGMANIMSCALE),
-                                         (framestart + 10, 0)):
-                        b_curve.addBezier((frame, value))
+                # if self.IMPORT_EGMANIM:
+                    # # set up the ipo key curve
+                    # b_curve = b_ipo.addCurve(keyname)
+                    # # linear interpolation
+                    # b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+                    # # constant extrapolation
+                    # b_curve.extend = Blender.IpoCurve.ExtendTypes.CONST
+                    # # set up the curve's control points
+                    # framestart = 1 + len(b_mesh.key.blocks) * 10
+                    # for frame, value in ((framestart, 0),
+                                         # (framestart + 5, self.IMPORT_EGMANIMSCALE),
+                                         # (framestart + 10, 0)):
+                        # b_curve.addBezier((frame, value))
 
-            if self.IMPORT_EGMANIM:
-                # set begin and end frame
-                bpy.context.scene.getRenderingContext().startFrame(1)
-                bpy.context.scene.getRenderingContext().endFrame(
-                    11 + len(b_mesh.key.blocks) * 10)
+            # if self.IMPORT_EGMANIM:
+                # # set begin and end frame
+                # bpy.context.scene.getRenderingContext().startFrame(1)
+                # bpy.context.scene.getRenderingContext().endFrame(
+                    # 11 + len(b_mesh.key.blocks) * 10)
 
-            # finally: return to base position
-            for bv, b_v_index in zip(n_verts, v_map):
-                base = mathutils.Vector(bv.x, bv.y, bv.z)
-                if applytransform:
-                    base *= transform
-                b_mesh.vertices[b_v_index].co[0] = base.x
-                b_mesh.vertices[b_v_index].co[1] = base.y
-                b_mesh.vertices[b_v_index].co[2] = base.z
+            # # finally: return to base position
+            # for bv, b_v_index in zip(n_verts, v_map):
+                # base = mathutils.Vector(bv.x, bv.y, bv.z)
+                # if applytransform:
+                    # base *= transform
+                # b_mesh.vertices[b_v_index].co[0] = base.x
+                # b_mesh.vertices[b_v_index].co[1] = base.y
+                # b_mesh.vertices[b_v_index].co[2] = base.z
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash
