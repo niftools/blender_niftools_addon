@@ -359,84 +359,106 @@ class ObjectAnimation():
         #get extrapolation from flags and set it to fcurves
         self.nif_import.animationhelper.set_extrapolation(n_vis_ctrl.flags, fcurves)
 
-    def import_mesh_controllers(self, n_node, b_obj ):
-        """Import mesh controller for blender object."""
+    def morph_mesh(self, b_mesh, baseverts, morphverts, v_map):
+        """Transform a mesh to be in the shape given by morphverts."""
+        # for each vertex calculate the key position from base
+        # pos + delta offset
+        # length check disabled
+        # as sometimes, oddly, the morph has more vertices...
+        # assert(len(baseverts) == len(morphverts) == len(v_map))
+        for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
+            # pyffi vector3
+            v = bv + mv
+            # if applytransform:
+                # v *= transform
+            b_mesh.vertices[b_v_index].co = v.as_tuple()
+    
+    def import_morph_controller(self, n_node, b_obj, v_map):
+        """Import NiGeomMorpherController as shape keys for blender object."""
         
         morphCtrl = nif_utils.find_controller(n_node, NifFormat.NiGeomMorpherController)
         if morphCtrl:
             b_mesh = b_obj.data
             morphData = morphCtrl.data
             if morphData.num_morphs:
+                b_obj_action = self.nif_import.animationhelper.create_action( b_obj, b_obj.name + "-Morphs")
                 fps = bpy.context.scene.render.fps
-                # insert base key at frame 1, using relative keys
-                b_mesh.insertKey(1, 'relative')
                 # get name for base key
-                keyname = morphData.morphs[0].frame_name
+                keyname = morphData.morphs[0].frame_name.decode()
                 if not keyname:
                     keyname = 'Base'
-                # set name for base key
-                b_mesh.key.blocks[0].name = keyname
+                
+                # insert base key at frame 1, using relative keys
+                sk_basis = b_obj.shape_key_add(keyname)
+                
                 # get base vectors and import all morphs
                 baseverts = morphData.morphs[0].vectors
-                b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
-                b_mesh.key.ipo = b_ipo
+                
                 for idxMorph in range(1, morphData.num_morphs):
                     # get name for key
-                    keyname = morphData.morphs[idxMorph].frame_name
+                    keyname = morphData.morphs[idxMorph].frame_name.decode()
                     if not keyname:
                         keyname = 'Key %i' % idxMorph
                     NifLog.info("Inserting key '{0}'".format(keyname))
                     # get vectors
                     morphverts = morphData.morphs[idxMorph].vectors
-                    # for each vertex calculate the key position from base
-                    # pos + delta offset
-                    assert(len(baseverts) == len(morphverts) == len(v_map))
-                    for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
-                        base = mathutils.Vector(bv.x, bv.y, bv.z)
-                        delta = mathutils.Vector(mv.x, mv.y, mv.z)
-                        v = base + delta
-                        if applytransform:
-                            v *= transform
-                        b_mesh.vertices[b_v_index].co[0] = v.x
-                        b_mesh.vertices[b_v_index].co[1] = v.y
-                        b_mesh.vertices[b_v_index].co[2] = v.z
-                    # update the mesh and insert key
-                    b_mesh.insertKey(idxMorph, 'relative')
-                    # set name for key
-                    b_mesh.key.blocks[idxMorph].name = keyname
-                    # set up the ipo key curve
-                    try:
-                        b_curve = b_ipo.addCurve(keyname)
-                    except ValueError:
-                        # this happens when two keys have the same name
-                        # an instance of this is in fallout 3
-                        # meshes/characters/_male/skeleton.nif HeadAnims:0
-                        NifLog.warn("Skipped duplicate of key '{0}'".format(keyname))
-                    # no idea how to set up the bezier triples -> switching
-                    # to linear instead
-                    b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
-                    # select extrapolation
-                    b_curve.extend = self.get_extend_from_flags(morphCtrl.flags)
-                    # set up the curve's control points
+                    self.morph_mesh(b_mesh, baseverts, morphverts, v_map)
+                    shape_key = b_obj.shape_key_add(keyname, from_mix=False)
+
                     # first find the keys
                     # older versions store keys in the morphData
-                    morphkeys = morphData.morphs[idxMorph].keys
+                    morphdata = morphData.morphs[idxMorph]
                     # newer versions store keys in the controller
-                    if (not morphkeys) and morphCtrl.interpolators:
-                        morphkeys = morphCtrl.interpolators[idxMorph].data.data.keys
-                    for key in morphkeys:
-                        x = key.value
-                        frame = 1 + int(key.time * fps + 0.5)
-                        b_curve.addBezier((frame, x))
-                    # finally: return to base position
-                    for bv, b_v_index in zip(baseverts, v_map):
-                        base = mathutils.Vector(bv.x, bv.y, bv.z)
-                        if applytransform:
-                            base *= transform
-                        b_mesh.vertices[b_v_index].co[0] = base.x
-                        b_mesh.vertices[b_v_index].co[1] = base.y
-                        b_mesh.vertices[b_v_index].co[2] = base.z
-    
+                    if not morphdata.keys:
+                        try:
+                            if morphCtrl.interpolators:
+                                morphdata = morphCtrl.interpolators[idxMorph].data.data
+                            elif morphCtrl.interpolator_weights:
+                                morphdata = morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
+                        except:
+                            NifLog.info("Unsupported interpolator '{0}'".format( type(morphCtrl.interpolator_weights[idxMorph].interpolator) ))
+                            continue
+                    # TODO [anim] can we create the fcurve manually - does not seem to work here?
+                    # as b_obj.data.shape_keys.animation_data is read-only
+                    
+                    # set keyframes
+                    for key in morphdata.keys:
+                        bpy.context.scene.frame_set( int(key.time * fps) )
+                        b_mesh.shape_keys.key_blocks[-1].value = key.value
+                        b_mesh.shape_keys.key_blocks[-1].keyframe_insert(data_path="value")
+                        
+                    fcurves = (b_obj.data.shape_keys.animation_data.action.fcurves[-1], )
+                    # set extrapolation to fcurves
+                    self.nif_import.animationhelper.set_extrapolation(morphCtrl.flags, fcurves)
+                    # get the interpolation mode
+                    interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( morphdata.interpolation)
+                    # TODO [anim] set interpolation once low level access works
+                        
+    def import_egm_morphs(self, egmdata, b_obj, v_map, n_verts):
+        """Import all EGM morphs as shape keys for blender object."""
+        # XXX if there is an egm, the assumption is that there is only one
+        # XXX mesh in the nif
+        b_mesh = b_obj.data
+        sym_morphs = [list(morph.get_relative_vertices())
+                      for morph in egmdata.sym_morphs]
+        asym_morphs = [list(morph.get_relative_vertices())
+                      for morph in egmdata.asym_morphs]
+        
+        # insert base key at frame 1, using absolute keys
+        sk_basis = b_obj.shape_key_add("Basis")
+        b_mesh.shape_keys.use_relative = False
+
+        morphs = ([(morph, "EGM SYM %i" % i)
+                   for i, morph in enumerate(sym_morphs)]
+                  + 
+                  [(morph, "EGM ASYM %i" % i)
+                   for i, morph in enumerate(asym_morphs)])
+
+        for morphverts, keyname in morphs:
+            self.morph_mesh(b_mesh, n_verts, morphverts, v_map)
+            shape_key = b_obj.shape_key_add(keyname, from_mix=False)
+
+                
 class MaterialAnimation():
     
     def __init__(self, parent):

@@ -1150,48 +1150,10 @@ class NifImport(NifCommon):
                 b_obj_partflag.pf_startflag = (bodypart_flag[i].pf_start_net_boneset)
         # import morph controller
         if NifOp.props.animation:
-            self.animationhelper.object_animation.import_mesh_controllers(niBlock, b_obj)
+            self.animationhelper.object_animation.import_morph_controller(niBlock, b_obj, v_map)
         # import facegen morphs
         if self.egmdata:
-            # XXX if there is an egm, the assumption is that there is only one
-            # XXX mesh in the nif
-            sym_morphs = [list(morph.get_relative_vertices())
-                          for morph in self.egmdata.sym_morphs]
-            asym_morphs = [list(morph.get_relative_vertices())
-                          for morph in self.egmdata.asym_morphs]
-
-            # insert base key at frame 1, using absolute keys
-            sk_basis = b_obj.shape_key_add("Basis")
-            b_mesh.shape_keys.use_relative = False
-
-            morphs = ([(morph, "EGM SYM %i" % i)
-                       for i, morph in enumerate(sym_morphs)]
-                      + 
-                      [(morph, "EGM ASYM %i" % i)
-                       for i, morph in enumerate(asym_morphs)])
-
-            for morphverts, keyname in morphs:
-                # length check disabled
-                # as sometimes, oddly, the morph has more vertices...
-                # assert(len(verts) == len(morphverts) == len(v_map))
-
-                # for each vertex calculate the key position from base
-                # pos + delta offset
-                for bv, mv, b_v_index in zip(n_verts, morphverts, v_map):
-                    base = mathutils.Vector( (bv.x, bv.y, bv.z) )
-                    delta = mathutils.Vector( (mv[0], mv[1], mv[2]) )
-                    v = base + delta
-                    if applytransform:
-                        v *= transform
-                    b_mesh.vertices[b_v_index].co = v
-                shape_key = b_obj.shape_key_add(keyname, from_mix=False)
-
-            # finally: return to base position
-            for bv, b_v_index in zip(n_verts, v_map):
-                base = mathutils.Vector( (bv.x, bv.y, bv.z) )
-                if applytransform:
-                    base *= transform
-                b_mesh.vertices[b_v_index].co = base
+            self.animationhelper.object_animation.import_egm_morphs(self.egmdata, b_obj, v_map, n_verts)
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash
