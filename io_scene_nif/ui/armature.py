@@ -72,11 +72,12 @@ class ArmaturePanel(Panel):
         return True
         
     def draw(self, context):
-        nif_armature_props = context.armature.niftools_armature
-        
-        layout = self.layout
-        row = layout.column()
-        
-        row.prop(nif_armature_props, "axis_forward")
-        row.prop(nif_armature_props, "axis_up")
+        if context.armature:
+            nif_armature_props = context.armature.niftools_armature
+            
+            layout = self.layout
+            row = layout.column()
+            
+            row.prop(nif_armature_props, "axis_forward")
+            row.prop(nif_armature_props, "axis_up")
     
