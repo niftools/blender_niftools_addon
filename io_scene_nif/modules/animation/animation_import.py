@@ -311,12 +311,12 @@ class ObjectAnimation():
                         shape_key.value = key.value
                         shape_key.keyframe_insert(data_path="value", frame=round(key.time * fps))
                     
-                    fcurves = (b_obj.data.shape_keys.animation_data.action.fcurves[-1], )
-                    # set extrapolation to fcurves
-                    self.nif_import.animationhelper.set_extrapolation(morphCtrl.flags, fcurves)
-                    # get the interpolation mode
-                    interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( morphdata.interpolation)
-                    # TODO [anim] set interpolation once low level access works
+                    # fcurves = (b_obj.data.shape_keys.animation_data.action.fcurves[-1], )
+                    # # set extrapolation to fcurves
+                    # self.nif_import.animationhelper.set_extrapolation(morphCtrl.flags, fcurves)
+                    # # get the interpolation mode
+                    # interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( morphdata.interpolation)
+                    # # TODO [anim] set interpolation once low level access works
                         
     def import_egm_morphs(self, egmdata, b_obj, v_map, n_verts):
         """Import all EGM morphs as shape keys for blender object."""
@@ -339,7 +339,13 @@ class ObjectAnimation():
                    for i, morph in enumerate(asym_morphs)])
 
         for morphverts, keyname in morphs:
-            self.morph_mesh(b_mesh, n_verts, morphverts, v_map)
+            #convert tuples into vector here so we can simply add in morph_mesh()
+            morphvert_out = []
+            for u in morphverts:
+                v = NifFormat.Vector3()
+                v.x, v.y, v.z = u
+                morphvert_out.append(v)
+            self.morph_mesh(b_mesh, n_verts, morphvert_out, v_map)
             shape_key = b_obj.shape_key_add(keyname, from_mix=False)
 
                 
