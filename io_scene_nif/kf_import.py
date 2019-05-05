@@ -79,5 +79,5 @@ class KfImport(NifCommon):
             # calculate and set frames per second
             self.animationhelper.set_frames_per_second( kfdata.roots )
             for kf_root in kfdata.roots:
-                self.animationhelper.import_kf_standalone( kf_root, b_armature, bind_data )
+                self.animationhelper.armature_animation.import_kf_standalone( kf_root, b_armature, bind_data )
         return {'FINISHED'}
