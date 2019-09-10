@@ -107,10 +107,8 @@ class AnimationHelper():
         if bonename:
             fcurves = [action.fcurves.new(data_path = 'pose.bones["'+bonename+'"].'+dtype, index = i, action_group = bonename) for i in drange]
         else:
-            # Object animation (non-skeletal)
-            # any() is intended here, as the fcurve should be lumped into the "LocRotScale" action_group if it is any of the given subtypes. It can never be all at once.
-            # nb. "rotation" catches both rotation_euler and rotation_quaternion
-            if any(subtype in dtype for subtype in ("rotation", "location", "scale")):
+            # Object animation (non-skeletal) is lumped into the "LocRotScale" action_group
+            if dtype in ("rotation_euler", "rotation_quaternion", "location", "scale"):
                 action_group = "LocRotScale"
             # Non-transformaing animations (eg. visibility or material anims) use no action groups
             else:
