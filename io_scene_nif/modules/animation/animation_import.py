@@ -115,29 +115,31 @@ class AnimationHelper():
                 action_group = ""
             fcurves = [action.fcurves.new(data_path = dtype, index = i, action_group = action_group) for i in drange]
         if flags:
-            self.set_extrapolation(flags, fcurves)
+            self.set_extrapolation(self.get_extend_from_flags(flags), fcurves)
         return fcurves
     
-    # TODO [animation]: Is there a better way to this than return a string,
-    #                   since handling requires different code per type?
     def get_extend_from_flags(self, flags):
         if flags & 6 == 4: # 0b100
-            return "CONST"
+            return "CONSTANT"
         elif flags & 6 == 0: # 0b000
             return "CYCLIC"
 
         NifLog.warn("Unsupported cycle mode in nif, using clamped.")
-        return "CONST"
+        return "CONSTANT"
+
+    def get_extend_from_cycle_type(self, cycle_type):
+        return ("CYCLIC", "REVERSE", "CONSTANT")[cycle_type]
     
-    def set_extrapolation(self, flags, fcurves):
-        f_curve_extend_type = self.get_extend_from_flags(flags)
-        if f_curve_extend_type == "CONST":
+    def set_extrapolation(self, extend_type, fcurves):
+        if extend_type == "CONSTANT":
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
-        elif f_curve_extend_type == "CYCLIC":
+        elif extend_type == "CYCLIC":
             for fcurve in fcurves:
                 fcurve.modifiers.new('CYCLES')
+        # don't support reverse for now, not sure if it is even possible in blender
         else:
+            NifLog.warn("Unsupported extrapolation mode, using clamped.")
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
     
@@ -443,7 +445,7 @@ class ArmatureAnimation():
         # import text keys
         self.nif_import.animationhelper.import_text_keys(kf_root)
         
-        self.nif_import.animationhelper.create_action(b_armature_obj, kf_root.name.decode() )
+        b_action = self.nif_import.animationhelper.create_action(b_armature_obj, kf_root.name.decode() )
         # go over all controlled blocks (NiKeyframeController)
         for controlledblock in kf_root.controlled_blocks:
             # get bone name
@@ -454,7 +456,6 @@ class ArmatureAnimation():
                n_name = controlledblock.node_name
             bone_name = armature.get_bone_name_for_blender( n_name )
             if bone_name not in b_armature_obj.data.bones:
-                print("Skipped",bone_name)
                 continue
             b_bone = b_armature_obj.data.bones[bone_name]
             # import bone priority
@@ -469,18 +470,17 @@ class ArmatureAnimation():
                    kfc = controlledblock.interpolator
                 if kfc:
                     self.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
-                
+        # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
+        if kf_root.cycle_type:
+            extend = self.nif_import.animationhelper.get_extend_from_cycle_type(kf_root.cycle_type)
+            self.nif_import.animationhelper.set_extrapolation(extend, b_action.fcurves)
+        
     def import_keyframe_controller(self, kfc, b_obj, bone_name=None, niBone_bind_scale=None, niBone_bind_rot_inv=None, niBone_bind_trans=None):
         b_action = b_obj.animation_data.action
         
         if bone_name:
             b_obj = b_obj.pose.bones[bone_name]
             
-        # old style: data directly on controller
-        kfd = kfc.data
-        # new style: data via interpolator
-        kfi = kfc
-        
         translations = []
         scales = []
         rotations = []
@@ -488,27 +488,26 @@ class ArmatureAnimation():
 
         #TODO: test interpolators
         # B-spline curve import
-        if isinstance(kfi, NifFormat.NiBSplineInterpolator):
-            times = list(kfi.get_times())
+        if isinstance(kfc, NifFormat.NiBSplineInterpolator):
+            times = list(kfc.get_times())
             
-            translations = zip( times, list(kfi.get_translations()) )
-            scales = zip( times, list(kfi.get_scales()) )
-            rotations = zip( times, list(kfi.get_rotations()) )
+            translations = zip( times, list(kfc.get_translations()) )
+            scales = zip( times, list(kfc.get_scales()) )
+            rotations = zip( times, list(kfc.get_rotations()) )
             
             #TODO: get these from interpolator?
             interp_rot = "LINEAR"
             interp_loc = "LINEAR"
             interp_scale = "LINEAR"
             return
-        # fallout
-        if isinstance(kfi, (NifFormat.NiTransformInterpolator, NifFormat.NiFloatInterpolator)):
-            # a hack to make it work as if it were old style keyframe data instead of an interpolator
-            kfd = kfi.data
-            # todo[anim] set interpolation according to interpolator's NiTransformData or NiFloatData
+        # fallout - we set extrapolation according to the root NiControllerSequence.cycle_type
+        if isinstance(kfc, (NifFormat.NiTransformInterpolator, NifFormat.NiFloatInterpolator)):
             flags = None
+        # ZT2 - get extrapolation for every kfc
         else:
             flags = kfc.flags
-        # ZT2
+        # ZT2 & Fallout
+        kfd = kfc.data
         if isinstance(kfd, NifFormat.NiKeyframeData):
             interp_rot = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.rotation_type)
             interp_loc = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.translations.interpolation)
