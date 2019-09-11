@@ -336,12 +336,14 @@ class ObjectHelper:
         """Returns the original imported name if present, or the name by which
         the object was exported already.
         """
-        try:
-            longname = b_obj.niftools.longname
-        except:
-            longname = ""
-        if not longname:
-            longname = self.get_unique_name(b_obj.name)
+        longname = ""
+        if b_obj:
+            try:
+                longname = b_obj.niftools.longname
+            except:
+                pass
+            if not longname:
+                longname = self.get_unique_name(b_obj.name)
         return longname
 
     def export_range_lod_data(self, n_node, b_obj):
