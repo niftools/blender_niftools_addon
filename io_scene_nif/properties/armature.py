@@ -73,7 +73,7 @@ class BoneProperty(PropertyGroup):
 class ArmatureProperty(PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Armature.niftools_armature = PointerProperty(
+        bpy.types.Armature.niftools = PointerProperty(
             name='Niftools Armature Property',
             description='Additional armature properties used by the Nif File Format',
             type=cls,
@@ -105,4 +105,4 @@ class ArmatureProperty(PropertyGroup):
 
     @classmethod
     def unregister(cls):
-        del bpy.types.Armature.niftools_armature
+        del bpy.types.Armature.niftools

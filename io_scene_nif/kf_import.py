@@ -66,7 +66,7 @@ class KfImport(NifCommon):
             raise nif_utils.NifError("No armature was found in scene, can not import KF animation!")
         
         #the axes used for bone correction depend on the armature in our scene
-        armature.set_bone_orientation(b_armature.data.niftools_armature.axis_forward, b_armature.data.niftools_armature.axis_up)
+        armature.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
         
         #get nif space bind pose of armature here for all anims
         bind_data = armature.get_bind_data(b_armature)
