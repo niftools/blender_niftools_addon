@@ -551,21 +551,17 @@ class NifImport(NifCommon):
 
             # import extra node data, such as node type
             # (other types should be added here too)
-            if (isinstance(niBlock, NifFormat.NiLODNode)
-                # XXX additional isinstance(b_obj, bpy.types.Object)
-                # XXX is a 'workaround' to the limitation that bones
-                # XXX cannot have properties in Blender 2.4x
-                # XXX (remove this check with Blender 2.5)
-                and isinstance(b_obj, bpy.types.Object)):
-                b_obj.addProperty("Type", "NiLODNode", "STRING")
+            if isinstance(niBlock, NifFormat.NiLODNode):
+                b_obj["type"] = "NiLODNode"
                 # import lod data
-                range_data = niBlock.lod_level_data
-                for lod_level, (n_child, b_child) in zip(
-                    range_data.lod_levels, b_children_list):
-                    b_child.addProperty(
-                        "Near Extent", lod_level.near_extent, "FLOAT")
-                    b_child.addProperty(
-                        "Far Extent", lod_level.far_extent, "FLOAT")
+                range_data = niBlock
+                # where lodlevels are stored seems to be determined by version number? need more examples
+                # just a guess here
+                if not range_data.lod_levels:
+                    range_data = niBlock.lod_level_data
+                for lod_level, (n_child, b_child) in zip(range_data.lod_levels, b_children_list):
+                    b_child["near_extent"] = lod_level.near_extent
+                    b_child["far_extent"] = lod_level.far_extent
 
             return b_obj
         # all else is currently discarded
