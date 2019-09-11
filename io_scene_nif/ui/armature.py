@@ -53,13 +53,15 @@ class BonePanel(Panel):
         
 
     def draw(self, context):
-        nif_bone_props = context.bone.niftools_bone
-        
-        layout = self.layout
-        row = layout.column()
-        
-        row.prop(nif_bone_props, "boneflags")
-        row.prop(nif_bone_props, "bonepriority")
+        if context.bone:
+            nif_bone_props = context.bone.niftools_bone
+            
+            layout = self.layout
+            row = layout.column()
+            
+            row.prop(nif_bone_props, "boneflags")
+            row.prop(nif_bone_props, "bonepriority")
+            row.prop(nif_bone_props, "longname")
 
 class ArmaturePanel(Panel):
     bl_label = "Niftools Armature Props"
