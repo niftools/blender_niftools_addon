@@ -81,7 +81,7 @@ class AnimationHelper():
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
             return "CONSTANT"
-        NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
+        # NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
         return "BEZIER"
         
     def create_action(self, b_obj, action_name):
@@ -449,11 +449,11 @@ class ArmatureAnimation():
         # go over all controlled blocks (NiKeyframeController)
         for controlledblock in kf_root.controlled_blocks:
             # get bone name
-            # ZT2
+            # ZT2 - old way is not supported by pyffi's get_node_name()
             n_name = controlledblock.target_name
-            # fallout
+            # fallout (node_name) & Loki (StringPalette)
             if not n_name:
-               n_name = controlledblock.node_name
+                n_name = controlledblock.get_node_name()
             bone_name = armature.get_bone_name_for_blender( n_name )
             if bone_name not in b_armature_obj.data.bones:
                 continue
@@ -465,7 +465,7 @@ class ArmatureAnimation():
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
                 # ZT2
                 kfc = controlledblock.controller
-                # fallout
+                # fallout, Loki
                 if not kfc:
                    kfc = controlledblock.interpolator
                 if kfc:
@@ -485,29 +485,31 @@ class ArmatureAnimation():
         scales = []
         rotations = []
         eulers = []
-
-        #TODO: test interpolators
+        kfd = None
+        
         # B-spline curve import
-        if isinstance(kfc, NifFormat.NiBSplineInterpolator):
+        if isinstance(kfc, (NifFormat.NiBSplineInterpolator, NifFormat.NiBSplineCompTransformInterpolator)):
             times = list(kfc.get_times())
             
-            translations = zip( times, list(kfc.get_translations()) )
-            scales = zip( times, list(kfc.get_scales()) )
-            rotations = zip( times, list(kfc.get_rotations()) )
+            translations = zip( times, [mathutils.Vector(tup) for tup in kfc.get_translations()] )
+            rotations = zip( times, [mathutils.Quaternion(tup) for tup in kfc.get_rotations()] )
+            # scales import as 0, investigate later
+            # scales = zip( times, list(kfc.get_scales()) )
             
             #TODO: get these from interpolator?
             interp_rot = "LINEAR"
             interp_loc = "LINEAR"
             interp_scale = "LINEAR"
-            return
-        # fallout - we set extrapolation according to the root NiControllerSequence.cycle_type
-        if isinstance(kfc, (NifFormat.NiTransformInterpolator, NifFormat.NiFloatInterpolator)):
-            flags = None
-        # ZT2 - get extrapolation for every kfc
         else:
+            # ZT2 & Fallout
+            kfd = kfc.data
+
+        # ZT2 - get extrapolation for every kfc
+        if isinstance(kfc, NifFormat.NiKeyframeController):
             flags = kfc.flags
-        # ZT2 & Fallout
-        kfd = kfc.data
+        # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
+        else:
+            flags = None
         if isinstance(kfd, NifFormat.NiKeyframeData):
             interp_rot = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.rotation_type)
             interp_loc = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.translations.interpolation)
