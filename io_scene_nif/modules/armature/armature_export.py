@@ -111,14 +111,6 @@ class Armature():
             # per-node animation
             self.nif_export.animationhelper.export_keyframes(node, arm, bone)
 
-            # does bone have priority value in NULL constraint?
-            for constr in arm.pose.bones[bone.name].constraints:
-                # yes! store it for reference when creating the kf file
-                if constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[
-                        armature.get_bone_name_for_nif(bone.name)
-                        ] = int(constr.name[9:])
-
         # now fix the linkage between the blocks
         for bone in bones:
             # link the bone's children to the bone
