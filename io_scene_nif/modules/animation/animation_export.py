@@ -64,7 +64,7 @@ class AnimationHelper():
         kfc.frequency = 1.0
         kfc.phase = 0.0
         if not start_frame and not stop_frame:
-            start_frame, stop_frame = fcurves[0].range()
+            start_frame, stop_frame = exp_fcurves[0].range()
         kfc.start_time = start_frame / self.fps
         kfc.stop_time = stop_frame / self.fps
 
