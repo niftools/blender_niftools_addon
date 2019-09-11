@@ -49,13 +49,6 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
-def create_b_obj(ob_name, b_obj_data):
-    """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""
-    b_obj = bpy.data.objects.new(ob_name, b_obj_data)
-    bpy.context.scene.objects.link(b_obj)
-    bpy.context.scene.objects.active = b_obj
-    b_obj.select = True
-    return b_obj
 
 class Armature():
     
@@ -69,10 +62,11 @@ class Armature():
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
         
-        armature_name = self.nif_import.import_name(n_armature)
+        # armature_name = self.nif_import.import_name(n_armature)
+        armature_name = n_armature.name.decode()
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
-        b_armature_obj = create_b_obj(armature_name, b_armature_data)
+        b_armature_obj = self.nif_import.objecthelper.create_b_obj(n_armature, b_armature_data)
         b_armature_obj.show_x_ray = True
         
         # make armature editable and create bones
@@ -83,15 +77,18 @@ class Armature():
         bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 
         # The armature has been created in editmode,
-        # now we are ready to set the bone keyframes.
+        # now we are ready to set the bone keyframes and store the bones' long names.
         if NifOp.props.animation:
             self.nif_import.animationhelper.create_action(b_armature_obj, armature_name+"-Anim")
-            for bone_name, b_posebone in b_armature_obj.pose.bones.items():
-                if bone_name in self.nif_import.dict_blocks:
-                    n_block = self.nif_import.dict_blocks[bone_name]
+        for bone_name, b_bone in b_armature_obj.data.bones.items():
+            if bone_name in self.nif_import.dict_blocks:
+                n_block = self.nif_import.dict_blocks[bone_name]
+                # the property is only available from object mode!
+                self.nif_import.objecthelper.store_longname(b_bone, n_block.name.decode())
+                if NifOp.props.animation:
                     self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj, bone_name)
-                else:
-                    NifLog.info("'%s' can not be found in the NIF - unable to import animation. This likely means your NIF structure duplicated bones".format(bone_name))
+            else:
+                NifLog.info("'%s' can not be found in the NIF - unable to import animation. This likely means your NIF structure duplicated bones".format(bone_name))
         return b_armature_obj
         
     def import_bone(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
@@ -103,6 +100,7 @@ class Armature():
         bone_name = self.nif_import.import_name(n_block)
         # create a new bone
         b_edit_bone = b_armature_data.edit_bones.new(bone_name)
+        self.nif_import.objecthelper.map_names(b_edit_bone, n_block)
         # get the nif bone's armature space matrix
         # (under the hood all bone space matrixes are multiplied together)
         n_bind = nif_utils.import_matrix(n_block, relative_to=n_armature)

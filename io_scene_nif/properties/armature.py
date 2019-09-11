@@ -49,7 +49,7 @@ from bpy.types import PropertyGroup
 class BoneProperty(PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Bone.niftools_bone = PointerProperty(
+        bpy.types.Bone.niftools = PointerProperty(
             name='Niftools Bone Property',
             description='Additional bone properties used by the Nif File Format',
             type=cls,
@@ -68,7 +68,7 @@ class BoneProperty(PropertyGroup):
 
     @classmethod
     def unregister(cls):
-        del bpy.types.Bone.niftools_bone
+        del bpy.types.Bone.niftools
 
 class ArmatureProperty(PropertyGroup):
     @classmethod
