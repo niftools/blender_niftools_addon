@@ -668,7 +668,6 @@ class NifImport(NifCommon):
             b_mesh = bpy.data.meshes.new(ni_name)
             # create mesh object and link to data
             b_obj = self.objecthelper.create_b_obj(niBlock, b_mesh)
-            # b_name = self.import_name(niBlock)
             
             # Mesh hidden flag
             if niBlock.flags & 1 == 1:
@@ -692,7 +691,7 @@ class NifImport(NifCommon):
         # shortcut for mesh geometry data
         niData = niBlock.data
         if not niData:
-            raise nif_utils.NifError("no shape data in %s" % b_name)
+            raise nif_utils.NifError("no shape data in %s" % ni_name)
 
         # vertices
         n_verts = niData.vertices
