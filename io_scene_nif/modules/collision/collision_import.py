@@ -386,7 +386,7 @@ class bhkshape_import():
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             # radius: quick estimate
-            b_obj.game.radius = min(vert.co.length for vert in b_mesh.vertices)
+            b_obj.game.radius = min(vert.co.length for vert in b_obj.data.vertices)
             # set material
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]
 

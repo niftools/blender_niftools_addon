@@ -50,11 +50,10 @@ class Object:
         # self.dict_names = {}
         # self.dict_blocks = {}
     
-    @staticmethod
-    def import_bsbound_data(root_block):
+    def import_bsbound_data(self, root_block):
         for n_extra in root_block.get_extra_datas():
             if isinstance(n_extra, NifFormat.BSBound):
-                self.boundhelper.import_bounding_box(n_extra)
+                self.nif_import.boundhelper.import_bounding_box(n_extra)
                     
     @staticmethod    
     def import_bsxflag_data(root_block):
