@@ -405,14 +405,14 @@ class ObjectHelper:
 
             # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
             if b_obj.parent_bone:
-            
-                # first multiply with inverse of the Blender bone matrix
+                # get parent bone
                 parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
+                # restore bone length that was substracted here on import
+                matrix.translation.y += parent_bone.length
                 
-                #undo the calculations from import
-                matrix =  parent_bone.matrix_local.to_3x3().to_4x4() * matrix
-                #but here we add to the X loc instead of Y due to the coordinate changes
-                matrix.translation.x += parent_bone.length
+                # undo the calculations from import - multiply with inverse of the Blender bone matrix
+                matrix = parent_bone.matrix_local.to_3x3().to_4x4() * matrix
+                
         #Nonetype, maybe other weird stuff
         else:
             matrix = mathutils.Matrix()
