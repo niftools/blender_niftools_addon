@@ -185,20 +185,14 @@ class ObjectHelper:
             # determine if object tracks camera
             # nb normally, imported models will have tracking constraints on their parent empty
             # but users may create track_to constraints directly on objects, so keep it for now
-            has_track = False
-            for constr in b_obj.constraints:
-                if constr.type == 'TRACK_TO':
-                    has_track = True
-                    break
+            has_track = self.has_track(b_obj)
+
             if is_collision:
                 self.nif_export.export_collision(b_obj, parent_block)
                 return None  # done; stop here
             elif has_anim or has_children or is_multimaterial or has_track:
                 # create a ninode as parent of this mesh for the hierarchy to work out
-                if not has_track:
-                    node = self.create_block('NiNode', b_obj)
-                else:
-                    node = self.create_block('NiBillboardNode', b_obj)
+                node = self.create_ninode(b_obj)
             else:
                 # don't create intermediate ninode for this guy
                 self.mesh_helper.export_tri_shapes(b_obj, parent_block, node_name)
@@ -206,21 +200,8 @@ class ObjectHelper:
                 return None
 
         elif b_obj is not None:
-            # -> everything else (empty/armature) is a regular node
-
-            # check for track_to constraint on this empty / armature
-            has_track = False
-            # does node have priority value in NULL constraint?
-            for constr in b_obj.constraints:
-                if constr.type == 'TRACK_TO':
-                    has_track = True
-                    break
-            # todo[object] decide on a unified way, either create_block or create_ninode
-            if not has_track:
-                # beware - this may be more than just a standard NiNode!
-                node = self.create_ninode(b_obj)
-            else:
-                node = self.create_block('NiBillboardNode', b_obj)
+            # -> everything else (empty/armature) is a (more or less regular) node
+            node = self.create_ninode(b_obj)
             
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -291,22 +272,24 @@ class ObjectHelper:
     # should be exported as a single mesh.
 
     def create_ninode(self, b_obj=None):
-        # trivial case first
+        """Essentially a wrapper around create_block() that creates nodes of the right type"""
+        # when no b_obj is passed, it means we create a root node
         if not b_obj:
             return self.create_block("NiNode")
 
-        # exporting an object, so first create node of correct type
-        # TODO: rework to get node type from nif format based on custom value?
+        # get node type - some are stored as custom property of the b_obj
         try:
             n_node_type = b_obj["type"]
         except:
             n_node_type = "NiNode"
-
+        # ...others by presence of constraints
+        if self.has_track(b_obj):
+            n_node_type = "NiBillboardNode"
+        # noew create the node
         n_node = self.create_block(n_node_type, b_obj)
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
             self.export_range_lod_data(n_node, b_obj)
-
         # return the node
         return n_node
 
@@ -423,6 +406,10 @@ class ObjectHelper:
             matrix = mathutils.Matrix()
         return matrix
 
+    def has_track(self, b_obj):
+        for constr in b_obj.constraints:
+            if constr.type == 'TRACK_TO':
+                return True
 
 class MeshHelper:
 
