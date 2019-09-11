@@ -41,6 +41,7 @@ import bpy
 from bpy.props import (PointerProperty,
                        IntProperty,
                        EnumProperty,
+                       StringProperty
                        )
 from bpy.types import PropertyGroup
 
@@ -60,6 +61,9 @@ class BoneProperty(PropertyGroup):
         cls.bonepriority = IntProperty(
             name='Bone Priority',
             default=0
+        )
+        cls.longname = StringProperty(
+            name='Nif Long Name'
         )
 
     @classmethod
