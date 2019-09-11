@@ -284,22 +284,5 @@ class Armature():
         if isinstance(niBlock, NifFormat.NiNode):
             return niBlock in self.dict_armatures
         
-    def store_names(self):
-        """Stores the original, long object names so that they can be
-        re-exported. In order for this to work it is necessary to mantain the
-        imported names unaltered. Since the text buffer is cleared on each
-        import only the last import will be exported correctly."""
-        # clear the text buffer, or create new buffer
-        try:
-            namestxt = bpy.data.texts["FullNames"]
-            namestxt.clear()
-        except KeyError:
-            namestxt = bpy.data.texts.new("FullNames")
-            
-        # write the names to the text buffer
-        for block, shortname in self.nif_import.dict_names.items():
-            block_name = block.name.decode()
-            if block_name and shortname != block_name:
-                namestxt.write('%s;%s\n' % (shortname, block_name))
                 
                 
