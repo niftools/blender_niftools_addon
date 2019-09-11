@@ -162,10 +162,6 @@ class ObjectHelper:
         has_anim = True if b_obj_anim_data and b_obj_anim_data.action.fcurves else False
         if node_name == 'RootCollisionNode':
             # -> root collision node (can be mesh or empty)
-            # TODO: do we need to fix this stuff on export?
-            # b_obj.draw_bounds_type = 'POLYHEDERON'
-            # b_obj.draw_type = 'BOUNDS'
-            # b_obj.show_wire = True
             self.nif_export.export_collision(b_obj, parent_block)
             return None  # done; stop here
 
@@ -187,20 +183,18 @@ class ObjectHelper:
             is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
 
             # determine if object tracks camera
+            # nb normally, imported models will have tracking constraints on their parent empty
+            # but users may create track_to constraints directly on objects, so keep it for now
             has_track = False
             for constr in b_obj.constraints:
                 if constr.type == 'TRACK_TO':
                     has_track = True
                     break
-                # does geom have priority value in NULL constraint?
-                elif constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[armature.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
-
             if is_collision:
                 self.nif_export.export_collision(b_obj, parent_block)
                 return None  # done; stop here
             elif has_anim or has_children or is_multimaterial or has_track:
-                # mesh ninode for the hierarchy to work out
+                # create a ninode as parent of this mesh for the hierarchy to work out
                 if not has_track:
                     node = self.create_block('NiNode', b_obj)
                 else:
@@ -213,12 +207,21 @@ class ObjectHelper:
 
         elif b_obj is not None:
             # -> everything else (empty/armature) is a regular node
-            node = self.create_ninode(b_obj)
+
+            # check for track_to constraint on this empty / armature
+            has_track = False
             # does node have priority value in NULL constraint?
             for constr in b_obj.constraints:
-                if constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[armature.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
-
+                if constr.type == 'TRACK_TO':
+                    has_track = True
+                    break
+            # todo[object] decide on a unified way, either create_block or create_ninode
+            if not has_track:
+                # beware - this may be more than just a standard NiNode!
+                node = self.create_ninode(b_obj)
+            else:
+                node = self.create_block('NiBillboardNode', b_obj)
+            
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
         if b_obj_type == 'MESH':
