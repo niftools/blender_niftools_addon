@@ -99,7 +99,7 @@ class AnimationHelper():
         b_obj.animation_data.action = b_action
         return b_action
     
-    def create_fcurves(self, action, dtype, drange, flags, bonename = None):
+    def create_fcurves(self, action, dtype, drange, flags = None, bonename = None):
         """
         Create fcurves in action for desired conditions.
         """
@@ -114,7 +114,8 @@ class AnimationHelper():
             else:
                 action_group = ""
             fcurves = [action.fcurves.new(data_path = dtype, index = i, action_group = action_group) for i in drange]
-        self.set_extrapolation(flags, fcurves)
+        if flags:
+            self.set_extrapolation(flags, fcurves)
         return fcurves
     
     # TODO [animation]: Is there a better way to this than return a string,
@@ -446,17 +447,29 @@ class ArmatureAnimation():
         # go over all controlled blocks (NiKeyframeController)
         for controlledblock in kf_root.controlled_blocks:
             # get bone name
-            bone_name = armature.get_bone_name_for_blender( controlledblock.target_name )
-            # import bone priority
+            # ZT2
+            n_name = controlledblock.target_name
+            # fallout
+            if not n_name:
+               n_name = controlledblock.node_name
+            bone_name = armature.get_bone_name_for_blender( n_name )
+            if bone_name not in b_armature_obj.data.bones:
+                print("Skipped",bone_name)
+                continue
             b_bone = b_armature_obj.data.bones[bone_name]
+            # import bone priority
             b_bone.niftools.bonepriority = controlledblock.priority
             # import animation
             if bone_name in bind_data:
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
+                # ZT2
                 kfc = controlledblock.controller
+                # fallout
+                if not kfc:
+                   kfc = controlledblock.interpolator
                 if kfc:
                     self.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans)
-    
+                
     def import_keyframe_controller(self, kfc, b_obj, bone_name=None, niBone_bind_scale=None, niBone_bind_rot_inv=None, niBone_bind_trans=None):
         b_action = b_obj.animation_data.action
         
@@ -466,7 +479,7 @@ class ArmatureAnimation():
         # old style: data directly on controller
         kfd = kfc.data
         # new style: data via interpolator
-        kfi = kfc.interpolator
+        kfi = kfc
         
         translations = []
         scales = []
@@ -487,13 +500,15 @@ class ArmatureAnimation():
             interp_loc = "LINEAR"
             interp_scale = "LINEAR"
             return
-        # next is a quick hack to make the new transform
-        # interpolator work as if it is an old style keyframe data
-        # block parented directly on the controller
-        if isinstance(kfi, NifFormat.NiTransformInterpolator):
+        # fallout
+        if isinstance(kfi, (NifFormat.NiTransformInterpolator, NifFormat.NiFloatInterpolator)):
+            # a hack to make it work as if it were old style keyframe data instead of an interpolator
             kfd = kfi.data
-            # for now, in this case, ignore interpolator
-            kfi = None
+            # todo[anim] set interpolation according to interpolator's NiTransformData or NiFloatData
+            flags = None
+        else:
+            flags = kfc.flags
+        # ZT2
         if isinstance(kfd, NifFormat.NiKeyframeData):
             interp_rot = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.rotation_type)
             interp_loc = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.translations.interpolation)
@@ -527,10 +542,10 @@ class ArmatureAnimation():
                 
             if kfd.translations.keys:
                 translations = [(key.time, key.value) for key in kfd.translations.keys]
-                
+
         if eulers:
             NifLog.debug('Rotation keys...(euler)')
-            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "rotation_euler", range(3), kfc.flags, bone_name)
+            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
             for t, val in eulers:
                 key = mathutils.Euler( val )
                 if bone_name:
@@ -538,7 +553,7 @@ class ArmatureAnimation():
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
         elif rotations:
             NifLog.debug('Rotation keys...(quaternions)')
-            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "rotation_quaternion", range(4), kfc.flags, bone_name)
+            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
             for t, val in rotations:
                 key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                 if bone_name:
@@ -546,7 +561,7 @@ class ArmatureAnimation():
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
         if translations:
             NifLog.debug('Translation keys...')
-            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "location", range(3), kfc.flags, bone_name)
+            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "location", range(3), flags, bone_name)
             for t, val in translations:
                 key = mathutils.Vector([val.x, val.y, val.z])
                 if bone_name:
@@ -554,7 +569,7 @@ class ArmatureAnimation():
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_loc)
         if scales:
             NifLog.debug('Scale keys...')
-            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "scale", range(3), kfc.flags, bone_name)
+            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "scale", range(3), flags, bone_name)
             for t, val in scales:
                 key = (val, val, val)
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_scale)

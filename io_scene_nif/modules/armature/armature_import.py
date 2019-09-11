@@ -138,11 +138,12 @@ class Armature():
         
     def append_armature_modifier(self, b_obj, b_armature):
         """Append an armature modifier for the object."""
-        armature_name = b_armature.name
-        b_mod = b_obj.modifiers.new(armature_name,'ARMATURE')
-        b_mod.object = b_armature
-        b_mod.use_bone_envelopes = False
-        b_mod.use_vertex_groups = True
+        if b_obj and b_armature:
+            armature_name = b_armature.name
+            b_mod = b_obj.modifiers.new(armature_name,'ARMATURE')
+            b_mod.object = b_armature
+            b_mod.use_bone_envelopes = False
+            b_mod.use_vertex_groups = True
 
     def mark_armatures_bones(self, niBlock):
         """Mark armatures and bones by peeking into NiSkinInstance blocks."""
@@ -177,7 +178,8 @@ class Armature():
             b_armature_obj = self.nif_import.selected_objects[0]
             skelroot = niBlock.find(block_name=b_armature_obj.name)
             if not skelroot:
-                raise nif_utils.NifError("nif has no armature '%s'" % b_armature_obj.name)
+                skelroot = niBlock
+                # raise nif_utils.NifError("nif has no armature '%s'" % b_armature_obj.name)
             NifLog.debug("Identified '{0}' as armature".format(skelroot.name))
             self.dict_armatures[skelroot] = []
             for bone_name in b_armature_obj.data.bones.keys():
