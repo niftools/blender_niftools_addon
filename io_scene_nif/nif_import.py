@@ -52,7 +52,7 @@ from io_scene_nif.modules.constraint.constraint_import import constraint_import
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.texture.texture_import import Texture
 from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
-from io_scene_nif.modules.object.object_import import NiObject
+from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.modules.scene import scene_import
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -84,7 +84,7 @@ class NifImport(NifCommon):
         self.texturehelper.set_texture_loader(self.textureloader)
         self.materialhelper = Material(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
-        self.objecthelper = NiObject()
+        self.objecthelper = Object(parent=self)
              
     def execute(self):
         """Main import function."""
@@ -291,11 +291,6 @@ class NifImport(NifCommon):
         if self.root_ninode:
             b_obj.niftools.rootnode = self.root_ninode
 
-        # store original names for re-export
-        if self.dict_names:
-            self.store_names()
-        
-        
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
         self.bhkhelper.get_havok_objects()
@@ -303,17 +298,7 @@ class NifImport(NifCommon):
 
         # parent selected meshes to imported skeleton
         if NifOp.props.skeleton == "SKELETON_ONLY":
-            # rename vertex groups to reflect bone names
-            # (for blends imported with older versions of the scripts!)
-            for b_child_obj in self.selected_objects:
-                if b_child_obj.type == 'MESH':
-                    for oldgroupname in b_child_obj.vertex_groups.items():
-                        newgroupname = armature.get_bone_name_for_blender(oldgroupname)
-                        if oldgroupname != newgroupname:
-                            NifLog.info("{0} : renaming vertex group {1} to {2}".format(b_child_obj, oldgroupname, newgroupname))
-                            b_child_obj.data.renameVertGroup(oldgroupname, newgroupname)
             # set parenting
-            # b_obj.parent_set(self.selected_objects)
             bpy.ops.object.parent_set(type='OBJECT')
             scn = bpy.context.scene
             scn.objects.active = b_obj
@@ -390,8 +375,8 @@ class NifImport(NifCommon):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[self.dict_names[niBlock]]
                 # bones cannot group geometries into a single mesh
-                b_obj.niftools_bone.bsxflags = self.bsxflags
-                b_obj.niftools_bone.boneflags = niBlock.flags
+                b_obj.niftools.bsxflags = self.bsxflags
+                b_obj.niftools.boneflags = niBlock.flags
                 geom_group = []
             else:
                 # is it a grouping node?
@@ -628,15 +613,10 @@ class NifImport(NifCommon):
         :type max_length: :class:`int`
         """
         if niBlock is None:
-            return None
+            return ""
         
-        if niBlock in self.dict_names:
-            return self.dict_names[niBlock]
-
         NifLog.debug("Importing name for {0} block from {1}".format(niBlock.__class__.__name__, niBlock.name))
 
-        # find unique name for Blender to use
-        uniqueInt = 0
         niName = niBlock.name.decode()
         # if name is empty, create something non-empty
         if not niName:
@@ -644,45 +624,14 @@ class NifImport(NifCommon):
                 niName = "RootCollisionNode"
             else:
                 niName = "noname"
-        
-        for uniqueInt in range(-1, 1000):
-            # limit name length
-            if uniqueInt == -1:
-                shortName = niName[:max_length - 1]
-            else:
-                shortName = ('%s.%02d'
-                             % (niName[:max_length - 4],
-                                uniqueInt))
-            # bone naming convention for blender
-            shortName = armature.get_bone_name_for_blender(shortName)
-            # make sure it is unique
-            if niName == "InvMarker":
-                if niName not in self.dict_names:
-                    break
-            if (shortName not in bpy.data.objects
-                and shortName not in bpy.data.materials
-                and shortName not in bpy.data.meshes):
-                # shortName not in use anywhere
-                break
-        else:
-            raise RuntimeError("Ran out of names.")
-        # save mapping
-        # block niBlock has Blender name shortName
-        self.dict_names[niBlock] = shortName
-        # Blender name shortName corresponds to niBlock
-        self.dict_blocks[shortName] = niBlock
-        NifLog.debug("Selected unique name {0}".format(shortName))
-        return shortName
 
+        shortName = armature.get_bone_name_for_blender(niName)
+
+        return shortName
+    
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
-        shortname = self.import_name(niBlock)
-        b_empty = bpy.data.objects.new(shortname, None)
-
-        # TODO: - is longname needed??? Yes it is needed, it resets the original name on export
-        b_empty.niftools.longname = niBlock.name.decode()
-
-        bpy.context.scene.objects.link(b_empty)
+        b_empty = self.objecthelper.create_b_obj(niBlock, None)
         b_empty.niftools.bsxflags = self.bsxflags
         b_empty.niftools.objectflags = niBlock.flags
         return b_empty
@@ -713,17 +662,14 @@ class NifImport(NifCommon):
             b_mesh = group_mesh.data
         else:
             # Mesh name -> must be unique, so tag it if needed
-            b_name = self.import_name(niBlock)
+            
+            ni_name = niBlock.name.decode()
             # create mesh data
-            b_mesh = bpy.data.meshes.new(b_name)
+            b_mesh = bpy.data.meshes.new(ni_name)
             # create mesh object and link to data
-            b_obj = bpy.data.objects.new(b_name, b_mesh)
-            # link mesh object to the scene
-            bpy.context.scene.objects.link(b_obj)
-            # save original name as object property, for export
-            if b_name != niBlock.name.decode():
-                b_obj.niftools.longname = niBlock.name.decode()
-
+            b_obj = self.objecthelper.create_b_obj(niBlock, b_mesh)
+            # b_name = self.import_name(niBlock)
+            
             # Mesh hidden flag
             if niBlock.flags & 1 == 1:
                 b_obj.draw_type = 'WIRE'  # hidden: wire

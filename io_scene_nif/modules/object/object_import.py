@@ -43,7 +43,12 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 
-class NiObject:
+class Object:
+    # this will have to deal with all naming issues
+    def __init__(self, parent):
+        self.nif_import = parent
+        # self.dict_names = {}
+        # self.dict_blocks = {}
     
     @staticmethod
     def import_bsbound_data(root_block):
@@ -69,3 +74,33 @@ class NiObject:
                     upbflags = n_extra.string_data.decode()
                     return upbflags
         return ''
+
+    
+    def create_b_obj(self, n_block, b_obj_data):
+        """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""
+        # get the actual nif name
+        n_name = n_block.name.decode()
+        # let blender choose a name
+        b_obj = bpy.data.objects.new(n_name, b_obj_data)
+        b_obj.select = True
+        # make the object visible and active
+        bpy.context.scene.objects.link(b_obj)
+        bpy.context.scene.objects.active = b_obj
+        self.store_longname(b_obj, n_name)
+        self.map_names(b_obj, n_block)
+        return b_obj
+        
+    def store_longname(self, b_obj, n_name):
+        """Save original name as object property, for export"""
+        if b_obj.name != n_name:
+            b_obj.niftools.longname = n_name
+            # NifLog.debug("Stored long name for {0}".format(b_obj.name))
+   
+    def map_names(self, b_obj, n_block):
+        """Create mapping between nif and blender names"""
+        # map nif block to blender short name
+        self.nif_import.dict_names[n_block] = b_obj.name
+        # map blender short name to nif block
+        self.nif_import.dict_blocks[b_obj.name] = n_block
+        
+        
