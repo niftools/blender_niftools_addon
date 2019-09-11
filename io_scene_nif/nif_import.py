@@ -358,8 +358,8 @@ class NifImport(NifCommon):
                 if NifOp.props.skeleton != "GEOMETRY_ONLY":
                     b_obj = self.armaturehelper.import_armature(niBlock)
                     # set axis orientation - move to armature module?
-                    b_obj.data.niftools_armature.axis_forward = NifOp.props.axis_forward
-                    b_obj.data.niftools_armature.axis_up = NifOp.props.axis_up
+                    b_obj.data.niftools.axis_forward = NifOp.props.axis_forward
+                    b_obj.data.niftools.axis_up = NifOp.props.axis_up
                     b_armature = b_obj
                     n_armature = niBlock
                 else:

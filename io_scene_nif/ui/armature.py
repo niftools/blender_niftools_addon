@@ -75,7 +75,7 @@ class ArmaturePanel(Panel):
         
     def draw(self, context):
         if context.armature:
-            nif_armature_props = context.armature.niftools_armature
+            nif_armature_props = context.armature.niftools
             
             layout = self.layout
             row = layout.column()
