@@ -202,9 +202,6 @@ class NifExport(NifCommon):
             except NameError:
                 animtxt = None
 
-            # rebuild the full name dictionary from the 'FullNames' text buffer
-            self.objecthelper.rebuild_full_names()
-
             # export nif:
             # -----------
             NifLog.info("Exporting")

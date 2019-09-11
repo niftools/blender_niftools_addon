@@ -234,7 +234,7 @@ class ObjectHelper:
             parent_block.add_child(node)
 
         # and fill in this node's non-trivial values
-        node.name = self.get_full_name(node_name)
+        node.name = self.get_full_name(b_obj)
 
         # default node flags
         if b_obj_type in export_types:
@@ -307,20 +307,6 @@ class ObjectHelper:
         # return the node
         return n_node
 
-    def rebuild_full_names(self):
-        """Recovers the full object names from the text buffer and rebuilds
-        the names dictionary."""
-        # TODO: get objects to store their own names.
-        try:
-            namestxt = bpy.data.texts['FullNames']
-        except KeyError:
-            return
-        for b_textline in namestxt.lines:
-            line = b_textline.body
-            if len(line) > 0:
-                name, fullname = line.split(';')
-                self.nif_export.dict_names[name] = fullname
-
     def get_unique_name(self, b_name):
         """Returns an unique name for use in the NIF file, from the name of a
         Blender object.
@@ -335,28 +321,28 @@ class ObjectHelper:
             unique_name = b_name
         # blender bone naming -> nif bone naming
         unique_name = armature.get_bone_name_for_nif(unique_name)
-        # ensure uniqueness
-        if unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
-            unique_int = 0
-            old_name = unique_name
-            while unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
-                unique_name = "%s.%02d" % (old_name, unique_int)
-                unique_int += 1
+        # # ensure uniqueness
+        # if unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
+            # unique_int = 0
+            # old_name = unique_name
+            # while unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
+                # unique_name = "%s.%02d" % (old_name, unique_int)
+                # unique_int += 1
         self.nif_export.dict_block_names.append(unique_name)
         self.nif_export.dict_names[b_name] = unique_name
         return unique_name
 
-    def get_full_name(self, b_name):
+    def get_full_name(self, b_obj):
         """Returns the original imported name if present, or the name by which
         the object was exported already.
-
-        .. todo:: Refactor and simplify this code.
-        :param b_name:
         """
         try:
-            return self.nif_export.dict_names[b_name]
-        except KeyError:
-            return self.get_unique_name(b_name)
+            longname = b_obj.niftools.longname
+        except:
+            longname = ""
+        if not longname:
+            longname = self.get_unique_name(b_obj.name)
+        return longname
 
     def export_range_lod_data(self, n_node, b_obj):
         """Export range lod data for for the children of b_obj, as a
@@ -601,7 +587,7 @@ class MeshHelper:
                 if len(mesh_materials) > 1:
                     trishape.name = trishape.name.decode() + ":%i" % materialIndex
                 else:
-                    trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
+                    trishape.name = self.nif_export.objecthelper.get_full_name(trishape)
 
             # Trishape Flags...
             if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
@@ -738,7 +724,7 @@ class MeshHelper:
 
                 # add NiTriShape's material property
                 trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
-                    name=self.nif_export.objecthelper.get_full_name(b_mat.name),
+                    name=self.nif_export.objecthelper.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
@@ -1019,7 +1005,6 @@ class MeshHelper:
             if b_obj.parent:
                 if b_obj.parent.type == 'ARMATURE':
                     b_obj_armature = b_obj.parent
-                    armaturename = b_obj_armature.name
                     bone_names = list(b_obj_armature.data.bones.keys())
                     # the vertgroups that correspond to bone_names are bones that influence the mesh
                     boneinfluences = []
@@ -1035,11 +1020,11 @@ class MeshHelper:
                         trishape.skin_instance = skininst
                         for block in self.nif_export.dict_blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(armaturename):
+                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature):
                                     skininst.skeleton_root = block
                                     break
                         else:
-                            raise nif_utils.NifError("Skeleton root '%s' not found." % armaturename)
+                            raise nif_utils.NifError("Skeleton root '%s' not found." % b_obj_armature.name)
 
                         # create skinning data and link it
                         skindata = self.nif_export.objecthelper.create_block("NiSkinData", b_obj)
@@ -1107,7 +1092,7 @@ class MeshHelper:
                             bone_block = None
                             for block in self.nif_export.dict_blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(bone):
+                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature.data.bones[bone]):
                                         if not bone_block:
                                             bone_block = block
                                         else:
