@@ -518,21 +518,15 @@ class NifImport(NifCommon):
                     if obj.type == 'CAMERA':
                         b_obj_camera = obj
                         break
+                # none exists, create one
                 else:
-                    raise nif_utils.NifError(
-                        "Scene needs camera for billboard node"
-                        " (add a camera and try again)")
+                    b_obj_camera_data = bpy.data.cameras.new("Camera")
+                    b_obj_camera = self.objecthelper.create_b_obj(None, b_obj_camera_data)
                 # make b_obj track camera object
-                # b_obj.setEuler(0,0,0)
-                b_obj.constraints.new('TRACK_TO')
-                constr = b_obj.constraints[-1]
+                constr = b_obj.constraints.new('TRACK_TO')
                 constr.target = b_obj_camera
-                if constr.target == None:
-                    NifLog.warn("Constraint for billboard node on {0} added but target not set due to transform bug. Set target to Camera manually.".format(b_obj))
                 constr.track_axis = 'TRACK_Z'
                 constr.up_axis = 'UP_Y'
-                # yields transform bug!
-                # constr[Blender.Constraint.Settings.TARGET] = obj
 
             # set object transform
             # this must be done after all children objects have been
