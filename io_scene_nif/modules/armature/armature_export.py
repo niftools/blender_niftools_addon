@@ -78,7 +78,7 @@ class Armature():
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.nif_export.objecthelper.get_full_name(bone.name)
+            node.name = self.nif_export.objecthelper.get_full_name(bone)
             
             if (bone.niftools.boneflags != 0):
                 node.flags = bone.niftools.boneflags
@@ -152,7 +152,9 @@ class Armature():
                         # we should parent the object to the bone instead of
                         # to the armature
                         # so let's find that bone!
-                        nif_bone_name = self.nif_export.objecthelper.get_full_name(parent_bone_name)
+                        parent_bone = b_obj.data.bones[parent_bone_name]
+                        nif_bone_name = self.nif_export.objecthelper.get_full_name(parent_bone)
+                        print(nif_bone_name)
                         for bone_block in self.nif_export.dict_blocks:
                             if isinstance(bone_block, NifFormat.NiNode) and \
                                 bone_block.name.decode() == nif_bone_name:
