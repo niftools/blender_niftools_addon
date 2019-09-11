@@ -602,15 +602,11 @@ class NifImport(NifCommon):
             if b_prop.shader_flags_2._items[sf_index]._value == 1:
                 b_obj.niftools_shader[b_flag_name_2] = True
         
-    def import_name(self, niBlock, max_length=63):
-        """Get unique name for an object, preserving existing names.
-        The maximum name length defaults to 63, since this is the
-        maximum for Blender objects.
+    def import_name(self, niBlock):
+        """Get name of niBlock, ready for blender but not necessarily unique.
 
         :param niBlock: A named nif block.
         :type niBlock: :class:`~pyffi.formats.nif.NifFormat.NiObjectNET`
-        :param max_length: The maximum length of the name.
-        :type max_length: :class:`int`
         """
         if niBlock is None:
             return ""
@@ -624,10 +620,10 @@ class NifImport(NifCommon):
                 niName = "RootCollisionNode"
             else:
                 niName = "noname"
+        # todo[armature] should this be moved into armature?
+        niName = armature.get_bone_name_for_blender(niName)
 
-        shortName = armature.get_bone_name_for_blender(niName)
-
-        return shortName
+        return niName
     
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
