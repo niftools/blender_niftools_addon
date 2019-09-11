@@ -360,23 +360,22 @@ class NifImport(NifCommon):
                     # set axis orientation - move to armature module?
                     b_obj.data.niftools.axis_forward = NifOp.props.axis_forward
                     b_obj.data.niftools.axis_up = NifOp.props.axis_up
-                    b_armature = b_obj
-                    n_armature = niBlock
                 else:
+                    n_name = self.import_name(niBlock)
                     b_obj = self.selected_objects[0]
-                    b_armature = b_obj
-                    n_armature = niBlock
-                    NifLog.info("Merging nif tree '{0}' with armature '{1}'".format(niBlock.name, b_obj.name))
-                    if niBlock.name != b_obj.name:
-                        NifLog.warn("Using Nif block '{0}' as armature '{1}' but names do not match".format(niBlock.name, b_obj.name))
+                    NifLog.info("Merging nif tree '{0}' with armature '{1}'".format(n_name, b_obj.name))
+                    if n_name != b_obj.name:
+                        NifLog.warn("Using Nif block '{0}' as armature '{1}' but names do not match".format(n_name, b_obj.name))
+                b_armature = b_obj
+                n_armature = niBlock
                 # armatures cannot group geometries into a single mesh
                 geom_group = []
             elif self.armaturehelper.is_bone(niBlock):
                 # bones have already been imported during import_armature
-                b_obj = b_armature.data.bones[self.dict_names[niBlock]]
-                # bones cannot group geometries into a single mesh
+                b_obj = b_armature.data.bones[self.import_name(niBlock)]
                 b_obj.niftools.bsxflags = self.bsxflags
                 b_obj.niftools.boneflags = niBlock.flags
+                # bones cannot group geometries into a single mesh
                 geom_group = []
             else:
                 # is it a grouping node?
@@ -1038,12 +1037,14 @@ class NifImport(NifCommon):
             skindata = skininst.data
             bones = skininst.bones
             boneWeights = skindata.bone_list
-            for idx, bone in enumerate(bones):
+            for idx, n_bone in enumerate(bones):
                 # skip empty bones (see pyffi issue #3114079)
-                if not bone:
+                if not n_bone:
                     continue
                 vertex_weights = boneWeights[idx].vertex_weights
-                groupname = self.dict_names[bone]
+                # if we are in import geom only mode we have not stored the bones in the dict
+                # groupname = self.dict_names[n_bone]
+                groupname = self.import_name(n_bone)
                 if not groupname in b_obj.vertex_groups.items():
                     v_group = b_obj.vertex_groups.new(groupname)
                 for skinWeight in vertex_weights:
