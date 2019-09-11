@@ -169,7 +169,7 @@ class NifExport(NifCommon):
                                                  "Workaround: apply size and rotation (CTRL-A) on '%s'." % b_obj.name)
 
             b_armature = armature.get_armature()
-            armature.set_bone_orientation(b_armature.data.niftools_armature.axis_forward, b_armature.data.niftools_armature.axis_up)
+            armature.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
             
             root_name = filebase
             # get the root object from selected object
