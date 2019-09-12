@@ -42,6 +42,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import armature
 
 class Object:
     # this will have to deal with all naming issues
@@ -104,12 +105,79 @@ class Object:
         
     def import_range_lod_data(self, n_node, b_obj):
         """ Import LOD ranges and mark b_obj as a LOD node """
-        b_obj["type"] = "NiLODNode"
-        range_data = n_node
-        # where lodlevels are stored is determined by version number
-        # need more examples - just a guess here
-        if not range_data.lod_levels:
-            range_data = n_node.lod_level_data
-        for lod_level, b_child in zip(range_data.lod_levels, b_obj.children):
-            b_child["near_extent"] = lod_level.near_extent
-            b_child["far_extent"] = lod_level.far_extent
+        if isinstance(n_node, NifFormat.NiLODNode):
+            b_obj["type"] = "NiLODNode"
+            range_data = n_node
+            # where lodlevels are stored is determined by version number
+            # need more examples - just a guess here
+            if not range_data.lod_levels:
+                range_data = n_node.lod_level_data
+            for lod_level, b_child in zip(range_data.lod_levels, b_obj.children):
+                b_child["near_extent"] = lod_level.near_extent
+                b_child["far_extent"] = lod_level.far_extent
+
+    def import_billboard(self, n_node, b_obj):
+        """ Import a NiBillboardNode """
+        if isinstance(n_node, NifFormat.NiBillboardNode):
+            # find camera object
+            for obj in bpy.context.scene.objects:
+                if obj.type == 'CAMERA':
+                    b_obj_camera = obj
+                    break
+            # none exists, create one
+            else:
+                b_obj_camera_data = bpy.data.cameras.new("Camera")
+                b_obj_camera = self.objecthelper.create_b_obj(None, b_obj_camera_data)
+            # make b_obj track camera object
+            constr = b_obj.constraints.new('TRACK_TO')
+            constr.target = b_obj_camera
+            constr.track_axis = 'TRACK_Z'
+            constr.up_axis = 'UP_Y'
+
+    def import_root_collision(self, n_node, b_obj):
+        """ Import a RootCollisionNode """
+        if isinstance(n_node, NifFormat.RootCollisionNode):
+            b_obj.draw_type = 'BOUNDS'
+            b_obj.show_wire = True
+            b_obj.draw_bounds_type = 'BOX'
+            b_obj.game.use_collision_bounds = True
+            b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+            b_obj.niftools.objectflags = n_node.flags
+            b_mesh = b_obj.data
+            b_mesh.validate()
+            b_mesh.update()
+    
+    def set_object_bind(self, b_obj, object_children, b_colliders, b_armature):
+        # fix parentship
+        if isinstance(b_obj, bpy.types.Object):
+            # simple object parentship
+            for (n_child, b_child) in object_children:
+                b_child.parent = b_obj
+
+        elif isinstance(b_obj, bpy.types.Bone):
+            
+            for b_collider in b_colliders:
+                b_collider.parent = b_armature
+                b_collider.parent_type = 'BONE'
+                b_collider.parent_bone = b_obj.name
+                
+                # the capsule has been centered, now make it relative to bone head
+                offset = b_collider.location.y - b_obj.length
+                b_collider.matrix_basis = armature.nif_bind_to_blender_bind( mathutils.Matrix() )
+                b_collider.location.y = offset
+            
+            # Mesh attached to bone (may be rigged or static)
+            for n_child, b_child in object_children:
+                b_child.parent = b_armature
+                b_child.parent_type = 'BONE'
+                b_child.parent_bone = b_obj.name
+
+                # before we start, matrix_basis and matrix_parent_inverse are unity
+                # this works even for arbitrary bone orientation
+                # note that matrix_parent_inverse is a unity matrix on import, so could be simplified further with a constant
+                mpi = armature.nif_bind_to_blender_bind(b_child.matrix_parent_inverse).inverted()
+                mpi.translation.y -= b_obj.length
+                # essentially we mimic a transformed matrix_parent_inverse and delegate its transform
+                b_child.matrix_local = mpi * b_child.matrix_basis
+        else:
+            raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
