@@ -344,13 +344,6 @@ class NifImport(NifCommon):
             return b_obj
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
-            # bounding box child?
-            bsbound = nif_utils.find_extra(niBlock, NifFormat.BSBound)
-            # if not (children
-                    # or niBlock.collision_object
-                    # or bsbound or niBlock.has_bounding_box):
-                # # do not import unless the node is "interesting"
-                # return None
             # import object
             if self.armaturehelper.is_armature_root(niBlock):
                 # all bones in the tree are also imported by
@@ -399,8 +392,6 @@ class NifImport(NifCommon):
                     else:
                         b_obj = self.boundhelper.import_bounding_box(niBlock)
 
-                    if isinstance(niBlock, NifFormat.RootCollisionNode):
-                        b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
                     geom_group = []
                 else:
                     # node groups geometries, so import it as a mesh
@@ -430,19 +421,6 @@ class NifImport(NifCommon):
                     if any(child.skin_instance
                            for child in geom_group):
                         self.armaturehelper.append_armature_modifier(b_obj, b_armature)
-                    # settings for collision node
-                    if isinstance(niBlock, NifFormat.RootCollisionNode):
-                        b_obj.draw_type = 'BOUNDS'
-                        b_obj.show_wire = True
-                        b_obj.draw_bounds_type = 'BOX'
-                        b_obj.game.use_collision_bounds = True
-                        b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
-                        b_obj.niftools.objectflags = niBlock.flags
-                        # also remove duplicate vertices
-                        b_mesh = b_obj.data
-                        b_mesh.validate()
-                        b_mesh.update()
-
 
 
             # find children that aren't part of the geometry group
@@ -469,83 +447,30 @@ class NifImport(NifCommon):
                     b_colliders.extend( self.bhkhelper.import_bhk_shape(bhkshape=bhk_body) )
 
                 # import bounding box
+                bsbound = nif_utils.find_extra(niBlock, NifFormat.BSBound)
                 if bsbound:
                     b_colliders.append( self.boundhelper.import_bounding_box(bsbound) )
+            
+            # set bind pose for children
+            self.objecthelper.set_object_bind(b_obj, object_children, b_colliders, b_armature)
 
-            # fix parentship
-            if isinstance(b_obj, bpy.types.Object):
-                # simple object parentship
-                for (n_child, b_child) in object_children:
-                    b_child.parent = b_obj
-
-            elif isinstance(b_obj, bpy.types.Bone):
-                
-                # TODO: MOVE TO ANIMATIONHELPER
-                for b_collider in b_colliders:
-                    b_collider.parent = b_armature
-                    b_collider.parent_type = 'BONE'
-                    b_collider.parent_bone = b_obj.name
-                    
-                    # the capsule has been centered, now make it relative to bone head
-                    offset = b_collider.location.y - b_obj.length
-                    b_collider.matrix_basis = armature.nif_bind_to_blender_bind( mathutils.Matrix() )
-                    b_collider.location.y = offset
-                
-                # set up transforms
-                for n_child, b_child in object_children:
-                    b_child.parent = b_armature
-                    b_child.parent_type = 'BONE'
-                    b_child.parent_bone = b_obj.name
-                    
-                    # get the child's final transform in nif coordinate space
-                    n_child_armaturespace_matrix = armature.get_bind_matrix(b_obj) * b_child.matrix_basis
-                    # setting the child's world matrix deals with the bone offset under the hood - very elegant!
-                    b_child.matrix_world = n_child_armaturespace_matrix
-                    
-                    # equivalent to the above but more verbose; keep this here as a reference; might be needed for anims?
-                    # make worldspace matrix relative to blender parent bone and set as child's local matrix
-                    # b_child.matrix_local =  b_obj.matrix_local.inverted() * n_child_armaturespace_matrix
-                    # move child to parent bone's head position instead of tail
-                    # b_child.location.y -= b_obj.length
-            else:
-                raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
-
-            # track camera for billboard nodes
-            if isinstance(niBlock, NifFormat.NiBillboardNode):
-                # find camera object
-                for obj in bpy.context.scene.objects:
-                    if obj.type == 'CAMERA':
-                        b_obj_camera = obj
-                        break
-                # none exists, create one
-                else:
-                    b_obj_camera_data = bpy.data.cameras.new("Camera")
-                    b_obj_camera = self.objecthelper.create_b_obj(None, b_obj_camera_data)
-                # make b_obj track camera object
-                constr = b_obj.constraints.new('TRACK_TO')
-                constr.target = b_obj_camera
-                constr.track_axis = 'TRACK_Z'
-                constr.up_axis = 'UP_Y'
-
+            # import extra node data, such as node type
+            self.objecthelper.import_billboard(niBlock, b_obj)
+            self.objecthelper.import_range_lod_data(niBlock, b_obj)
+            self.objecthelper.import_root_collision(niBlock, b_obj)
+            
             # set object transform
             # this must be done after all children objects have been
             # parented to b_obj
             if isinstance(b_obj, bpy.types.Object):
-                # note: bones already have their matrix set
+                # note: bones and this object's children already have their matrix set
                 b_obj.matrix_local = nif_utils.import_matrix(niBlock)
 
                 # import the animations
                 if NifOp.props.animation:
-                    self.animationhelper.armature_animation.import_object_animation(niBlock, b_obj)
-                    # import the extras
                     self.animationhelper.import_text_keys(niBlock)
-                    # import vis controller
+                    self.animationhelper.armature_animation.import_object_animation(niBlock, b_obj)
                     self.animationhelper.object_animation.import_object_vis_controller(niBlock, b_obj)
-
-            # import extra node data, such as node type
-            # (other types should be added here too)
-            if isinstance(niBlock, NifFormat.NiLODNode):
-                self.objecthelper.import_range_lod_data(niBlock, b_obj)
 
             return b_obj
         # all else is currently discarded
@@ -596,10 +521,7 @@ class NifImport(NifCommon):
         niName = niBlock.name.decode()
         # if name is empty, create something non-empty
         if not niName:
-            if isinstance(niBlock, NifFormat.RootCollisionNode):
-                niName = "RootCollisionNode"
-            else:
-                niName = "noname"
+            niName = "noname"
         # todo[armature] should this be moved into armature?
         niName = armature.get_bone_name_for_blender(niName)
 

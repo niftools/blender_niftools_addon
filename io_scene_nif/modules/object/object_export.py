@@ -384,32 +384,33 @@ class ObjectHelper:
         """
 
         if isinstance(b_obj, bpy.types.Bone):
-            matrix = armature.get_bind_matrix(b_obj)
+            return armature.get_bind_matrix(b_obj)
 
         elif isinstance(b_obj, bpy.types.Object):
             # TODO MOVE TO ARMATUREHELPER
-
-            matrix = b_obj.matrix_local.copy()
 
             # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
             if b_obj.parent_bone:
                 # get parent bone
                 parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
-                # restore bone length that was substracted here on import
-                matrix.translation.y += parent_bone.length
-                
-                # undo the calculations from import - multiply with inverse of the Blender bone matrix
-                matrix = parent_bone.matrix_local.to_3x3().to_4x4() * matrix
-                
+
+                # undo what was done on import
+                mpi = armature.nif_bind_to_blender_bind(b_obj.matrix_parent_inverse).inverted()
+                mpi.translation.y -= parent_bone.length
+                return mpi.inverted() * b_obj.matrix_basis
+            # just get the local matrix
+            else:
+                return b_obj.matrix_local
         #Nonetype, maybe other weird stuff
-        else:
-            matrix = mathutils.Matrix()
-        return matrix
+        return mathutils.Matrix()
 
     def has_track(self, b_obj):
-        for constr in b_obj.constraints:
-            if constr.type == 'TRACK_TO':
-                return True
+        """ Determine if this b_obj has a track_to constraint """
+        # bones do not have constraints
+        if not isinstance(b_obj, bpy.types.Bone):
+            for constr in b_obj.constraints:
+                if constr.type == 'TRACK_TO':
+                    return True
 
 class MeshHelper:
 
