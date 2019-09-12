@@ -344,12 +344,11 @@ class Armature():
             self.complete_bone_tree(boneparent, skelroot)
 
     def is_bone(self, niBlock):
-        """Tests a NiNode to see if it's a bone."""
-        if not niBlock :
-            return False
-        for bones in self.dict_armatures.values():
-            if niBlock in bones:
-                return True
+        """Tests a NiNode to see if it has been marked as a bone."""
+        if niBlock:
+            for bones in self.dict_armatures.values():
+                if niBlock in bones:
+                    return True
 
     def is_armature_root(self, niBlock):
         """Tests a block to see if it's an armature."""
