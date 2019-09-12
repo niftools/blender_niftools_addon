@@ -118,7 +118,7 @@ class Object:
 
     def import_billboard(self, n_node, b_obj):
         """ Import a NiBillboardNode """
-        if isinstance(n_node, NifFormat.NiBillboardNode):
+        if isinstance(n_node, NifFormat.NiBillboardNode) and not isinstance(b_obj, bpy.types.Bone):
             # find camera object
             for obj in bpy.context.scene.objects:
                 if obj.type == 'CAMERA':
