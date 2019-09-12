@@ -490,11 +490,16 @@ class ArmatureAnimation():
         # B-spline curve import
         if isinstance(kfc, (NifFormat.NiBSplineInterpolator, NifFormat.NiBSplineCompTransformInterpolator)):
             times = list(kfc.get_times())
-            
-            translations = zip( times, [mathutils.Vector(tup) for tup in kfc.get_translations()] )
-            rotations = zip( times, [mathutils.Quaternion(tup) for tup in kfc.get_rotations()] )
-            # scales import as 0, investigate later
-            # scales = zip( times, list(kfc.get_scales()) )
+            # just do these temp steps to avoid generating empty fcurves down the line
+            trans_temp = [mathutils.Vector(tup) for tup in kfc.get_translations()]
+            if trans_temp:
+                translations = zip( times, trans_temp )
+            rot_temp = [mathutils.Quaternion(tup) for tup in kfc.get_rotations()]
+            if rot_temp:
+                rotations = zip( times, rot_temp )
+            scale_temp = list(kfc.get_scales())
+            if scale_temp:
+                scales = zip( times, scale_temp )
             
             #TODO: get these from interpolator?
             interp_rot = "LINEAR"
