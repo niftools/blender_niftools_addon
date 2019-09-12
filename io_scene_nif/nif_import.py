@@ -140,19 +140,7 @@ class NifImport(NifCommon):
             if NifOp.props.send_bones_to_bind_position:
                 pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=self.data).recurse()
             if NifOp.props.apply_skin_deformation:
-                
-                # TODO Create function & move to object/mesh class
-                for n_geom in self.data.get_global_iterator():
-                    if not isinstance(n_geom, NifFormat.NiGeometry):
-                        continue
-                    if not n_geom.is_skin():
-                        continue
-                    NifLog.info('Applying skin deformation on geometry {0}'.format(n_geom.name))
-                    vertices = n_geom.get_skin_deformation()[0]
-                    for vold, vnew in zip(n_geom.data.vertices, vertices):
-                        vold.x = vnew.x
-                        vold.y = vnew.y
-                        vold.z = vnew.z
+                self.objecthelper.apply_skin_deformation(self.data)
 
             # scale tree
             toaster = pyffi.spells.nif.NifToaster()
