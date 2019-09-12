@@ -127,7 +127,7 @@ class Object:
             # none exists, create one
             else:
                 b_obj_camera_data = bpy.data.cameras.new("Camera")
-                b_obj_camera = self.objecthelper.create_b_obj(None, b_obj_camera_data)
+                b_obj_camera = self.create_b_obj(None, b_obj_camera_data)
             # make b_obj track camera object
             constr = b_obj.constraints.new('TRACK_TO')
             constr.target = b_obj_camera
