@@ -949,21 +949,43 @@ class NifImport(NifCommon):
         if skininst:
             skindata = skininst.data
             bones = skininst.bones
-            boneWeights = skindata.bone_list
-            for idx, n_bone in enumerate(bones):
-                # skip empty bones (see pyffi issue #3114079)
-                if not n_bone:
-                    continue
-                vertex_weights = boneWeights[idx].vertex_weights
-                # if we are in import geom only mode we have not stored the bones in the dict
-                # groupname = self.dict_names[n_bone]
-                groupname = self.import_name(n_bone)
-                if not groupname in b_obj.vertex_groups.items():
-                    v_group = b_obj.vertex_groups.new(groupname)
-                for skinWeight in vertex_weights:
-                    vert = skinWeight.index
-                    weight = skinWeight.weight
-                    v_group.add([v_map[vert]], weight, 'REPLACE')
+            # the usual case
+            if skindata.has_vertex_weights:
+                boneWeights = skindata.bone_list
+                for idx, n_bone in enumerate(bones):
+                    # skip empty bones (see pyffi issue #3114079)
+                    if not n_bone:
+                        continue
+                    vertex_weights = boneWeights[idx].vertex_weights
+                    # if we are in import geom only mode we have not stored the bones in the dict
+                    # groupname = self.dict_names[n_bone]
+                    groupname = self.import_name(n_bone)
+                    if not groupname in b_obj.vertex_groups.items():
+                        v_group = b_obj.vertex_groups.new(groupname)
+                    for skinWeight in vertex_weights:
+                        vert = skinWeight.index
+                        weight = skinWeight.weight
+                        v_group.add([v_map[vert]], weight, 'REPLACE')
+            # WLP2 - hides the weights in the partition
+            else:
+                skinpartition = skininst.skin_partition
+                for block in skinpartition.skin_partition_blocks:
+                    # create all vgroups for this block's bones
+                    block_bone_names = [self.import_name(bones[i]) for i in block.bones]
+                    for groupname in block_bone_names:
+                        b_obj.vertex_groups.new(groupname)
+
+                    # go over each vert in this block
+                    for vert, vertex_weights, bone_indices in zip(block.vertex_map,
+                                                                  block.vertex_weights,
+                                                                  block.bone_indices):
+                        # assign this vert's 4 weights to its 4 vgroups (at max)
+                        for w, b_i in zip(vertex_weights, bone_indices):
+                            if w > 0:
+                                groupname = block_bone_names[b_i]
+                                v_group = b_obj.vertex_groups[groupname]
+                                v_group.add([v_map[vert]], w, 'REPLACE')
+                    
 
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
