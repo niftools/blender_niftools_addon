@@ -232,11 +232,10 @@ class Object:
 
     def apply_skin_deformation(self, n_data):
         """ Process all geometries in NIF tree to apply their skin """
-        for n_geom in n_data.get_global_iterator():
-            if not isinstance(n_geom, NifFormat.NiGeometry):
-                continue
-            if not n_geom.is_skin():
-                continue
+        # get all geometries with skin
+        n_geoms = [g for g in n_data.get_global_iterator() if isinstance(g, NifFormat.NiGeometry) and g.is_skin()]
+        # make sure that each skin is applied only once to avoid distortions when a model is referred to twice
+        for n_geom in set(n_geoms):
             NifLog.info('Applying skin deformation on geometry {0}'.format(n_geom.name))
             skininst = n_geom.skin_instance
             skindata = skininst.data
