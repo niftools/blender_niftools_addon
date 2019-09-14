@@ -48,31 +48,6 @@ from pyffi.utils.quickhull import qhull3d
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
-
-def box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz):
-    verts = []
-    for x in [minx, maxx]:
-        for y in [miny, maxy]:
-            for z in [minz, maxz]:
-                verts.append( (x,y,z) )
-    faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
-    return mesh_from_data(b_name, verts, faces)
-    
-def create_ob(ob_name, ob_data):
-    ob = bpy.data.objects.new(ob_name, ob_data)
-    bpy.context.scene.objects.link(ob)
-    bpy.context.scene.objects.active = ob
-    return ob
-
-def mesh_from_data(name, verts, faces, wireframe = True):
-    me = bpy.data.meshes.new(name)
-    me.from_pydata(verts, [], faces)
-    me.update()
-    ob = create_ob(name, me)
-    if wireframe:
-        ob.draw_type = 'WIRE'
-    return ob
-
 class bhkshape_import():
     """Import basic and Havok Collision Shapes"""
 
@@ -245,7 +220,7 @@ class bhkshape_import():
         maxz = +bhkshape.dimensions.z * self.HAVOK_SCALE
 
         #create blender object
-        b_obj = box_from_extents("box", minx, maxx, miny, maxy, minz, maxz)
+        b_obj = self.nif_import.objecthelper.box_from_extents("box", minx, maxx, miny, maxy, minz, maxz)
 
         # set bounds type
         b_obj.draw_type = 'WIRE'
@@ -263,7 +238,7 @@ class bhkshape_import():
         # create sphere
         b_radius = bhkshape.radius * self.HAVOK_SCALE
         
-        b_obj = box_from_extents("sphere", -b_radius, b_radius, -b_radius, b_radius, -b_radius, b_radius)
+        b_obj = self.nif_import.objecthelper.box_from_extents("sphere", -b_radius, b_radius, -b_radius, b_radius, -b_radius, b_radius)
 
         # set bounds type
         b_obj.draw_type = 'WIRE'
@@ -287,7 +262,7 @@ class bhkshape_import():
         maxz = +(length + 2*b_radius) * (self.HAVOK_SCALE / 2)
 
         #create blender object
-        b_obj = box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
+        b_obj = self.nif_import.objecthelper.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
 
         # set bounds type
         b_obj.draw_type = 'BOUNDS'
@@ -311,7 +286,7 @@ class bhkshape_import():
                                      self.HAVOK_SCALE * n_vert.z)
                                      for n_vert in bhkshape.vertices ])
 
-        b_obj = mesh_from_data("convexpoly", verts, faces)
+        b_obj = self.nif_import.objecthelper.mesh_from_data("convexpoly", verts, faces)
 
         b_obj.show_wire = True
         b_obj.draw_type = 'WIRE'
@@ -331,7 +306,7 @@ class bhkshape_import():
         # no factor 7 correction!!!
         verts = [ (v.x, v.y, v.z) for v in bhkshape.vertices ]
         faces = list(bhkshape.get_triangles())
-        b_obj = mesh_from_data("poly", verts, faces)
+        b_obj = self.nif_import.objecthelper.mesh_from_data("poly", verts, faces)
         
         # set bounds type
         b_obj.draw_type = 'WIRE'
@@ -374,11 +349,7 @@ class bhkshape_import():
                                   hktriangle.triangle.v_3 - vertex_offset) )
                 else:
                     continue
-            # todo: face normals are ignored here - are they even relevant?
-            # could just run the recalc normals operator if they are
-            # old solution was rather hacky anyway
-            
-            b_obj = mesh_from_data('poly%i' % subshape_num, verts, faces)
+            b_obj = self.nif_import.objecthelper.mesh_from_data('poly%i' % subshape_num, verts, faces)
 
             # set bounds type
             b_obj.draw_type = 'WIRE'
@@ -435,7 +406,7 @@ class bound_import():
                             % bbox.__class__.__name__)
 
         #create blender object
-        b_obj = box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz)
+        b_obj = self.nif_import.objecthelper.box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz)
         # link box to scene and set transform
         # XXX this is set in the import_branch() method
         # ob.matrix_local = mathutils.Matrix(
