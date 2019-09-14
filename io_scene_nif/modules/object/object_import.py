@@ -165,37 +165,26 @@ class Object:
             b_mesh.validate()
             b_mesh.update()
     
-    def set_object_bind(self, b_obj, object_children, b_colliders, b_armature):
-        # fix parentship
+    def set_object_bind(self, b_obj, b_obj_children, b_armature):
+        """ Sets up parent-child relationships for b_obj and all its children and corrects space for children of bones"""
         if isinstance(b_obj, bpy.types.Object):
-            # simple object parentship
-            for (n_child, b_child) in object_children:
+            # simple object parentship, no space correction
+            for b_child in b_obj_children:
                 b_child.parent = b_obj
 
         elif isinstance(b_obj, bpy.types.Bone):
-            
-            for b_collider in b_colliders:
-                b_collider.parent = b_armature
-                b_collider.parent_type = 'BONE'
-                b_collider.parent_bone = b_obj.name
-                
-                # the capsule has been centered, now make it relative to bone head
-                offset = b_collider.location.y - b_obj.length
-                b_collider.matrix_basis = armature.nif_bind_to_blender_bind( mathutils.Matrix() )
-                b_collider.location.y = offset
-            
-            # Mesh attached to bone (may be rigged or static)
-            for n_child, b_child in object_children:
+            # Mesh attached to bone (may be rigged or static) or a collider, needs bone space correction
+            for b_child in b_obj_children:
                 b_child.parent = b_armature
                 b_child.parent_type = 'BONE'
                 b_child.parent_bone = b_obj.name
-
-                # before we start, matrix_basis and matrix_parent_inverse are unity
+                
                 # this works even for arbitrary bone orientation
                 # note that matrix_parent_inverse is a unity matrix on import, so could be simplified further with a constant
                 mpi = armature.nif_bind_to_blender_bind(b_child.matrix_parent_inverse).inverted()
                 mpi.translation.y -= b_obj.length
                 # essentially we mimic a transformed matrix_parent_inverse and delegate its transform
+                # nb. matrix local is relative to the armature object, not the bone
                 b_child.matrix_local = mpi * b_child.matrix_basis
         else:
             raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
