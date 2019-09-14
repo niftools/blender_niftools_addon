@@ -77,10 +77,12 @@ class Object:
         return ''
 
     
-    def create_b_obj(self, n_block, b_obj_data):
+    def create_b_obj(self, n_block, b_obj_data, name=""):
         """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""
         # get the actual nif name
         n_name = n_block.name.decode() if n_block else ""
+        if name:
+            n_name = name
         # let blender choose a name
         b_obj = bpy.data.objects.new(n_name, b_obj_data)
         b_obj.select = True
@@ -90,7 +92,22 @@ class Object:
         self.store_longname(b_obj, n_name)
         self.map_names(b_obj, n_block)
         return b_obj
+
+    def mesh_from_data(self, name, verts, faces):
+        me = bpy.data.meshes.new(name)
+        me.from_pydata(verts, [], faces)
+        me.update()
+        return self.create_b_obj(None, me, name)
         
+    def box_from_extents(self, b_name, minx, maxx, miny, maxy, minz, maxz):
+        verts = []
+        for x in [minx, maxx]:
+            for y in [miny, maxy]:
+                for z in [minz, maxz]:
+                    verts.append( (x,y,z) )
+        faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+        return self.mesh_from_data(b_name, verts, faces)
+
     def store_longname(self, b_obj, n_name):
         """Save original name as object property, for export"""
         if b_obj.name != n_name:
