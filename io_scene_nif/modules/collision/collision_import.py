@@ -58,6 +58,99 @@ class bhkshape_import():
     def get_havok_objects(self):
         return self.nif_import.dict_havok_objects
 
+    def import_collision(self, n_node):
+        """ Imports a NiNode's collision_object, if present"""
+        if n_node.collision_object:
+            if isinstance(n_node.collision_object, NifFormat.bhkNiCollisionObject):
+                return self.import_bhk_shape(n_node.collision_object.body)
+            elif isinstance(n_node.collision_object, NifFormat.NiCollisionData):
+                return self.import_bounding_volume(n_node.collision_object.bounding_volume)
+        return []
+
+    def import_bounding_volume(self, bounding_volume):
+        """Imports a NiCollisionData's bounding_volume """
+
+        bvt = bounding_volume.collision_type
+        # sphere
+        if bvt == 0:
+            return self.import_spherebv(bounding_volume.sphere)
+        # box
+        elif bvt == 1:
+            return self.import_boxbv(bounding_volume.box)
+        # capsule
+        elif bvt == 2:
+            return self.import_capsulebv(bounding_volume.capsule)
+        # union - a bundle
+        elif bvt == 4:
+            volumes = []
+            for sub_vol in bounding_volume.union.bounding_volumes:
+                volumes.extend( self.import_bounding_volume(sub_vol) )
+            return volumes
+        # don't support 5 Half Space for now
+        return []
+
+    def import_spherebv(self, sphere):
+        r = sphere.radius
+        c = sphere.center
+        b_obj = self.nif_import.objecthelper.box_from_extents("sphere", -r, r, -r, r, -r, r)
+
+        # set bounds type
+        b_obj.draw_type = 'WIRE'
+        b_obj.draw_bounds_type = 'SPHERE'
+        b_obj.game.use_collision_bounds = True
+        b_obj.game.collision_bounds_type = 'SPHERE'
+        b_obj.game.radius = r
+        b_obj.location = (c.x, c.y, c.z)
+        return [ b_obj ]
+
+    def import_boxbv(self, box):
+        offset = box.center
+        #ignore for now, seems to be a unity 3x3 matrix
+        axes = box.axis
+        x, y, z = box.extent
+        b_obj = self.nif_import.objecthelper.box_from_extents("box", -x, x, -y, y, -z, z)
+
+        # set bounds type
+        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_bounds_type = 'BOX'
+        b_obj.game.use_collision_bounds = True
+        b_obj.game.collision_bounds_type = 'BOX'
+        b_obj.game.radius = (x+y+z)/3
+        b_obj.location = (offset.x, offset.y, offset.z)
+        return [ b_obj ]
+        
+    def import_capsulebv(self, capsule):
+        offset = capsule.center
+        # always a normalized vector
+        dir = capsule.origin
+        # nb properly named in newer nif.xmls
+        extent = capsule.unknown_float_1
+        radius = capsule.unknown_float_2
+        
+        # positions of the box verts
+        minx = miny = -radius
+        maxx = maxy = +radius
+        minz = -(extent + 2*radius) / 2
+        maxz = +(extent + 2*radius) / 2
+
+        #create blender object
+        b_obj = self.nif_import.objecthelper.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
+
+        # set bounds type
+        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_bounds_type = 'CAPSULE'
+        b_obj.game.use_collision_bounds = True
+        b_obj.game.collision_bounds_type = 'CAPSULE'
+        b_obj.game.radius = radius
+        
+        # get the rotation that makes (1,0,0) match dir
+        dir = mathutils.Vector( (dir.x, dir.y, dir.z) )
+        rot = dir.to_track_quat("Z", "Y" )
+        # apply transform in local space
+        b_obj.matrix_local = rot.to_matrix().to_4x4()
+        b_obj.location = (offset.x, offset.y, offset.z)
+        return [ b_obj ]
+
     def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
 
@@ -170,10 +263,6 @@ class bhkshape_import():
             b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
             
-            b_col_obj.niftools.bsxflags = self.nif_import.bsxflags
-            b_col_obj.niftools.objectflags = self.nif_import.objectflags
-            b_col_obj.niftools.upb = self.nif_import.upbflags
-            
             b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
             
             b_col_obj.rigid_body.use_deactivation = True
@@ -273,7 +362,8 @@ class bhkshape_import():
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
         
         # center around middle; will acount for bone length once it is parented
-        b_obj.location.y = length / 2 * self.HAVOK_SCALE
+        # the problem is, at this stage we do not yet know the orientation of the bone we want to undo
+        # b_obj.location.y = length / 2 * self.HAVOK_SCALE
         return [ b_obj ]
 
 
