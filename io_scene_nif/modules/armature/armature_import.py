@@ -66,6 +66,9 @@ class Armature():
         armature_name = n_armature.name.decode()
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
+        # set axis orientation for export
+        b_armature_data.niftools.axis_forward = NifOp.props.axis_forward
+        b_armature_data.niftools.axis_up = NifOp.props.axis_up
         b_armature_obj = self.nif_import.objecthelper.create_b_obj(n_armature, b_armature_data)
         b_armature_obj.show_x_ray = True
         
@@ -324,9 +327,9 @@ class Armature():
                 NifLog.debug("'{0}' marked as extra bone of armature '{1}'".format(bone.name, skelroot.name))
         
     def complete_bone_tree(self, bone, skelroot):
-        """Make sure that the complete hierarchy from skelroot down to bone is marked in dict_armatures.
+        """Make sure that the complete hierarchy from bone up to skelroot is marked in dict_armatures.
         """
-        # we must already have marked this one as a bone
+        # we must already have marked both as a bone
         assert skelroot in self.dict_armatures # debug
         assert bone in self.dict_armatures[skelroot] # debug
         # get the node parent, this should be marked as an armature or as a bone
