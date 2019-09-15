@@ -43,7 +43,7 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 
 from io_scene_nif.modules.animation.animation_export import AnimationHelper
-from io_scene_nif.modules.collision.collision_export import bhkshape_export, bound_export
+from io_scene_nif.modules.collision.collision_export import CollisionHelper, bound_export
 from io_scene_nif.modules.armature.armature_export import Armature
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.property.property_export import PropertyHelper
@@ -92,7 +92,7 @@ class NifExport(NifCommon):
         NifCommon.__init__(self, operator)
     
         # Helper systems
-        self.bhkshapehelper = bhkshape_export(parent=self)
+        self.collisionhelper = CollisionHelper(parent=self)
         self.boundhelper = bound_export(parent=self)
         self.armaturehelper = Armature(parent=self)
         self.animationhelper = AnimationHelper(parent=self)
@@ -794,43 +794,6 @@ class NifExport(NifCommon):
 
         return {'FINISHED'}
 
-    def export_collision(self, b_obj, parent_block):
-        """Main function for adding collision object b_obj to a node."""
-        if NifOp.props.game == 'MORROWIND':
-            if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
-                raise nif_utils.NifError("Morrowind only supports Triangle Mesh collisions.")
-            node = self.objecthelper.create_block("RootCollisionNode", b_obj)
-            parent_block.add_child(node)
-            node.flags = 0x0003  # default
-            self.objecthelper.set_object_matrix(b_obj, node)
-            for child in b_obj.children:
-                self.objecthelper.export_node(child, node, None)
-
-        elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-
-            nodes = [parent_block]
-            nodes.extend([block for block in parent_block.children if block.name[:14] == 'collisiondummy'])
-            for node in nodes:
-                try:
-                    self.bhkshapehelper.export_collision_helper(b_obj, node)
-                    break
-                except ValueError:  # adding collision failed
-                    continue
-            else:  # all nodes failed so add new one
-                node = self.objecthelper.create_ninode(b_obj)
-                node.set_transform(self.IDENTITY44)
-                node.name = 'collisiondummy%i' % parent_block.num_children
-                if b_obj.niftools.objectflags != 0:
-                    node_flag_hex = hex(b_obj.niftools.objectflags)
-                else:
-                    node_flag_hex = 0x000E  # default
-                node.flags = node_flag_hex
-                parent_block.add_child(node)
-                self.bhkshapehelper.export_collision_helper(b_obj, node)
-
-        else:
-            NifLog.warn("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '{0}'".format(b_obj.name))
-            
     def export_egm(self, keyblocks):
         self.egm_data = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
         for keyblock in keyblocks:
