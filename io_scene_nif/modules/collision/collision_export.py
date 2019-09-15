@@ -45,7 +45,7 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
-class bhkshape_export():
+class CollisionHelper():
 
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
@@ -54,6 +54,112 @@ class bhkshape_export():
         self.nif_export = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
 
+    def export_collision(self, b_obj, n_parent):
+        """Main function for adding collision object b_obj to a node."""
+        if NifOp.props.game == 'MORROWIND':
+            if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
+                raise nif_utils.NifError("Morrowind only supports Triangle Mesh collisions.")
+            node = self.nif_export.objecthelper.create_block("RootCollisionNode", b_obj)
+            n_parent.add_child(node)
+            node.flags = 0x0003  # default
+            self.nif_export.objecthelper.set_object_matrix(b_obj, node)
+            for child in b_obj.children:
+                self.nif_export.objecthelper.export_node(child, node, None)
+
+        elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+
+            nodes = [n_parent]
+            nodes.extend([block for block in n_parent.children if block.name[:14] == 'collisiondummy'])
+            for node in nodes:
+                try:
+                    self.export_collision_helper(b_obj, node)
+                    break
+                except ValueError:  # adding collision failed
+                    continue
+            else:  # all nodes failed so add new one
+                node = self.nif_export.objecthelper.create_ninode(b_obj)
+                # node.set_transform(self.IDENTITY44)
+                node.name = 'collisiondummy%i' % n_parent.num_children
+                if b_obj.niftools.objectflags != 0:
+                    node_flag_hex = hex(b_obj.niftools.objectflags)
+                else:
+                    node_flag_hex = 0x000E  # default
+                node.flags = node_flag_hex
+                n_parent.add_child(node)
+                self.export_collision_helper(b_obj, node)
+
+        elif NifOp.props.game in ('ZOO_TYCOON_2',):
+            self.export_nicollisiondata(b_obj, n_parent)
+        else:
+            NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(NifOp.props.game, b_obj.name))
+            
+    def export_nicollisiondata(self, b_obj, n_parent):
+        """ Export b_obj as a NiCollisionData """
+        coll_data = self.nif_export.objecthelper.create_block("NiCollisionData", b_obj)
+        coll_data.use_abv = 1
+        coll_data.target = n_parent
+        n_parent.collision_object = coll_data
+
+        bv = coll_data.bounding_volume
+        if b_obj.draw_bounds_type == 'SPHERE':
+            self.export_spherebv(b_obj, bv)
+        elif b_obj.draw_bounds_type == 'BOX':
+            self.export_boxbv(b_obj, bv)
+        elif b_obj.draw_bounds_type == 'CAPSULE':
+            self.export_capsulebv(b_obj, bv)
+
+    def export_spherebv(self, b_obj, bv):
+        """ Export b_obj as a NiCollisionData's bounding_volume sphere """
+        
+        bv.collision_type = 0
+        matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
+        center = matrix.translation
+        bv.sphere.radius = b_obj.dimensions.x / 2
+        bv.sphere.center.x = center.x
+        bv.sphere.center.y = center.y
+        bv.sphere.center.z = center.z
+        
+    def export_boxbv(self, b_obj, bv):
+        """ Export b_obj as a NiCollisionData's bounding_volume box """
+        
+        bv.collision_type = 1
+        matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
+        # set center
+        center = matrix.translation
+        bv.box.center.x = center.x
+        bv.box.center.y = center.y
+        bv.box.center.z = center.z
+        # set axes to unity 3x3 matrix
+        bv.box.axis[0].x = 1
+        bv.box.axis[1].y = 1
+        bv.box.axis[2].z = 1
+        # set extent
+        extent = b_obj.dimensions / 2
+        bv.box.extent[0] = extent.x
+        bv.box.extent[1] = extent.y
+        bv.box.extent[2] = extent.z
+
+    def export_capsulebv(self, b_obj, bv):
+        """ Export b_obj as a NiCollisionData's bounding_volume capsule """
+        
+        bv.collision_type = 2
+        matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
+        offset = matrix.translation
+        # calculate the direction unit vector
+        dir = ( mathutils.Vector( (0,0,1) ) * matrix.to_3x3().inverted() ).normalized()
+        extent = b_obj.dimensions.z - b_obj.dimensions.x
+        radius = b_obj.dimensions.x / 2
+
+        # store data
+        bv.capsule.center.x = offset.x
+        bv.capsule.center.y = offset.y
+        bv.capsule.center.z = offset.z
+        bv.capsule.origin.x = dir.x
+        bv.capsule.origin.y = dir.y
+        bv.capsule.origin.z = dir.z
+        # nb properly named in newer nif.xmls
+        bv.capsule.unknown_float_1 = extent
+        bv.capsule.unknown_float_2 = radius
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
