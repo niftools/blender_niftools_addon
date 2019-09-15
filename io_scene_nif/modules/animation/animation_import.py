@@ -507,11 +507,8 @@ class ArmatureAnimation():
             scale_temp = list(kfc.get_scales())
             if scale_temp:
                 scales = zip( times, scale_temp )
-            
-            #TODO: get these from interpolator?
-            interp_rot = "LINEAR"
-            interp_loc = "LINEAR"
-            interp_scale = "LINEAR"
+            # Bsplines are Bezier curves
+            interp_rot = interp_loc = interp_scale = "BEZIER"
         else:
             # ZT2 & Fallout
             kfd = kfc.data
