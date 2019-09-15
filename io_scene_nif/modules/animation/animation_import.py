@@ -488,7 +488,14 @@ class ArmatureAnimation():
         kfd = None
         
         # B-spline curve import
-        if isinstance(kfc, (NifFormat.NiBSplineInterpolator, NifFormat.NiBSplineCompTransformInterpolator)):
+        if isinstance(kfc, NifFormat.NiBSplineInterpolator):
+            # used by WLP2 (tiger.kf), but only for non-LocRotScale data
+            # eg. bone stretching - see controlledblock.get_variable_1()
+            # do not support this for now, no good representation in Blender
+            if isinstance(kfc, NifFormat.NiBSplineCompFloatInterpolator):
+                # pyffi lacks support for this, but the following gets float keys
+                # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
+                return
             times = list(kfc.get_times())
             # just do these temp steps to avoid generating empty fcurves down the line
             trans_temp = [mathutils.Vector(tup) for tup in kfc.get_translations()]
