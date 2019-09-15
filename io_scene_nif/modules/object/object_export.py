@@ -162,7 +162,7 @@ class ObjectHelper:
         has_anim = True if b_obj_anim_data and b_obj_anim_data.action.fcurves else False
         if node_name == 'RootCollisionNode':
             # -> root collision node (can be mesh or empty)
-            self.nif_export.export_collision(b_obj, parent_block)
+            self.nif_export.collisionhelper.export_collision(b_obj, parent_block)
             return None  # done; stop here
 
         elif b_obj_type == 'MESH' and b_obj.show_bounds and b_obj.name.lower().startswith('bsbound'):
@@ -188,7 +188,7 @@ class ObjectHelper:
             has_track = self.has_track(b_obj)
 
             if is_collision:
-                self.nif_export.export_collision(b_obj, parent_block)
+                self.nif_export.collisionhelper.export_collision(b_obj, parent_block)
                 return None  # done; stop here
             elif has_anim or has_children or is_multimaterial or has_track:
                 # create a ninode as parent of this mesh for the hierarchy to work out
