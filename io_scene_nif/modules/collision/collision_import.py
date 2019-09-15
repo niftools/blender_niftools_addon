@@ -143,13 +143,17 @@ class bhkshape_import():
         b_obj.game.collision_bounds_type = 'CAPSULE'
         b_obj.game.radius = radius
         
-        # get the rotation that makes (1,0,0) match dir
-        dir = mathutils.Vector( (dir.x, dir.y, dir.z) )
-        rot = dir.to_track_quat("Z", "Y" )
         # apply transform in local space
-        b_obj.matrix_local = rot.to_matrix().to_4x4()
-        b_obj.location = (offset.x, offset.y, offset.z)
+        b_obj.matrix_local = self.center_origin_to_matrix(offset, dir)
         return [ b_obj ]
+
+    def center_origin_to_matrix(self, n_center, n_dir):
+        """ Helper for capsules to transform nif data into a local matrix """
+        # get the rotation that makes (1,0,0) match dir
+        dir = mathutils.Vector( (n_dir.x, n_dir.y, n_dir.z) ).normalized()
+        rot = dir.to_track_quat("Z", "Y" ).to_matrix().to_4x4()
+        rot.translation = (n_center.x, n_center.y, n_center.z)
+        return rot
 
     def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
@@ -342,13 +346,14 @@ class bhkshape_import():
 
     def import_bhkcapsule_shape(self, bhkshape):
         """Import a BhkCapsule block as a simple cylinder collision object"""
-        b_radius = bhkshape.radius
-        # create capsule mesh
-        length = (bhkshape.first_point - bhkshape.second_point).norm()
-        minx = miny = -b_radius * self.HAVOK_SCALE
-        maxx = maxy = +b_radius * self.HAVOK_SCALE
-        minz = -(length + 2*b_radius) * (self.HAVOK_SCALE / 2)
-        maxz = +(length + 2*b_radius) * (self.HAVOK_SCALE / 2)
+        radius = bhkshape.radius * self.HAVOK_SCALE
+        length = (bhkshape.first_point - bhkshape.second_point).norm() * self.HAVOK_SCALE
+        first_point = bhkshape.first_point * self.HAVOK_SCALE
+        second_point = bhkshape.second_point * self.HAVOK_SCALE
+        minx = miny = -radius
+        maxx = maxy = +radius
+        minz = -radius - length/2
+        maxz = length/2 + radius
 
         #create blender object
         b_obj = self.nif_import.objecthelper.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
@@ -358,12 +363,19 @@ class bhkshape_import():
         b_obj.draw_bounds_type = 'CAPSULE'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'CAPSULE'
-        b_obj.game.radius = bhkshape.radius*self.HAVOK_SCALE
+        b_obj.game.radius = radius
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+        for v, k in zip(NifFormat.SkyrimHavokMaterial._enumvalues, NifFormat.SkyrimHavokMaterial._enumkeys):
+            if v == bhkshape.skyrim_material:
+                print("Found")
+                b_obj.nifcollision.skyrim_havok_material = k
+                break
         
-        # center around middle; will acount for bone length once it is parented
-        # the problem is, at this stage we do not yet know the orientation of the bone we want to undo
-        # b_obj.location.y = length / 2 * self.HAVOK_SCALE
+        # here, these are not encoded as a direction so we must first calculate the direction
+        b_obj.matrix_local = self.center_origin_to_matrix(second_point, first_point-second_point)
+        # we do it like this so the rigid bodies are correctly drawn in blender
+        # because they always draw around the object center
+        b_obj.location.z += length/2 
         return [ b_obj ]
 
 
