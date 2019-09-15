@@ -262,15 +262,6 @@ class ObjectHelper:
 
         return node
 
-    # Export a blender object ob of the type mesh, child of nif block
-    # parent_block, as NiTriShape and NiTriShapeData blocks, possibly
-    # along with some NiTexturingProperty, NiSourceTexture,
-    # NiMaterialProperty, and NiAlphaProperty blocks. We export one
-    # trishape block per mesh material. We also export vertex weights.
-    #
-    # The parameter trishape_name passes on the name for meshes that
-    # should be exported as a single mesh.
-
     def create_ninode(self, b_obj=None):
         """Essentially a wrapper around create_block() that creates nodes of the right type"""
         # when no b_obj is passed, it means we create a root node
@@ -417,7 +408,18 @@ class MeshHelper:
     def __init__(self, parent):
         self.nif_export = parent
 
+
     def export_tri_shapes(self, b_obj, parent_block, trishape_name=None):
+        """ 
+        Export a blender object ob of the type mesh, child of nif block
+        parent_block, as NiTriShape and NiTriShapeData blocks, possibly
+        along with some NiTexturingProperty, NiSourceTexture,
+        NiMaterialProperty, and NiAlphaProperty blocks. We export one
+        trishape block per mesh material. We also export vertex weights.
+        
+        The parameter trishape_name passes on the name for meshes that
+        should be exported as a single mesh.
+        """
         NifLog.info("Exporting {0}".format(b_obj))
 
         assert (b_obj.type == 'MESH')
