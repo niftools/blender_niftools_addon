@@ -182,7 +182,7 @@ class CollisionHelper():
                 self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE
 
         # find physics properties/defaults
-        n_havok_mat = b_obj.nifcollision.havok_material
+        n_havok_mat = (b_obj.nifcollision.havok_material, b_obj.nifcollision.skyrim_havok_material)
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
         deactivator_type = b_obj.nifcollision.deactivator_type
@@ -311,7 +311,7 @@ class CollisionHelper():
 
             n_col_mopp = self.nif_export.objecthelper.create_block("bhkMoppBvTreeShape", b_obj)
             n_col_body.shape = n_col_mopp
-            n_col_mopp.material = n_havok_mat
+            n_col_mopp.material = n_havok_mat[0]
             n_col_mopp.unknown_8_bytes[0] = 160
             n_col_mopp.unknown_8_bytes[1] = 13
             n_col_mopp.unknown_8_bytes[2] = 75
@@ -396,7 +396,7 @@ class CollisionHelper():
         if not n_col_body.shape:
             n_col_shape = self.nif_export.objecthelper.create_block("bhkListShape")
             n_col_body.shape = n_col_shape
-            n_col_shape.material = n_havok_mat
+            n_col_shape.material = n_havok_mat[0]
         else:
             n_col_shape = n_col_body.shape
             if not isinstance(n_col_shape, NifFormat.bhkListShape):
@@ -432,7 +432,7 @@ class CollisionHelper():
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.nif_export.objecthelper.create_block("bhkConvexTransformShape", b_obj)
-            coltf.material = n_havok_mat
+            coltf.material = n_havok_mat[0]
             coltf.unknown_float_1 = 0.1
             coltf.unknown_8_bytes[0] = 96
             coltf.unknown_8_bytes[1] = 120
@@ -463,7 +463,7 @@ class CollisionHelper():
             if b_obj.game.collision_bounds_type == 'BOX':
                 colbox = self.nif_export.objecthelper.create_block("bhkBoxShape", b_obj)
                 coltf.shape = colbox
-                colbox.material = n_havok_mat
+                colbox.material = n_havok_mat[0]
                 colbox.radius = radius
                 colbox.unknown_8_bytes[0] = 0x6b
                 colbox.unknown_8_bytes[1] = 0xee
@@ -482,7 +482,7 @@ class CollisionHelper():
             elif b_obj.game.collision_bounds_type == 'SPHERE':
                 colsphere = self.nif_export.objecthelper.create_block("bhkSphereShape", b_obj)
                 coltf.shape = colsphere
-                colsphere.material = n_havok_mat
+                colsphere.material = n_havok_mat[0]
                 # take average radius and
                 # Todo find out what this is: fix for havok coordinate system (6 * 7 = 42)
                 colsphere.radius = radius
@@ -490,49 +490,35 @@ class CollisionHelper():
             return coltf
 
         elif b_obj.game.collision_bounds_type in {'CYLINDER', 'CAPSULE'}:
-            # take average radius and calculate end points
-            localradius = (maxx + maxy - minx - miny) / 4.0
-            transform = b_obj.matrix_local.transposed()
-            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
-                                       (maxy + miny)/2.0,
-                                       maxz - localradius ] )
-            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
-                                       (maxy + miny) / 2.0,
-                                       minz + localradius ] )
-            vert1 = vert1 * transform
-            vert2 = vert2 * transform
+            
+            length = b_obj.dimensions.z - b_obj.dimensions.x
+            radius = b_obj.dimensions.x / 2
+            matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
+            # undo centering on matrix
+            matrix.translation.z -= length/2 
 
-            # check if end points are far enough from each other
-            if (vert1 - vert2).length < NifOp.props.epsilon:
-                NifLog.warn("End points of cylinder {0} too close, converting to sphere.".format(b_obj))
-                # change type
-                b_obj.game.collision_bounds_type = 'SPHERE'
-                # instead of duplicating code, just run the function again
-                return self.export_collision_object(b_obj, layer, n_havok_mat)
+            second_point = matrix.translation
+            # calculate the direction unit vector
+            dir = ( mathutils.Vector( (0,0,1) ) * matrix.to_3x3().inverted() ).normalized()
+            first_point = second_point + dir * length
 
-            # end points are ok, so export as capsule
+            radius /= self.HAVOK_SCALE
+            first_point /= self.HAVOK_SCALE
+            second_point /= self.HAVOK_SCALE
+
             colcaps = self.nif_export.objecthelper.create_block("bhkCapsuleShape", b_obj)
-            colcaps.material = n_havok_mat
-            colcaps.first_point.x = vert1[0] / self.HAVOK_SCALE
-            colcaps.first_point.y = vert1[1] / self.HAVOK_SCALE
-            colcaps.first_point.z = vert1[2] / self.HAVOK_SCALE
-            colcaps.second_point.x = vert2[0] / self.HAVOK_SCALE
-            colcaps.second_point.y = vert2[1] / self.HAVOK_SCALE
-            colcaps.second_point.z = vert2[2] / self.HAVOK_SCALE
+            colcaps.material = n_havok_mat[0]
+            colcaps.skyrim_material = n_havok_mat[1]
+            colcaps.first_point.x = first_point.x
+            colcaps.first_point.y = first_point.y
+            colcaps.first_point.z = first_point.z
+            colcaps.second_point.x = second_point.x
+            colcaps.second_point.y = second_point.y
+            colcaps.second_point.z = second_point.z
 
-            # set radius, with correct scale
-            size_x = b_obj.scale.x
-            size_y = b_obj.scale.y
-            size_z = b_obj.scale.z
-
-            colcaps.radius = localradius * (size_x + size_y) * 0.5
-            colcaps.radius_1 = colcaps.radius
-            colcaps.radius_2 = colcaps.radius
-
-            # fix havok coordinate system for radii
-            colcaps.radius /= self.HAVOK_SCALE
-            colcaps.radius_1 /= self.HAVOK_SCALE
-            colcaps.radius_2 /= self.HAVOK_SCALE
+            colcaps.radius = radius
+            colcaps.radius_1 = radius
+            colcaps.radius_2 = radius
             return colcaps
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
@@ -582,7 +568,7 @@ class CollisionHelper():
                     " Decimate/split your b_mesh and try again.")
 
             colhull = self.nif_export.objecthelper.create_block("bhkConvexVerticesShape", b_obj)
-            colhull.material = n_havok_mat
+            colhull.material = n_havok_mat[0]
             colhull.radius = radius
             colhull.unknown_6_floats[2] = -0.0 # enables arrow detection
             colhull.unknown_6_floats[5] = -0.0 # enables arrow detection
