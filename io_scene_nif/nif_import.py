@@ -384,7 +384,7 @@ class NifImport(NifCommon):
 
             # import extra node data, such as node type
             self.objecthelper.import_billboard(niBlock, b_obj)
-            self.objecthelper.import_range_lod_data(niBlock, b_obj)
+            self.objecthelper.import_range_lod_data(niBlock, b_obj, b_children)
             self.objecthelper.import_root_collision(niBlock, b_obj)
             
             # set object transform
