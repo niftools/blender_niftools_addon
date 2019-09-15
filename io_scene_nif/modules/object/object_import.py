@@ -121,7 +121,7 @@ class Object:
         # map blender short name to nif block
         self.nif_import.dict_blocks[b_obj.name] = n_block
         
-    def import_range_lod_data(self, n_node, b_obj):
+    def import_range_lod_data(self, n_node, b_obj, b_children):
         """ Import LOD ranges and mark b_obj as a LOD node """
         if isinstance(n_node, NifFormat.NiLODNode):
             b_obj["type"] = "NiLODNode"
@@ -130,7 +130,8 @@ class Object:
             # need more examples - just a guess here
             if not range_data.lod_levels:
                 range_data = n_node.lod_level_data
-            for lod_level, b_child in zip(range_data.lod_levels, b_obj.children):
+            # can't just take b_obj.children because the order doesn't match
+            for lod_level, b_child in zip(range_data.lod_levels, b_children):
                 b_child["near_extent"] = lod_level.near_extent
                 b_child["far_extent"] = lod_level.far_extent
 
