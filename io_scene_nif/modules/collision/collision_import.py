@@ -367,7 +367,6 @@ class bhkshape_import():
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
         for v, k in zip(NifFormat.SkyrimHavokMaterial._enumvalues, NifFormat.SkyrimHavokMaterial._enumkeys):
             if v == bhkshape.skyrim_material:
-                print("Found")
                 b_obj.nifcollision.skyrim_havok_material = k
                 break
         

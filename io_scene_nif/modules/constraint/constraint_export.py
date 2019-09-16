@@ -185,7 +185,7 @@ class constraint_export():
                     b_constr.pivot_x,
                     b_constr.pivot_y,
                     b_constr.pivot_z,
-                    ])
+                    ]) / self.HAVOK_SCALE
                 constr_matrix = mathutils.Euler((
                     b_constr.axis_x,
                     b_constr.axis_y,
@@ -216,13 +216,13 @@ class constraint_export():
                 # (this is O * T * B' * B^{-1} at once)
                 transform = mathutils.Matrix(
                     b_obj.matrix_local)
-                pivot = pivot * transform
+                # pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.to_3x3()
 
                 # export hkdescriptor pivot point
-                hkdescriptor.pivot_a.x = pivot[0] / self.HAVOK_SCALE
-                hkdescriptor.pivot_a.y = pivot[1] / self.HAVOK_SCALE
-                hkdescriptor.pivot_a.z = pivot[2] / self.HAVOK_SCALE
+                # hkdescriptor.pivot_a.x = pivot[0]
+                # hkdescriptor.pivot_a.y = pivot[1]
+                # hkdescriptor.pivot_a.z = pivot[2]
                 # export hkdescriptor axes and other parameters
                 # (also see import_nif.py NifImport.import_bhk_constraints)
                 axis_x = mathutils.Vector([1,0,0]) * constr_matrix
@@ -280,4 +280,7 @@ class constraint_export():
 
                 # do AB
                 hkconstraint.update_a_b(root_block)
+                hkdescriptor.pivot_b.x = pivot[0]
+                hkdescriptor.pivot_b.y = pivot[1]
+                hkdescriptor.pivot_b.z = pivot[2]
 
