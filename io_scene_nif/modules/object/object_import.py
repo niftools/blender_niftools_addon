@@ -49,14 +49,7 @@ class Object:
     # this will have to deal with all naming issues
     def __init__(self, parent):
         self.nif_import = parent
-        # self.dict_names = {}
-        # self.dict_blocks = {}
-    
-    def import_bsbound_data(self, root_block):
-        for n_extra in root_block.get_extra_datas():
-            if isinstance(n_extra, NifFormat.BSBound):
-                self.nif_import.boundhelper.import_bounding_box(n_extra)
-                    
+      
     @staticmethod    
     def import_bsxflag_data(root_block):
         for n_extra in root_block.get_extra_datas():
