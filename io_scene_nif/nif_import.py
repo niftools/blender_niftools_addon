@@ -89,6 +89,8 @@ class NifImport(NifCommon):
     def execute(self):
         """Main import function."""
 
+        # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
+        # we use this dictionary to set the physics constraints (ragdoll etc)
         self.dict_havok_objects = {}
         self.dict_names = {}
         self.dict_blocks = {}
