@@ -45,7 +45,7 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
-class CollisionHelper():
+class Collision():
 
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
@@ -597,12 +597,6 @@ class CollisionHelper():
             raise nif_utils.NifError(
                 'cannot export collision type %s to collision shape list'
                 % b_obj.game.collision_bounds_type)
-
-
-class bound_export():
-
-    def __init__(self, parent):
-        self.nif_export = parent
 
     def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
