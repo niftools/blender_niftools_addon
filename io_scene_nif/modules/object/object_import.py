@@ -83,7 +83,6 @@ class Object:
         bpy.context.scene.objects.link(b_obj)
         bpy.context.scene.objects.active = b_obj
         self.store_longname(b_obj, n_name)
-        self.map_names(b_obj, n_block)
         return b_obj
 
     def mesh_from_data(self, name, verts, faces):
@@ -107,13 +106,6 @@ class Object:
             b_obj.niftools.longname = n_name
             NifLog.debug("Stored long name for {0}".format(b_obj.name))
    
-    def map_names(self, b_obj, n_block):
-        """Create mapping between nif and blender names"""
-        # map nif block to blender short name
-        self.nif_import.dict_names[n_block] = b_obj.name
-        # map blender short name to nif block
-        self.nif_import.dict_blocks[b_obj.name] = n_block
-        
     def import_range_lod_data(self, n_node, b_obj, b_children):
         """ Import LOD ranges and mark b_obj as a LOD node """
         if isinstance(n_node, NifFormat.NiLODNode):
