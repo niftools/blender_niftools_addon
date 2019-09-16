@@ -43,7 +43,7 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 
 from io_scene_nif.modules.animation.animation_export import AnimationHelper
-from io_scene_nif.modules.collision.collision_export import CollisionHelper, bound_export
+from io_scene_nif.modules.collision.collision_export import Collision
 from io_scene_nif.modules.armature.armature_export import Armature
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.property.property_export import PropertyHelper
@@ -92,8 +92,7 @@ class NifExport(NifCommon):
         NifCommon.__init__(self, operator)
     
         # Helper systems
-        self.collisionhelper = CollisionHelper(parent=self)
-        self.boundhelper = bound_export(parent=self)
+        self.collisionhelper = Collision(parent=self)
         self.armaturehelper = Armature(parent=self)
         self.animationhelper = AnimationHelper(parent=self)
         self.propertyhelper = PropertyHelper(parent=self)
@@ -449,13 +448,12 @@ class NifExport(NifCommon):
                             for sub_shape in block.shape.sub_shapes):
                                 NifLog.warn("Mopps for non-static objects may not function correctly in-game. You may wish to use simple primitives for collision.")
 
-            export_animation = NifOp.props.animation
-            if export_animation == 'ALL_NIF':
+            if NifOp.props.animation == 'ALL_NIF':
                 NifLog.info("Exporting geometry and animation")
-            elif export_animation == 'GEOM_NIF':
+            elif NifOp.props.animation == 'GEOM_NIF':
                 # for morrowind: everything except keyframe controllers
                 NifLog.info("Exporting geometry only")
-            elif export_animation == 'ANIM_KF':
+            elif NifOp.props.animation == 'ANIM_KF':
                 # for morrowind: only keyframe controllers
                 NifLog.info("Exporting animation only (as .kf file)")
 
@@ -464,7 +462,7 @@ class NifExport(NifCommon):
 
             NifLog.info("Writing NIF version 0x%08X" % self.version)
 
-            if export_animation != 'ANIM_KF':
+            if NifOp.props.animation != 'ANIM_KF':
                 if NifOp.props.game == 'EMPIRE_EARTH_II':
                     ext = ".nifcache"
                 else:
@@ -491,7 +489,7 @@ class NifExport(NifCommon):
             # ----------------------------------------------
 
             # convert root_block tree into a keyframe tree
-            if export_animation == 'ANIM_KF' or export_animation == 'ALL_NIF_XNIF_XKF':
+            if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
                 NifLog.info("Creating keyframe tree")
                 # find all nodes and relevant controllers
                 node_kfctrls = {}
@@ -534,9 +532,6 @@ class NifExport(NifCommon):
                     # TODO [animation] allow for object kf only
                     # create kf root header
                     kf_root = self.objecthelper.create_block("NiControllerSequence")
-                    # if self.EXPORT_ANIMSEQUENCENAME:
-                        # kf_root.name = self.EXPORT_ANIMSEQUENCENAME
-                    # else:
                     kf_root.name = filebase
                     kf_root.unknown_int_1 = 1
                     kf_root.weight = 1.0
@@ -609,7 +604,7 @@ class NifExport(NifCommon):
                                              " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % NifOp.props.game)
 
                 # write kf (and xnif if asked)
-                prefix = "" if (export_animation != 'ALL_NIF_XNIF_XKF') else "x"
+                prefix = "" if (NifOp.props.animation != 'ALL_NIF_XNIF_XKF') else "x"
 
                 ext = ".kf"
                 NifLog.info("Writing {0} file".format(prefix + ext))
@@ -624,7 +619,7 @@ class NifExport(NifCommon):
                 finally:
                     stream.close()
 
-            if export_animation == 'ALL_NIF_XNIF_XKF':
+            if NifOp.props.animation == 'ALL_NIF_XNIF_XKF':
                 NifLog.info("Detaching keyframe controllers from nif")
                 # detach the keyframe controllers from the nif (for xnif)
                 for node in root_block.tree():
