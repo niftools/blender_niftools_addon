@@ -188,6 +188,9 @@ class CollisionHelper():
         deactivator_type = b_obj.nifcollision.deactivator_type
         solver_deactivation = b_obj.nifcollision.solver_deactivation
         quality_type = b_obj.nifcollision.quality_type
+        if not b_obj.rigid_body:
+            NifLog.warn("'{0}' has no rigid body, skipping rigid body export".format(b_obj.name))
+            return
         mass = b_obj.rigid_body.mass
         restitution = b_obj.rigid_body.restitution
         friction = b_obj.rigid_body.friction

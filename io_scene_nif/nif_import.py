@@ -47,7 +47,7 @@ from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.modules.animation.animation_import import AnimationHelper
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.armature.armature_import import Armature
-from io_scene_nif.modules.collision.collision_import import bhkshape_import, bound_import
+from io_scene_nif.modules.collision.collision_import import Collision
 from io_scene_nif.modules.constraint.constraint_import import constraint_import
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.texture.texture_import import Texture
@@ -75,9 +75,7 @@ class NifImport(NifCommon):
         # Helper systems
         self.animationhelper = AnimationHelper(parent=self)
         self.armaturehelper = Armature(parent=self)
-        # TODO: create super collisionhelper
-        self.bhkhelper = bhkshape_import(parent=self)
-        self.boundhelper = bound_import(parent=self)
+        self.collisionhelper = Collision(parent=self)
         self.constrainthelper = constraint_import(parent=self)
         self.textureloader = TextureLoader(parent=self)
         self.texturehelper = Texture(parent=self)
@@ -223,10 +221,8 @@ class NifImport(NifCommon):
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node, which we do not import as a blender object
             # process its collision
-            for n_extra in root_block.get_extra_datas():
-                if isinstance(n_extra, NifFormat.BSBound):
-                    self.boundhelper.import_bounding_box(n_extra)
-            self.bhkhelper.import_collision(root_block)
+            self.collisionhelper.import_bsbound_data(root_block)
+            self.collisionhelper.import_collision(root_block)
 
             # we only process all its children
             for child in root_block.children:
@@ -261,7 +257,7 @@ class NifImport(NifCommon):
 
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
-        self.bhkhelper.get_havok_objects()
+        self.collisionhelper.get_havok_objects()
         self.constrainthelper.import_bhk_constraints()
 
         # parent selected meshes to imported skeleton
@@ -341,7 +337,7 @@ class NifImport(NifCommon):
                     if not niBlock.has_bounding_box:
                         b_obj = self.import_empty(niBlock)
                     else:
-                        b_obj = self.boundhelper.import_bounding_box(niBlock)
+                        b_obj = self.collisionhelper.import_bounding_box(niBlock)[0]
 
                     geom_group = []
                 else:
@@ -374,12 +370,11 @@ class NifImport(NifCommon):
             # if not importing skeleton only
             if NifOp.props.skeleton != "SKELETON_ONLY":
                 # import collision objects
-                b_children.extend( self.bhkhelper.import_collision(niBlock) )
+                b_children.extend( self.collisionhelper.import_collision(niBlock) )
 
                 # import bounding box
                 bsbound = nif_utils.find_extra(niBlock, NifFormat.BSBound)
-                if bsbound:
-                    b_children.append( self.boundhelper.import_bounding_box(bsbound) )
+                b_children.extend( self.collisionhelper.import_bounding_box(bsbound) )
             
             # set bind pose for children
             self.objecthelper.set_object_bind(b_obj, b_children, b_armature)
