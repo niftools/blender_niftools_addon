@@ -122,9 +122,7 @@ class NifExport(NifCommon):
 
         self.dict_bone_priorities = {}
         self.dict_havok_objects = {}
-        self.dict_names = {}
-        self.dict_blocks = {}
-        self.dict_block_names = []
+        self.block_to_obj = {}
         self.dict_materials = {}
         self.dict_textures = {}
         self.dict_mesh_uvlayers = []
@@ -134,65 +132,47 @@ class NifExport(NifCommon):
 
         try:  # catch export errors
 
-            for b_obj in bpy.data.objects:
+            # get the root object from selected object
+            selected_objects = bpy.context.selected_objects
+            # if none are selected, just get all of this scene's objects
+            if not selected_objects:
+                selected_objects = bpy.context.scene.objects
+            
+            # only export empties, meshes, and armatures
+            self.export_types = ('EMPTY', 'MESH', 'ARMATURE')
+            self.exportable_objects = [b_obj for b_obj in selected_objects if b_obj.type in self.export_types]
+            if not self.exportable_objects:
+                NifLog.warn("No objects can be exported!")
+                return {'FINISHED'}
+            NifLog.info("Exporting objects")
+            # find all objects that do not have a parent
+            self.root_objects = [b_obj for b_obj in self.exportable_objects if not b_obj.parent]
+
+            for b_obj in self.exportable_objects:
                 # armatures should not be in rest position
                 if b_obj.type == 'ARMATURE':
-                    # ensure we get the mesh vertices in animation mode,
-                    # and not in rest position!
                     b_obj.data.pose_position = 'POSE'
 
-                if b_obj.type == 'MESH':
-                    # TODO - Need to implement correct armature checking
-                    # b_armature_modifier = None
-                    b_obj_name = b_obj.name
-                    if b_obj.parent:
-                        for b_mod in bpy.data.objects[b_obj_name].modifiers:
+                elif b_obj.type == 'MESH':
+                    if b_obj.parent and b_obj.parent.type == 'ARMATURE':
+                        for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE':
-                                # b_armature_modifier = b_mod.name
                                 if b_mod.use_bone_envelopes:
                                     raise nif_utils.NifError("'%s': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
                                                              "If you don't have vertex groups, select the bones one by one press W to "
                                                              "convert their envelopes to vertex weights, and turn off envelopes." % b_obj.name)
-                            # if not b_armature_modifier:
-                            #     raise nif_utils.NifError("'%s': is parented but does not have"
-                            #                              " the armature modifier set. This will"
-                            #                              " cause animations to fail."
-                            #                              % b_obj.name)
-
+                                    
                 # check for non-uniform transforms
-                # (lattices are not exported so ignore them as they often tend
-                # to have non-uniform scaling)
-                if b_obj.type != 'LATTICE':
-                    scale = b_obj.matrix_local.to_scale()
-                    if abs(scale.x - scale.y) > NifOp.props.epsilon or abs(scale.y - scale.z) > NifOp.props.epsilon:
-                        raise nif_utils.NifError("Non-uniform scaling not supported.\n "
-                                                 "Workaround: apply size and rotation (CTRL-A) on '%s'." % b_obj.name)
+                scale = b_obj.matrix_local.to_scale()
+                if abs(scale.x - scale.y) > NifOp.props.epsilon or abs(scale.y - scale.z) > NifOp.props.epsilon:
+                    NifLog.warn("Non-uniform scaling not supported.\n "
+                                "Workaround: apply size and rotation (CTRL-A) on '%s'." % b_obj.name)
 
             b_armature = armature.get_armature()
             # some scenes may not have an armature, so nothing to do here
             if b_armature:
                armature.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
             
-            root_name = filebase
-            # get the root object from selected object
-            # only export empties, meshes, and armatures
-            if not bpy.context.selected_objects:
-                raise nif_utils.NifError("Please select the object(s) to export, and run this script again.")
-
-            root_objects = set()
-            export_types = ('EMPTY', 'MESH', 'ARMATURE')
-            exportable_objects = [b_obj for b_obj in bpy.context.selected_objects if b_obj.type in export_types]
-            for root_object in exportable_objects:
-                while root_object.parent:
-                    root_object = root_object.parent
-                if NifOp.props.game in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3', 'ZOO_TYCOON_2'):
-                    if (root_object.type == 'ARMATURE') or (root_object.name.lower() == "bip01"):
-                        root_name = 'Scene Root'
-                # TODO remove as already filtered
-                if root_object.type not in export_types:
-                    raise nif_utils.NifError("Root object (%s) must be an 'EMPTY', 'MESH', or 'ARMATURE' object." % root_object.name)
-                root_objects.add(root_object)
-
             # smooth seams of objects
             if NifOp.props.smooth_object_seams:
                 self.objecthelper.mesh_helper.smooth_mesh_seams(bpy.context.scene.objects)
@@ -215,32 +195,9 @@ class NifExport(NifCommon):
 
             # create a nif object
 
-            # export the root node (the name is fixed later to avoid confusing the
+            # export the actual root node (the name is fixed later to avoid confusing the
             # exporter with duplicate names)
-            root_block = self.objecthelper.export_node(None, None, '')
-
-            # TODO Move to object system and redo
-            # export objects
-            NifLog.info("Exporting objects")
-            for root_object in root_objects:
-                if NifOp.props.game in 'SKYRIM':
-                    if root_object.niftools_bs_invmarker:
-                        for extra_item in root_block.extra_data_list:
-                            if isinstance(extra_item, NifFormat.BSInvMarker):
-                                raise nif_utils.NifError("Multiple Items have Inventory marker data only one item may contain this data")
-                        else:
-                            n_extra_list = NifFormat.BSInvMarker()
-                            n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
-                            n_extra_list.rotation_x = root_object.niftools_bs_invmarker[0].bs_inv_x
-                            n_extra_list.rotation_y = root_object.niftools_bs_invmarker[0].bs_inv_y
-                            n_extra_list.rotation_z = root_object.niftools_bs_invmarker[0].bs_inv_z
-                            n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
-                             
-                            root_block.add_extra_data(n_extra_list)
-
-                # export the root objects as a NiNodes; their children are
-                # exported as well
-                self.objecthelper.export_node(root_object, root_block, root_object.name)
+            root_block = self.objecthelper.export_root_node(filebase)
 
             # post-processing:
             # ----------------
@@ -250,7 +207,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
-                for block in self.dict_blocks:
+                for block in self.block_to_obj:
                     # has it a controller field?
                     if isinstance(block, NifFormat.NiObjectNET):
                         if block.controller:
@@ -267,7 +224,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking controllers")
             if animtxt and NifOp.props.game == 'MORROWIND':
                 has_keyframecontrollers = False
-                for block in self.dict_blocks:
+                for block in self.block_to_obj:
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
@@ -278,7 +235,7 @@ class NifExport(NifCommon):
                     self.animationhelper.export_keyframes(root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
-                for block in self.dict_blocks:
+                for block in self.block_to_obj:
                     if isinstance(block, NifFormat.NiNode):
                         # if any of the shape children has a controller
                         # or if the ninode has a controller
@@ -296,7 +253,7 @@ class NifExport(NifCommon):
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
-                for block in list(self.dict_blocks.keys()):
+                for block in list(self.block_to_obj.keys()):
                     if isinstance(block, NifFormat.NiNode) and block.name.decode() == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
                             ctrl = self.objecthelper.create_block("NiTransformController")
@@ -329,33 +286,6 @@ class NifExport(NifCommon):
                 else:
                     anim_textextra = None
 
-            # oblivion and Fallout 3 furniture markers
-            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase[:15].lower() == 'furnituremarker':
-                # exporting a furniture marker for Oblivion/FO3
-                try:
-                    furniturenumber = int(filebase[15:])
-                except ValueError:
-                    raise nif_utils.NifError("Furniture marker has invalid number (%s).\n"
-                                             "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19." % filebase[15:])
-                # name scene root name the file base name
-                root_name = filebase
-
-                # create furniture marker block
-                furnmark = self.objecthelper.create_block("BSFurnitureMarker")
-                furnmark.name = "FRN"
-                furnmark.num_positions = 1
-                furnmark.positions.update_size()
-                furnmark.positions[0].position_ref_1 = furniturenumber
-                furnmark.positions[0].position_ref_2 = furniturenumber
-
-                # create extra string data sgoKeep
-                sgokeep = self.objecthelper.create_block("NiStringExtraData")
-                sgokeep.name = "UPB"  # user property buffer
-                sgokeep.string_data = "sgoKeep=1 ExportSel = Yes"  # Unyielding = 0, sgoKeep=1ExportSel = Yes
-
-                # add extra blocks
-                root_block.add_extra_data(furnmark)
-                root_block.add_extra_data(sgokeep)
 
             # FIXME:
             NifLog.info("Checking collision")
@@ -389,7 +319,7 @@ class NifExport(NifCommon):
                     # we are not using blender properties to set the mass
                     # so calculate mass automatically first calculate distribution of mass
                     total_mass = 0
-                    for block in self.dict_blocks:
+                    for block in self.block_to_obj:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             block.update_mass_center_inertia(solid=self.EXPORT_OB_SOLID)
                             total_mass += block.mass
@@ -399,7 +329,7 @@ class NifExport(NifCommon):
                         total_mass = 1
 
                     # now update the mass ensuring that total mass is self.EXPORT_OB_MASS
-                    for block in self.dict_blocks:
+                    for block in self.block_to_obj:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             mass = self.EXPORT_OB_MASS * block.mass / total_mass
                             # lower bound on mass
@@ -409,7 +339,7 @@ class NifExport(NifCommon):
                 else:
                     # using blender properties, so block.mass *should* have
                     # been set properly
-                    for block in self.dict_blocks:
+                    for block in self.block_to_obj:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             # lower bound on mass
                             if block.mass < 0.0001:
@@ -419,8 +349,8 @@ class NifExport(NifCommon):
                                 solid=self.EXPORT_OB_SOLID)
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
-            # note: self.dict_blocks changes during iteration, so need list copy
-            for block in list(self.dict_blocks):
+            # note: self.block_to_obj changes during iteration, so need list copy
+            for block in list(self.block_to_obj):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
                         if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
@@ -475,7 +405,7 @@ class NifExport(NifCommon):
                 # flatten skins
                 skelroots = set()
                 affectedbones = []
-                for block in self.dict_blocks:
+                for block in self.block_to_obj:
                     if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
                         NifLog.info("Flattening skin on geometry {0}".format(block.name))
                         affectedbones.extend(block.flatten_skin())
@@ -507,7 +437,7 @@ class NifExport(NifCommon):
 
             # generate mopps (must be done after applying scale!)
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                for block in self.dict_blocks:
+                for block in self.block_to_obj:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         NifLog.info("Generating mopp...")
                         block.update_mopp()
@@ -518,45 +448,6 @@ class NifExport(NifCommon):
                         if any(sub_shape.layer != 1
                             for sub_shape in block.shape.sub_shapes):
                                 NifLog.warn("Mopps for non-static objects may not function correctly in-game. You may wish to use simple primitives for collision.")
-
-            # delete original scene root if a scene root object was already defined
-            if root_block.num_children == 1 and (root_block.children[0].name in ['Scene Root', 'Bip01'] or root_block.children[0].name[-3:] == 'nif'):
-                if root_block.children[0].name[-3:] == 'nif':
-                    root_block.children[0].name = filebase
-                NifLog.info("Making '{0}' the root block".format(root_block.children[0].name))
-                # remove root_block from self.dict_blocks
-                self.dict_blocks.pop(root_block)
-                # set new root block
-                old_root_block = root_block
-                root_block = old_root_block.children[0]
-                # copy extra data and properties
-                for extra in old_root_block.get_extra_datas():
-                    # delete links in extras to avoid parentship problems
-                    extra.next_extra_data = None
-                    # now add it
-                    root_block.add_extra_data(extra)
-                for b in old_root_block.get_controllers():
-                    root_block.add_controller(b)
-                for b in old_root_block.properties:
-                    root_block.add_property(b)
-                for b in old_root_block.effects:
-                    root_block.add_effect(b)
-            else:
-                root_block.name = root_name
-                
-            self.root_ninode = None
-            for root_obj in root_objects:
-                if root_obj.niftools.rootnode == 'BSFadeNode':
-                    self.root_ninode = 'BSFadeNode'
-                elif self.root_ninode is None:
-                    self.root_ninode = 'NiNode'
-
-            # making root block a fade node
-            if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and self.root_ninode == 'BSFadeNode':
-                NifLog.info("Making root block a BSFadeNode")
-                fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
-                fade_root_block.replace_global_node(root_block, fade_root_block)
-                root_block = fade_root_block
 
             export_animation = NifOp.props.animation
             if export_animation == 'ALL_NIF':

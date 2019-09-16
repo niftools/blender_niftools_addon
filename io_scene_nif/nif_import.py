@@ -90,9 +90,6 @@ class NifImport(NifCommon):
         # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
         # we use this dictionary to set the physics constraints (ragdoll etc)
         self.dict_havok_objects = {}
-        self.dict_names = {}
-        self.dict_blocks = {}
-        self.dict_block_names = []
         self.dict_materials = {}
         self.dict_textures = {}
         self.dict_mesh_uvlayers = []

@@ -56,6 +56,8 @@ class Armature():
         self.nif_import = parent
         # this is used to hold lists of bones for each armature during mark_armatures_bones
         self.dict_armatures = {}
+        # to get access to the nif bone in object mode
+        self.name_to_block = {}
         
     def import_armature(self, n_armature):
         """Scans an armature hierarchy, and returns a whole armature.
@@ -84,14 +86,12 @@ class Armature():
         if NifOp.props.animation:
             self.nif_import.animationhelper.create_action(b_armature_obj, armature_name+"-Anim")
         for bone_name, b_bone in b_armature_obj.data.bones.items():
-            if bone_name in self.nif_import.dict_blocks:
-                n_block = self.nif_import.dict_blocks[bone_name]
-                # the property is only available from object mode!
-                self.nif_import.objecthelper.store_longname(b_bone, n_block.name.decode())
-                if NifOp.props.animation:
-                    self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj, bone_name)
-            else:
-                NifLog.info("'%s' can not be found in the NIF - unable to import animation. This likely means your NIF structure duplicated bones".format(bone_name))
+            n_block = self.name_to_block[bone_name]
+            # the property is only available from object mode!
+            self.nif_import.objecthelper.store_longname(b_bone, n_block.name.decode())
+            if NifOp.props.animation:
+                self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj, bone_name)
+            
         return b_armature_obj
         
     def import_bone(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
@@ -103,7 +103,8 @@ class Armature():
         bone_name = self.nif_import.import_name(n_block)
         # create a new bone
         b_edit_bone = b_armature_data.edit_bones.new(bone_name)
-        self.nif_import.objecthelper.map_names(b_edit_bone, n_block)
+        # store nif block for access from object mode
+        self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix
         # (under the hood all bone space matrixes are multiplied together)
         n_bind = nif_utils.import_matrix(n_block, relative_to=n_armature)
@@ -135,8 +136,6 @@ class Armature():
                     if not n_bone:
                         continue
                     vertex_weights = boneWeights[idx].vertex_weights
-                    # if we are in import geom only mode we have not stored the bones in the dict
-                    # groupname = self.dict_names[n_bone]
                     groupname = self.nif_import.import_name(n_bone)
                     if groupname not in b_obj.vertex_groups:
                         v_group = b_obj.vertex_groups.new(groupname)
@@ -265,7 +264,6 @@ class Armature():
                 # add it to the name list if there is a bone with that name
                 if bone_block:
                     NifLog.info("Identified nif block '{0}' with bone '{1}' in selected armature".format(nif_bone_name, bone_name))
-                    self.nif_import.dict_names[bone_block] = bone_name
                     self.dict_armatures[skelroot].append(bone_block)
                     self.complete_bone_tree(bone_block, skelroot)
 

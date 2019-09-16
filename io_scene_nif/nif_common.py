@@ -49,16 +49,7 @@ class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
     """
-
-    # dictionary of names, to map NIF blocks to correct Blender names
-    dict_names = {}
-
-    # dictionary of bones, maps Blender name to NIF block
-    dict_blocks = {}
     
-    # keeps track of names of exported blocks, to make sure they are unique
-    dict_block_names = []
-
     # dictionary of materials, to reuse materials
     dict_materials = {}
     
