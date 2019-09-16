@@ -50,10 +50,6 @@ class NifCommon:
     that are commonly used in both import and export.
     """
 
-    # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
-    # we use this dictionary to set the physics constraints (ragdoll etc)
-    dict_havok_objects = {}
-    
     # dictionary of names, to map NIF blocks to correct Blender names
     dict_names = {}
 
