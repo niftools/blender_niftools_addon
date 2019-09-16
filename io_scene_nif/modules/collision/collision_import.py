@@ -48,7 +48,7 @@ from pyffi.utils.quickhull import qhull3d
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
-class bhkshape_import():
+class Collision():
     """Import basic and Havok Collision Shapes"""
 
     def __init__(self, parent):
@@ -66,6 +66,30 @@ class bhkshape_import():
             elif isinstance(n_node.collision_object, NifFormat.NiCollisionData):
                 return self.import_bounding_volume(n_node.collision_object.bounding_volume)
         return []
+
+    def set_b_collider(self, b_obj, bounds_type, radius, material = None, skyrim_material = None):
+        """ Helper function to set up b_obj so it becomes recognizable as a collision object """
+        # set bounds type
+        b_obj.draw_type = 'BOUNDS'
+        # b_obj.show_bounds = True
+        b_obj.draw_bounds_type = bounds_type
+        b_obj.game.use_collision_bounds = True
+        b_obj.game.collision_bounds_type = bounds_type
+        b_obj.game.radius = radius
+        if material:
+            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[material]
+        for v, k in zip(NifFormat.SkyrimHavokMaterial._enumvalues, NifFormat.SkyrimHavokMaterial._enumkeys):
+            if v == skyrim_material:
+                b_obj.nifcollision.skyrim_havok_material = k
+                break
+
+    def center_origin_to_matrix(self, n_center, n_dir):
+        """ Helper for capsules to transform nif data into a local matrix """
+        # get the rotation that makes (1,0,0) match dir
+        dir = mathutils.Vector( (n_dir.x, n_dir.y, n_dir.z) ).normalized()
+        rot = dir.to_track_quat("Z", "Y" ).to_matrix().to_4x4()
+        rot.translation = (n_center.x, n_center.y, n_center.z)
+        return rot
 
     def import_bounding_volume(self, bounding_volume):
         """Imports a NiCollisionData's bounding_volume """
@@ -93,14 +117,8 @@ class bhkshape_import():
         r = sphere.radius
         c = sphere.center
         b_obj = self.nif_import.objecthelper.box_from_extents("sphere", -r, r, -r, r, -r, r)
-
-        # set bounds type
-        b_obj.draw_type = 'WIRE'
-        b_obj.draw_bounds_type = 'SPHERE'
-        b_obj.game.use_collision_bounds = True
-        b_obj.game.collision_bounds_type = 'SPHERE'
-        b_obj.game.radius = r
         b_obj.location = (c.x, c.y, c.z)
+        self.set_b_collider(b_obj, "SPHERE", r)
         return [ b_obj ]
 
     def import_boxbv(self, box):
@@ -109,14 +127,8 @@ class bhkshape_import():
         axes = box.axis
         x, y, z = box.extent
         b_obj = self.nif_import.objecthelper.box_from_extents("box", -x, x, -y, y, -z, z)
-
-        # set bounds type
-        b_obj.draw_type = 'BOUNDS'
-        b_obj.draw_bounds_type = 'BOX'
-        b_obj.game.use_collision_bounds = True
-        b_obj.game.collision_bounds_type = 'BOX'
-        b_obj.game.radius = (x+y+z)/3
         b_obj.location = (offset.x, offset.y, offset.z)
+        self.set_b_collider(b_obj, "BOX", (x+y+z)/3)
         return [ b_obj ]
         
     def import_capsulebv(self, capsule):
@@ -135,25 +147,10 @@ class bhkshape_import():
 
         #create blender object
         b_obj = self.nif_import.objecthelper.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
-
-        # set bounds type
-        b_obj.draw_type = 'BOUNDS'
-        b_obj.draw_bounds_type = 'CAPSULE'
-        b_obj.game.use_collision_bounds = True
-        b_obj.game.collision_bounds_type = 'CAPSULE'
-        b_obj.game.radius = radius
-        
         # apply transform in local space
         b_obj.matrix_local = self.center_origin_to_matrix(offset, dir)
+        self.set_b_collider(b_obj, "CAPSULE", radius)
         return [ b_obj ]
-
-    def center_origin_to_matrix(self, n_center, n_dir):
-        """ Helper for capsules to transform nif data into a local matrix """
-        # get the rotation that makes (1,0,0) match dir
-        dir = mathutils.Vector( (n_dir.x, n_dir.y, n_dir.z) ).normalized()
-        rot = dir.to_track_quat("Z", "Y" ).to_matrix().to_4x4()
-        rot.translation = (n_center.x, n_center.y, n_center.z)
-        return rot
 
     def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
@@ -219,8 +216,7 @@ class bhkshape_import():
         # apply transform
         for b_col_obj in collision_objs:
             b_col_obj.matrix_local = b_col_obj.matrix_local * transform
-            # b_col_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
-            # and return a list of transformed collision shapes
+        # return a list of transformed collision shapes
         return collision_objs
 
 
@@ -235,14 +231,13 @@ class bhkshape_import():
             # set rotation
             transform = mathutils.Quaternion([
                 bhkshape.rotation.w, bhkshape.rotation.x,
-                bhkshape.rotation.y, bhkshape.rotation.z]).to_matrix()
-            transform = transform.to_4x4()
+                bhkshape.rotation.y, bhkshape.rotation.z]).to_matrix().to_4x4()
 
             # set translation
             transform.translation = mathutils.Vector(
-                    (bhkshape.translation.x * self.HAVOK_SCALE,
-                     bhkshape.translation.y * self.HAVOK_SCALE,
-                     bhkshape.translation.z * self.HAVOK_SCALE))
+                    (bhkshape.translation.x,
+                     bhkshape.translation.y,
+                     bhkshape.translation.z)) * self.HAVOK_SCALE
 
             # apply transform
             for b_col_obj in collision_objs:
@@ -305,6 +300,7 @@ class bhkshape_import():
     def import_bhkbox_shape(self, bhkshape):
         """Import a BhkBox block as a simple Box collision object"""
         # create box
+        r = bhkshape.radius * self.HAVOK_SCALE
         minx = -bhkshape.dimensions.x * self.HAVOK_SCALE
         maxx = +bhkshape.dimensions.x * self.HAVOK_SCALE
         miny = -bhkshape.dimensions.y * self.HAVOK_SCALE
@@ -314,33 +310,15 @@ class bhkshape_import():
 
         #create blender object
         b_obj = self.nif_import.objecthelper.box_from_extents("box", minx, maxx, miny, maxy, minz, maxz)
-
-        # set bounds type
-        b_obj.draw_type = 'WIRE'
-        b_obj.draw_bounds_type = 'BOX'
-        b_obj.game.use_collision_bounds = True
-        b_obj.game.collision_bounds_type = 'BOX'
-        b_obj.game.radius = bhkshape.radius
-        b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
-        
+        self.set_b_collider(b_obj, "BOX", r, bhkshape.material, bhkshape.skyrim_material)
         return [ b_obj ]
 
 
     def import_bhksphere_shape(self, bhkshape):
-        """Import a BhkSphere block as a simple uv-sphere collision object"""
-        # create sphere
-        b_radius = bhkshape.radius * self.HAVOK_SCALE
-        
-        b_obj = self.nif_import.objecthelper.box_from_extents("sphere", -b_radius, b_radius, -b_radius, b_radius, -b_radius, b_radius)
-
-        # set bounds type
-        b_obj.draw_type = 'WIRE'
-        b_obj.draw_bounds_type = 'SPHERE'
-        b_obj.game.use_collision_bounds = True
-        b_obj.game.collision_bounds_type = 'SPHERE'
-        b_obj.game.radius = bhkshape.radius
-        b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
-
+        """Import a BhkSphere block as a simple sphere collision object"""
+        r = bhkshape.radius * self.HAVOK_SCALE
+        b_obj = self.nif_import.objecthelper.box_from_extents("sphere", -r, r, -r, r, -r, r)
+        self.set_b_collider(b_obj, "SPHERE", r, bhkshape.material, bhkshape.skyrim_material)
         return [ b_obj ]
 
 
@@ -357,24 +335,12 @@ class bhkshape_import():
 
         #create blender object
         b_obj = self.nif_import.objecthelper.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
-
-        # set bounds type
-        b_obj.draw_type = 'BOUNDS'
-        b_obj.draw_bounds_type = 'CAPSULE'
-        b_obj.game.use_collision_bounds = True
-        b_obj.game.collision_bounds_type = 'CAPSULE'
-        b_obj.game.radius = radius
-        b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
-        for v, k in zip(NifFormat.SkyrimHavokMaterial._enumvalues, NifFormat.SkyrimHavokMaterial._enumkeys):
-            if v == bhkshape.skyrim_material:
-                b_obj.nifcollision.skyrim_havok_material = k
-                break
-        
         # here, these are not encoded as a direction so we must first calculate the direction
         b_obj.matrix_local = self.center_origin_to_matrix(second_point, first_point-second_point)
         # we do it like this so the rigid bodies are correctly drawn in blender
         # because they always draw around the object center
-        b_obj.location.z += length/2 
+        b_obj.location.z += length/2
+        self.set_b_collider(b_obj, "CAPSULE", radius, bhkshape.material, bhkshape.skyrim_material)
         return [ b_obj ]
 
 
@@ -388,17 +354,9 @@ class bhkshape_import():
                                      for n_vert in bhkshape.vertices ])
 
         b_obj = self.nif_import.objecthelper.mesh_from_data("convexpoly", verts, faces)
-
-        b_obj.show_wire = True
-        b_obj.draw_type = 'WIRE'
-        b_obj.draw_bounds_type = 'BOX'
-        b_obj.game.use_collision_bounds = True
+        radius = bhkshape.radius * self.HAVOK_SCALE
+        self.set_b_collider(b_obj, "BOX", radius, bhkshape.material, bhkshape.skyrim_material)
         b_obj.game.collision_bounds_type = 'CONVEX_HULL'
-
-        # radius: quick estimate
-        b_obj.game.radius = bhkshape.radius
-        b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
-
         return [ b_obj ]
 
 
@@ -408,16 +366,8 @@ class bhkshape_import():
         verts = [ (v.x, v.y, v.z) for v in bhkshape.vertices ]
         faces = list(bhkshape.get_triangles())
         b_obj = self.nif_import.objecthelper.mesh_from_data("poly", verts, faces)
-        
-        # set bounds type
-        b_obj.draw_type = 'WIRE'
-        b_obj.draw_bounds_type = 'BOX'
-        b_obj.game.use_collision_bounds = True
+        self.set_b_collider(b_obj, "BOX", bhkshape.radius, self.havok_mat, None)
         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
-        # radius: quick estimate
-        b_obj.game.radius = bhkshape.radius
-        b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[self.havok_mat]
-
         return [ b_obj ]
 
     def import_bhkpackednitristrips_shape(self, bhkshape):
@@ -451,31 +401,23 @@ class bhkshape_import():
                 else:
                     continue
             b_obj = self.nif_import.objecthelper.mesh_from_data('poly%i' % subshape_num, verts, faces)
-
-            # set bounds type
-            b_obj.draw_type = 'WIRE'
-            b_obj.draw_bounds_type = 'BOX'
-            b_obj.game.use_collision_bounds = True
+            radius = min(vert.co.length for vert in b_obj.data.vertices)
+            self.set_b_collider(b_obj, "BOX", radius, subshape.material, subshape.skyrim_material)
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
-            # radius: quick estimate
-            b_obj.game.radius = min(vert.co.length for vert in b_obj.data.vertices)
-            # set material
-            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]
 
             vertex_offset += subshape.num_vertices
             hk_objects.append(b_obj)
 
         return hk_objects
 
-class bound_import():
-    """Import a bound box shape"""
-
-    def __init__(self, parent):
-        self.nif_import = parent
+    def import_bsbound_data(self, n_node):
+        for n_extra in n_node.get_extra_datas():
+            self.import_bounding_box(n_extra)
 
     def import_bounding_box(self, bbox):
         """Import a bounding box (BSBound, or NiNode with bounding box)."""
-
+        if not bbox:
+            return []
         # calculate bounds
         if isinstance(bbox, NifFormat.BSBound):
             b_name = 'BSBound'
@@ -503,28 +445,13 @@ class bound_import():
             n_bbox_center = bbox.bounding_box.translation.as_list()
 
         else:
-            raise TypeError("Expected BSBound or NiNode but got %s."
-                            % bbox.__class__.__name__)
+            return []
 
         #create blender object
         b_obj = self.nif_import.objecthelper.box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz)
-        # link box to scene and set transform
-        # XXX this is set in the import_branch() method
-        # ob.matrix_local = mathutils.Matrix(
-        #    *bbox.bounding_box.rotation.as_list())
-        # ob.setLocation(
-        #    *bbox.bounding_box.translation.as_list())
-        
-        # TODO b_obj.niftools.objectflags = self.nif_import.objectflags
+        # probably only on NiNodes with BB
+        if hasattr(bbox, "flags"):
+            b_obj.niftools.objectflags = bbox.flags
         b_obj.location = n_bbox_center
-
-        # set bounds type
-        b_obj.show_bounds = True
-        b_obj.draw_type = 'BOUNDS'
-        b_obj.draw_bounds_type = 'BOX'
-        b_obj.game.use_collision_bounds = True
-        b_obj.game.collision_bounds_type = 'BOX'
-        # quick radius estimate
-        b_obj.game.radius = max(maxx, maxy, maxz)
-        
-        return b_obj
+        self.set_b_collider(b_obj, "BOX", max(maxx, maxy, maxz))
+        return [b_obj,]
