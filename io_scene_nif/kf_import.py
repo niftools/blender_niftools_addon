@@ -40,7 +40,7 @@
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.io.kf import KFFile
 from io_scene_nif.modules import armature
-from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility import nif_utils
 import pyffi.spells.nif.fix
@@ -54,7 +54,7 @@ class KfImport(NifCommon):
         NifCommon.__init__(self, operator)
         
         # Helper systems
-        self.animationhelper = AnimationHelper(parent=self)
+        self.animationhelper = Animation(parent=self)
              
     def execute(self):
         """Main import function."""

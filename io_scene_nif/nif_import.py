@@ -44,7 +44,7 @@ from io_scene_nif.io.nif import NifFile
 from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile 
 
-from io_scene_nif.modules.animation.animation_import import AnimationHelper
+from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import Collision
@@ -71,7 +71,7 @@ class NifImport(NifCommon):
         NifCommon.__init__(self, operator)
         
         # Helper systems
-        self.animationhelper = AnimationHelper(parent=self)
+        self.animationhelper = Animation(parent=self)
         self.armaturehelper = Armature(parent=self)
         self.collisionhelper = Collision(parent=self)
         self.constrainthelper = constraint_import(parent=self)
@@ -195,7 +195,6 @@ class NifImport(NifCommon):
         # backward
         self.set_parents(root_block)
         
-            
         # mark armature nodes and bones
         self.armaturehelper.mark_armatures_bones(root_block)
 
@@ -205,23 +204,23 @@ class NifImport(NifCommon):
 
         # read the NIF tree
         self.active_obj_name = ""
-        b_obj = None
-        if self.armaturehelper.is_armature_root(root_block) or \
-           self.is_grouping_node(root_block) or \
-           isinstance(root_block, NifFormat.NiTriBasedGeom):
+        if isinstance(root_block, (NifFormat.NiNode, NifFormat.NiTriBasedGeom)):
             b_obj = self.import_branch(root_block)
             self.objecthelper.import_extra_datas(root_block, b_obj)
 
-        elif isinstance(root_block, NifFormat.NiNode):
-            # root node is dummy scene node, which we do not import as a blender object
-            # process its collision
-            self.collisionhelper.import_bsbound_data(root_block)
-            self.collisionhelper.import_collision(root_block)
+            # now all havok objects are imported, so we are
+            # ready to import the havok constraints
+            self.constrainthelper.import_bhk_constraints()
 
-            # we only process all its children
-            for child in root_block.children:
-                b_obj = self.import_branch(child)
-                self.objecthelper.import_extra_datas(root_block, b_obj)
+            # parent selected meshes to imported skeleton
+            if NifOp.props.skeleton == "SKELETON_ONLY":
+                # update parenting & armature modifier
+                for child in bpy.context.selected_objects:
+                    if isinstance(child, bpy.types.Object) and not isinstance(child.data, bpy.types.Armature):
+                        child.parent = b_obj
+                        for mod in child.modifiers:
+                            if mod.type == "ARMATURE":
+                                mod.object = b_obj
 
         elif isinstance(root_block, NifFormat.NiCamera):
             NifLog.warn('Skipped NiCamera root')
@@ -232,20 +231,6 @@ class NifImport(NifCommon):
         else:
             NifLog.warn("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
 
-
-        # now all havok objects are imported, so we are
-        # ready to import the havok constraints
-        self.constrainthelper.import_bhk_constraints()
-
-        # parent selected meshes to imported skeleton
-        if NifOp.props.skeleton == "SKELETON_ONLY":
-            # update parenting & armature modifier
-            for child in bpy.context.selected_objects:
-                if isinstance(child, bpy.types.Object) and not isinstance(child.data, bpy.types.Armature):
-                    child.parent = b_obj
-                    for mod in child.modifiers:
-                        if mod.type == "ARMATURE":
-                            mod.object = b_obj
 
     def import_branch(self, niBlock, b_armature=None, n_armature=None):
         """Read the content of the current NIF tree branch to Blender
@@ -311,10 +296,7 @@ class NifImport(NifCommon):
                     # no grouping node, or too many materials to
                     # group the geometry into a single mesh
                     # so import it as an empty
-                    if not niBlock.has_bounding_box:
-                        b_obj = self.import_empty(niBlock)
-                    else:
-                        b_obj = self.collisionhelper.import_bounding_box(niBlock)[0]
+                    b_obj = self.import_empty(niBlock)
 
                     geom_group = []
                 else:
@@ -344,14 +326,10 @@ class NifImport(NifCommon):
                 if b_child and isinstance(b_child, bpy.types.Object):
                     b_children.append( b_child )
 
-            # if not importing skeleton only
+            # import collision objects & bounding box
             if NifOp.props.skeleton != "SKELETON_ONLY":
-                # import collision objects
                 b_children.extend( self.collisionhelper.import_collision(niBlock) )
-
-                # import bounding box
-                bsbound = nif_utils.find_extra(niBlock, NifFormat.BSBound)
-                b_children.extend( self.collisionhelper.import_bounding_box(bsbound) )
+                b_children.extend( self.collisionhelper.import_bounding_box(niBlock) )
             
             # set bind pose for children
             self.objecthelper.set_object_bind(b_obj, b_children, b_armature)
@@ -452,10 +430,19 @@ class NifImport(NifCommon):
         b_empty.niftools.objectflags = niBlock.flags
         return b_empty
 
+    def import_stencil_property(self, n_mesh, b_mesh):
+        """ Imports a NiStencilProperty attached to n_mesh """
+        # Stencil (for double sided meshes)
+        n_stencil_prop = nif_utils.find_property(n_mesh, NifFormat.NiStencilProperty)
+        # we don't check flags for now, nothing fancy
+        if n_stencil_prop:
+            b_mesh.show_double_sided = True
+        else:
+            b_mesh.show_double_sided = False
+
     def import_mesh(self, niBlock,
                     group_mesh=None,
-                    applytransform=False,
-                    relative_to=None):
+                    applytransform=False):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh.
 
@@ -498,11 +485,11 @@ class NifImport(NifCommon):
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
 
-            b_obj.matrix_local = nif_utils.import_matrix(niBlock, relative_to=relative_to)
+            b_obj.matrix_local = nif_utils.import_matrix(niBlock)
 
         else:
             # used later on
-            transform = nif_utils.import_matrix(niBlock, relative_to=relative_to)
+            transform = nif_utils.import_matrix(niBlock)
 
         # shortcut for mesh geometry data
         niData = niBlock.data
@@ -531,14 +518,7 @@ class NifImport(NifCommon):
         '''
         Properties
         '''
-
-        # Stencil (for double sided meshes)
-        n_stencil_prop = nif_utils.find_property(niBlock, NifFormat.NiStencilProperty)
-        # we don't check flags for now, nothing fancy
-        if n_stencil_prop:
-            b_mesh.show_double_sided = True
-        else:
-            b_mesh.show_double_sided = False
+        self.import_stencil_property(niBlock, b_mesh)
 
         # Material
         # note that NIF files only support one material for each trishape
@@ -566,7 +546,6 @@ class NifImport(NifCommon):
                         extra_datas.append(extra)    
             
             # bethesda shader
-            bsShaderProperty = None
             bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSShaderPPLightingProperty)
             if bsShaderProperty is None:
@@ -581,7 +560,6 @@ class NifImport(NifCommon):
                 else:
                     bsShaderProperty = self.bsShaderProperty1st
                 
-            bsEffectShaderProperty = None
             bsEffectShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSEffectShaderProperty)
 

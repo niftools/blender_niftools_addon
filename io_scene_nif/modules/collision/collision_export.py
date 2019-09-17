@@ -272,8 +272,8 @@ class Collision():
             n_bhkrigidbody.unknown_7_shorts[5] = 44
             n_bhkrigidbody.unknown_7_shorts[6] = 0
 
-            # mass is 1.0 at the moment (unless property was set)
-            # will be fixed later
+            # mass is 1.0 at the moment (unless property was set on import or by the user)
+            # will be fixed in update_rigid_bodies()
             n_bhkrigidbody.mass = mass
             n_bhkrigidbody.linear_damping = linear_damping
             n_bhkrigidbody.angular_damping = angular_damping
@@ -286,7 +286,8 @@ class Collision():
             n_bhkrigidbody.penetration_depth = penetration_depth
             n_bhkrigidbody.motion_system = motion_system
             n_bhkrigidbody.deactivator_type = deactivator_type
-            n_bhkrigidbody.solver_deactivation = solver_deactivation 
+            n_bhkrigidbody.solver_deactivation = solver_deactivation
+            # todo [collision / properties / ui] expose unknowns to UI & make sure to keep defaults
             n_bhkrigidbody.unknown_byte_1 = 1
             n_bhkrigidbody.unknown_byte_2 = 1
             n_bhkrigidbody.quality_type = quality_type
