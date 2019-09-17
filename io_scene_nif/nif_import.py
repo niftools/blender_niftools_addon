@@ -503,14 +503,7 @@ class NifImport(NifCommon):
         n_triangles = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
-        n_uv = list()
-        for i in range(len(niData.uv_sets)):
-            for lw in range(len(niData.uv_sets[i])):
-                n_uvt = list()
-                n_uvt.append(niData.uv_sets[i][lw].u)
-                n_uvt.append(1.0 - (niData.uv_sets[i][lw].v))
-                n_uv.append(tuple(n_uvt))
-        n_uvco = tuple(n_uv)
+        n_uvco = tuple( (lw.u, 1.0-lw.v) for uv_set in niData.uv_sets for lw in uv_set )
 
         # vertex normals
         n_norms = niData.normals
