@@ -63,7 +63,7 @@ def interpolate(x_out, x_in, y_in):
         y_out.append(y_in[i] + slopes[i] * (x - x_in[i]) )
     return y_out
 
-class AnimationHelper():
+class Animation:
     
     def __init__(self, parent):
         self.nif_import = parent
@@ -225,7 +225,7 @@ class AnimationHelper():
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
 
-class ObjectAnimation():
+class ObjectAnimation:
     
     def __init__(self, parent):
         self.nif_import = parent

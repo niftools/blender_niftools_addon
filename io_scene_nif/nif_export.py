@@ -42,7 +42,7 @@ from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 
-from io_scene_nif.modules.animation.animation_export import AnimationHelper
+from io_scene_nif.modules.animation.animation_export import Animation
 from io_scene_nif.modules.collision.collision_export import Collision
 from io_scene_nif.modules.armature.armature_export import Armature
 from io_scene_nif.modules import armature
@@ -85,7 +85,7 @@ class NifExport(NifCommon):
         # Helper systems
         self.collisionhelper = Collision(parent=self)
         self.armaturehelper = Armature(parent=self)
-        self.animationhelper = AnimationHelper(parent=self)
+        self.animationhelper = Animation(parent=self)
         self.propertyhelper = PropertyHelper(parent=self)
         self.constrainthelper = constraint_export(parent=self)
         self.texturehelper = TextureHelper(parent=self)
