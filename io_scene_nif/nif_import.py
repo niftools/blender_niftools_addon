@@ -503,7 +503,7 @@ class NifImport(NifCommon):
         n_triangles = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
-        n_uvco = tuple( (lw.u, 1.0-lw.v) for uv_set in niData.uv_sets for lw in uv_set )
+        n_uvco = tuple( tuple((lw.u, 1.0-lw.v) for lw in uv_set) for uv_set in niData.uv_sets )
 
         # vertex normals
         n_norms = niData.normals
@@ -775,9 +775,6 @@ class NifImport(NifCommon):
         # (some corner cases have only one vertex, and no polygons,
         # and b_mesh.faceUV = 1 on such mesh raises a runtime error)
         if b_mesh.polygons:
-           
-            # b_mesh.faceUV = 1
-            # b_mesh.vertexUV = 0
             for i in range(len(niData.uv_sets)):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
@@ -785,24 +782,15 @@ class NifImport(NifCommon):
                 uvlayer = self.texturehelper.get_uv_layer_name(i)
                 if not uvlayer in b_mesh.uv_textures:
                     b_mesh.uv_textures.new(uvlayer)
-                    uv_faces = b_mesh.uv_textures.active.data[:]
-                elif uvlayer in b_mesh.uv_textures:
-                    uv_faces = b_mesh.uv_textures[uvlayer].data[:]
-                else:
-                    uv_faces = None
-                if uv_faces:
-                    uvl = b_mesh.uv_layers.active.data[:]
-                    for b_f_index, f in enumerate(n_triangles):
-                        if b_f_index is None:
-                            continue
-                        uvlist = f
-                        v1, v2, v3 = uvlist
-                        # if v3 == 0:
-                        #   v1,v2,v3 = v3,v1,v2
-                        b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
-                        uvl[b_poly_index.loop_start].uv = n_uvco[v1]
-                        uvl[b_poly_index.loop_start + 1].uv = n_uvco[v2]
-                        uvl[b_poly_index.loop_start + 2].uv = n_uvco[v3]
+                uvl = b_mesh.uv_layers[uvlayer].data[:]
+                for b_f_index, f in enumerate(n_triangles):
+                    if b_f_index is None:
+                        continue
+                    v1, v2, v3 = f
+                    b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
+                    uvl[b_poly_index.loop_start].uv = n_uvco[i][v1]
+                    uvl[b_poly_index.loop_start + 1].uv = n_uvco[i][v2]
+                    uvl[b_poly_index.loop_start + 2].uv = n_uvco[i][v3]
             b_mesh.uv_textures.active_index = 0
 
         if material:
@@ -828,9 +816,6 @@ class NifImport(NifCommon):
                         if b_polyimage_index is None:
                             continue
                         tface = b_mesh.uv_textures.active.data[b_polyimage_index]
-                        # gone in blender 2.5x+?
-                        # f.mode = Blender.Mesh.FaceModes['TEX']
-                        # f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
                         tface.image = imgobj
 
         # import skinning info, for meshes affected by bones
