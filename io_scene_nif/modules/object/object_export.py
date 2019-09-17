@@ -1381,7 +1381,9 @@ class MeshHelper:
                         # fix data consistency type
                         tridata.consistency_flags = b_obj.niftools.consistency_flags
         return trishape
+    
     def smooth_mesh_seams(self, b_objs):
+        """ Finds vertices that are shared between all blender objects and averages their normals"""
         # get shared vertices
         NifLog.info("Smoothing seams between objects...")
         vdict = {}

@@ -235,7 +235,6 @@ class NifImport(NifCommon):
 
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
-        self.collisionhelper.get_havok_objects()
         self.constrainthelper.import_bhk_constraints()
 
         # parent selected meshes to imported skeleton
