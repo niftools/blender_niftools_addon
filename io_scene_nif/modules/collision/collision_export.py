@@ -54,6 +54,12 @@ class Collision():
         self.nif_export = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
 
+    def has_collision(self,):
+        """ Helper function that determines if a blend file contains a collider """
+        for b_obj in bpy.data.objects:
+            if b_obj.game.use_collision_bounds:
+                return b_obj
+
     def export_collision(self, b_obj, n_parent):
         """Main function for adding collision object b_obj to a node."""
         if NifOp.props.game == 'MORROWIND':
@@ -281,10 +287,10 @@ class Collision():
             n_bhkrigidbody.motion_system = motion_system
             n_bhkrigidbody.deactivator_type = deactivator_type
             n_bhkrigidbody.solver_deactivation = solver_deactivation 
-            n_bhkrigidbody.unknown_byte_1 = self.nif_export.EXPORT_OB_UNKNOWNBYTE1
-            n_bhkrigidbody.unknown_byte_2 = self.nif_export.EXPORT_OB_UNKNOWNBYTE2
+            n_bhkrigidbody.unknown_byte_1 = 1
+            n_bhkrigidbody.unknown_byte_2 = 1
             n_bhkrigidbody.quality_type = quality_type
-            n_bhkrigidbody.unknown_int_9 = self.nif_export.EXPORT_OB_WIND
+            n_bhkrigidbody.unknown_int_9 = 0
             
             # we will use n_col_body to attach shapes to below
             n_col_body = n_bhkrigidbody
