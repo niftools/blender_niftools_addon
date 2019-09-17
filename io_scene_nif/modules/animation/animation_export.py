@@ -48,7 +48,7 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
     
-class AnimationHelper():
+class Animation:
     
     def __init__(self, parent):
         self.nif_export = parent
@@ -379,7 +379,7 @@ class AnimationHelper():
         return textextra
     
     
-class TextureAnimation():
+class TextureAnimation:
     
     def __init__(self, parent):
         self.nif_export = parent
@@ -424,7 +424,7 @@ class TextureAnimation():
                 %fliptxt.name)
         flip.delta = (flip.stop_time - flip.start_time) / count
 
-class MaterialAnimation():
+class MaterialAnimation:
     
     def __init__(self, parent):
         self.nif_export = parent
@@ -551,7 +551,7 @@ class MaterialAnimation():
             n_geom.add_controller(n_uvctrl)
             
             
-class ObjectAnimation():
+class ObjectAnimation:
         
     def __init__(self, parent):
         self.nif_export = parent

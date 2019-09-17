@@ -407,48 +407,45 @@ class Collision():
 
         return hk_objects
 
-    def import_bsbound_data(self, n_node):
-        for n_extra in n_node.get_extra_datas():
-            self.import_bounding_box(n_extra)
-
-    def import_bounding_box(self, bbox):
-        """Import a bounding box (BSBound, or NiNode with bounding box)."""
-        if not bbox:
+    def import_bounding_box(self, n_block):
+        """Import a NiNode's bounding box or attached BSBound extra data."""
+        if not n_block or not isinstance(n_block, NifFormat.NiNode):
             return []
-        # calculate bounds
-        if isinstance(bbox, NifFormat.BSBound):
-            b_name = 'BSBound'
-            minx = bbox.center.x - bbox.dimensions.x
-            miny = bbox.center.y - bbox.dimensions.y
-            minz = bbox.center.z - bbox.dimensions.z
-            maxx = bbox.center.x + bbox.dimensions.x
-            maxy = bbox.center.y + bbox.dimensions.y
-            maxz = bbox.center.z + bbox.dimensions.z
-            n_bbox_center = bbox.center.as_list()
-            
-        elif isinstance(bbox, NifFormat.NiNode):
-            if not bbox.has_bounding_box:
-                raise ValueError("Expected NiNode with bounding box.")
+        # we have a ninode with bounding box
+        if n_block.has_bounding_box:
             b_name = 'Bounding Box'
 
-            # Ninode's(bbox) behaves like a seperate mesh.
-            # bounding_box center(bbox.bounding_box.translation) is relative to the bound_box
-            minx = bbox.bounding_box.translation.x - bbox.translation.x - bbox.bounding_box.radius.x
-            miny = bbox.bounding_box.translation.y - bbox.translation.y - bbox.bounding_box.radius.y
-            minz = bbox.bounding_box.translation.z - bbox.translation.z - bbox.bounding_box.radius.z
-            maxx = bbox.bounding_box.translation.x - bbox.translation.x + bbox.bounding_box.radius.x
-            maxy = bbox.bounding_box.translation.y - bbox.translation.y + bbox.bounding_box.radius.y
-            maxz = bbox.bounding_box.translation.z - bbox.translation.z + bbox.bounding_box.radius.z
-            n_bbox_center = bbox.bounding_box.translation.as_list()
-
+            # Ninode's bbox behaves like a seperate mesh.
+            # bounding_box center(n_block.bounding_box.translation) is relative to the bound_box
+            minx = n_block.bounding_box.translation.x - n_block.translation.x - n_block.bounding_box.radius.x
+            miny = n_block.bounding_box.translation.y - n_block.translation.y - n_block.bounding_box.radius.y
+            minz = n_block.bounding_box.translation.z - n_block.translation.z - n_block.bounding_box.radius.z
+            maxx = n_block.bounding_box.translation.x - n_block.translation.x + n_block.bounding_box.radius.x
+            maxy = n_block.bounding_box.translation.y - n_block.translation.y + n_block.bounding_box.radius.y
+            maxz = n_block.bounding_box.translation.z - n_block.translation.z + n_block.bounding_box.radius.z
+            bbox_center = n_block.bounding_box.translation.as_list()
+        # we may still have a BSBound extra data attached to this node
         else:
-            return []
+            for n_extra in n_block.get_extra_datas():
+                if isinstance(n_extra, NifFormat.BSBound):
+                    b_name = 'BSBound'
+                    minx = n_extra.center.x - n_extra.dimensions.x
+                    miny = n_extra.center.y - n_extra.dimensions.y
+                    minz = n_extra.center.z - n_extra.dimensions.z
+                    maxx = n_extra.center.x + n_extra.dimensions.x
+                    maxy = n_extra.center.y + n_extra.dimensions.y
+                    maxz = n_extra.center.z + n_extra.dimensions.z
+                    bbox_center = n_extra.center.as_list()
+                    break
+            # none was found
+            else:
+                return []
 
         #create blender object
         b_obj = self.nif_import.objecthelper.box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz)
         # probably only on NiNodes with BB
-        if hasattr(bbox, "flags"):
-            b_obj.niftools.objectflags = bbox.flags
-        b_obj.location = n_bbox_center
+        if hasattr(n_block, "flags"):
+            b_obj.niftools.objectflags = n_block.flags
+        b_obj.location = bbox_center
         self.set_b_collider(b_obj, "BOX", max(maxx, maxy, maxz))
         return [b_obj,]
