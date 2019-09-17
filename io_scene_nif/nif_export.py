@@ -111,7 +111,6 @@ class NifExport(NifCommon):
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
         self.dict_bone_priorities = {}
-        self.dict_havok_objects = {}
         self.block_to_obj = {}
         self.dict_materials = {}
         self.dict_textures = {}
@@ -165,7 +164,7 @@ class NifExport(NifCommon):
             
             # smooth seams of objects
             if NifOp.props.smooth_object_seams:
-                self.objecthelper.mesh_helper.smooth_mesh_seams(bpy.context.scene.objects)
+                self.objecthelper.mesh_helper.smooth_mesh_seams(self.exportable_objects)
                 
             # TODO: use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
@@ -174,17 +173,11 @@ class NifExport(NifCommon):
             except NameError:
                 animtxt = None
 
-            # export nif:
-            # -----------
             NifLog.info("Exporting")
 
             # find nif version to write
-            # TODO Move fully to scene level
-            self.version = NifOp.op.version[NifOp.props.game]
-            self.user_version, self.user_version_2 = scene_export.get_version_info(NifOp.props)
-
-            # create a nif object
-
+            self.version, data = scene_export.get_version_data()
+            
             # export the actual root node (the name is fixed later to avoid confusing the
             # exporter with duplicate names)
             root_block = self.objecthelper.export_root_node(filebase)
@@ -375,8 +368,6 @@ class NifExport(NifCommon):
             # export nif file:
             # ----------------
 
-            NifLog.info("Writing NIF version 0x%08X" % self.version)
-
             if NifOp.props.animation != 'ANIM_KF':
                 if NifOp.props.game == 'EMPIRE_EARTH_II':
                     ext = ".nifcache"
@@ -389,7 +380,6 @@ class NifExport(NifCommon):
                     NifLog.warn("Changing extension from {0} to {1} on output file".format(fileext, ext))
                 niffile = os.path.join(directory, filebase + ext)
                 
-                data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
                 data.roots = [root_block]
                 if NifOp.props.game == 'NEOSTEAM':
                     data.modification = "neosteam"
@@ -525,7 +515,6 @@ class NifExport(NifCommon):
                 NifLog.info("Writing {0} file".format(prefix + ext))
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
-                data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
                 data.roots = [kf_root]
                 data.neosteam = (NifOp.props.game == 'NEOSTEAM')
                 stream = open(kffile, "wb")
@@ -565,7 +554,6 @@ class NifExport(NifCommon):
                 NifLog.info("Writing {0} file" .format(prefix + ext))
 
                 xniffile = os.path.join(directory, prefix + filebase + ext)
-                data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
                 data.roots = [root_block]
                 data.neosteam = (NifOp.props.game == 'NEOSTEAM')
                 stream = open(xniffile, "wb")

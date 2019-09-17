@@ -55,9 +55,6 @@ class Collision():
         self.nif_import = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
 
-    def get_havok_objects(self):
-        return self.nif_import.dict_havok_objects
-
     def import_collision(self, n_node):
         """ Imports a NiNode's collision_object, if present"""
         if n_node.collision_object:
