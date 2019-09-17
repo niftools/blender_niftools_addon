@@ -73,20 +73,11 @@ class NifExport(NifCommon):
     # TODO: - Expose via properties
     
     EXPORT_OPTIMIZE_MATERIALS = True
-    EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False
+    IGNORE_BLENDER_PHYSICS = False
     
     EXPORT_BHKLISTSHAPE = False
-    EXPORT_OB_BSXFLAGS = 2
     EXPORT_OB_MASS = 10.0
     EXPORT_OB_SOLID = True
-    EXPORT_OB_MOTIONSYSTEM = 7,  # MO_SYS_FIXED
-    EXPORT_OB_UNKNOWNBYTE1 = 1
-    EXPORT_OB_UNKNOWNBYTE2 = 1
-    EXPORT_OB_QUALITYTYPE = 1  # MO_QUAL_FIXED
-    EXPORT_OB_WIND = 0
-    EXPORT_OB_LAYER = 1  # static
-    EXPORT_OB_MATERIAL = 9  # wood
-    EXPORT_OB_PRN = "NONE"  # Todo with location on character. For weapons, rings, helmets, Sheilds ect
 
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator)
@@ -286,67 +277,6 @@ class NifExport(NifCommon):
                     anim_textextra = None
 
 
-            # FIXME:
-            NifLog.info("Checking collision")
-            # activate oblivion/Fallout 3 collision and physics
-            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                hascollision = False
-                for b_obj in bpy.data.objects:
-                    if b_obj.game.use_collision_bounds:
-                        hascollision = True
-                        break
-                if hascollision:
-                    # enable collision
-                    bsx = self.objecthelper.create_block("BSXFlags")
-                    bsx.name = 'BSX'
-                    bsx.integer_data = b_obj.niftools.bsxflags
-                    root_block.add_extra_data(bsx)
-
-                    # many Oblivion nifs have a UPB, but export is disabled as
-                    # they do not seem to affect anything in the game
-                    if b_obj.niftools.upb:
-                        upb = self.objecthelper.create_block("NiStringExtraData")
-                        upb.name = 'UPB'
-                        if b_obj.niftools.upb == '':
-                            upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-                        else:
-                            upb.string_data = b_obj.niftools.upb.encode()
-                        root_block.add_extra_data(upb)
-
-                # update rigid body center of gravity and mass
-                if self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
-                    # we are not using blender properties to set the mass
-                    # so calculate mass automatically first calculate distribution of mass
-                    total_mass = 0
-                    for block in self.block_to_obj:
-                        if isinstance(block, NifFormat.bhkRigidBody):
-                            block.update_mass_center_inertia(solid=self.EXPORT_OB_SOLID)
-                            total_mass += block.mass
-
-                    if total_mass == 0:
-                        # to avoid zero division error later (if mass is zero then this does not matter anyway)
-                        total_mass = 1
-
-                    # now update the mass ensuring that total mass is self.EXPORT_OB_MASS
-                    for block in self.block_to_obj:
-                        if isinstance(block, NifFormat.bhkRigidBody):
-                            mass = self.EXPORT_OB_MASS * block.mass / total_mass
-                            # lower bound on mass
-                            if mass < 0.0001:
-                                mass = 0.05
-                            block.update_mass_center_inertia(mass=mass, solid=self.EXPORT_OB_SOLID)
-                else:
-                    # using blender properties, so block.mass *should* have
-                    # been set properly
-                    for block in self.block_to_obj:
-                        if isinstance(block, NifFormat.bhkRigidBody):
-                            # lower bound on mass
-                            if block.mass < 0.0001:
-                                block.mass = 0.05
-                            block.update_mass_center_inertia(
-                                mass=block.mass,
-                                solid=self.EXPORT_OB_SOLID)
-
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
             # note: self.block_to_obj changes during iteration, so need list copy
             for block in list(self.block_to_obj):
@@ -372,21 +302,6 @@ class NifExport(NifCommon):
             for b_obj in self.objecthelper.get_exported_objects():
                 if isinstance(b_obj, bpy.types.Object) and b_obj.constraints:
                     self.constrainthelper.export_constraints(b_obj, root_block)
-
-            # export weapon location
-            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                if self.EXPORT_OB_PRN != "NONE":
-                    # add string extra data
-                    prn = self.objecthelper.create_block("NiStringExtraData")
-                    prn.name = 'Prn'
-                    prn.string_data = {
-                        "BACK": "BackWeapon",
-                        "SIDE": "SideWeapon",
-                        "QUIVER": "Quiver",
-                        "SHIELD": "Bip01 L ForearmTwist",
-                        "HELM": "Bip01 Head",
-                        "RING": "Bip01 R Finger1"}[self.EXPORT_OB_PRN]
-                    root_block.add_extra_data(prn)
 
             # add vertex color and zbuffer properties for civ4 and railroads
             if NifOp.props.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):

@@ -116,13 +116,15 @@ class ObjectHelper:
             fade_root_block.replace_global_node(n_root, fade_root_block)
             n_root = fade_root_block
         # various extra datas
+        self.export_bsxflags_upb(n_root)
+        self.export_weapon_location(n_root)
         self.export_inventory_marker(n_root)
         self.export_furniture_marker(n_root, filebase)
         return n_root
     
     def export_inventory_marker(self, n_root):
-        for root_object in self.nif_export.root_objects:
-            if NifOp.props.game in 'SKYRIM':
+        if NifOp.props.game in ('SKYRIM',):
+            for root_object in self.nif_export.root_objects:
                 if root_object.niftools_bs_invmarker:
                     for extra_item in n_root.extra_data_list:
                         if isinstance(extra_item, NifFormat.BSInvMarker):
@@ -135,7 +137,6 @@ class ObjectHelper:
                         n_extra_list.rotation_z = root_object.niftools_bs_invmarker[0].bs_inv_z
                         n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
                         n_root.add_extra_data(n_extra_list)
-
 
     def export_furniture_marker(self, n_root, filebase):
         # oblivion and Fallout 3 furniture markers
@@ -163,7 +164,74 @@ class ObjectHelper:
             # add extra blocks
             n_root.add_extra_data(furnmark)
             n_root.add_extra_data(sgokeep)
-        
+    
+    def export_bsxflags_upb(self, root_block):
+        # FIXME:
+        NifLog.info("Checking collision")
+        # activate oblivion/Fallout 3 collision and physics
+        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            b_obj = self.nif_export.collisionhelper.has_collision()
+            if b_obj:
+                # enable collision
+                bsx = self.create_block("BSXFlags")
+                bsx.name = 'BSX'
+                bsx.integer_data = b_obj.niftools.bsxflags
+                root_block.add_extra_data(bsx)
+
+                # many Oblivion nifs have a UPB, but export is disabled as
+                # they do not seem to affect anything in the game
+                if b_obj.niftools.upb:
+                    upb = self.create_block("NiStringExtraData")
+                    upb.name = 'UPB'
+                    if b_obj.niftools.upb == '':
+                        upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                    else:
+                        upb.string_data = b_obj.niftools.upb.encode()
+                    root_block.add_extra_data(upb)
+    
+    def export_weapon_location(self, n_root):
+        # export weapon location
+        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            b_obj = self.nif_export.root_objects[0]
+            loc = b_obj.niftools.prn_location
+            if loc != "NONE":
+                # add string extra data
+                prn = self.create_block("NiStringExtraData")
+                prn.name = 'Prn'
+                prn.string_data = self.nif_export.prn_dict[loc]
+                n_root.add_extra_data(prn)
+
+    def update_rigid_bodies(self, ):
+        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            rigid_bodies = [block for block in self.block_to_obj if isinstance(block, NifFormat.bhkRigidBody)]
+            # update rigid body center of gravity and mass
+            if self.nif_export.IGNORE_BLENDER_PHYSICS:
+                # we are not using blender properties to set the mass
+                # so calculate mass automatically first calculate distribution of mass
+                total_mass = 0
+                for block in rigid_bodies:
+                    block.update_mass_center_inertia(solid=self.nif_export.EXPORT_OB_SOLID)
+                    total_mass += block.mass
+
+                # to avoid zero division error later (if mass is zero then this does not matter anyway)
+                if total_mass == 0:
+                    total_mass = 1
+
+                # now update the mass ensuring that total mass is EXPORT_OB_MASS
+                for block in rigid_bodies:
+                    mass = self.nif_export.EXPORT_OB_MASS * block.mass / total_mass
+                    # lower bound on mass
+                    if mass < 0.0001:
+                        mass = 0.05
+                    block.update_mass_center_inertia(mass=mass, solid=self.nif_export.EXPORT_OB_SOLID)
+            else:
+                # using blender properties, so block.mass *should* have been set properly
+                for block in rigid_bodies:
+                    # lower bound on mass
+                    if block.mass < 0.0001:
+                        block.mass = 0.05
+                    block.update_mass_center_inertia(mass=block.mass, solid=self.nif_export.EXPORT_OB_SOLID)
+      
     def set_node_flags(self, b_obj, n_node):
         # default node flags
         b_obj_type = b_obj.type
@@ -237,9 +305,7 @@ class ObjectHelper:
                 node = self.create_ninode(b_obj)
             else:
                 # don't create intermediate ninode for this guy
-                self.mesh_helper.export_tri_shapes(b_obj, n_parent, b_obj.name)
-                # we didn't create a ninode, return nothing
-                return None
+                return self.mesh_helper.export_tri_shapes(b_obj, n_parent, b_obj.name)
 
             # set transform on trishapes rather than on NiNode for skinned meshes
             # this fixes an issue with clothing slots
@@ -269,7 +335,7 @@ class ObjectHelper:
             self.nif_export.animationhelper.object_animation.export_object_vis_controller(node, b_obj)
         # if it is a mesh, export the mesh as trishape children of this ninode
         if b_obj.type == 'MESH':
-            self.mesh_helper.export_tri_shapes(b_obj, node)
+            return self.mesh_helper.export_tri_shapes(b_obj, node)
         # if it is an armature, export the bones as ninode children of this ninode
         elif b_obj.type == 'ARMATURE':
             self.nif_export.armaturehelper.export_bones(b_obj, node)
@@ -685,25 +751,25 @@ class MeshHelper:
                     trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceeding child of the trishape)
-            ref_mtex = self.nif_export.texturehelper.ref_mtex
-            if NifOp.props.game == 'MORROWIND' and ref_mtex:
-                # create a new parent block for this shape
-                extra_node = self.create_block("NiNode", ref_mtex)
-                n_parent.add_child(extra_node)
-                # set default values for this ninode
-                extra_node.rotation.set_identity()
-                extra_node.scale = 1.0
-                extra_node.flags = 0x000C  # morrowind
-                # create texture effect block and parent the
-                # texture effect and trishape to it
-                texeff = self.export_texture_effect(ref_mtex)
-                extra_node.add_child(texeff)
-                extra_node.add_child(trishape)
-                extra_node.add_effect(texeff)
-            else:
-                # refer to this block in the parent's
-                # children list
-                n_parent.add_child(trishape)
+            if n_parent:
+                ref_mtex = self.nif_export.texturehelper.ref_mtex
+                if NifOp.props.game == 'MORROWIND' and ref_mtex:
+                    # create a new parent block for this shape
+                    extra_node = self.create_block("NiNode", ref_mtex)
+                    n_parent.add_child(extra_node)
+                    # set default values for this ninode
+                    extra_node.rotation.set_identity()
+                    extra_node.scale = 1.0
+                    extra_node.flags = 0x000C  # morrowind
+                    # create texture effect block and parent the
+                    # texture effect and trishape to it
+                    texeff = self.export_texture_effect(ref_mtex)
+                    extra_node.add_child(texeff)
+                    extra_node.add_child(trishape)
+                    extra_node.add_effect(texeff)
+                else:
+                    # refer to this block in the parent's children list
+                    n_parent.add_child(trishape)
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
@@ -1314,7 +1380,7 @@ class MeshHelper:
 
                         # fix data consistency type
                         tridata.consistency_flags = b_obj.niftools.consistency_flags
-
+        return trishape
     def smooth_mesh_seams(self, b_objs):
         # get shared vertices
         NifLog.info("Smoothing seams between objects...")

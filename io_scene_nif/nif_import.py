@@ -70,8 +70,6 @@ class NifImport(NifCommon):
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator)
         
-        self.root_ninode = 'NiNode'
-
         # Helper systems
         self.animationhelper = AnimationHelper(parent=self)
         self.armaturehelper = Armature(parent=self)
@@ -197,8 +195,6 @@ class NifImport(NifCommon):
         # backward
         self.set_parents(root_block)
         
-        if isinstance(root_block, NifFormat.BSFadeNode):
-            self.root_ninode = 'BSFadeNode'
             
         # mark armature nodes and bones
         self.armaturehelper.mark_armatures_bones(root_block)
@@ -214,6 +210,7 @@ class NifImport(NifCommon):
            self.is_grouping_node(root_block) or \
            isinstance(root_block, NifFormat.NiTriBasedGeom):
             b_obj = self.import_branch(root_block)
+            self.objecthelper.import_extra_datas(root_block, b_obj)
 
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node, which we do not import as a blender object
@@ -224,6 +221,7 @@ class NifImport(NifCommon):
             # we only process all its children
             for child in root_block.children:
                 b_obj = self.import_branch(child)
+                self.objecthelper.import_extra_datas(root_block, b_obj)
 
         elif isinstance(root_block, NifFormat.NiCamera):
             NifLog.warn('Skipped NiCamera root')
@@ -234,23 +232,6 @@ class NifImport(NifCommon):
         else:
             NifLog.warn("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
 
-        # just to make sure that a root has been imported
-        if b_obj:
-            if hasattr(root_block, "extra_data_list"):
-                for n_extra_list in root_block.extra_data_list:
-                    if isinstance(n_extra_list, NifFormat.BSInvMarker):
-                        b_obj.niftools_bs_invmarker.add()
-                        b_obj.niftools_bs_invmarker[0].name = n_extra_list.name.decode()
-                        b_obj.niftools_bs_invmarker[0].bs_inv_x = n_extra_list.rotation_x
-                        b_obj.niftools_bs_invmarker[0].bs_inv_y = n_extra_list.rotation_y
-                        b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra_list.rotation_z
-                        b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra_list.zoom
-
-            b_obj.niftools.rootnode = self.root_ninode
-            b_obj.niftools.objectflags = root_block.flags
-            # there's no point in setting these globals on every object
-            b_obj.niftools.bsxflags = self.objecthelper.import_bsxflag_data(root_block)
-            b_obj.niftools.upb = self.objecthelper.import_upbflag_data(root_block)
 
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
