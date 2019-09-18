@@ -89,9 +89,7 @@ class Animation:
         return "BEZIER"
 
     def create_action(self, b_obj, action_name):
-        """
-        Create or retrieve action and set it as active on the object.
-        """
+        """ Create or retrieve action and set it as active on the object. """
         # could probably skip this test and create always
         if not b_obj.animation_data:
             b_obj.animation_data_create()
@@ -104,9 +102,7 @@ class Animation:
         return b_action
 
     def create_fcurves(self, action, dtype, drange, flags=None, bonename=None):
-        """
-        Create fcurves in action for desired conditions.
-        """
+        """ Create fcurves in action for desired conditions. """
         # armature pose bone animation
         if bonename:
             fcurves = [
@@ -328,8 +324,7 @@ class ObjectAnimation:
 
     def import_egm_morphs(self, egm_data, b_obj, v_map, n_verts):
         """Import all EGM morphs as shape keys for blender object."""
-        # XXX if there is an egm, the assumption is that there is only one
-        # XXX mesh in the nif
+        # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
         b_mesh = b_obj.data
         sym_morphs = [list(morph.get_relative_vertices()) for morph in egm_data.sym_morphs]
         asym_morphs = [list(morph.get_relative_vertices()) for morph in egm_data.asym_morphs]
