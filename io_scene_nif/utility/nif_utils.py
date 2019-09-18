@@ -39,8 +39,10 @@
 # ***** END LICENSE BLOCK *****
 
 import mathutils
+import math
 
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.nif_global import NifOp
 
 
 class NifError(Exception):
@@ -48,29 +50,64 @@ class NifError(Exception):
     pass
 
 
+def vec_roll_to_mat3(vec, roll):
+    #port of the updated C function from armature.c
+    #https://developer.blender.org/T39470
+    #note that C accesses columns first, so all matrix indices are swapped compared to the C version
+    
+    nor = vec.normalized()
+    THETA_THRESHOLD_NEGY = 1.0e-9
+    THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5
+    
+    #create a 3x3 matrix
+    bMatrix = mathutils.Matrix().to_3x3()
+
+    theta = 1.0 + nor[1]
+
+    if (theta > THETA_THRESHOLD_NEGY_CLOSE) or ((nor[0] or nor[2]) and theta > THETA_THRESHOLD_NEGY):
+
+        bMatrix[1][0] = -nor[0]
+        bMatrix[0][1] = nor[0]
+        bMatrix[1][1] = nor[1]
+        bMatrix[2][1] = nor[2]
+        bMatrix[1][2] = -nor[2]
+        if theta > THETA_THRESHOLD_NEGY_CLOSE:
+            #If nor is far enough from -Y, apply the general case.
+            bMatrix[0][0] = 1 - nor[0] * nor[0] / theta
+            bMatrix[2][2] = 1 - nor[2] * nor[2] / theta
+            bMatrix[0][2] = bMatrix[2][0] = -nor[0] * nor[2] / theta
+        
+        else:
+            #If nor is too close to -Y, apply the special case.
+            theta = nor[0] * nor[0] + nor[2] * nor[2]
+            bMatrix[0][0] = (nor[0] + nor[2]) * (nor[0] - nor[2]) / -theta
+            bMatrix[2][2] = -bMatrix[0][0]
+            bMatrix[0][2] = bMatrix[2][0] = 2.0 * nor[0] * nor[2] / theta
+
+    else:
+        #If nor is -Y, simple symmetry by Z axis.
+        bMatrix = mathutils.Matrix().to_3x3()
+        bMatrix[0][0] = bMatrix[1][1] = -1.0
+
+    #Make Roll matrix
+    rMatrix = mathutils.Matrix.Rotation(roll, 3, nor)
+    
+    #Combine and output result
+    mat = rMatrix * bMatrix
+    return mat
+
+def mat3_to_vec_roll(mat):
+    #this hasn't changed
+    vec = mat.col[1]
+    vecmat = vec_roll_to_mat3(mat.col[1], 0)
+    vecmatinv = vecmat.inverted()
+    rollmat = vecmatinv * mat
+    roll = math.atan2(rollmat[0][2], rollmat[2][2])
+    return vec, roll
+
 def import_matrix(niBlock, relative_to=None):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-    # return Matrix(*niBlock.get_transform(relative_to).as_list())
-    n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
-
-    # create a location matrix
-    b_loc_vec = mathutils.Vector(n_loc_vec3.as_tuple())
-    b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
-    
-    # create a scale matrix
-    b_scale_mat = mathutils.Matrix.Scale(n_scale, 4)
-
-    # create 3 rotation matrices    
-    n_rot_mat = mathutils.Matrix()
-    n_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_21, n_rot_mat3.m_31
-    n_rot_mat[1].xyz = n_rot_mat3.m_12, n_rot_mat3.m_22, n_rot_mat3.m_32
-    n_rot_mat[2].xyz = n_rot_mat3.m_13, n_rot_mat3.m_23, n_rot_mat3.m_33    
-    # b_rot_mat = n_rot_mat * b_scale_mat.transposed()
-    b_rot_mat = n_rot_mat
-    
-    b_import_matrix = b_loc_vec * b_rot_mat * b_scale_mat
-    return b_import_matrix
-
+    return mathutils.Matrix( niBlock.get_transform(relative_to).as_list() ).transposed()
 
 def decompose_srt(matrix):
     """Decompose Blender transform matrix as a scale, rotation matrix, and

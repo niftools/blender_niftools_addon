@@ -38,13 +38,14 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy_extras.io_utils import ImportHelper
+from bpy_extras.io_utils import ImportHelper, orientation_helper_factory
 
 from .nif_common_op import NifOperatorCommon
 
 from io_scene_nif import nif_import
 
-class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
+OrientationHelper = orientation_helper_factory("OrientationHelper", axis_forward='Z', axis_up='Y')
+class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon, OrientationHelper):
     """Operator for loading a nif file."""
 
     #: Name of function for calling the nif export operators.
@@ -65,14 +66,6 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         name="Override Scene Information",
         description="This will overwrite any previously stored scene information with the Nif header info.",
         default=True)
-
-    #: Keyframe file for animations.
-    keyframe_file = bpy.props.StringProperty(
-        name="Keyframe File",
-        description="Keyframe file for animations.",
-        maxlen=1024,
-        default="",
-        subtype="FILE_PATH")
 
     #: FaceGen EGM file for morphs.
     egm_file = bpy.props.StringProperty(
@@ -118,17 +111,6 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         name="Apply Skin Deformation",
         description="Apply skin deformation to all skinned geometries.",
         default=False)
-
-    #: Re-align Tail bones on import
-    import_realign_bones = bpy.props.EnumProperty(
-        items=(
-            ("1", "Re-Align Tail Bone", "Re-Aligns bone tail on import."),
-            ("2", "Re-Align Tail Bone + Roll", "Re-Align tail bone + roll"),
-            ),
-        name="Align",
-        description="Re-align or Re-Align+Roll",
-        default="1")
-
 
     #: What should be imported.
     skeleton = bpy.props.EnumProperty(

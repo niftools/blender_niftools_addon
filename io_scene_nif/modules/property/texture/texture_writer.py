@@ -86,7 +86,7 @@ class TextureWriter():
         srctex.unknown_byte = 1
 
         # search for duplicate
-        for block in self.nif_export.nif_export.dict_blocks:
+        for block in self.nif_export.nif_export.block_to_obj:
             if isinstance(block, NifFormat.NiSourceTexture) and block.get_hash() == srctex.get_hash():
                 return block
 

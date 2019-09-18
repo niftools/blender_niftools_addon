@@ -217,7 +217,7 @@ class TextureHelper:
         self.export_nitextureprop_tex_descs(texprop)
 
         # search for duplicate
-        for block in self.nif_export.dict_blocks:
+        for block in self.nif_export.block_to_obj:
             if isinstance(block, NifFormat.NiTexturingProperty) and block.get_hash() == texprop.get_hash():
                 return block
 

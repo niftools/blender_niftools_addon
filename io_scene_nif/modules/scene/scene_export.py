@@ -38,31 +38,30 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.nif_logging import NifLog
+from pyffi.formats.nif import NifFormat
 
-user_version = {
+USER_VERSION = {
     'OBLIVION' : 11,
     'FALLOUT_3' : 11,
     'DIVINITY_2' : 131072
 }
 
-user_version_2 = {
+USER_VERSION_2 = {
     'OBLIVION' : 11,
     'FALLOUT_3' : 34
 }
 
-def get_version_info(properties):
+def get_version_data():
+    """ Returns NifFormat.Data of the correct version and user versions """
+    game = NifOp.props.game
+    version = NifOp.op.version[game]
+    NifLog.info("Writing NIF version 0x%08X" % version)
 
-    # set user version and user version 2 for export
+    # get user version and user version 2 for export
     b_scene = bpy.context.scene.niftools_scene
+    user_version = b_scene.user_version if b_scene.user_version else USER_VERSION.get(game, 0)
+    user_version_2 = b_scene.user_version_2 if b_scene.user_version_2 else USER_VERSION_2.get(game, 0)
 
-    if b_scene.user_version == 0:
-        NIF_USER_VERSION = user_version.get(properties.game, 0)
-    else :
-        NIF_USER_VERSION = b_scene.user_version
-
-    if b_scene.user_version_2 == 0:
-        NIF_USER_VERSION_2 = user_version_2.get(properties.game, 0)
-    else:
-        NIF_USER_VERSION_2 = b_scene.user_version_2
-
-    return (NIF_USER_VERSION, NIF_USER_VERSION_2)
+    return version, NifFormat.Data(version, user_version, user_version_2)
