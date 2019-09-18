@@ -68,7 +68,8 @@ class Animation:
         kfc.start_time = start_frame / self.fps
         kfc.stop_time = stop_frame / self.fps
 
-    def get_n_interp_from_b_interp(self, b_ipol):
+    @staticmethod
+    def get_n_interp_from_b_interp(b_ipol):
         if b_ipol == "LINEAR":
             return NifFormat.KeyType.LINEAR_KEY
         elif b_ipol == "BEZIER":
@@ -79,7 +80,8 @@ class Animation:
         NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
         return NifFormat.KeyType.QUADRATIC_KEY
 
-    def get_flags_from_fcurves(self, fcurves):
+    @staticmethod
+    def get_flags_from_fcurves(fcurves):
         # see if there are cyclic extrapolation modifiers on exp_fcurves
         cyclic = False
         for fcu in fcurves:
@@ -94,7 +96,8 @@ class Animation:
         else:
             return 4  # 0b100
 
-    def iter_frame_key(self, fcurves, mathutils_class):
+    @staticmethod
+    def iter_frame_key(fcurves, mathutils_class):
         """
         Iterator that yields a tuple of frame and key for all fcurves.
         Assumes the fcurves are sampled at the same time and all have the same amount of keys
@@ -139,7 +142,8 @@ class Animation:
                 # raise error on any objects parented to bones
                 if b_obj.parent and b_obj.parent_type == "BONE":
                     raise nif_utils.NifError(
-                        b_obj.name + " is parented to a bone AND has animations. The nif format does not support this!")
+                       "{} is parented to a bone AND has animations."
+                       "The nif format does not support this!".format(b_obj.name))
 
                 # we have either a root object (Scene Root), in which case we take the coordinates without modification
                 # or a generic object parented to an empty = node
@@ -219,7 +223,7 @@ class Animation:
 
         if quaternions:
             if len(quaternions) != 4:
-                raise nif_utils.NifError("Incomplete ROT key set" + bonestr + " for action " + action.name)
+                raise nif_utils.NifError("Incomplete ROT key set {} for action {}".format(bonestr, action.name))
             else:
                 for frame, quat in self.iter_frame_key(quaternions, mathutils.Quaternion):
                     quat = armature.export_keymat(bind_rot, quat.to_matrix().to_4x4(), bone).to_quaternion()
@@ -227,19 +231,20 @@ class Animation:
 
         if eulers:
             if len(eulers) != 3:
-                raise nif_utils.NifError("Incomplete Euler key set" + bonestr + " for action " + action.name)
+                raise nif_utils.NifError("Incomplete Euler key set {} for action {}".format(bonestr, action.name))
             else:
                 for frame, euler in self.iter_frame_key(eulers, mathutils.Euler):
-                    euler = armature.export_keymat(bind_rot, euler.to_matrix().to_4x4(), bone).to_euler("XYZ", euler)
+                    keymat = armature.export_keymat(bind_rot, euler.to_matrix().to_4x4(), bone)
+                    euler = keymat.to_euler("XYZ", euler)
                     euler_curve.append((frame, euler))
 
         if translations:
             if len(translations) != 3:
-                raise nif_utils.NifError("Incomplete LOC key set" + bonestr + " for action " + action.name)
+                raise nif_utils.NifError("Incomplete LOC key set{} for action {}".format(bonestr, action.name))
             else:
                 for frame, trans in self.iter_frame_key(translations, mathutils.Vector):
-                    trans = armature.export_keymat(bind_rot, mathutils.Matrix.Translation(trans),
-                                                   bone).to_translation() + bind_trans
+                    keymat = armature.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone)
+                    trans = keymat.to_translation() + bind_trans
                     trans_curve.append((frame, trans))
 
         # finally we can export the data calculated above
@@ -352,11 +357,11 @@ class Animation:
             # parse line
             t = s.split('/')
             if len(t) < 2:
-                raise nif_utils.NifError("Syntax error in Anim buffer ('%s')" % s)
+                raise nif_utils.NifError("Syntax error in Anim buffer ('{}')".format(s))
             f = int(t[0])
             if (f < bpy.context.scene.frame_start) or (f > bpy.context.scene.frame_end):
-                NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(str(f), str(
-                    bpy.context.scene.frame_start), str(bpy.context.scene.frame_end)))
+                NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(
+                    str(f), str(bpy.context.scene.frame_start), str(bpy.context.scene.frame_end)))
             d = t[1].strip()
             for i in range(2, len(t)):
                 d = d + '\r\n' + t[i].strip()
@@ -387,7 +392,7 @@ class TextureAnimation:
         self.nif_export = parent
 
     def export_flip_controller(self, fliptxt, texture, target, target_tex):
-        # TODO:port code to use native Blender texture flipping system
+        # TODO [animation] port code to use native Blender texture flipping system
         #
         # export a NiFlipController
         #
@@ -412,7 +417,8 @@ class TextureAnimation:
         flip.texture_slot = target_tex
         count = 0
         for t in tlist:
-            if len(t) == 0: continue  # skip empty lines
+            if len(t) == 0:
+                continue  # skip empty lines
             # create a NiSourceTexture for each flip
             tex = self.nif_export.texturehelper.texture_writer.export_source_texture(texture, t)
             flip.num_sources += 1
@@ -421,9 +427,7 @@ class TextureAnimation:
             count += 1
         if count < 2:
             raise nif_utils.NifError(
-                "Error in Texture Flip buffer '%s':"
-                " must define at least two textures"
-                % fliptxt.name)
+                "Error in Texture Flip buffer '{}': must define at least two textures".format(fliptxt.name))
         flip.delta = (flip.stop_time - flip.start_time) / count
 
 
@@ -447,9 +451,7 @@ class MaterialAnimation:
         # find the nif material property to attach alpha & color controllers to
         n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
         if not n_matprop:
-            raise ValueError(
-                "bug!! must add material property"
-                " before exporting alpha controller")
+            raise ValueError("Bug!! must add material property before exporting alpha controller")
         colors = (("alpha", None),
                   ("niftools.ambient_color", NifFormat.TargetColor.TC_AMBIENT),
                   ("diffuse_color", NifFormat.TargetColor.TC_DIFFUSE),
