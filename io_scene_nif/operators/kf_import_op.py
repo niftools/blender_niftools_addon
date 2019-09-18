@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+'''Blender Nif Plugin Main Import operators, function called through Import Menu'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -38,48 +38,41 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Panel
+from bpy_extras.io_utils import ImportHelper
 
+from .nif_common_op import NifOperatorCommon
 
-class BonePanel(Panel):
-    bl_label = "Niftools Bone Props"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "bone"
+from io_scene_nif import kf_import
 
-    @classmethod
-    def poll(cls, context):
-        return True
+class KfImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
+    """Operator for loading a kf file."""
         
+    #: Name of function for calling the nif export operators.
+    bl_idname = "import_scene.kf"
 
-    def draw(self, context):
-        if context.bone:
-            nif_bone_props = context.bone.niftools
-            
-            layout = self.layout
-            row = layout.column()
-            
-            row.prop(nif_bone_props, "boneflags")
-            row.prop(nif_bone_props, "bonepriority")
-            row.prop(nif_bone_props, "longname")
+    #: How the nif import operators is labelled in the user interface.
+    bl_label = "Import KF"
 
-class ArmaturePanel(Panel):
-    bl_label = "Niftools Armature Props"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "data"
-
-    @classmethod
-    def poll(cls, context):
-        return True
+    #: Number of nif units per blender unit.
+    scale_correction_import = bpy.props.FloatProperty(
+        name="Scale Correction Import",
+        description="Changes size of mesh to fit onto Blender's default grid.",
+        default=1.0,
+        min=0.01, max=100.0, precision=2)
         
-    def draw(self, context):
-        if context.armature:
-            nif_armature_props = context.armature.niftools
-            
-            layout = self.layout
-            row = layout.column()
-            
-            row.prop(nif_armature_props, "axis_forward")
-            row.prop(nif_armature_props, "axis_up")
+    #: File name filter for file select dialog.
+    filter_glob = bpy.props.StringProperty(
+        default="*.kf", options={'HIDDEN'})
+        
+    files = bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
+    
+
+    def execute(self, context):
+        """Execute the import operators: first constructs a
+        :class:`~io_scene_nif.kf_import.KfImport` instance and then
+        calls its :meth:`~io_scene_nif.kf_import.KfImport.execute`
+        method.
+        """
+        
+        return kf_import.KfImport(self, context).execute()
     

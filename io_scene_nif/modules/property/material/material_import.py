@@ -105,7 +105,7 @@ class Material():
         
         # name unique material
         name = self.nif_import.import_name(n_mat_prop)
-        if name is None:
+        if not name:
             name = (self.nif_import.active_obj_name + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
         

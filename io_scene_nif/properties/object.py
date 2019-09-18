@@ -104,6 +104,12 @@ class ObjectProperty(PropertyGroup):
             default='NiNode',
         )
 
+        cls.prn_location = EnumProperty(
+            name='Weapon Location',
+            description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',
+            items=[(item, item, "", i) for i, item in enumerate(["NONE","BACK","SIDE","QUIVER","SHIELD","HELM","RING"])],
+            # default = 'NONE'
+        )
         cls.bsnumuvset = IntProperty(
             name='BS Num UV Set',
             default=0
