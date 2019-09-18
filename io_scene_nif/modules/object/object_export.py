@@ -41,6 +41,7 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -69,16 +70,12 @@ class ObjectHelper:
     def get_exported_objects(self):
         """Return a list of exported objects."""
         exported_objects = []
-        # iterating over self.nif_export.dict_blocks.itervalues() will count some objects twice
-        for b_obj in self.nif_export.dict_blocks.values():
-            # skip empty objects
-            if b_obj is None:
-                continue
-            # detect doubles
-            if b_obj in exported_objects:
-                continue
-            # append new object
-            exported_objects.append(b_obj)
+        # iterating over self.nif_export.block_to_obj.itervalues() will count some objects twice
+        for b_obj in self.nif_export.block_to_obj.values():
+            # skip empty & known objects
+            if b_obj and b_obj not in exported_objects:
+                # append new object
+                exported_objects.append(b_obj)
         # return the list of unique exported objects
         return exported_objects
 
@@ -93,244 +90,295 @@ class ObjectHelper:
             NifLog.info("Exporting {0} block".format(block.__class__.__name__))
         else:
             NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
-        self.nif_export.dict_blocks[block] = b_obj
+        self.nif_export.block_to_obj[block] = b_obj
         return block
 
-    def export_node(self, b_obj, space, parent_block, node_name):
-        """Export a mesh/armature/empty object b_obj as child of parent_block.
+    def export_root_node(self, filebase):
+        """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
+        # todo: detect root collision
+        #     # -> root collision node (can be mesh or empty)
+        #     self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
+        #     return None  # done; stop here
+        # there is only one root object so that will be our final root
+        if len(self.nif_export.root_objects) == 1:
+            n_root = self.export_node(self.nif_export.root_objects[0], None)
+        # there is more than one root object so we create a meta root
+        else:
+            n_root = self.create_ninode()
+            n_root.name = "Scene Root"
+            for b_obj in self.nif_export.root_objects:
+                self.export_node(b_obj, n_root)
+        # making root block a fade node
+        root_type = self.nif_export.root_objects[0].niftools.rootnode
+        if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and root_type == 'BSFadeNode':
+            NifLog.info("Making root block a BSFadeNode")
+            fade_root_block = NifFormat.BSFadeNode().deepcopy(n_root)
+            fade_root_block.replace_global_node(n_root, fade_root_block)
+            n_root = fade_root_block
+        # various extra datas
+        self.export_bsxflags_upb(n_root)
+        self.export_weapon_location(n_root)
+        self.export_inventory_marker(n_root)
+        self.export_furniture_marker(n_root, filebase)
+        return n_root
+    
+    def export_inventory_marker(self, n_root):
+        if NifOp.props.game in ('SKYRIM',):
+            for root_object in self.nif_export.root_objects:
+                if root_object.niftools_bs_invmarker:
+                    for extra_item in n_root.extra_data_list:
+                        if isinstance(extra_item, NifFormat.BSInvMarker):
+                            raise nif_utils.NifError("Multiple Items have Inventory marker data only one item may contain this data")
+                    else:
+                        n_extra_list = NifFormat.BSInvMarker()
+                        n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
+                        n_extra_list.rotation_x = root_object.niftools_bs_invmarker[0].bs_inv_x
+                        n_extra_list.rotation_y = root_object.niftools_bs_invmarker[0].bs_inv_y
+                        n_extra_list.rotation_z = root_object.niftools_bs_invmarker[0].bs_inv_z
+                        n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
+                        n_root.add_extra_data(n_extra_list)
+
+    def export_furniture_marker(self, n_root, filebase):
+        # oblivion and Fallout 3 furniture markers
+        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase[:15].lower() == 'furnituremarker':
+            # exporting a furniture marker for Oblivion/FO3
+            try:
+                furniturenumber = int(filebase[15:])
+            except ValueError:
+                raise nif_utils.NifError("Furniture marker has invalid number (%s).\n"
+                                            "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19." % filebase[15:])
+            
+            # create furniture marker block
+            furnmark = self.objecthelper.create_block("BSFurnitureMarker")
+            furnmark.name = "FRN"
+            furnmark.num_positions = 1
+            furnmark.positions.update_size()
+            furnmark.positions[0].position_ref_1 = furniturenumber
+            furnmark.positions[0].position_ref_2 = furniturenumber
+
+            # create extra string data sgoKeep
+            sgokeep = self.objecthelper.create_block("NiStringExtraData")
+            sgokeep.name = "UPB"  # user property buffer
+            sgokeep.string_data = "sgoKeep=1 ExportSel = Yes"  # Unyielding = 0, sgoKeep=1ExportSel = Yes
+
+            # add extra blocks
+            n_root.add_extra_data(furnmark)
+            n_root.add_extra_data(sgokeep)
+    
+    def export_bsxflags_upb(self, root_block):
+        # FIXME:
+        NifLog.info("Checking collision")
+        # activate oblivion/Fallout 3 collision and physics
+        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            b_obj = self.nif_export.collisionhelper.has_collision()
+            if b_obj:
+                # enable collision
+                bsx = self.create_block("BSXFlags")
+                bsx.name = 'BSX'
+                bsx.integer_data = b_obj.niftools.bsxflags
+                root_block.add_extra_data(bsx)
+
+                # many Oblivion nifs have a UPB, but export is disabled as
+                # they do not seem to affect anything in the game
+                if b_obj.niftools.upb:
+                    upb = self.create_block("NiStringExtraData")
+                    upb.name = 'UPB'
+                    if b_obj.niftools.upb == '':
+                        upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                    else:
+                        upb.string_data = b_obj.niftools.upb.encode()
+                    root_block.add_extra_data(upb)
+    
+    def export_weapon_location(self, n_root):
+        # export weapon location
+        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            b_obj = self.nif_export.root_objects[0]
+            loc = b_obj.niftools.prn_location
+            if loc != "NONE":
+                # add string extra data
+                prn = self.create_block("NiStringExtraData")
+                prn.name = 'Prn'
+                prn.string_data = self.nif_export.prn_dict[loc]
+                n_root.add_extra_data(prn)
+
+    def update_rigid_bodies(self, ):
+        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            rigid_bodies = [block for block in self.block_to_obj if isinstance(block, NifFormat.bhkRigidBody)]
+            # update rigid body center of gravity and mass
+            if self.nif_export.IGNORE_BLENDER_PHYSICS:
+                # we are not using blender properties to set the mass
+                # so calculate mass automatically first calculate distribution of mass
+                total_mass = 0
+                for block in rigid_bodies:
+                    block.update_mass_center_inertia(solid=self.nif_export.EXPORT_OB_SOLID)
+                    total_mass += block.mass
+
+                # to avoid zero division error later (if mass is zero then this does not matter anyway)
+                if total_mass == 0:
+                    total_mass = 1
+
+                # now update the mass ensuring that total mass is EXPORT_OB_MASS
+                for block in rigid_bodies:
+                    mass = self.nif_export.EXPORT_OB_MASS * block.mass / total_mass
+                    # lower bound on mass
+                    if mass < 0.0001:
+                        mass = 0.05
+                    block.update_mass_center_inertia(mass=mass, solid=self.nif_export.EXPORT_OB_SOLID)
+            else:
+                # using blender properties, so block.mass *should* have been set properly
+                for block in rigid_bodies:
+                    # lower bound on mass
+                    if block.mass < 0.0001:
+                        block.mass = 0.05
+                    block.update_mass_center_inertia(mass=block.mass, solid=self.nif_export.EXPORT_OB_SOLID)
+      
+    def set_node_flags(self, b_obj, n_node):
+        # default node flags
+        b_obj_type = b_obj.type
+        if b_obj_type in self.nif_export.export_types:
+            if b_obj_type is 'EMPTY' and b_obj.niftools.objectflags != 0:
+                n_node.flags = b_obj.niftools.objectflags
+            if b_obj_type is 'MESH' and b_obj.niftools.objectflags != 0:
+                n_node.flags = b_obj.niftools.objectflags
+            elif b_obj_type is 'ARMATURE' and b_obj.niftools.objectflags != 0:
+                n_node.flags = b_obj.niftools.objectflags
+            elif b_obj_type is 'ARMATURE' and b_obj.niftools.objectflags == 0 and b_obj.parent is None:
+                n_node.flags = b_obj.niftools.objectflags
+            else:
+                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                    n_node.flags = 0x000E
+                elif NifOp.props.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
+                    n_node.flags = 0x0010
+                elif NifOp.props.game is 'EMPIRE_EARTH_II':
+                    n_node.flags = 0x0002
+                elif NifOp.props.game is 'DIVINITY_2':
+                    n_node.flags = 0x0310
+                else:
+                    n_node.flags = 0x000C  # morrowind
+        
+    def export_node(self, b_obj, n_parent):
+        """Export a mesh/armature/empty object b_obj as child of n_parent.
         Export also all children of b_obj.
 
-        - space is 'none', 'worldspace', or 'localspace', and determines
-          relative to what object the transformation should be stored.
-        - parent_block is the parent nif block of the object (None for the
-          root node)
-        - for the root node, b_obj is None, and node_name is usually the base
-          filename (either with or without extension)
-
-        :param space:
-        :param parent_block:
+        :param n_parent:
         :param b_obj:
-        :param node_name: The name of the node to be exported.
-        :type node_name: :class:`str`
         """
-        # b_obj_type: determine the block type
-        #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
-        # b_obj_ipo:  object animation ipo
-        # node:    contains new NifFormat.NiNode instance
-        export_types = ('EMPTY', 'MESH', 'ARMATURE')
-        if b_obj is None:
-            selected_exportable_objects = [b_obj for b_obj in bpy.context.selected_objects if b_obj.type in export_types]
-            if len(selected_exportable_objects) == 0:
-                raise nif_utils.NifError("Selected objects ({0}) are not exportable.".format(str(bpy.context.selected_objects)))
 
-            for root_object in [b_obj for b_obj in bpy.context.selected_objects if b_obj.type in export_types]:
-                while root_object.parent:
-                    root_object = root_object.parent
-
-            # root node
-            if root_object.type == 'ARMATURE':
-                b_obj = root_object
-
-            # root node
-            if b_obj is None:
-                assert parent_block is None  # debug
-                node = self.create_ninode()
-                b_obj_type = None
-                b_obj_ipo = None
-            else:
-                b_obj_type = b_obj.type
-                assert (b_obj_type in export_types)  # debug
-                assert (parent_block is None)  # debug
-                b_obj_ipo = b_obj.animation_data  # get animation data
-                b_obj_children = b_obj.children
-                node_name = b_obj.name
-
-        elif b_obj.name != parent_block.name.decode() and b_obj.parent is not None:
-            # -> empty, b_mesh, or armature
-            b_obj_type = b_obj.type
-            assert (b_obj_type in export_types)  # debug
-            assert parent_block  # debug
-            b_obj_ipo = b_obj.animation_data  # get animation data
-            b_obj_children = b_obj.children
-
-        elif b_obj.name != parent_block.name.decode() and b_obj.type != 'ARMATURE':
-            # -> empty, b_mesh, or armature
-            b_obj_type = b_obj.type
-            assert b_obj_type in ['EMPTY', 'MESH']  # debug
-            assert parent_block  # debug
-            b_obj_ipo = b_obj.animation_data  # get animation data
-            b_obj_children = b_obj.children
-
-        else:
+        if not b_obj:
             return None
 
-        if node_name == 'RootCollisionNode':
-            # -> root collision node (can be mesh or empty)
-            # TODO: do we need to fix this stuff on export?
-            # b_obj.draw_bounds_type = 'POLYHEDERON'
-            # b_obj.draw_type = 'BOUNDS'
-            # b_obj.show_wire = True
-            self.nif_export.export_collision(b_obj, parent_block)
-            return None  # done; stop here
+        b_obj_type = b_obj.type
+        b_obj_anim_data = b_obj.animation_data  # get animation data
+        b_obj_children = b_obj.children
+        has_anim = True if b_obj_anim_data and b_obj_anim_data.action.fcurves else False
 
-        elif b_obj_type == 'MESH' and b_obj.show_bounds and b_obj.name.lower().startswith('bsbound'):
+        # can we export this b_obj?
+        if b_obj_type not in self.nif_export.export_types:
+            return None
+        if b_obj_type == 'MESH' and b_obj.name.lower().startswith('bsbound'):
             # add a bounding box
-            self.nif_export.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
+            self.nif_export.collisionhelper.export_bounding_box(b_obj, n_parent, bsbound=True)
             return None  # done; stop here
 
-        elif b_obj_type == 'MESH' and b_obj.show_bounds and b_obj.name.lower().startswith("bounding box"):
+        elif b_obj_type == 'MESH' and b_obj.name.lower().startswith("bounding box"):
             # Morrowind bounding box
-            self.nif_export.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
+            self.nif_export.collisionhelper.export_bounding_box(b_obj, n_parent, bsbound=False)
             return None  # done; stop here
 
         elif b_obj_type == 'MESH':
             # -> mesh data.
             # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
             is_collision = b_obj.game.use_collision_bounds
-            has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
             has_children = len(b_obj_children) > 0
             is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
 
             # determine if object tracks camera
-            has_track = False
-            for constr in b_obj.constraints:
-                if constr.type == 'TRACK_TO':
-                    has_track = True
-                    break
-                # does geom have priority value in NULL constraint?
-                elif constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[self.nif_export.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
+            # nb normally, imported models will have tracking constraints on their parent empty
+            # but users may create track_to constraints directly on objects, so keep it for now
+            has_track = self.has_track(b_obj)
 
             if is_collision:
-                self.nif_export.export_collision(b_obj, parent_block)
+                self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
                 return None  # done; stop here
-            elif has_ipo or has_children or is_multimaterial or has_track:
-                # mesh ninode for the hierarchy to work out
-                if not has_track:
-                    node = self.create_block('NiNode', b_obj)
-                else:
-                    node = self.create_block('NiBillboardNode', b_obj)
+            elif has_anim or has_children or is_multimaterial or has_track:
+                # create a ninode as parent of this mesh for the hierarchy to work out
+                node = self.create_ninode(b_obj)
             else:
                 # don't create intermediate ninode for this guy
-                self.mesh_helper.export_tri_shapes(b_obj, space, parent_block, node_name)
-                # we didn't create a ninode, return nothing
-                return None
+                return self.mesh_helper.export_tri_shapes(b_obj, n_parent, b_obj.name)
 
-        elif b_obj is not None:
-            # -> everything else (empty/armature) is a regular node
-            node = self.create_ninode(b_obj)
-            # does node have priority value in NULL constraint?
-            for constr in b_obj.constraints:
-                if constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[self.nif_export.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
-
-        # set transform on trishapes rather than on NiNode for skinned meshes
-        # this fixes an issue with clothing slots
-        if b_obj_type == 'MESH':
+            # set transform on trishapes rather than on NiNode for skinned meshes
+            # this fixes an issue with clothing slots
             if b_obj.parent and b_obj.parent.type == 'ARMATURE':
-                if b_obj_ipo:
+                if b_obj_anim_data:
                     # mesh with armature parent should not have animation!
                     NifLog.warn("Mesh {0} is skinned but also has object animation. "
                                 "The nif format does not support this, ignoring object animation.".format(b_obj.name))
-                    b_obj_ipo = None
-                trishape_space = space
-                space = 'none'
-            else:
-                trishape_space = 'none'
+                    has_anim = False
 
+        else:
+            # -> everything else (empty/armature) is a (more or less regular) node
+            node = self.create_ninode(b_obj)
+            
         # make it child of its parent in the nif, if it has one
-        if parent_block:
-            parent_block.add_child(node)
+        if n_parent:
+            n_parent.add_child(node)
 
         # and fill in this node's non-trivial values
-        node.name = self.get_full_name(node_name)
+        node.name = self.get_full_name(b_obj)
+        self.set_node_flags(b_obj, node)
+        self.set_object_matrix(b_obj, node)
 
-        # default node flags
-        if b_obj_type in export_types:
-            if b_obj_type is 'EMPTY' and b_obj.niftools.objectflags != 0:
-                node.flags = b_obj.niftools.objectflags
-            if b_obj_type is 'MESH' and b_obj.niftools.objectflags != 0:
-                node.flags = b_obj.niftools.objectflags
-            elif b_obj_type is 'ARMATURE' and b_obj.niftools.objectflags != 0:
-                node.flags = b_obj.niftools.objectflags
-            elif b_obj_type is 'ARMATURE' and b_obj.niftools.objectflags == 0 and b_obj.parent is None:
-                node.flags = b_obj.niftools.objectflags
-            else:
-                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                    node.flags = 0x000E
-                elif NifOp.props.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
-                    node.flags = 0x0010
-                elif NifOp.props.game is 'EMPIRE_EARTH_II':
-                    node.flags = 0x0002
-                elif NifOp.props.game is 'DIVINITY_2':
-                    node.flags = 0x0310
-                else:
-                    node.flags = 0x000C  # morrowind
+        # export object animation
+        if has_anim:
+            self.nif_export.animationhelper.export_keyframes(node, b_obj)
+            self.nif_export.animationhelper.object_animation.export_object_vis_controller(node, b_obj)
+        # if it is a mesh, export the mesh as trishape children of this ninode
+        if b_obj.type == 'MESH':
+            return self.mesh_helper.export_tri_shapes(b_obj, node)
+        # if it is an armature, export the bones as ninode children of this ninode
+        elif b_obj.type == 'ARMATURE':
+            self.nif_export.armaturehelper.export_bones(b_obj, node)
 
-        self.set_object_matrix(b_obj, space, node)
-
-        if b_obj:
-            # export animation
-            if b_obj_ipo:
-                if any(b_obj_ipo[b_channel] for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    self.nif_export.animationhelper.export_keyframes(b_obj_ipo, space, node)
-                self.export_object_vis_controller(b_obj, node)
-            # if it is a mesh, export the mesh as trishape children of this ninode
-            if b_obj.type == 'MESH':
-                # see definition of trishape_space above
-                self.mesh_helper.export_tri_shapes(b_obj, trishape_space, node)
-
-            # if it is an armature, export the bones as ninode children of this ninode
-            elif b_obj.type == 'ARMATURE':
-                self.nif_export.armaturehelper.export_bones(b_obj, node)
-
-            # export all children of this empty/mesh/armature/bone object as children of this NiNode
-            self.nif_export.armaturehelper.export_children(b_obj, node)
+        # export all children of this b_obj as children of this NiNode
+        self.export_children(b_obj, node)
 
         return node
 
-    # Export a blender object ob of the type mesh, child of nif block
-    # parent_block, as NiTriShape and NiTriShapeData blocks, possibly
-    # along with some NiTexturingProperty, NiSourceTexture,
-    # NiMaterialProperty, and NiAlphaProperty blocks. We export one
-    # trishape block per mesh material. We also export vertex weights.
-    #
-    # The parameter trishape_name passes on the name for meshes that
-    # should be exported as a single mesh.
+    def export_children(self, b_parent, n_parent):
+        """Export all children of blender object b_parent as children of n_parent."""
+        # loop over all obj's children
+        for b_child in b_parent.children:
+            # special case: objects parented to armature bones - find the nif parent bone
+            if b_parent.type == 'ARMATURE' and b_child.parent_bone != "":
+                parent_bone = b_parent.data.bones[b_child.parent_bone]
+                assert(parent_bone in self.nif_export.block_to_obj.values())
+                for n_parent, obj in self.nif_export.block_to_obj.items():
+                    if obj == parent_bone:
+                        break
+            self.nif_export.objecthelper.export_node(b_child, n_parent)
 
     def create_ninode(self, b_obj=None):
-        # trivial case first
+        """Essentially a wrapper around create_block() that creates nodes of the right type"""
+        # when no b_obj is passed, it means we create a root node
         if not b_obj:
             return self.create_block("NiNode")
 
-        # exporting an object, so first create node of correct type
-        # TODO: rework to get node type from nif format based on custom value?
+        # get node type - some are stored as custom property of the b_obj
         try:
-            n_node_type = b_obj.getProperty("Type").data
-        except (RuntimeError, AttributeError, NameError):
+            n_node_type = b_obj["type"]
+        except:
             n_node_type = "NiNode"
-
+        # ...others by presence of constraints
+        if self.has_track(b_obj):
+            n_node_type = "NiBillboardNode"
+        # noew create the node
         n_node = self.create_block(n_node_type, b_obj)
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
             self.export_range_lod_data(n_node, b_obj)
-
         # return the node
         return n_node
-
-    def rebuild_full_names(self):
-        """Recovers the full object names from the text buffer and rebuilds
-        the names dictionary."""
-        # TODO: get objects to store their own names.
-        try:
-            namestxt = bpy.data.texts['FullNames']
-        except KeyError:
-            return
-        for b_textline in namestxt.lines:
-            line = b_textline.body
-            if len(line) > 0:
-                name, fullname = line.split(';')
-                self.nif_export.dict_names[name] = fullname
 
     def get_unique_name(self, b_name):
         """Returns an unique name for use in the NIF file, from the name of a
@@ -345,29 +393,22 @@ class ObjectHelper:
         if b_name:
             unique_name = b_name
         # blender bone naming -> nif bone naming
-        unique_name = self.nif_export.get_bone_name_for_nif(unique_name)
-        # ensure uniqueness
-        if unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
-            unique_int = 0
-            old_name = unique_name
-            while unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
-                unique_name = "%s.%02d" % (old_name, unique_int)
-                unique_int += 1
-        self.nif_export.dict_block_names.append(unique_name)
-        self.nif_export.dict_names[b_name] = unique_name
+        unique_name = armature.get_bone_name_for_nif(unique_name)
         return unique_name
 
-    def get_full_name(self, b_name):
+    def get_full_name(self, b_obj):
         """Returns the original imported name if present, or the name by which
         the object was exported already.
-
-        .. todo:: Refactor and simplify this code.
-        :param b_name:
         """
-        try:
-            return self.nif_export.dict_names[b_name]
-        except KeyError:
-            return self.get_unique_name(b_name)
+        longname = ""
+        if b_obj:
+            try:
+                longname = b_obj.niftools.longname
+            except:
+                pass
+            if not longname:
+                longname = self.get_unique_name(b_obj.name)
+        return longname
 
     def export_range_lod_data(self, n_node, b_obj):
         """Export range lod data for for the children of b_obj, as a
@@ -386,143 +427,86 @@ class ObjectHelper:
         n_node.lod_levels.update_size()
         n_range_data.lod_levels.update_size()
         for b_child, n_lod_level, n_rd_lod_level in zip(b_children, n_node.lod_levels, n_range_data.lod_levels):
-            n_lod_level.near_extent = b_child.getProperty("Near Extent").data
-            n_lod_level.far_extent = b_child.getProperty("Far Extent").data
+            n_lod_level.near_extent = b_child["near_extent"]
+            n_lod_level.far_extent = b_child["far_extent"]
             n_rd_lod_level.near_extent = n_lod_level.near_extent
             n_rd_lod_level.far_extent = n_lod_level.far_extent
 
-    def set_object_matrix(self, b_obj, space, block):
-        """Set a block's transform matrix to an object's transformation matrix in rest pose."""
-        # decompose
-        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
+    def set_object_matrix(self, b_obj, block):
+        """Set a blender object's transform matrix to a NIF object's transformation matrix in rest pose."""
+        block.set_transform( self.get_object_matrix(b_obj) )
+        
+    def get_object_matrix(self, b_obj):
+        """Get a blender object's matrix as NifFormat.Matrix44"""
+        return self.mathutils_to_nifformat_matrix( self.get_object_bind(b_obj) )
+        
+    def set_b_matrix_to_n_block(self, b_matrix, block):
+        """Set a blender matrix to a NIF object's transformation matrix in rest pose."""
+        ### TODO [object] maybe favor this over the above two methods for more flexibility and transparency?
+        block.set_transform( self.mathutils_to_nifformat_matrix(b_matrix) )
 
-        # and fill in the values
-        block.translation.x = n_trans_vec[0]
-        block.translation.y = n_trans_vec[1]
-        block.translation.z = n_trans_vec[2]
-        block.rotation.m_11 = n_rot_mat33[0][0]
-        block.rotation.m_21 = n_rot_mat33[0][1]
-        block.rotation.m_31 = n_rot_mat33[0][2]
-        block.rotation.m_12 = n_rot_mat33[1][0]
-        block.rotation.m_22 = n_rot_mat33[1][1]
-        block.rotation.m_32 = n_rot_mat33[1][2]
-        block.rotation.m_13 = n_rot_mat33[2][0]
-        block.rotation.m_23 = n_rot_mat33[2][1]
-        block.rotation.m_33 = n_rot_mat33[2][2]
-        block.velocity.x = 0.0
-        block.velocity.y = 0.0
-        block.velocity.z = 0.0
-        block.scale = n_scale
+    def mathutils_to_nifformat_matrix(self, b_matrix):
+        """Convert a blender matrix to a NifFormat.Matrix44"""
+        # transpose to swap columns for rows so we can use pyffi's set_rows() directly
+        # instead of setting every single value manually
+        n_matrix = NifFormat.Matrix44()
+        n_matrix.set_rows( *b_matrix.transposed() )
+        return n_matrix
+        
+    def get_object_bind(self, b_obj):
+        """Get the bind matrix of a blender object.
+        
+        Returns the final NIF matrix for the given blender object.
+        Blender space and axes order are corrected for the NIF.
+        Returns a 4x4 mathutils.Matrix()
+        """
 
-        return n_scale, n_rot_mat33, n_trans_vec
-
-    def get_object_matrix(self, b_obj, space):
-        """Get an object's matrix as NifFormat.Matrix44
-
-        Note: for objects parented to bones, this will return the transform
-        relative to the bone parent head in nif coordinates (that is, including
-        the bone correction); this differs from getMatrix which
-        returns the transform relative to the armature."""
-        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
-        matrix = NifFormat.Matrix44()
-
-        matrix.m_11 = n_rot_mat33[0][0] * n_scale
-        matrix.m_21 = n_rot_mat33[0][1] * n_scale
-        matrix.m_31 = n_rot_mat33[0][2] * n_scale
-        matrix.m_12 = n_rot_mat33[1][0] * n_scale
-        matrix.m_22 = n_rot_mat33[1][1] * n_scale
-        matrix.m_32 = n_rot_mat33[1][2] * n_scale
-        matrix.m_13 = n_rot_mat33[2][0] * n_scale
-        matrix.m_23 = n_rot_mat33[2][1] * n_scale
-        matrix.m_33 = n_rot_mat33[2][2] * n_scale
-        matrix.m_14 = n_trans_vec[0]
-        matrix.m_24 = n_trans_vec[1]
-        matrix.m_34 = n_trans_vec[2]
-
-        matrix.m_41 = 0.0
-        matrix.m_42 = 0.0
-        matrix.m_43 = 0.0
-        matrix.m_44 = 1.0
-
-        return matrix
-
-    def get_object_srt(self, b_obj, space='localspace'):
-        """Find scale, rotation, and translation components of an object in
-        the rest pose. Returns a triple (bs, br, bt), where bs
-        is a scale float, br is a 3x3 rotation matrix, and bt is a
-        translation vector. It should hold that
-
-        ob.getMatrix(space) == bs * br * bt
-
-        Note: for objects parented to bones, this will return the transform
-        relative to the bone parent head including bone correction.
-
-        space is either 'none' (gives identity transform) or 'localspace'"""
-        # TODO: remove the space argument, always do local space
-        # handle the trivial case first
-        if space == 'none':
-            return (1.0,
-                    mathutils.Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
-                    mathutils.Vector([0, 0, 0]))
-
-        assert (space == 'localspace')
-
-        # now write out spaces
         if isinstance(b_obj, bpy.types.Bone):
-            # bones, get the rest matrix
-            matrix = self.nif_export.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
+            return armature.get_bind_matrix(b_obj)
 
-        else:
+        elif isinstance(b_obj, bpy.types.Object):
             # TODO MOVE TO ARMATUREHELPER
 
-            matrix = b_obj.matrix_local.copy()
-            bone_parent_name = b_obj.parent_bone
-
             # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
-            if bone_parent_name:
-                # so v * O * T * B' = v * Z * B
-                # where B' is the Blender bone matrix in armature
-                # space, T is the bone tail translation, O is the object
-                # matrix (relative to the head), and B is the nif bone matrix;
-                # we wish to find Z
+            if b_obj.parent_bone:
+                # get parent bone
+                parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
 
-                # b_obj.getMatrix('localspace')
-                # gets the object local transform matrix, relative
-                # to the armature!! (not relative to the bone)
-                # so at this point, matrix = O * T * B'
-                # hence it must hold that matrix = Z * B,
-                # or equivalently Z = matrix * B^{-1}
+                # undo what was done on import
+                mpi = armature.nif_bind_to_blender_bind(b_obj.matrix_parent_inverse).inverted()
+                mpi.translation.y -= parent_bone.length
+                return mpi.inverted() * b_obj.matrix_basis
+            # just get the local matrix
+            else:
+                return b_obj.matrix_local
+        #Nonetype, maybe other weird stuff
+        return mathutils.Matrix()
 
-                # now, B' = X * B, so B^{-1} = B'^{-1} * X
-                # hence Z = matrix * B'^{-1} * X
-
-                # first multiply with inverse of the Blender bone matrix
-                bone_parent = b_obj.parent.data.bones[bone_parent_name]
-                boneinv = mathutils.Matrix(bone_parent.matrix['ARMATURESPACE'])
-                boneinv.invert()
-                matrix = matrix * boneinv
-                # now multiply with the bone correction matrix X
-                try:
-                    extra = mathutils.Matrix(self.nif_export.armaturehelper.get_bone_extra_matrix_inv(bone_parent_name))
-                    extra.invert()
-                    matrix = matrix * extra
-                except KeyError:
-                    # no extra local transform
-                    pass
-
-        try:
-            return nif_utils.decompose_srt(matrix)
-        except nif_utils.NifError:  # non-uniform scaling
-            raise nif_utils.NifError("Non-uniform scaling on bone '%s' not supported. "
-                                     "This could be a bug... No workaround. :-( Post your blend!" % b_obj.name)
-
+    def has_track(self, b_obj):
+        """ Determine if this b_obj has a track_to constraint """
+        # bones do not have constraints
+        if not isinstance(b_obj, bpy.types.Bone):
+            for constr in b_obj.constraints:
+                if constr.type == 'TRACK_TO':
+                    return True
 
 class MeshHelper:
 
     def __init__(self, parent):
         self.nif_export = parent
 
-    def export_tri_shapes(self, b_obj, space, parent_block, trishape_name=None):
+
+    def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
+        """ 
+        Export a blender object ob of the type mesh, child of nif block
+        n_parent, as NiTriShape and NiTriShapeData blocks, possibly
+        along with some NiTexturingProperty, NiSourceTexture,
+        NiMaterialProperty, and NiAlphaProperty blocks. We export one
+        trishape block per mesh material. We also export vertex weights.
+        
+        The parameter trishape_name passes on the name for meshes that
+        should be exported as a single mesh.
+        """
         NifLog.info("Exporting {0}".format(b_obj))
 
         assert (b_obj.type == 'MESH')
@@ -539,7 +523,7 @@ class MeshHelper:
             return
 
         # get the mesh's materials, this updates the mesh material list
-        if not isinstance(parent_block, NifFormat.RootCollisionNode):
+        if not isinstance(n_parent, NifFormat.RootCollisionNode):
             mesh_materials = b_mesh.materials
         else:
             # ignore materials on collision trishapes
@@ -635,7 +619,7 @@ class MeshHelper:
                 elif mesh_hasvcola:
                     mesh_hasalpha = True
                 elif b_mat.animation_data and \
-                        b_mat.animation_data.action.fcurves['Alpha']:
+                        'Alpha' in b_mat.animation_data.action.fcurves:
                     mesh_hasalpha = True
 
                 # wire mat
@@ -669,12 +653,12 @@ class MeshHelper:
                 trishape = self.nif_export.objecthelper.create_block("NiTriStrips", b_obj)
 
             # fill in the NiTriShape's non-trivial values
-            if isinstance(parent_block, NifFormat.RootCollisionNode):
+            if isinstance(n_parent, NifFormat.RootCollisionNode):
                 trishape.name = ""
             else:
                 if not trishape_name:
-                    if parent_block.name:
-                        trishape.name = "Tri " + parent_block.name.decode()
+                    if n_parent.name:
+                        trishape.name = "Tri " + n_parent.name.decode()
                     else:
                         trishape.name = "Tri " + b_obj.name.decode()
                 else:
@@ -685,7 +669,7 @@ class MeshHelper:
                 if len(mesh_materials) > 1:
                     trishape.name = trishape.name.decode() + ":%i" % materialIndex
                 else:
-                    trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
+                    trishape.name = self.nif_export.objecthelper.get_full_name(trishape)
 
             # Trishape Flags...
             if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
@@ -716,8 +700,13 @@ class MeshHelper:
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1  # default
 
-            self.nif_export.objecthelper.set_object_matrix(b_obj, space, trishape)
-
+            # if we have an animation of a blender mesh
+            # an intermediate NiNode has been created which holds this b_obj's transform
+            # the trishape itself then needs identity transform (default)
+            if trishape_name is not None:
+                # only export the bind matrix on trishapes that were not animated
+                self.nif_export.objecthelper.set_object_matrix(b_obj, trishape)
+            
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
@@ -762,25 +751,25 @@ class MeshHelper:
                     trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceeding child of the trishape)
-            ref_mtex = self.nif_export.texturehelper.ref_mtex
-            if NifOp.props.game == 'MORROWIND' and ref_mtex:
-                # create a new parent block for this shape
-                extra_node = self.create_block("NiNode", ref_mtex)
-                parent_block.add_child(extra_node)
-                # set default values for this ninode
-                extra_node.rotation.set_identity()
-                extra_node.scale = 1.0
-                extra_node.flags = 0x000C  # morrowind
-                # create texture effect block and parent the
-                # texture effect and trishape to it
-                texeff = self.export_texture_effect(ref_mtex)
-                extra_node.add_child(texeff)
-                extra_node.add_child(trishape)
-                extra_node.add_effect(texeff)
-            else:
-                # refer to this block in the parent's
-                # children list
-                parent_block.add_child(trishape)
+            if n_parent:
+                ref_mtex = self.nif_export.texturehelper.ref_mtex
+                if NifOp.props.game == 'MORROWIND' and ref_mtex:
+                    # create a new parent block for this shape
+                    extra_node = self.create_block("NiNode", ref_mtex)
+                    n_parent.add_child(extra_node)
+                    # set default values for this ninode
+                    extra_node.rotation.set_identity()
+                    extra_node.scale = 1.0
+                    extra_node.flags = 0x000C  # morrowind
+                    # create texture effect block and parent the
+                    # texture effect and trishape to it
+                    texeff = self.export_texture_effect(ref_mtex)
+                    extra_node.add_child(texeff)
+                    extra_node.add_child(trishape)
+                    extra_node.add_effect(texeff)
+                else:
+                    # refer to this block in the parent's children list
+                    n_parent.add_child(trishape)
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
@@ -817,7 +806,7 @@ class MeshHelper:
 
                 # add NiTriShape's material property
                 trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
-                    name=self.nif_export.objecthelper.get_full_name(b_mat.name),
+                    name=self.nif_export.objecthelper.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
@@ -1098,7 +1087,6 @@ class MeshHelper:
             if b_obj.parent:
                 if b_obj.parent.type == 'ARMATURE':
                     b_obj_armature = b_obj.parent
-                    armaturename = b_obj_armature.name
                     bone_names = list(b_obj_armature.data.bones.keys())
                     # the vertgroups that correspond to bone_names are bones that influence the mesh
                     boneinfluences = []
@@ -1112,22 +1100,21 @@ class MeshHelper:
                         else:
                             skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
-                        for block in self.nif_export.dict_blocks:
+                        for block in self.nif_export.block_to_obj:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(armaturename):
+                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature):
                                     skininst.skeleton_root = block
                                     break
                         else:
-                            raise nif_utils.NifError("Skeleton root '%s' not found." % armaturename)
+                            raise nif_utils.NifError("Skeleton root '%s' not found." % b_obj_armature.name)
 
                         # create skinning data and link it
                         skindata = self.nif_export.objecthelper.create_block("NiSkinData", b_obj)
                         skininst.data = skindata
 
                         skindata.has_vertex_weights = True
-                        # fix geometry rest pose: transform relative to
-                        # skeleton root
-                        skindata.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj, 'localspace').get_inverse())
+                        # fix geometry rest pose: transform relative to skeleton root
+                        skindata.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj).get_inverse())
 
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}
@@ -1185,9 +1172,9 @@ class MeshHelper:
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
-                            for block in self.nif_export.dict_blocks:
+                            for block in self.nif_export.block_to_obj:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(bone):
+                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature.data.bones[bone]):
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -1393,8 +1380,10 @@ class MeshHelper:
 
                         # fix data consistency type
                         tridata.consistency_flags = b_obj.niftools.consistency_flags
-
+        return trishape
+    
     def smooth_mesh_seams(self, b_objs):
+        """ Finds vertices that are shared between all blender objects and averages their normals"""
         # get shared vertices
         NifLog.info("Smoothing seams between objects...")
         vdict = {}

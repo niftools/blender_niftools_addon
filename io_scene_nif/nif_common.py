@@ -49,45 +49,14 @@ class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
     """
-    
-    # dictionary of bones that belong to a certain armature
-    # maps NIF armature name to list of NIF bone name
-    dict_armatures = {}
-    # dictionary of bones, maps Blender bone name to matrix that maps the
-    # NIF bone matrix on the Blender bone matrix
-    # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
-    dict_bones_extra_matrix = {}
-
-    # dictionary of bones, maps Blender bone name to matrix that maps the
-    # NIF bone matrix on the Blender bone matrix
-    # Recall from the import script
-    #   B' = X * B,
-    # where B' is the Blender bone matrix, and B is the NIF bone matrix,
-    # both in armature space. So to restore the NIF matrices we need to do
-    #   B = X^{-1} * B'
-    # Hence, we will restore the X's, invert them, and store those inverses in the
-    # following dictionary.
-    dict_bones_extra_matrix_inv = {}
-
-    # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
-    # we use this dictionary to set the physics constraints (ragdoll etc)
-    dict_havok_objects = {}
-    
-    # dictionary of names, to map NIF blocks to correct Blender names
-    dict_names = {}
-
-    # dictionary of bones, maps Blender name to NIF block
-    dict_blocks = {}
-    
-    # keeps track of names of exported blocks, to make sure they are unique
-    dict_block_names = []
-
-    # bone animation priorities (maps NiNode name to priority number);
-    # priorities are set in import_kf_root and are stored into the name
-    # of a NULL constraint (for lack of something better) in
-    # import_armature
-    dict_bone_priorities = {}
-
+    # used for weapon locations or attachments to a body
+    prn_dict = {"BACK": "BackWeapon",
+                "SIDE": "SideWeapon",
+                "QUIVER": "Quiver",
+                "SHIELD": "Bip01 L ForearmTwist",
+                "HELM": "Bip01 Head",
+                "RING": "Bip01 R Finger1"}
+                
     # dictionary of materials, to reuse materials
     dict_materials = {}
     
@@ -128,96 +97,7 @@ class NifCommon:
         self.selected_objects = bpy.context.selected_objects[:]
 
 
-    def get_bone_name_for_blender(self, name):
-        """Convert a bone name to a name that can be used by Blender: turns
-        'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
 
-        :param name: The bone name as in the nif file.
-        :type name: :class:`str`
-        :return: Bone name in Blender convention.
-        :rtype: :class:`str`
-        """
-        if isinstance(name, bytes):
-            name = name.decode()
-        if name.startswith("Bip01 L "):
-            return "Bip01 " + name[8:] + ".L"
-        elif name.startswith("Bip01 R "):
-            return "Bip01 " + name[8:] + ".R"
-        elif name.startswith("NPC L ") and name.endswith("]"):
-            name = name.replace("NPC L", "NPC")
-            name = name.replace("[L", "[")
-            name = name.replace("]", "].L")
-            return name
-        elif name.startswith("NPC R ") and name.endswith("]"):
-            name = name.replace("NPC R", "NPC")
-            name = name.replace("[R", "[")
-            name = name.replace("]", "].R")
-            return name
-
-        return name
-
-    def get_bone_name_for_nif(self, name):
-        """Convert a bone name to a name that can be used by the nif file:
-        turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
-
-        :param name: The bone name as in Blender.
-        :type name: :class:`str`
-        :return: Bone name in nif convention.
-        :rtype: :class:`str`
-        """
-        if isinstance(name, bytes):
-            name = name.decode()
-        if name.startswith("Bip01 "):
-            if name.endswith(".L"):
-                return "Bip01 L " + name[6:-2]
-            elif name.endswith(".R"):
-                return "Bip01 R " + name[6:-2]
-        elif name.startswith("NPC ") and name.endswith("].L"):
-            name = name.replace("NPC ", "NPC L")
-            name = name.replace("[", "[L")
-            name = name.replace("].L", "]")
-            return name
-        elif name.startswith("NPC ") and name.endswith("].R"):
-            name = name.replace("NPC ", "NPC R")
-            name = name.replace("[", "[R")
-            name = name.replace("].R", "]")
-            return name
-
-        return name
-
-    # TODO: Is there a better way to this than return a string,
-    #       since handling requires different code per type?
-    def get_extend_from_flags(self, flags):
-        if flags & 6 == 4: # 0b100
-            return "CONST"
-        elif flags & 6 == 0: # 0b000
-            return "CYCLIC"
-
-        NifLog.warn("Unsupported cycle mode in nif, using clamped.")
-        return "CONST"
-
-    def get_b_curve_from_n_curve(self, n_ipol):
-        if n_ipol == NifFormat.KeyType.LINEAR_KEY:
-            return bpy.types.Keyframe.interpolation.LINEAR
-        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
-            return bpy.types.Keyframe.interpolation.BEZIER
-        elif n_ipol == 0:
-            # guessing, not documented in nif.xml
-            return bpy.types.Keyframe.interpolation.CONST
-        
-        NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
-        return bpy.types.Keyframe.interpolation.BEZIER
-
-    def get_n_curve_from_b_curve(self, b_ipol):
-        if b_ipol == bpy.types.Keyframe.interpolation.LINEAR:
-            return NifFormat.KeyType.LINEAR_KEY
-        elif b_ipol == bpy.types.Keyframe.interpolation.BEZIER:
-            return NifFormat.KeyType.QUADRATIC_KEY
-        elif b_ipol == bpy.types.Keyframe.interpolation.CONST:
-            return NifFormat.KeyType.CONST_KEY
-        
-        NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
-        return NifFormat.KeyType.QUADRATIC_KEY
 
     def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
         if b_blend_type == "LIGHTEN":

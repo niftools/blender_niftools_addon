@@ -378,7 +378,7 @@ class Texture():
             return "MIX"
 
     def get_uv_layer_name(self, uvset):
-        return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"
+        return str(uvset)
 
     def get_used_textslots(self, b_mat):
         self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if
