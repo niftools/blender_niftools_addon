@@ -1,4 +1,4 @@
-'''Script to import/export all the skeleton related objects.'''
+"""Script to import/export all the skeleton related objects."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,32 +37,25 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
-import mathutils
-from io_scene_nif.modules import armature
-from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
-from pyffi.formats.nif import NifFormat
 
-
-class Armature():
-    
+class Armature:
 
     def __init__(self, parent):
         self.nif_export = parent
-    
+
     def export_bones(self, arm, parent_block):
         """Export the bones of an armature."""
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
-        assert( arm.type == 'ARMATURE' )
-        
+        assert (arm.type == 'ARMATURE')
+
         # find the root bones
         # list of all bones
         bones = arm.data.bones.values()
-        
+
         # maps bone names to NiNode blocks
         bones_node = {}
 
@@ -79,8 +72,8 @@ class Armature():
 
             # add the node and the keyframe for this bone
             node.name = self.nif_export.objecthelper.get_full_name(bone)
-            
-            if (bone.niftools.boneflags != 0):
+
+            if bone.niftools.boneflags != 0:
                 node.flags = bone.niftools.boneflags
             else:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
@@ -104,7 +97,7 @@ class Armature():
                         # default for Div 2 final bones
                         node.flags = 0x0196
                 else:
-                    node.flags = 0x0002 # default for Morrowind bones
+                    node.flags = 0x0002  # default for Morrowind bones
             # rest pose
             self.nif_export.objecthelper.set_object_matrix(bone, node)
 
@@ -120,5 +113,3 @@ class Armature():
             # if it is a root bone, link it to the armature
             if not bone.parent:
                 parent_block.add_child(bones_node[bone.name])
-    
-   
