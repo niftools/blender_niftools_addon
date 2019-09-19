@@ -327,7 +327,7 @@ class Animation:
             key.time = frame / self.fps
             key.value = scale
 
-    def export_text_keys(self, block_parent, ):
+    def export_text_keys(self, block_parent):
         """Parse the animation groups buffer and write an extra string
         data block, and attach it to an existing block (typically, the root
         of the nif tree)."""
