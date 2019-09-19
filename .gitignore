@@ -1,21 +1,3 @@
-Skip to content
-Search or jump to…
-
-Pull requests
-Issues
-Marketplace
-Explore
-
-@neomonkeus
-34
-12253niftools/blender_nif_plugin
- Code Issues 100 Pull requests 2 Projects 14 Security Insights Settings
-blender_nif_plugin/.gitignore
-@neomonkeus neomonkeus Stop jetbrains stuff annoying me, especially line length non-sense
-06d6c41 on 2 Jan
-@neomonkeus@amorilia@TagnumElite
-186 lines (147 sloc)  2.74 KB
-
 *~
 docs/_build
 docs/python_api
@@ -202,15 +184,3 @@ fabric.properties
 
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
-© 2019 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Help
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
