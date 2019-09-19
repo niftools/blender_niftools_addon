@@ -90,8 +90,7 @@ class Armature:
             # the property is only available from object mode!
             self.nif_import.objecthelper.store_longname(b_bone, n_block.name.decode())
             if NifOp.props.animation:
-                self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj,
-                                                                                         bone_name)
+                self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj, bone_name)
 
         return b_armature_obj
 
@@ -124,34 +123,34 @@ class Armature:
             self.import_bone(n_child, b_armature_data, n_armature, b_edit_bone)
 
     def import_skin(self, ni_block, b_obj, v_map):
-        """ Import a NiSkinInstance and its contents as vertex groups """
+        """Import a NiSkinInstance and its contents as vertex groups"""
         skininst = ni_block.skin_instance
         if skininst:
             skindata = skininst.data
             bones = skininst.bones
             # the usual case
             if skindata.has_vertex_weights:
-                boneWeights = skindata.bone_list
+                bone_weights = skindata.bone_list
                 for idx, n_bone in enumerate(bones):
                     # skip empty bones (see pyffi issue #3114079)
                     if not n_bone:
                         continue
-                    vertex_weights = boneWeights[idx].vertex_weights
-                    groupname = self.nif_import.import_name(n_bone)
-                    if groupname not in b_obj.vertex_groups:
-                        v_group = b_obj.vertex_groups.new(groupname)
+                    vertex_weights = bone_weights[idx].vertex_weights
+                    group_name = self.nif_import.import_name(n_bone)
+                    if group_name not in b_obj.vertex_groups:
+                        v_group = b_obj.vertex_groups.new(group_name)
                     for skinWeight in vertex_weights:
                         vert = skinWeight.index
                         weight = skinWeight.weight
                         v_group.add([v_map[vert]], weight, 'REPLACE')
             # WLP2 - hides the weights in the partition
             else:
-                skinpartition = skininst.skin_partition
-                for block in skinpartition.skin_partition_blocks:
+                skin_partition = skininst.skin_partition
+                for block in skin_partition.skin_partition_blocks:
                     # create all vgroups for this block's bones
                     block_bone_names = [self.nif_import.import_name(bones[i]) for i in block.bones]
-                    for groupname in block_bone_names:
-                        b_obj.vertex_groups.new(groupname)
+                    for group_name in block_bone_names:
+                        b_obj.vertex_groups.new(group_name)
 
                     # go over each vert in this block
                     for vert, vertex_weights, bone_indices in zip(block.vertex_map,
@@ -160,8 +159,8 @@ class Armature:
                         # assign this vert's 4 weights to its 4 vgroups (at max)
                         for w, b_i in zip(vertex_weights, bone_indices):
                             if w > 0:
-                                groupname = block_bone_names[b_i]
-                                v_group = b_obj.vertex_groups[groupname]
+                                group_name = block_bone_names[b_i]
+                                v_group = b_obj.vertex_groups[group_name]
                                 v_group.add([v_map[vert]], w, 'REPLACE')
 
         # import body parts as vertex groups
@@ -173,12 +172,12 @@ class Armature:
                     skininst.partitions, skinpart.skin_partition_blocks):
                 bodypart_wrap = NifFormat.BSDismemberBodyPartType()
                 bodypart_wrap.set_value(bodypart.body_part)
-                groupname = bodypart_wrap.get_detail_display()
+                group_name = bodypart_wrap.get_detail_display()
                 # create vertex group if it did not exist yet
-                if groupname not in b_obj.vertex_groups:
-                    v_group = b_obj.vertex_groups.new(groupname)
+                if group_name not in b_obj.vertex_groups:
+                    v_group = b_obj.vertex_groups.new(group_name)
                     skinpart_index = len(skinpart_list)
-                    skinpart_list.append((skinpart_index, groupname))
+                    skinpart_list.append((skinpart_index, group_name))
                     bodypart_flag.append(bodypart.part_flag)
                 # find vertex indices of this group
                 groupverts = [v_map[v_index] for v_index in skinpartblock.vertex_map]
@@ -192,17 +191,18 @@ class Armature:
                 b_obj_partflag.pf_editorflag = bodypart_flag[i].pf_editor_visible
                 b_obj_partflag.pf_startflag = bodypart_flag[i].pf_start_net_boneset
 
-    def fix_bone_lengths(self, b_armature_data):
+    @staticmethod
+    def fix_bone_lengths(b_armature_data):
         """Sets all edit_bones to a suitable length."""
         for b_edit_bone in b_armature_data.edit_bones:
             # don't change root bones
             if b_edit_bone.parent:
                 # take the desired length from the mean of all children's heads
                 if b_edit_bone.children:
-                    childheads = mathutils.Vector()
+                    child_heads = mathutils.Vector()
                     for b_child in b_edit_bone.children:
-                        childheads += b_child.head
-                    bone_length = (b_edit_bone.head - childheads / len(b_edit_bone.children)).length
+                        child_heads += b_child.head
+                    bone_length = (b_edit_bone.head - child_heads / len(b_edit_bone.children)).length
                     if bone_length < 0.01:
                         bone_length = 0.25
                 # end of a chain
@@ -210,7 +210,8 @@ class Armature:
                     bone_length = b_edit_bone.parent.length
                 b_edit_bone.length = bone_length
 
-    def append_armature_modifier(self, b_obj, b_armature):
+    @staticmethod
+    def append_armature_modifier(b_obj, b_armature):
         """Append an armature modifier for the object."""
         if b_obj and b_armature:
             armature_name = b_armature.name
@@ -226,12 +227,11 @@ class Armature:
         # do all NiNode's as bones
         if NifOp.props.skeleton == "SKELETON_ONLY" or (
                 self.nif_import.data.version in (0x14000005, 0x14020007) and
-                (os.path.basename(NifOp.props.filepath).lower()
-                 in ('skeleton.nif', 'skeletonbeast.nif'))):
+                (os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif'))):
 
             if not isinstance(ni_block, NifFormat.NiNode):
-                raise nif_utils.NifError(
-                    "cannot import skeleton: root is not a NiNode")
+                raise nif_utils.NifError("Cannot import skeleton: root is not a NiNode")
+
             # for morrowind, take the Bip01 node to be the skeleton root
             if self.nif_import.data.version == 0x04000002:
                 skelroot = ni_block.find(block_name='Bip01', block_type=NifFormat.NiNode)
@@ -262,8 +262,7 @@ class Armature:
                 bone_block = skelroot.find(block_name=nif_bone_name)
                 # add it to the name list if there is a bone with that name
                 if bone_block:
-                    NifLog.info("Identified nif block '{0}' with bone '{1}' in selected armature".format(nif_bone_name,
-                                                                                                         bone_name))
+                    NifLog.info("Identified nif block '{0}' with bone '{1}' in selected armature".format(nif_bone_name, bone_name))
                     self.dict_armatures[skelroot].append(bone_block)
                     self.complete_bone_tree(bone_block, skelroot)
 
@@ -283,9 +282,7 @@ class Armature:
                         NifLog.debug("'{0}' is an armature".format(skelroot.name))
                 elif NifOp.props.skeleton == "GEOMETRY_ONLY":
                     if skelroot not in self.dict_armatures:
-                        raise nif_utils.NifError(
-                            "Nif structure incompatible with '{0}' as armature: node '{1}' has '{2}' as armature".format(
-                                b_armature_obj.name, ni_block.name, skelroot.name))
+                        raise nif_utils.NifError("Nif structure incompatible with '{0}' as armature: node '{1}' has '{2}' as armature".format(b_armature_obj.name, ni_block.name, skelroot.name))
 
                 for boneBlock in skininst.bones:
                     # boneBlock can be None; see pyffi issue #3114079
@@ -308,8 +305,7 @@ class Armature:
             self.mark_armatures_bones(child)
 
     def populate_bone_tree(self, skelroot):
-        """Add all of skelroot's bones to its dict_armatures list.
-        """
+        """Add all of skelroot's bones to its dict_armatures list."""
         for bone in skelroot.tree():
             if bone is skelroot:
                 continue
@@ -325,8 +321,7 @@ class Armature:
                 NifLog.debug("'{0}' marked as extra bone of armature '{1}'".format(bone.name, skelroot.name))
 
     def complete_bone_tree(self, bone, skelroot):
-        """Make sure that the complete hierarchy from bone up to skelroot is marked in dict_armatures.
-        """
+        """Make sure that the complete hierarchy from bone up to skelroot is marked in dict_armatures."""
         # we must already have marked both as a bone
         assert skelroot in self.dict_armatures  # debug
         assert bone in self.dict_armatures[skelroot]  # debug
