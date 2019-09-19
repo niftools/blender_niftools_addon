@@ -38,16 +38,18 @@
 # ***** END LICENSE BLOCK *****
 import bpy
 import mathutils
+
 from bisect import bisect_left
+
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.nif_logging import NifLog
 
 
-# TODO [animationation][util] interpolate() should perhaps be moved to utils?
+# TODO [animation][util] interpolate() should perhaps be moved to utils?
 def interpolate(x_out, x_in, y_in):
     """
     sample (x_in I y_in) at x coordinates x_out
@@ -88,7 +90,8 @@ class Animation:
         # NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
         return "BEZIER"
 
-    def create_action(self, b_obj, action_name):
+    @staticmethod
+    def create_action(b_obj, action_name):
         """ Create or retrieve action and set it as active on the object. """
         # could probably skip this test and create always
         if not b_obj.animation_data:
@@ -120,7 +123,8 @@ class Animation:
             self.set_extrapolation(self.get_extend_from_flags(flags), fcurves)
         return fcurves
 
-    def get_extend_from_flags(self, flags):
+    @staticmethod
+    def get_extend_from_flags(flags):
         if flags & 6 == 4:  # 0b100
             return "CONSTANT"
         elif flags & 6 == 0:  # 0b000
@@ -129,10 +133,12 @@ class Animation:
         NifLog.warn("Unsupported cycle mode in nif, using clamped.")
         return "CONSTANT"
 
-    def get_extend_from_cycle_type(self, cycle_type):
+    @staticmethod
+    def get_extend_from_cycle_type(cycle_type):
         return ("CYCLIC", "REVERSE", "CONSTANT")[cycle_type]
 
-    def set_extrapolation(self, extend_type, fcurves):
+    @staticmethod
+    def set_extrapolation(extend_type, fcurves):
         if extend_type == "CONSTANT":
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
@@ -168,10 +174,10 @@ class Animation:
             # get animation text buffer, and clear it if it already exists
             name = "Anim"
             if name in bpy.data.texts:
-                animtxt = bpy.data.texts["Anim"]
+                animtxt = bpy.data.texts[name]
                 animtxt.clear()
             else:
-                animtxt = bpy.data.texts.new("Anim")
+                animtxt = bpy.data.texts.new(name)
 
             for key in txk.text_keys:
                 newkey = str(key.value).replace('\r\n', '/').rstrip('/')
@@ -288,21 +294,21 @@ class ObjectAnimation:
                         keyname = 'Key %i' % idxMorph
                     NifLog.info("Inserting key '{0}'".format(keyname))
                     # get vectors
-                    morphverts = morphData.morphs[idxMorph].vectors
-                    self.morph_mesh(b_mesh, baseverts, morphverts, v_map)
+                    morph_verts = morphData.morphs[idxMorph].vectors
+                    self.morph_mesh(b_mesh, baseverts, morph_verts, v_map)
                     shape_key = b_obj.shape_key_add(keyname, from_mix=False)
 
                     # first find the keys
                     # older versions store keys in the morphData
-                    morphdata = morphData.morphs[idxMorph]
+                    morph_data = morphData.morphs[idxMorph]
                     # newer versions store keys in the controller
-                    if not morphdata.keys:
+                    if not morph_data.keys:
                         try:
                             if morphCtrl.interpolators:
-                                morphdata = morphCtrl.interpolators[idxMorph].data.data
+                                morph_data = morphCtrl.interpolators[idxMorph].data.data
                             elif morphCtrl.interpolator_weights:
-                                morphdata = morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
-                        except:
+                                morph_data = morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
+                        except KeyError:
                             NifLog.info("Unsupported interpolator '{0}'".format(
                                 type(morphCtrl.interpolator_weights[idxMorph].interpolator)))
                             continue
@@ -311,7 +317,7 @@ class ObjectAnimation:
 
                     # FYI shape_key = b_mesh.shape_keys.key_blocks[-1]
                     # set keyframes
-                    for key in morphdata.keys:
+                    for key in morph_data.keys:
                         shape_key.value = key.value
                         shape_key.keyframe_insert(data_path="value", frame=round(key.time * fps))
 
@@ -319,7 +325,7 @@ class ObjectAnimation:
                     # # set extrapolation to fcurves
                     # self.nif_import.animationhelper.set_extrapolation(morphCtrl.flags, fcurves)
                     # # get the interpolation mode
-                    # interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( morphdata.interpolation)
+                    # interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( morph_data.interpolation)
                     # TODO [animation] set interpolation once low level access works
 
     def import_egm_morphs(self, egm_data, b_obj, v_map, n_verts):
@@ -347,6 +353,7 @@ class ObjectAnimation:
                 v.x, v.y, v.z = u
                 morphvert_out.append(v)
             self.morph_mesh(b_mesh, n_verts, morphvert_out, v_map)
+            # TODO [animation] unused variable is it required
             shape_key = b_obj.shape_key_add(key_name, from_mix=False)
 
 
@@ -480,8 +487,9 @@ class ArmatureAnimation:
             extend = self.nif_import.animationhelper.get_extend_from_cycle_type(kf_root.cycle_type)
             self.nif_import.animationhelper.set_extrapolation(extend, b_action.fcurves)
 
-    def import_keyframe_controller(self, kfc, b_obj, bone_name=None, niBone_bind_scale=None, niBone_bind_rot_inv=None,
-                                   niBone_bind_trans=None):
+    # TODO [animation] Is scale param required or can be removed, not used
+    def import_keyframe_controller(self, kfc, b_obj, bone_name=None, ni_bone_bind_scale=None, ni_bone_bind_rot_inv=None,
+                                   ni_bone_bind_trans=None):
         b_action = b_obj.animation_data.action
 
         if bone_name:
@@ -565,7 +573,7 @@ class ArmatureAnimation:
             for t, val in eulers:
                 key = mathutils.Euler(val)
                 if bone_name:
-                    key = armature.import_keymat(niBone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
+                    key = armature.import_keymat(ni_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
         elif rotations:
             NifLog.debug('Rotation keys...(quaternions)')
@@ -574,7 +582,7 @@ class ArmatureAnimation:
             for t, val in rotations:
                 key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                 if bone_name:
-                    key = armature.import_keymat(niBone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
+                    key = armature.import_keymat(ni_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
         if translations:
             NifLog.debug('Translation keys...')
@@ -582,8 +590,8 @@ class ArmatureAnimation:
             for t, val in translations:
                 key = mathutils.Vector([val.x, val.y, val.z])
                 if bone_name:
-                    key = armature.import_keymat(niBone_bind_rot_inv,
-                                                 mathutils.Matrix.Translation(key - niBone_bind_trans)).to_translation()
+                    key = armature.import_keymat(ni_bone_bind_rot_inv,
+                                                 mathutils.Matrix.Translation(key - ni_bone_bind_trans)).to_translation()
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_loc)
         if scales:
             NifLog.debug('Scale keys...')

@@ -171,7 +171,7 @@ class Animation:
             # present, only the data is not present (see further on)
             return
 
-        # add a keyframecontroller block, and refer to this block in the
+        # add a KeyframeController block, and refer to this block in the
         # parent's time controller
         if self.nif_export.version < 0x0A020000:
             kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", exp_fcurves)
@@ -189,16 +189,16 @@ class Animation:
             parent_block.add_controller(kfc)
         # else ControllerSequence, so create a link
         elif isinstance(parent_block, NifFormat.NiControllerSequence):
-            controlledblock = parent_block.add_controlled_block()
+            controlled_block = parent_block.add_controlled_block()
             if self.nif_export.version < 0x0A020000:
                 # older versions need the actual controller blocks
-                controlledblock.target_name = armature.get_bone_name_for_nif(bone.name)
-                controlledblock.controller = kfc
+                controlled_block.target_name = armature.get_bone_name_for_nif(bone.name)
+                controlled_block.controller = kfc
                 # erase reference to target node
                 kfc.target = None
             else:
                 # newer versions need the interpolator blocks
-                controlledblock.interpolator = kfi
+                controlled_block.interpolator = kfi
         else:
             raise nif_utils.NifError("Unsupported KeyframeController parent!")
 
@@ -480,16 +480,16 @@ class MaterialAnimation:
             controller = "NiMaterialColorController"
 
         # create the key data
-        n_keydata = self.nif_export.objecthelper.create_block(keydata, fcurves)
-        n_keydata.data.num_keys = len(fcurves[0].keyframe_points)
-        n_keydata.data.interpolation = NifFormat.KeyType.LINEAR_KEY
-        n_keydata.data.keys.update_size()
+        n_key_data = self.nif_export.objecthelper.create_block(keydata, fcurves)
+        n_key_data.data.num_keys = len(fcurves[0].keyframe_points)
+        n_key_data.data.interpolation = NifFormat.KeyType.LINEAR_KEY
+        n_key_data.data.keys.update_size()
 
         # assumption: all curves have same amount of keys and are sampled at the same time
-        for i, n_key in enumerate(n_keydata.data.keys):
+        for i, n_key in enumerate(n_key_data.data.keys):
             frame = fcurves[0].keyframe_points[i].co[0]
             # add each point of the curves
-            n_key.arg = n_keydata.data.interpolation
+            n_key.arg = n_key_data.data.interpolation
             n_key.time = frame / self.fps
             if b_dtype == "alpha":
                 n_key.value = fcurves[0].keyframe_points[i].co[1]
@@ -506,8 +506,8 @@ class MaterialAnimation:
             # set target color only for color controller
             if n_dtype:
                 n_mat_ctrl.set_target_color(n_dtype)
-            n_mat_ctrl.data = n_keydata
-            n_mat_ipol.data = n_keydata
+            n_mat_ctrl.data = n_key_data
+            n_mat_ipol.data = n_key_data
             # attach block to material property
             n_matprop.add_controller(n_mat_ctrl)
 
@@ -530,30 +530,30 @@ class MaterialAnimation:
             return
 
         # get the uv curves and translate them into nif data
-        n_uvdata = NifFormat.NiUVData()
-        for fcu, n_uvgroup in zip(fcurves, n_uvdata.uv_groups):
+        n_uv_data = NifFormat.NiUVData()
+        for fcu, n_uv_group in zip(fcurves, n_uv_data.uv_groups):
             if fcu:
                 # NifLog.info("Exporting {0} as NiUVData".format(b_curve))
-                n_uvgroup.num_keys = len(fcu.keyframe_points)
-                n_uvgroup.interpolation = NifFormat.KeyType.LINEAR_KEY
-                n_uvgroup.keys.update_size()
-                for b_point, n_key in zip(fcu.keyframe_points, n_uvgroup.keys):
+                n_uv_group.num_keys = len(fcu.keyframe_points)
+                n_uv_group.interpolation = NifFormat.KeyType.LINEAR_KEY
+                n_uv_group.keys.update_size()
+                for b_point, n_key in zip(fcu.keyframe_points, n_uv_group.keys):
                     # add each point of the curve
                     b_frame, b_value = b_point.co
                     if "offset" in fcu.data_path:
                         # offsets are negated in blender
                         b_value = -b_value
-                    n_key.arg = n_uvgroup.interpolation
+                    n_key.arg = n_uv_group.interpolation
                     n_key.time = b_frame / self.fps
                     n_key.value = b_value
         # if uv data is present
         # then add the controller so it is exported
         if fcurves[0].keyframe_points:
-            n_uvctrl = NifFormat.NiUVController()
-            self.set_flags_and_timing(n_uvctrl, fcurves)
-            n_uvctrl.data = n_uvdata
+            n_uv_ctrl = NifFormat.NiUVController()
+            self.set_flags_and_timing(n_uv_ctrl, fcurves)
+            n_uv_ctrl.data = n_uv_data
             # attach block to geometry
-            n_geom.add_controller(n_uvctrl)
+            n_geom.add_controller(n_uv_ctrl)
 
 
 class ObjectAnimation:
