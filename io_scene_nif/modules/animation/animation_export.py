@@ -48,7 +48,37 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
 
+def set_flags_and_timing(kfc, exp_fcurves, start_frame=None, stop_frame=None):
+    # fill in the non-trivial values
+    kfc.flags = 8  # active
+    kfc.flags |= get_flags_from_fcurves(exp_fcurves)
+    kfc.frequency = 1.0
+    kfc.phase = 0.0
+    if not start_frame and not stop_frame:
+        start_frame, stop_frame = exp_fcurves[0].range()
+    kfc.start_time = start_frame / Animation.fps
+    kfc.stop_time = stop_frame / Animation.fps
+
+
+def get_flags_from_fcurves(fcurves):
+    # see if there are cyclic extrapolation modifiers on exp_fcurves
+    cyclic = False
+    for fcu in fcurves:
+        # sometimes fcurves can include empty fcurves - see uv controller export
+        if fcu:
+            for mod in fcu.modifiers:
+                if mod.type == "CYCLES":
+                    cyclic = True
+                    break
+    if cyclic:
+        return 0
+    else:
+        return 4  # 0b100
+
+
 class Animation:
+
+    fps = 30
 
     def __init__(self, parent):
         self.nif_export = parent
@@ -56,17 +86,6 @@ class Animation:
         self.material_animation = MaterialAnimation(parent)
         self.texture_animation = TextureAnimation(parent)
         self.fps = bpy.context.scene.render.fps
-
-    def set_flags_and_timing(self, kfc, exp_fcurves, start_frame=None, stop_frame=None):
-        # fill in the non-trivial values
-        kfc.flags = 8  # active
-        kfc.flags |= self.get_flags_from_fcurves(exp_fcurves)
-        kfc.frequency = 1.0
-        kfc.phase = 0.0
-        if not start_frame and not stop_frame:
-            start_frame, stop_frame = exp_fcurves[0].range()
-        kfc.start_time = start_frame / self.fps
-        kfc.stop_time = stop_frame / self.fps
 
     @staticmethod
     def get_n_interp_from_b_interp(b_ipol):
@@ -79,22 +98,6 @@ class Animation:
 
         NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
         return NifFormat.KeyType.QUADRATIC_KEY
-
-    @staticmethod
-    def get_flags_from_fcurves(fcurves):
-        # see if there are cyclic extrapolation modifiers on exp_fcurves
-        cyclic = False
-        for fcu in fcurves:
-            # sometimes fcurves can include empty fcurves - see uv controller export
-            if fcu:
-                for mod in fcu.modifiers:
-                    if mod.type == "CYCLES":
-                        cyclic = True
-                        break
-        if cyclic:
-            return 0
-        else:
-            return 4  # 0b100
 
     @staticmethod
     def iter_frame_key(fcurves, mathutils_class):
@@ -203,7 +206,7 @@ class Animation:
             raise nif_utils.NifError("Unsupported KeyframeController parent!")
 
         # fill in the non-trivial values
-        self.set_flags_and_timing(kfc, exp_fcurves, start_frame, stop_frame)
+        set_flags_and_timing(kfc, exp_fcurves, start_frame, stop_frame)
 
         if NifOp.props.animation == 'GEOM_NIF':
             # keyframe data is not present in geometry files
@@ -502,7 +505,7 @@ class MaterialAnimation:
             n_mat_ipol = self.nif_export.objecthelper.create_block(interpolator, fcurves)
             n_mat_ctrl.interpolator = n_mat_ipol
 
-            self.set_flags_and_timing(n_mat_ctrl, fcurves)
+            set_flags_and_timing(n_mat_ctrl, fcurves)
             # set target color only for color controller
             if n_dtype:
                 n_mat_ctrl.set_target_color(n_dtype)
@@ -550,7 +553,7 @@ class MaterialAnimation:
         # then add the controller so it is exported
         if fcurves[0].keyframe_points:
             n_uv_ctrl = NifFormat.NiUVController()
-            self.set_flags_and_timing(n_uv_ctrl, fcurves)
+            set_flags_and_timing(n_uv_ctrl, fcurves)
             n_uv_ctrl.data = n_uv_data
             # attach block to geometry
             n_geom.add_controller(n_uv_ctrl)
@@ -598,7 +601,7 @@ class ObjectAnimation:
         if fcurves[0].keyframe_points:
             n_vis_ctrl = self.nif_export.objecthelper.create_block("NiVisController", fcurves)
             n_vis_ipol = self.nif_export.objecthelper.create_block("NiBoolInterpolator", fcurves)
-            self.set_flags_and_timing(n_vis_ctrl, fcurves)
+            set_flags_and_timing(n_vis_ctrl, fcurves)
             n_vis_ctrl.interpolator = n_vis_ipol
             n_vis_ctrl.data = n_vis_data
             n_vis_ipol.data = n_bool_data
