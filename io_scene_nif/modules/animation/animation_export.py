@@ -177,36 +177,35 @@ class Animation:
         # add a KeyframeController block, and refer to this block in the
         # parent's time controller
         if self.nif_export.version < 0x0A020000:
-            kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", exp_fcurves)
+            n_kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", exp_fcurves)
         else:
-            kfc = self.nif_export.objecthelper.create_block("NiTransformController", exp_fcurves)
-            kfi = self.nif_export.objecthelper.create_block("NiTransformInterpolator", exp_fcurves)
+            n_kfc = self.nif_export.objecthelper.create_block("NiTransformController", exp_fcurves)
+            n_kfi = self.nif_export.objecthelper.create_block("NiTransformInterpolator", exp_fcurves)
             # link interpolator from the controller
-            kfc.interpolator = kfi
+            n_kfc.interpolator = n_kfi
             # set interpolator default data
-            kfi.scale, kfi.rotation, kfi.translation = \
-                parent_block.get_transform().get_scale_quat_translation()
+            n_kfi.scale, n_kfi.rotation, n_kfi.translation = parent_block.get_transform().get_scale_quat_translation()
 
         # if parent is a node, attach controller to that node
         if isinstance(parent_block, NifFormat.NiNode):
-            parent_block.add_controller(kfc)
+            parent_block.add_controller(n_kfc)
         # else ControllerSequence, so create a link
         elif isinstance(parent_block, NifFormat.NiControllerSequence):
             controlled_block = parent_block.add_controlled_block()
             if self.nif_export.version < 0x0A020000:
                 # older versions need the actual controller blocks
                 controlled_block.target_name = armature.get_bone_name_for_nif(bone.name)
-                controlled_block.controller = kfc
+                controlled_block.controller = n_kfc
                 # erase reference to target node
-                kfc.target = None
+                n_kfc.target = None
             else:
                 # newer versions need the interpolator blocks
-                controlled_block.interpolator = kfi
+                controlled_block.interpolator = n_kfi
         else:
             raise nif_utils.NifError("Unsupported KeyframeController parent!")
 
         # fill in the non-trivial values
-        set_flags_and_timing(kfc, exp_fcurves, start_frame, stop_frame)
+        set_flags_and_timing(n_kfc, exp_fcurves, start_frame, stop_frame)
 
         if NifOp.props.animation == 'GEOM_NIF':
             # keyframe data is not present in geometry files
@@ -259,43 +258,43 @@ class Animation:
             # insufficient keys, so set the data and we're done!
             if trans_curve:
                 trans = trans_curve[0][1]
-                kfi.translation.x = trans[0]
-                kfi.translation.y = trans[1]
-                kfi.translation.z = trans[2]
+                n_kfi.translation.x = trans[0]
+                n_kfi.translation.y = trans[1]
+                n_kfi.translation.z = trans[2]
             if quat_curve:
                 quat = quat_curve[0][1]
-                kfi.rotation.x = quat.x
-                kfi.rotation.y = quat.y
-                kfi.rotation.z = quat.z
-                kfi.rotation.w = quat.w
+                n_kfi.rotation.x = quat.x
+                n_kfi.rotation.y = quat.y
+                n_kfi.rotation.z = quat.z
+                n_kfi.rotation.w = quat.w
             elif euler_curve:
                 quat = euler_curve[0][1].to_quaternion()
-                kfi.rotation.x = quat.x
-                kfi.rotation.y = quat.y
-                kfi.rotation.z = quat.z
-                kfi.rotation.w = quat.w
+                n_kfi.rotation.x = quat.x
+                n_kfi.rotation.y = quat.y
+                n_kfi.rotation.z = quat.z
+                n_kfi.rotation.w = quat.w
             # ignore scale for now...
-            kfi.scale = 1.0
+            n_kfi.scale = 1.0
             # done!
             return
 
         # add the keyframe data
         if self.nif_export.version < 0x0A020000:
-            kfd = self.nif_export.objecthelper.create_block("NiKeyframeData", exp_fcurves)
-            kfc.data = kfd
+            n_kfd = self.nif_export.objecthelper.create_block("NiKeyframeData", exp_fcurves)
+            n_kfc.data = n_kfd
         else:
             # number of frames is > 1, so add transform data
-            kfd = self.nif_export.objecthelper.create_block("NiTransformData", exp_fcurves)
-            kfi.data = kfd
+            n_kfd = self.nif_export.objecthelper.create_block("NiTransformData", exp_fcurves)
+            n_kfi.data = n_kfd
 
         # TODO [animation] support other interpolation modes, get interpolation from blender?
         #                  probably requires additional data like tangents and stuff
 
         # save all nif keys
         if euler_curve:
-            kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
-            kfd.num_rotation_keys = 1  # *NOT* len(frames) this crashes the engine!
-            for i, coord in enumerate(kfd.xyz_rotations):
+            n_kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
+            n_kfd.num_rotation_keys = 1  # *NOT* len(frames) this crashes the engine!
+            for i, coord in enumerate(n_kfd.xyz_rotations):
                 coord.num_keys = len(euler_curve)
                 coord.interpolation = NifFormat.KeyType.LINEAR_KEY
                 coord.keys.update_size()
@@ -303,40 +302,40 @@ class Animation:
                     key.time = frame / self.fps
                     key.value = euler[i]
         elif quat_curve:
-            kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
-            kfd.num_rotation_keys = len(quat_curve)
-            kfd.quaternion_keys.update_size()
-            for key, (frame, quat) in zip(kfd.quaternion_keys, quat_curve):
+            n_kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
+            n_kfd.num_rotation_keys = len(quat_curve)
+            n_kfd.quaternion_keys.update_size()
+            for key, (frame, quat) in zip(n_kfd.quaternion_keys, quat_curve):
                 key.time = frame / self.fps
                 key.value.w = quat.w
                 key.value.x = quat.x
                 key.value.y = quat.y
                 key.value.z = quat.z
 
-        kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
-        kfd.translations.num_keys = len(trans_curve)
-        kfd.translations.keys.update_size()
-        for key, (frame, trans) in zip(kfd.translations.keys, trans_curve):
+        n_kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
+        n_kfd.translations.num_keys = len(trans_curve)
+        n_kfd.translations.keys.update_size()
+        for key, (frame, trans) in zip(n_kfd.translations.keys, trans_curve):
             key.time = frame / self.fps
             key.value.x, key.value.y, key.value.z = trans
 
-        kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
-        kfd.scales.num_keys = len(scale_curve)
-        kfd.scales.keys.update_size()
-        for key, (frame, scale) in zip(kfd.scales.keys, scale_curve):
+        n_kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
+        n_kfd.scales.num_keys = len(scale_curve)
+        n_kfd.scales.keys.update_size()
+        for key, (frame, scale) in zip(n_kfd.scales.keys, scale_curve):
             key.time = frame / self.fps
             key.value = scale
 
     def export_text_keys(self, block_parent):
-        """Parse the animation groups buffer and write an extra string
-        data block, and attach it to an existing block (typically, the root
-        of the nif tree)."""
+        """Parse the animation groups buffer and write an extra string data block,
+        and attach it to an existing block (typically, the root of the nif tree)."""
         if NifOp.props.animation == 'GEOM_NIF':
             # animation group extra data is not present in geometry only files
             return
-        if "Anim" not in bpy.data.texts:
+        anim = "Anim"
+        if anim not in bpy.data.texts:
             return
-        animtxt = bpy.data.texts["Anim"]
+        anim_txt = bpy.data.texts[anim]
         NifLog.info("Exporting animation groups")
         # -> get animation groups information
 
@@ -350,7 +349,7 @@ class Animation:
         # 051/Idle2: Stop/Idle3: Start
         # 101/Idle3: Loop Start/Idle3: Stop
 
-        slist = animtxt.asLines()
+        slist = anim_txt.asLines()
         flist = []
         dlist = []
         for s in slist:
@@ -360,7 +359,7 @@ class Animation:
             # parse line
             t = s.split('/')
             if len(t) < 2:
-                raise nif_utils.NifError("Syntax error in Anim buffer ('{}')".format(s))
+                raise nif_utils.NifError("Syntax error in Anim buffer ('{0}')".format(s))
             f = int(t[0])
             if (f < bpy.context.scene.frame_start) or (f > bpy.context.scene.frame_end):
                 NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(
@@ -376,17 +375,17 @@ class Animation:
 
         # add a NiTextKeyExtraData block, and refer to this block in the
         # parent node (we choose the root block)
-        textextra = self.nif_export.objecthelper.create_block("NiTextKeyExtraData", animtxt)
-        block_parent.add_extra_data(textextra)
+        n_text_extra = self.nif_export.objecthelper.create_block("NiTextKeyExtraData", anim_txt)
+        block_parent.add_extra_data(n_text_extra)
 
         # create a text key for each frame descriptor
-        textextra.num_text_keys = len(flist)
-        textextra.text_keys.update_size()
-        for i, key in enumerate(textextra.text_keys):
+        n_text_extra.num_text_keys = len(flist)
+        n_text_extra.text_keys.update_size()
+        for i, key in enumerate(n_text_extra.text_keys):
             key.time = flist[i] / self.fps
             key.value = dlist[i]
 
-        return textextra
+        return n_text_extra
 
 
 class TextureAnimation:
@@ -399,39 +398,39 @@ class TextureAnimation:
         #
         # export a NiFlipController
         #
-        # fliptxt is a blender text object containing the flip definitions
+        # fliptxt is a blender text object containing the n_flip definitions
         # texture is the texture object in blender ( texture is used to checked for pack and mipmap flags )
         # target is the NiTexturingProperty
-        # target_tex is the texture to flip ( 0 = base texture, 4 = glow texture )
+        # target_tex is the texture to n_flip ( 0 = base texture, 4 = glow texture )
         #
         # returns exported NiFlipController
         #
         tlist = fliptxt.asLines()
 
         # create a NiFlipController
-        flip = self.nif_export.objecthelper.create_block("NiFlipController", fliptxt)
-        target.add_controller(flip)
+        n_flip = self.nif_export.objecthelper.create_block("NiFlipController", fliptxt)
+        target.add_controller(n_flip)
 
         # fill in NiFlipController's values
-        flip.flags = 8  # active
-        flip.frequency = 1.0
-        flip.start_time = (bpy.context.scene.frame_start - 1) * bpy.context.scene.render.fps
-        flip.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
-        flip.texture_slot = target_tex
+        n_flip.flags = 8  # active
+        n_flip.frequency = 1.0
+        n_flip.start_time = (bpy.context.scene.frame_start - 1) * bpy.context.scene.render.fps
+        n_flip.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
+        n_flip.texture_slot = target_tex
         count = 0
         for t in tlist:
             if len(t) == 0:
                 continue  # skip empty lines
-            # create a NiSourceTexture for each flip
+            # create a NiSourceTexture for each n_flip
             tex = self.nif_export.texturehelper.texture_writer.export_source_texture(texture, t)
-            flip.num_sources += 1
-            flip.sources.update_size()
-            flip.sources[flip.num_sources - 1] = tex
+            n_flip.num_sources += 1
+            n_flip.sources.update_size()
+            n_flip.sources[n_flip.num_sources - 1] = tex
             count += 1
         if count < 2:
             raise nif_utils.NifError(
                 "Error in Texture Flip buffer '{}': must define at least two textures".format(fliptxt.name))
-        flip.delta = (flip.stop_time - flip.start_time) / count
+        n_flip.delta = (n_flip.stop_time - n_flip.start_time) / count
 
 
 class MaterialAnimation:
