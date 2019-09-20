@@ -1,4 +1,4 @@
-'''Script to import/export constraints.'''
+"""Script to import/export constraints."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,25 +37,25 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import mathutils
 from pyffi.formats.nif import NifFormat
 
-import bpy
-import mathutils
 from io_scene_nif.utility.nif_logging import NifLog
 
-class constraint_import():
+
+class constraint_import:
 
     def __init__(self, parent):
         self.nif_import = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
-        
+
     def import_bhk_constraints(self):
         for hkbody in self.nif_import.dict_havok_objects:
             self.import_constraint(hkbody)
-        
+
     def import_constraint(self, hkbody):
         """Imports a bone havok constraint as Blender object constraint."""
-        assert(isinstance(hkbody, NifFormat.bhkRigidBody))
+        assert (isinstance(hkbody, NifFormat.bhkRigidBody))
 
         # check for constraints
         if not hkbody.constraints:
@@ -104,8 +104,8 @@ class constraint_import():
                 else:
                     NifLog.warn("Unknown malleable type ({0}), skipped".format(str(hkconstraint.type)))
                 # extra malleable constraint settings
-                ### damping parameters not yet in Blender Python API
-                ### tau (force between bodies) not supported by Blender
+                # damping parameters not yet in Blender Python API
+                # tau (force between bodies) not supported by Blender
             else:
                 NifLog.warn("Unknown constraint type ({0}), skipped".format(hkconstraint.__class__.__name__))
                 continue
@@ -146,8 +146,7 @@ class constraint_import():
             # pivx/y/z is the pivot point
 
             # set constraint target
-            b_constr.target = \
-                self.nif_import.dict_havok_objects[hkconstraint.entities[1]][0]
+            b_constr.target = self.nif_import.dict_havok_objects[hkconstraint.entities[1]][0]
             # set rigid body type (generic)
             b_constr.pivot_type = 'GENERIC_6_DOF'
             # limiting parameters (limit everything)
@@ -179,24 +178,16 @@ class constraint_import():
                 # set the angle limits
                 # (see http://niftools.sourceforge.net/wiki/Oblivion/Bhk_Objects/Ragdoll_Constraint
                 # for a nice picture explaining this)
-                b_constr.limit_angle_min_x = \
-                    hkdescriptor.plane_min_angle
-                b_constr.limit_angle_max_x = \
-                    hkdescriptor.plane_max_angle
+                b_constr.limit_angle_min_x = hkdescriptor.plane_min_angle
+                b_constr.limit_angle_max_x = hkdescriptor.plane_max_angle
 
-                b_constr.limit_angle_min_y = \
-                    -hkdescriptor.cone_max_angle
-                b_constr.limit_angle_max_y = \
-                    hkdescriptor.cone_max_angle
+                b_constr.limit_angle_min_y = -hkdescriptor.cone_max_angle
+                b_constr.limit_angle_max_y = hkdescriptor.cone_max_angle
 
-                b_constr.limit_angle_min_z = \
-                    hkdescriptor.twist_min_angle
-                b_constr.limit_angle_max_z = \
-                    hkdescriptor.twist_max_angle
-                    
+                b_constr.limit_angle_min_z = hkdescriptor.twist_min_angle
+                b_constr.limit_angle_max_z = hkdescriptor.twist_max_angle
+
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
-                    
-                
 
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -221,8 +212,7 @@ class constraint_import():
                 if (mathutils.Vector.cross(axis_x, axis_y)
                     - axis_z).length > 0.01:
                     # either not orthogonal, or negative orientation
-                    if (mathutils.Vector.cross(-axis_x, axis_y)
-                        - axis_z).length > 0.01:
+                    if (mathutils.Vector.cross(-axis_x, axis_y) - axis_z).length > 0.01:
                         NifLog.warn("Axes are not orthogonal in {0}; Arbitrary orientation has been chosen".format(hkdescriptor.__class__.__name__))
                         axis_z = mathutils.Vector.cross(axis_x, axis_y)
                     else:
@@ -234,11 +224,10 @@ class constraint_import():
                 b_constr.limit_angle_max_x = hkdescriptor.max_angle
                 b_constr.limit_angle_min_x = hkdescriptor.min_angle
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
-                
+
                 if hasattr(hkconstraint, "tau"):
                     b_hkobj.niftools_constraint.tau = hkconstraint.tau
                     b_hkobj.niftools_constraint.damping = hkconstraint.damping
-                
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -258,8 +247,7 @@ class constraint_import():
                 axis_x = mathutils.Vector.cross(axis_y, axis_z)
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
             else:
-                raise ValueError("unknown descriptor %s"
-                                 % hkdescriptor.__class__.__name__)
+                raise ValueError("Unknown descriptor {0}".format(hkdescriptor.__class__.__name__))
 
             # transform pivot point and constraint matrix into object
             # coordinates
@@ -307,16 +295,16 @@ class constraint_import():
             # # note that B' = X * B with X = self.nif_import.dict_bones_extra_matrix[B]
             # # so multiply with the inverse of X
             # for niBone in self.nif_import.dict_bones_extra_matrix:
-                # if niBone.collision_object \
-                   # and niBone.collision_object.body is hkbody:
-                    # transform = mathutils.Matrix(
-                        # self.nif_import.dict_bones_extra_matrix[niBone])
-                    # transform.invert()
-                    # pivot = pivot * transform
-                    # transform = transform.to_3x3()
-                    # axis_z = axis_z * transform
-                    # axis_x = axis_x * transform
-                    # break
+            # if niBone.collision_object \
+            # and niBone.collision_object.body is hkbody:
+            # transform = mathutils.Matrix(
+            # self.nif_import.dict_bones_extra_matrix[niBone])
+            # transform.invert()
+            # pivot = pivot * transform
+            # transform = transform.to_3x3()
+            # axis_z = axis_z * transform
+            # axis_x = axis_x * transform
+            # break
 
             # # cancel out bone tail translation
             # if b_hkobj.parent_bone:
@@ -324,8 +312,7 @@ class constraint_import():
             #         b_hkobj.parent_bone].length
 
             # cancel out object transform
-            transform = mathutils.Matrix(
-                b_hkobj.matrix_local)
+            transform = mathutils.Matrix(b_hkobj.matrix_local)
             transform.invert()
             # pivot = pivot * transform
             transform = transform.to_3x3()
@@ -347,19 +334,15 @@ class constraint_import():
             b_constr.axis_y = constr_euler.y
             b_constr.axis_z = constr_euler.z
             # DEBUG
-            assert((axis_x - mathutils.Vector((1,0,0)) * constr_matrix).length < 0.0001)
-            assert((axis_z - mathutils.Vector((0,0,1)) * constr_matrix).length < 0.0001)
+            assert ((axis_x - mathutils.Vector((1, 0, 0)) * constr_matrix).length < 0.0001)
+            assert ((axis_z - mathutils.Vector((0, 0, 1)) * constr_matrix).length < 0.0001)
 
-            # the generic rigid body type is very buggy... so for simulation
-            # purposes let's transform it into ball and hinge
+            # the generic rigid body type is very buggy... so for simulation purposes let's transform it into ball and hinge
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # cone_twist
                 b_constr.pivot_type = 'CONE_TWIST'
-            elif isinstance(hkdescriptor, (NifFormat.LimitedHingeDescriptor,
-                                         NifFormat.HingeDescriptor)):
+            elif isinstance(hkdescriptor, (NifFormat.LimitedHingeDescriptor, NifFormat.HingeDescriptor)):
                 # (limited) hinge
                 b_constr.pivot_type = 'HINGE'
             else:
-                raise ValueError("unknown descriptor %s"
-                                 % hkdescriptor.__class__.__name__)
-
+                raise ValueError("unknown descriptor {0}".format(hkdescriptor.__class__.__name__))
