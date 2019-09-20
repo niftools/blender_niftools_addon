@@ -46,7 +46,7 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
 
-class constraint_export:
+class Constraint:
 
     def __init__(self, parent):
         self.nif_export = parent
