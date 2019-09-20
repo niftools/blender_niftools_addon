@@ -269,10 +269,10 @@ class ObjectAnimation:
     def import_morph_controller(self, n_node, b_obj, v_map):
         """Import NiGeomMorpherController as shape keys for blender object."""
 
-        morphCtrl = nif_utils.find_controller(n_node, NifFormat.NiGeomMorpherController)
-        if morphCtrl:
+        n_morphCtrl = nif_utils.find_controller(n_node, NifFormat.NiGeomMorpherController)
+        if n_morphCtrl:
             b_mesh = b_obj.data
-            morphData = morphCtrl.data
+            morphData = n_morphCtrl.data
             if morphData.num_morphs:
                 b_obj_action = self.nif_import.animationhelper.create_action(b_obj, b_obj.name + "-Morphs")
                 fps = bpy.context.scene.render.fps
@@ -304,13 +304,12 @@ class ObjectAnimation:
                     # newer versions store keys in the controller
                     if not morph_data.keys:
                         try:
-                            if morphCtrl.interpolators:
-                                morph_data = morphCtrl.interpolators[idxMorph].data.data
-                            elif morphCtrl.interpolator_weights:
-                                morph_data = morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
+                            if n_morphCtrl.interpolators:
+                                morph_data = n_morphCtrl.interpolators[idxMorph].data.data
+                            elif n_morphCtrl.interpolator_weights:
+                                morph_data = n_morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
                         except KeyError:
-                            NifLog.info("Unsupported interpolator '{0}'".format(
-                                type(morphCtrl.interpolator_weights[idxMorph].interpolator)))
+                            NifLog.info("Unsupported interpolator '{0}'".format(type(n_morphCtrl.interpolator_weights[idxMorph].interpolator)))
                             continue
                     # TODO [animation] can we create the fcurve manually - does not seem to work here?
                     # as b_obj.data.shape_keys.animation_data is read-only
@@ -323,7 +322,7 @@ class ObjectAnimation:
 
                     # fcurves = (b_obj.data.shape_keys.animation_data.action.fcurves[-1], )
                     # # set extrapolation to fcurves
-                    # self.nif_import.animationhelper.set_extrapolation(morphCtrl.flags, fcurves)
+                    # self.nif_import.animationhelper.set_extrapolation(n_morphCtrl.flags, fcurves)
                     # # get the interpolation mode
                     # interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( morph_data.interpolation)
                     # TODO [animation] set interpolation once low level access works
@@ -339,11 +338,8 @@ class ObjectAnimation:
         sk_basis = b_obj.shape_key_add("Basis")
         b_mesh.shape_keys.use_relative = False
 
-        morphs = ([(morph, "EGM SYM %i" % i)
-                   for i, morph in enumerate(sym_morphs)]
-                  +
-                  [(morph, "EGM ASYM %i" % i)
-                   for i, morph in enumerate(asym_morphs)])
+        morphs = ([(morph, "EGM SYM %i" % i) for i, morph in enumerate(sym_morphs)] +
+                  [(morph, "EGM ASYM %i" % i) for i, morph in enumerate(asym_morphs)])
 
         for morph_verts, key_name in morphs:
             # convert tuples into vector here so we can simply add in morph_mesh()
@@ -398,14 +394,12 @@ class MaterialAnimation:
                     break
         else:
             return
-        NifLog.info(
-            "Importing material color controller for target color {0} into blender channel {0}".format(n_target_color,
-                                                                                                       b_channel))
+        NifLog.info("Importing material color controller for target color {0} into blender channel {0}".format(n_target_color, b_channel))
+
         # import data as curves
         b_mat_action = self.nif_import.animationhelper.create_action(b_material, "MaterialAction")
 
-        fcurves = self.nif_import.animationhelper.create_fcurves(b_mat_action, b_channel, range(3),
-                                                                 n_matcolor_ctrl.flags)
+        fcurves = self.nif_import.animationhelper.create_fcurves(b_mat_action, b_channel, range(3), n_matcolor_ctrl.flags)
         interp = self.nif_import.animationhelper.get_b_interp_from_n_interp(n_matcolor_ctrl.data.data.interpolation)
         for key in n_matcolor_ctrl.data.data.keys:
             self.nif_import.animationhelper.add_key(fcurves, key.time, key.value.as_list(), interp)
@@ -428,8 +422,7 @@ class MaterialAnimation:
                 # so we have to repeat the import for each used tex slot
                 for i, texture_slot in enumerate(b_material.texture_slots):
                     if texture_slot:
-                        fcurves = self.nif_import.animationhelper.create_fcurves(b_mat_action, "texture_slots[" + str(
-                            i) + "]." + data_path, (array_ind,), n_ctrl.flags)
+                        fcurves = self.nif_import.animationhelper.create_fcurves(b_mat_action, "texture_slots[" + str(i) + "]." + data_path, (array_ind,), n_ctrl.flags)
                         for key in n_uvgroup.keys:
                             if "offset" in data_path:
                                 self.nif_import.animationhelper.add_key(fcurves, key.time, (-key.value,), interp)
@@ -443,9 +436,7 @@ class ArmatureAnimation:
         self.nif_import = parent
 
     def import_kf_standalone(self, kf_root, b_armature_obj, bind_data):
-        """
-        Import a kf animation. Needs a suitable armature in blender scene.
-        """
+        """Import a kf animation. Needs a suitable armature in blender scene."""
 
         NifLog.info("Importing KF tree")
 
@@ -488,8 +479,7 @@ class ArmatureAnimation:
             self.nif_import.animationhelper.set_extrapolation(extend, b_action.fcurves)
 
     # TODO [animation] Is scale param required or can be removed, not used
-    def import_keyframe_controller(self, kfc, b_obj, bone_name=None, ni_bone_bind_scale=None, ni_bone_bind_rot_inv=None,
-                                   ni_bone_bind_trans=None):
+    def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None, n_bone_bind_scale=None, n_bone_bind_rot_inv=None, n_bone_bind_trans=None):
         b_action = b_obj.animation_data.action
 
         if bone_name:
@@ -499,90 +489,88 @@ class ArmatureAnimation:
         scales = []
         rotations = []
         eulers = []
-        kfd = None
+        n_kfd = None
 
         # B-spline curve import
-        if isinstance(kfc, NifFormat.NiBSplineInterpolator):
+        if isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
             # used by WLP2 (tiger.kf), but only for non-LocRotScale data
             # eg. bone stretching - see controlledblock.get_variable_1()
             # do not support this for now, no good representation in Blender
-            if isinstance(kfc, NifFormat.NiBSplineCompFloatInterpolator):
+            if isinstance(n_kfc, NifFormat.NiBSplineCompFloatInterpolator):
                 # pyffi lacks support for this, but the following gets float keys
                 # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
                 return
-            times = list(kfc.get_times())
+            times = list(n_kfc.get_times())
             # just do these temp steps to avoid generating empty fcurves down the line
-            trans_temp = [mathutils.Vector(tup) for tup in kfc.get_translations()]
+            trans_temp = [mathutils.Vector(tup) for tup in n_kfc.get_translations()]
             if trans_temp:
                 translations = zip(times, trans_temp)
-            rot_temp = [mathutils.Quaternion(tup) for tup in kfc.get_rotations()]
+            rot_temp = [mathutils.Quaternion(tup) for tup in n_kfc.get_rotations()]
             if rot_temp:
                 rotations = zip(times, rot_temp)
-            scale_temp = list(kfc.get_scales())
+            scale_temp = list(n_kfc.get_scales())
             if scale_temp:
                 scales = zip(times, scale_temp)
             # Bsplines are Bezier curves
             interp_rot = interp_loc = interp_scale = "BEZIER"
         else:
             # ZT2 & Fallout
-            kfd = kfc.data
+            n_kfd = n_kfc.data
 
         # ZT2 - get extrapolation for every kfc
-        if isinstance(kfc, NifFormat.NiKeyframeController):
-            flags = kfc.flags
+        if isinstance(n_kfc, NifFormat.NiKeyframeController):
+            flags = n_kfc.flags
         # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
         else:
             flags = None
-        if isinstance(kfd, NifFormat.NiKeyframeData):
-            interp_rot = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.rotation_type)
-            interp_loc = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.translations.interpolation)
-            interp_scale = self.nif_import.animationhelper.get_b_interp_from_n_interp(kfd.scales.interpolation)
-            if kfd.rotation_type == 4:
+        if isinstance(n_kfd, NifFormat.NiKeyframeData):
+            interp_rot = self.nif_import.animationhelper.get_b_interp_from_n_interp(n_kfd.rotation_type)
+            interp_loc = self.nif_import.animationhelper.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
+            interp_scale = self.nif_import.animationhelper.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
+            if n_kfd.rotation_type == 4:
                 b_obj.rotation_mode = "XYZ"
                 # uses xyz rotation
-                if kfd.xyz_rotations[0].keys:
+                if n_kfd.xyz_rotations[0].keys:
                     # euler keys need not be sampled at the same time in KFs
                     # but we need complete key sets to do the space conversion
                     # so perform linear interpolation to import all keys properly
 
                     # get all the keys' times
-                    times_x = [key.time for key in kfd.xyz_rotations[0].keys]
-                    times_y = [key.time for key in kfd.xyz_rotations[1].keys]
-                    times_z = [key.time for key in kfd.xyz_rotations[2].keys]
+                    times_x = [key.time for key in n_kfd.xyz_rotations[0].keys]
+                    times_y = [key.time for key in n_kfd.xyz_rotations[1].keys]
+                    times_z = [key.time for key in n_kfd.xyz_rotations[2].keys]
                     # the unique time stamps we have to sample all curves at
                     times_all = sorted(set(times_x + times_y + times_z))
                     # the actual resampling
-                    x_r = interpolate(times_all, times_x, [key.value for key in kfd.xyz_rotations[0].keys])
-                    y_r = interpolate(times_all, times_y, [key.value for key in kfd.xyz_rotations[1].keys])
-                    z_r = interpolate(times_all, times_z, [key.value for key in kfd.xyz_rotations[2].keys])
+                    x_r = interpolate(times_all, times_x, [key.value for key in n_kfd.xyz_rotations[0].keys])
+                    y_r = interpolate(times_all, times_y, [key.value for key in n_kfd.xyz_rotations[1].keys])
+                    z_r = interpolate(times_all, times_z, [key.value for key in n_kfd.xyz_rotations[2].keys])
                 eulers = zip(times_all, zip(x_r, y_r, z_r))
             else:
                 b_obj.rotation_mode = "QUATERNION"
-                rotations = [(key.time, key.value) for key in kfd.quaternion_keys]
+                rotations = [(key.time, key.value) for key in n_kfd.quaternion_keys]
 
-            if kfd.scales.keys:
-                scales = [(key.time, key.value) for key in kfd.scales.keys]
+            if n_kfd.scales.keys:
+                scales = [(key.time, key.value) for key in n_kfd.scales.keys]
 
-            if kfd.translations.keys:
-                translations = [(key.time, key.value) for key in kfd.translations.keys]
+            if n_kfd.translations.keys:
+                translations = [(key.time, key.value) for key in n_kfd.translations.keys]
 
         if eulers:
             NifLog.debug('Rotation keys...(euler)')
-            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "rotation_euler", range(3), flags,
-                                                                     bone_name)
+            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
             for t, val in eulers:
                 key = mathutils.Euler(val)
                 if bone_name:
-                    key = armature.import_keymat(ni_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
+                    key = armature.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
         elif rotations:
             NifLog.debug('Rotation keys...(quaternions)')
-            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "rotation_quaternion", range(4), flags,
-                                                                     bone_name)
+            fcurves = self.nif_import.animationhelper.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
             for t, val in rotations:
                 key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                 if bone_name:
-                    key = armature.import_keymat(ni_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
+                    key = armature.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_rot)
         if translations:
             NifLog.debug('Translation keys...')
@@ -590,8 +578,8 @@ class ArmatureAnimation:
             for t, val in translations:
                 key = mathutils.Vector([val.x, val.y, val.z])
                 if bone_name:
-                    key = armature.import_keymat(ni_bone_bind_rot_inv,
-                                                 mathutils.Matrix.Translation(key - ni_bone_bind_trans)).to_translation()
+                    key = armature.import_keymat(n_bone_bind_rot_inv,
+                                                 mathutils.Matrix.Translation(key - n_bone_bind_trans)).to_translation()
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_loc)
         if scales:
             NifLog.debug('Scale keys...')
@@ -601,28 +589,21 @@ class ArmatureAnimation:
                 self.nif_import.animationhelper.add_key(fcurves, t, key, interp_scale)
 
     def import_object_animation(self, n_block, b_obj):
-        """
-        Loads an animation attached to a nif block (non-skeletal).
-        Becomes the object level animation of the blender object.
-        """
+        """Loads an animation attached to a nif block (non-skeletal). Becomes the object level animation of the blender object."""
         NifLog.debug('Importing animation for object %s'.format(b_obj.name))
 
-        kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
-        if kfc:
+        n_kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
+        if n_kfc:
             self.nif_import.animationhelper.create_action(b_obj, b_obj.name + "-Anim")
-            self.import_keyframe_controller(kfc, b_obj)
+            self.import_keyframe_controller(n_kfc, b_obj)
 
     def import_bone_animation(self, n_block, b_armature_obj, bone_name):
-        """
-        Loads an animation attached to a nif block (skeletal).
-        Becomes the pose bone level animation of the blender object.
-        """
+        """Loads an animation attached to a nif block (skeletal). Becomes the pose bone level animation of the blender object."""
         NifLog.debug('Importing animation for bone %s'.format(bone_name))
 
-        kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
-        if kfc:
+        n_kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
+        if n_kfc:
             bone_bm = nif_utils.import_matrix(n_block)  # base pose
-            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(bone_bm)
-            niBone_bind_rot_inv = niBone_bind_rot.to_4x4().inverted()
-            self.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale, niBone_bind_rot_inv,
-                                            niBone_bind_trans)
+            n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = nif_utils.decompose_srt(bone_bm)
+            niBone_bind_rot_inv = n_bone_bind_rot.to_4x4().inverted()
+            self.import_keyframe_controller(n_kfc, b_armature_obj, bone_name, n_bone_bind_scale, niBone_bind_rot_inv, n_bone_bind_trans)
