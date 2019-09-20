@@ -66,43 +66,43 @@ class Armature:
         # ok, let's create the bone NiNode blocks
         for bone in bones:
             # create a new block for this bone
-            node = self.nif_export.objecthelper.create_ninode(bone)
+            n_bone = self.nif_export.objecthelper.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
-            bones_node[bone.name] = node
+            bones_node[bone.name] = n_bone
 
-            # add the node and the keyframe for this bone
-            node.name = self.nif_export.objecthelper.get_full_name(bone)
+            # add the n_bone and the keyframe for this bone
+            n_bone.name = self.nif_export.objecthelper.get_full_name(bone)
 
             if bone.niftools.boneflags != 0:
-                node.flags = bone.niftools.boneflags
+                n_bone.flags = bone.niftools.boneflags
             else:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     # default for Oblivion bones
                     # note: bodies have 0x000E, clothing has 0x000F
-                    node.flags = 0x000E
+                    n_bone.flags = 0x000E
                 elif NifOp.props.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
                     if bone.children:
                         # default for Civ IV/EE II bones with children
-                        node.flags = 0x0006
+                        n_bone.flags = 0x0006
                     else:
                         # default for Civ IV/EE II final bones
-                        node.flags = 0x0016
+                        n_bone.flags = 0x0016
                 elif NifOp.props.game in ('DIVINITY_2',):
                     if bone.children:
                         # default for Div 2 bones with children
-                        node.flags = 0x0186
+                        n_bone.flags = 0x0186
                     elif bone.name.lower()[-9:] == 'footsteps':
-                        node.flags = 0x0116
+                        n_bone.flags = 0x0116
                     else:
                         # default for Div 2 final bones
-                        node.flags = 0x0196
+                        n_bone.flags = 0x0196
                 else:
-                    node.flags = 0x0002  # default for Morrowind bones
+                    n_bone.flags = 0x0002  # default for Morrowind bones
             # rest pose
-            self.nif_export.objecthelper.set_object_matrix(bone, node)
+            self.nif_export.objecthelper.set_object_matrix(bone, n_bone)
 
-            # per-node animation
-            self.nif_export.animationhelper.export_keyframes(node, arm, bone)
+            # per-bone animation
+            self.nif_export.animationhelper.export_keyframes(n_bone, arm, bone)
 
         # now fix the linkage between the blocks
         for bone in bones:
