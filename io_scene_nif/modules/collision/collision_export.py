@@ -155,7 +155,7 @@ class Collision:
         matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
         offset = matrix.translation
         # calculate the direction unit vector
-        dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
+        v_dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
         extent = b_obj.dimensions.z - b_obj.dimensions.x
         radius = b_obj.dimensions.x / 2
 
@@ -163,10 +163,10 @@ class Collision:
         n_bv.capsule.center.x = offset.x
         n_bv.capsule.center.y = offset.y
         n_bv.capsule.center.z = offset.z
-        n_bv.capsule.origin.x = dir.x
-        n_bv.capsule.origin.y = dir.y
-        n_bv.capsule.origin.z = dir.z
-        # nb properly named in newer nif.xmls
+        n_bv.capsule.origin.x = v_dir.x
+        n_bv.capsule.origin.y = v_dir.y
+        n_bv.capsule.origin.z = v_dir.z
+        # TODO [collision] nb properly named in newer nif.xmls
         n_bv.capsule.unknown_float_1 = extent
         n_bv.capsule.unknown_float_2 = radius
 
