@@ -160,16 +160,16 @@ class Animation:
             fcurve.keyframe_points.insert(frame, k).interpolation = interp
 
     # import animation groups
-    def import_text_keys(self, ni_block):
+    def import_text_keys(self, n_block):
         """Stores the text keys that define animation start and end in a text
         buffer, so that they can be re-exported. Since the text buffer is
         cleared on each import only the last import will be exported
         correctly."""
 
-        if isinstance(ni_block, NifFormat.NiControllerSequence):
-            txk = ni_block.text_keys
+        if isinstance(n_block, NifFormat.NiControllerSequence):
+            txk = n_block.text_keys
         else:
-            txk = ni_block.find(block_type=NifFormat.NiTextKeyExtraData)
+            txk = n_block.find(block_type=NifFormat.NiTextKeyExtraData)
         if txk:
             # get animation text buffer, and clear it if it already exists
             name = "Anim"
