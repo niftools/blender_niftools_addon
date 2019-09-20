@@ -42,14 +42,15 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
+
 class KFFile:
     """Class to load and save a NifFile"""
-    
+
     @staticmethod
     def load_kf(file_path):
         """Loads a Kf file from the given path"""
         NifLog.info("Loading {0}".format(file_path))
-        
+
         kf_file = NifFormat.Data()
 
         # open keyframe file for binary reading
@@ -63,8 +64,7 @@ class KFFile:
                 kf_file.read(kf_stream)
             elif kf_file.version == -1:
                 raise NifError("Unsupported KF version.")
-            else:                    
+            else:
                 raise NifError("Not a KF file.")
-            
-        return kf_file    
-    
+
+        return kf_file

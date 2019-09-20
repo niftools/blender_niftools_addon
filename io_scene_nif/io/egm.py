@@ -42,6 +42,7 @@ from pyffi.formats.egm import EgmFormat
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
+
 class EGMFile:
     """Load and save a FaceGen Egm file"""
 
@@ -49,9 +50,9 @@ class EGMFile:
     def load_egm(file_path):
         """Loads an egm file from the given path"""
         NifLog.info("Loading {0}".format(file_path))
-        
+
         egm_file = EgmFormat.Data()
-        
+
         # open keyframe file for binary reading
         with open(file_path, "rb") as egm_stream:
             # check if nif file is valid
@@ -63,8 +64,7 @@ class EGMFile:
                 egm_file.read(egm_stream)
             elif egm_file.version == -1:
                 raise NifError("Unsupported EGM version.")
-            else:                    
+            else:
                 raise NifError("Not a EGM file.")
-            
+
         return egm_file
-    
