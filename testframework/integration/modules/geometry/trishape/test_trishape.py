@@ -42,32 +42,30 @@ import nose.tools
 
 from integration import Base
 from integration import SingleNif
-from integration.data import gen_data 
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
+from integration.modules.scene import n_gen_header, b_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
+
 
 class TestTriShape(SingleNif):
     """Test base geometry, single blender object."""
 
-    n_name = 'geometry/trishape/test_trishape' # (documented in base class)
+    g_path = 'geometry/trishape'  # (documented in base class)
+    g_name = "test_trishape"
     b_name = 'Cube'
 
     def b_create_header(self):
-        self.n_game = 'OBLIVION'
+        b_gen_header.b_create_oblivion_info()
 
     def b_create_data(self):
-        # (documented in base class)
-        b_obj = b_gen_geometry.b_create_cube(self.b_name)
-        
-        # transform it into something less trivial
-        b_gen_geometry.b_transform_cube(b_obj)
+        b_obj = b_gen_geometry.b_create_cube(self.b_name)  # (documented in base class)
+        b_gen_geometry.b_transform_cube(b_obj)  # transform it into something less trivial
     
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
         b_gen_geometry.b_check_geom_obj(b_obj)
 
     def n_create_header(self):
-        gen_data.n_create_header_oblivion(self.n_data)
+        n_gen_header.n_create_header_oblivion(self.n_data)
 
     def n_create_data(self):
         n_gen_geometry.n_create_blocks(self.n_data)
@@ -77,7 +75,9 @@ class TestTriShape(SingleNif):
         n_trishape = self.n_data.roots[0].children[0]
         n_gen_geometry.n_check_trishape(n_trishape)
 
+
 class TestNonUniformlyScaled(Base):
+
     def setup(self):
         # create a non-uniformly scaled cube
         bpy.ops.mesh.primitive_cube_add()
@@ -86,8 +86,4 @@ class TestNonUniformlyScaled(Base):
  
     @nose.tools.raises(Exception)
     def test_export(self):
-        bpy.ops.export_scene.nif(
-            filepath="test/export/non_uniformly_scaled_cube.nif",
-            log_level='DEBUG',
-            )
-
+        bpy.ops.export_scene.nif(filepath="test/export/non_uniformly_scaled_cube.nif", log_level='DEBUG')

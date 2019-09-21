@@ -40,26 +40,30 @@
 import bpy
 import nose.tools
 
-from pyffi.formats.nif import NifFormat
-
 from integration import SingleNif
-from integration.data import gen_data
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
-from integration.property.material import b_gen_material
-from integration.property.material import n_gen_material
+from integration.modules.scene import n_gen_header, b_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
+from integration.modules.property.material import b_gen_material, n_gen_material
+
 
 class TestGlossProperty(SingleNif):
     """Export and import material meshes with gloss."""
 
-    n_name = "property/material/test_gloss"
+    g_path = "property/material"
+    g_name = "test_gloss"
     b_name = 'Cube'
+
+    def b_create_header(self):
+        b_gen_header.b_create_oblivion_info()
+
+    def n_create_header(self):
+        n_gen_header.n_create_header_oblivion(self.n_data)
 
     def b_create_data(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
         b_mat = b_gen_material.b_create_material_block(b_obj)      
         b_gen_material.b_create_set_default_material_property(b_mat)
-        b_gen_material.b_create_gloss_property(b_mat) # set our gloss value
+        b_gen_material.b_create_gloss_property(b_mat)  # set our gloss value
 
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
@@ -67,9 +71,8 @@ class TestGlossProperty(SingleNif):
         b_mat = b_gen_material.b_check_material_block(b_obj)
         b_gen_material.b_check_gloss_property(b_mat)
 
-
     def n_create_data(self):
-        gen_data.n_create_header_oblivion(self.n_data)
+        n_gen_header.n_create_header_oblivion(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         
         n_trishape = self.n_data.roots[0].children[0]
@@ -89,5 +92,3 @@ class TestGlossProperty(SingleNif):
         
         # check its values
         n_gen_material.n_check_material_gloss_property(n_mat_prop)
-
-    

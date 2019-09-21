@@ -7,14 +7,10 @@ Useful additional params:
 --with-xunit, --with-coverage 
 """
 
-import os
-import site # for fedora: get site-packages into sys.path so it finds nose
 import sys
-
-# Nose internally uses sys.argv for paramslist, prune extras params from chain, add name param 
-sys.argv = ['blender-nosetests'] + sys.argv[6:]
-
-
 import nose
+
+# Nose internally uses sys.argv for paramslist, prune extras params from chain, add name param
+sys.argv = ['blender-nosetests'] + sys.argv[6:]
 nose.run_exit()
 

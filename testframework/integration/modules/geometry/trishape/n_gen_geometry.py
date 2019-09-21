@@ -45,18 +45,17 @@ import nose
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
-
 """Vertex coordinates for testing."""
 b_verts = {
-        (-7.5, 7.5, 3.5),
-        (7.5, 3.75, 1.75),
-        (7.5, -3.75, -1.75),
-        (7.5, 3.75, -1.75),
-        (-7.5, 7.5, -3.5),
-        (-7.5, -7.5, 3.5),
-        (7.5, -3.75, 1.75),
-        (-7.5, -7.5, -3.5),
-        }
+    (-7.5, 7.5, 3.5),
+    (7.5, 3.75, 1.75),
+    (7.5, -3.75, -1.75),
+    (7.5, 3.75, -1.75),
+    (-7.5, 7.5, -3.5),
+    (-7.5, -7.5, 3.5),
+    (7.5, -3.75, 1.75),
+    (-7.5, -7.5, -3.5),
+}
 
 
 def n_create_blocks(n_data):
@@ -76,7 +75,7 @@ def n_create_blocks(n_data):
         n_ninode.num_children = 1
         n_ninode.children.update_size()
         n_ninode.children[0] = n_nitrishape_1
-        
+
     with ref(n_nitrishape_1) as n_nitrishape:
         n_nitrishape.name = b'Cube'
         n_nitrishape.flags = 14
@@ -94,10 +93,10 @@ def n_create_blocks(n_data):
             n_matrix33.m_13 = 0.5
             n_matrix33.m_23 = 0.75
             n_matrix33.m_33 = 0.433012
-            assert(n_matrix33.is_rotation()) # make sure in case we change values:
+            assert (n_matrix33.is_rotation())  # make sure in case we change values:
         n_nitrishape.scale = 0.75
         n_nitrishape.data = n_nitrishapedata_1
-        
+
     with ref(n_nitrishapedata_1) as n_nitrishapedata:
         n_nitrishapedata.has_vertices = True
         n_nitrishapedata.num_vertices = 8
@@ -134,7 +133,7 @@ def n_create_blocks(n_data):
             n_vector3.x = 7.5
             n_vector3.y = -3.75
             n_vector3.z = 1.75
-            
+
         n_nitrishapedata.has_normals = True
         n_nitrishapedata.normals.update_size()
         with ref(n_nitrishapedata.normals[0]) as n_vector3:
@@ -169,14 +168,14 @@ def n_create_blocks(n_data):
             n_vector3.x = 0.669027
             n_vector3.y = -0.4991
             n_vector3.z = 0.550676
-            
+
         with ref(n_nitrishapedata.center) as n_vector3:
             n_vector3.x = 4.76837e-07
             n_vector3.y = 2.14577e-06
-        
+
         n_nitrishapedata.radius = 11.1692
         n_nitrishapedata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
-        
+
         n_nitrishapedata.num_triangles = 12
         n_nitrishapedata.num_triangle_points = 36
         n_nitrishapedata.has_triangles = True
@@ -224,50 +223,50 @@ def n_create_blocks(n_data):
             n_triangle.v_1 = 4
             n_triangle.v_2 = 3
             n_triangle.v_3 = 5
-    return n_data
+
 
 def n_check_trishape(n_trishape):
     nose.tools.assert_is_instance(n_trishape, NifFormat.NiTriShape)
     n_check_transform(n_trishape)
-    
+
     n_trishapedata = n_trishape.data
     n_check_trishape_data(n_trishapedata)
     n_check_8_vertices(n_trishapedata)
 
-def n_check_transform(n_trishape):        
-    nose.tools.assert_equal(n_trishape.translation.as_tuple(),(20.0, 20.0, 20.0)) # location
-    
+
+def n_check_transform(n_trishape):
+    nose.tools.assert_equal(n_trishape.translation.as_tuple(), (20.0, 20.0, 20.0))  # location
+
     n_rot_eul = mathutils.Matrix(n_trishape.rotation.as_tuple()).to_euler()
-    nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < NifFormat.EPSILON, True) # x rotation
-    nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < NifFormat.EPSILON, True) # y rotation
-    nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < NifFormat.EPSILON, True) # z rotation
-    
-    nose.tools.assert_equal(n_trishape.scale - 0.75 < NifFormat.EPSILON, True) # scale
+    nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < NifFormat.EPSILON, True)  # x rotation
+    nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < NifFormat.EPSILON, True)  # y rotation
+    nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < NifFormat.EPSILON, True)  # z rotation
+
+    nose.tools.assert_equal(n_trishape.scale - 0.75 < NifFormat.EPSILON, True)  # scale
+
 
 def n_check_trishape_data(n_trishape_data):
     nose.tools.assert_true(n_trishape_data.has_vertices)
-    
+
     nose.tools.assert_equal(n_trishape_data.num_triangles, 12)
-    
-    #TODO FIXME
+
+    # TODO [object][flags] check
     # nose.tools.assert_equal(n_trishape_data.consistency_flags, NifFormat.ConsistencyType.CT_STATIC)
-    
-    
+
+
 def n_check_8_vertices(n_trishape_data):
     nose.tools.assert_equal(n_trishape_data.num_vertices, 8)
     verts = {
-        tuple(round(co, 4) for co in vert.as_list())
-        for vert in n_trishape_data.vertices
-        }
+        tuple(round(co, 4) for co in vert.as_list()) for vert in n_trishape_data.vertices
+    }
     nose.tools.assert_set_equal(verts, b_verts)
-    
-    #See Issue #26
-    #nose.tools.assert_true(n_trishape_data.has_normals)
-    #nose.tools.assert_equal(n_trishape_data.num_normals, 8)
 
-    
-    #TODO: Additional checks needed.
-    
-    #TriData
+    # See Issue #26
+    # nose.tools.assert_true(n_trishape_data.has_normals)
+    # nose.tools.assert_equal(n_trishape_data.num_normals, 8)
+
+    # TODO [object][flags] Additional checks needed.
+
+    # TriData
     #    Flags: blender - Continue, Maya - Triangles, Pyffi - Bound.
     #    radius:
