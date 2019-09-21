@@ -1,4 +1,4 @@
-'''Helper funcitons to create and check bhkBoxShape based collisions'''
+"""Helper funcitons to create and check bhkBoxShape based collisions"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -42,9 +42,9 @@ import nose
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
+
 def n_update_bhkrigidbody(n_bhkrigidbody):
-    
-    n_bhkrigidbody.layer = NifFormat.OblivionLayer.OL_CLUTTER # 4
+    n_bhkrigidbody.layer = NifFormat.OblivionLayer.OL_CLUTTER  # 4
     n_bhkrigidbody.layer_copy = n_bhkrigidbody.layer
     n_bhkrigidbody.col_filter = 1
     n_bhkrigidbody.col_filter_copy = n_bhkrigidbody.col_filter
@@ -60,7 +60,7 @@ def n_update_bhkrigidbody(n_bhkrigidbody):
     n_bhkrigidbody.unknown_7_shorts[3] = 62977
     n_bhkrigidbody.unknown_7_shorts[4] = 65535
     n_bhkrigidbody.unknown_7_shorts[5] = 44
-    
+
     with ref(n_bhkrigidbody.inertia) as n_inertiamatrix:
         n_inertiamatrix.m_11 = 0.304209
         n_inertiamatrix.m_12 = 0.0631379
@@ -71,39 +71,39 @@ def n_update_bhkrigidbody(n_bhkrigidbody):
         n_inertiamatrix.m_31 = 0.0364526
         n_inertiamatrix.m_32 = 0.0546789
         n_inertiamatrix.m_33 = 0.293686
-        
+
     with ref(n_bhkrigidbody.center) as n_vector4:
         n_vector4.x = 2.85714
         n_vector4.y = 2.85714
         n_vector4.z = 2.85714
-        
+
     n_bhkrigidbody.linear_damping = 0.1
     n_bhkrigidbody.angular_damping = 0.05
     n_bhkrigidbody.friction = 0.3
     n_bhkrigidbody.restitution = 0.3
     n_bhkrigidbody.max_angular_velocity = 31.4159
     n_bhkrigidbody.penetration_depth = 0.15
-    n_bhkrigidbody.motion_system = NifFormat.MotionSystem.MO_SYS_BOX # 4
-    n_bhkrigidbody.quality_type = NifFormat.MotionQuality.MO_QUAL_MOVING # 4
+    n_bhkrigidbody.motion_system = NifFormat.MotionSystem.MO_SYS_BOX  # 4
+    n_bhkrigidbody.quality_type = NifFormat.MotionQuality.MO_QUAL_MOVING  # 4
+
 
 def n_check_bhkrigidbody_data(n_bhkrigidbody):
-    
-    nose.tools.assert_equal(n_bhkrigidbody.layer, NifFormat.OblivionLayer.OL_CLUTTER) # 4
+    nose.tools.assert_equal(n_bhkrigidbody.layer, NifFormat.OblivionLayer.OL_CLUTTER)  # 4
     nose.tools.assert_equal(n_bhkrigidbody.layer, n_bhkrigidbody.layer_copy)
     nose.tools.assert_equal(n_bhkrigidbody.col_filter, 1)
     nose.tools.assert_equal(n_bhkrigidbody.col_filter, n_bhkrigidbody.col_filter_copy)
-    nose.tools.assert_equal(n_bhkrigidbody.motion_system, NifFormat.MotionSystem.MO_SYS_BOX) # 4
-    nose.tools.assert_equal(n_bhkrigidbody.quality_type, NifFormat.MotionQuality.MO_QUAL_MOVING) # 4
+    nose.tools.assert_equal(n_bhkrigidbody.motion_system, NifFormat.MotionSystem.MO_SYS_BOX)  # 4
+    nose.tools.assert_equal(n_bhkrigidbody.quality_type, NifFormat.MotionQuality.MO_QUAL_MOVING)  # 4
+
 
 def n_attach_bhkconvextransform(n_bhkshape):
     '''Attaches a bhkTransform shape to store transform information'''
-    
+
     n_bhkconvextransformshape = NifFormat.bhkConvexTransformShape()
     n_bhkshape.shape = n_bhkconvextransformshape
-    
-    with ref(n_bhkconvextransformshape) as n_bhktransform:
 
-        n_bhktransform.material = NifFormat.HavokMaterial.HAV_MAT_WOOD # 9
+    with ref(n_bhkconvextransformshape) as n_bhktransform:
+        n_bhktransform.material = NifFormat.HavokMaterial.HAV_MAT_WOOD  # 9
         n_bhktransform.unknown_float_1 = 0.1
         n_bhktransform.unknown_8_bytes.update_size()
         n_bhktransform.unknown_8_bytes[0] = 96
@@ -114,7 +114,7 @@ def n_attach_bhkconvextransform(n_bhkshape):
         n_bhktransform.unknown_8_bytes[5] = 9
         n_bhktransform.unknown_8_bytes[6] = 253
         n_bhktransform.unknown_8_bytes[7] = 4
-        
+
         with ref(n_bhktransform.transform) as n_matrix44:
             n_matrix44.m_11 = -2.23517e-08
             n_matrix44.m_21 = 0.649519
@@ -128,23 +128,23 @@ def n_attach_bhkconvextransform(n_bhkshape):
             n_matrix44.m_14 = 2.85714
             n_matrix44.m_24 = 2.85714
             n_matrix44.m_34 = 2.85714
-            
+
     return n_bhktransform
 
 
 def n_check_bhkconvextransform_data(n_bhkrigidbody):
-    nose.tools.assert_equal(n_bhkrigidbody.shape != None, True)
+    nose.tools.assert_true(n_bhkrigidbody.shape != None)
     n_bhktransform = n_bhkrigidbody.shape
     nose.tools.assert_is_instance(n_bhktransform, NifFormat.bhkConvexTransformShape)
-    
+
     return n_bhktransform
 
+
 def n_attach_bhkboxshape(n_bhkshape):
-    
     n_bhkboxshape = NifFormat.bhkBoxShape()
     n_bhkshape.shape = n_bhkboxshape
-    
-    n_bhkboxshape.material = NifFormat.HavokMaterial.HAV_MAT_WOOD # 9    
+
+    n_bhkboxshape.material = NifFormat.HavokMaterial.HAV_MAT_WOOD  # 9
     n_bhkboxshape.radius = 0.1
     n_bhkboxshape.unknown_8_bytes.update_size()
     n_bhkboxshape.unknown_8_bytes[0] = 107
@@ -159,11 +159,10 @@ def n_attach_bhkboxshape(n_bhkshape):
         n_vector3.x = 1.07143
         n_vector3.y = 1.07143
         n_vector3.z = 0.5
-    n_bhkboxshape.minimum_size = 0.5    
+    n_bhkboxshape.minimum_size = 0.5
+
 
 def n_check_bhkboxshape_data(n_bhkconvextransfrom):
     nose.tools.assert_equal(n_bhkconvextransfrom.shape != None, True)
     n_bhkboxshape = n_bhkconvextransfrom.shape
     nose.tools.assert_is_instance(n_bhkboxshape, NifFormat.bhkBoxShape)
-    
-    
