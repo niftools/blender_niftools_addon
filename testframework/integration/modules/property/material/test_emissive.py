@@ -83,7 +83,6 @@ class TestEmissiveMaterial(SingleNif):
         n_gen_geometry.n_check_trishape(n_nitrishape)
 
         # check we have property and correct type
-        print(n_nitrishape)
         nose.tools.assert_equal(n_nitrishape.num_properties, 1)
         n_mat_prop = n_nitrishape.properties[0]        
         n_gen_material.n_check_material_block(n_mat_prop)
