@@ -38,17 +38,19 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import nose.tools
 
 from integration import SingleNif
-from integration.data import n_gen_header , b_gen_header
-from integration.object import b_gen_object, n_gen_object
+from integration.modules.scene import n_gen_header, b_gen_header
+from integration.modules.object import b_gen_object, n_gen_object
+
+PATH = 'object/test_object'
+
 
 class TestNiNode(SingleNif):
     """Test base geometry, single blender object."""
 
-    n_name = 'object/test_object' # (documented in base class)
-    n_game = 'OBLIVION'
+    g_path = PATH  # (documented in base class)
+    g_name = 'test_object'
     b_name = 'NifObject'
 
     def b_create_header(self):
@@ -67,10 +69,8 @@ class TestNiNode(SingleNif):
 
     def n_create_data(self):
         n_gen_object.n_create_blocks(self.n_data)
-        return self.n_data
 
     def n_check_data(self):
         n_ninode = self.n_data.roots[0].children[0]
         n_gen_object.n_check_ninode(n_ninode)
         n_gen_object.n_check_transform(n_ninode)
-
