@@ -2,48 +2,38 @@ import nose
 
 import bpy
 import addon_utils    
-nif_module_name = "io_scene_nif"
 
-def test_enable_addon():
-    """Enables the nif scripts addon, so all tests can use it."""
-    try:
-        addon_utils.enable(module_name=nif_module_name, default_set=True, persistent=False, handle_error=None)
-    except:
-        pass
-    
-    enabled = False
-    modules = bpy.context.user_preferences.addons.keys()
-    if(nif_module_name in modules):
-        enabled = True
-        
-    nose.tools.assert_true(enabled)
-    
-    
-def test_dependancies():
-    try:
-        import pyffi
-    except:
-        print("Dependancy was not found, ensure that pyffi was built and included with the installer")
-        assert(False)
-    
-    
-def test_disable_addon():
-    """Disables the nif scripts addon, so all tests can use it."""
-    
-    enabled = False
-    if(nif_module_name in bpy.context.user_preferences.addons.keys()):
-        enabled = True
 
-    nose.tools.assert_true(enabled)
-    
-    try:
-        addon_utils.disable(module_name=nif_module_name, default_set=True, handle_error=None)
-    except:
-        pass
-    
-    disabled = False
-    modules = bpy.context.user_preferences.addons.keys()
-    if(nif_module_name not in modules):
-        disabled = True
-        
-    nose.tools.assert_true(disabled)
+class TestSmokeTests:
+
+    nif_module_name = "io_scene_nif"
+
+    def test_ordered_test(self):
+        if self.is_enabled():
+            self._disable_addon()
+        self._enable_addon()
+        self._disable_addon()
+
+    def _enable_addon(self):
+        """Enables the nif scripts addon, so all tests can use it."""
+        addon_utils.enable(module_name=self.nif_module_name, default_set=True, persistent=False, handle_error=None)
+        nose.tools.assert_true(self.is_enabled())
+        print("Addon enabled successfully")
+        try:
+            import io_scene_nif
+        except ImportError:
+            print("Failed to import io_scene_nif module")
+            assert False
+        try:
+            import pyffi
+        except ImportError:
+            print("Dependancy was not found, ensure that pyffi was built and included with the installer")
+            assert False
+
+    def _disable_addon(self):
+        """Disables the nif scripts addon, so all tests can use it."""
+        addon_utils.disable(module_name=self.nif_module_name, default_set=True, handle_error=None)
+        nose.tools.assert_false(self.is_enabled())
+
+    def is_enabled(self):
+        return self.nif_module_name in bpy.context.user_preferences.addons.keys()

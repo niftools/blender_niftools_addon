@@ -40,28 +40,31 @@
 import bpy
 import nose.tools
 
-from pyffi.formats.nif import NifFormat
-
 from integration import SingleNif
-from integration.data import gen_data
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
-from integration.property.material import b_gen_material
-from integration.property.material import n_gen_material
-from integration.property.specular import b_gen_specular
-from integration.property.specular import n_gen_specular
+from integration.modules.scene import n_gen_header, b_gen_header
+from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
+from integration.modules.property.material import b_gen_material, n_gen_material
+from integration.modules.property.specular import b_gen_specular, n_gen_specular
+
 
 class TestSpecularProperty(SingleNif):
     """Test import/export of meshes with material based specular property."""
     
-    n_name = "property/specular/test_specular"
+    g_path = "property/specular"
+    g_name = "test_specular"
     b_name = "Cube"
-    
+
+    def b_create_header(self):
+        b_gen_header.b_create_oblivion_info()
+
+    def n_create_header(self):
+        n_gen_header.n_create_header_oblivion(self.n_data)
+
     def b_create_data(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
         b_mat = b_gen_material.b_create_material_block(b_obj)
         b_gen_material.b_create_set_default_material_property(b_mat)
-        b_gen_specular.b_create_alter_specular_property(b_mat) # update specular
+        b_gen_specular.b_create_alter_specular_property(b_mat)  # update specular
 
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
@@ -70,12 +73,11 @@ class TestSpecularProperty(SingleNif):
         b_gen_specular.b_check_specular_property(b_mat)
 
     def n_create_data(self):
-        gen_data.n_create_header_oblivion(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         n_trishape = self.n_data.roots[0].children[0]
         n_gen_material.n_attach_material_prop(n_trishape)
-        n_gen_specular.n_alter_material_specular(n_trishape.properties[0]) # set material alpha
-        n_gen_specular.n_attach_specular_prop(n_trishape) # add nialphaprop
+        n_gen_specular.n_alter_material_specular(n_trishape.properties[0])  # set material alpha
+        n_gen_specular.n_attach_specular_prop(n_trishape)  # add nialphaprop
         return self.n_data
 
     def n_check_data(self):
