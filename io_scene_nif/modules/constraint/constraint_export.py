@@ -1,4 +1,4 @@
-'''Script to export constraints.'''
+"""Script to export constraints."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -46,12 +46,12 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
 
-class constraint_export():
+class Constraint:
 
     def __init__(self, parent):
         self.nif_export = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
-        
+
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
 
@@ -76,47 +76,36 @@ class constraint_export():
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.nif_export.block_to_obj.items():
-                    if isinstance(otherbody, NifFormat.bhkRigidBody) \
-                        and otherobj is b_obj:
+                    if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj is b_obj:
                         hkbody = otherbody
                         break
                 else:
                     # no collision body for this object
-                    raise nif_utils.NifError(
-                        "Object %s has a rigid body constraint,"
-                        " but is not exported as collision object"
-                        % b_obj.name)
+                    raise nif_utils.NifError("Object {0} has a rigid body constraint, but is not exported as collision object".format(b_obj.name))
+
                 # yes there is a rigid body constraint
                 # is it of a type that is supported?
                 if b_constr.pivot_type == 'CONE_TWIST':
                     # ball
-                    if b_obj.rigid_body.enabled == True:
-                        hkconstraint = self.nif_export.objecthelper.create_block(
-                            "bhkRagdollConstraint", b_constr)
+                    if b_obj.rigid_body.enabled:
+                        n_bhkconstraint = self.nif_export.objecthelper.create_block("bhkRagdollConstraint", b_constr)
                     else:
-                        hkconstraint = self.nif_export.objecthelper.create_block(
-                            "bhkMalleableConstraint", b_constr)
-                        hkconstraint.type = 7
-                    hkdescriptor = hkconstraint.ragdoll
+                        n_bhkconstraint = self.nif_export.objecthelper.create_block("bhkMalleableConstraint", b_constr)
+                        n_bhkconstraint.type = 7
+                    n_bhkdescriptor = n_bhkconstraint.ragdoll
                 elif b_constr.pivot_type == 'HINGE':
                     # hinge
-                    if b_obj.rigid_body.enabled == True:
-                        hkconstraint = self.nif_export.objecthelper.create_block(
-                            "bhkLimitedHingeConstraint", b_constr)
+                    if b_obj.rigid_body.enabled:
+                        n_bhkconstraint = self.nif_export.objecthelper.create_block("bhkLimitedHingeConstraint", b_constr)
                     else:
-                        hkconstraint = self.nif_export.objecthelper.create_block(
-                            "bhkMalleableConstraint", b_constr)
-                        hkconstraint.type = 2
-                    hkdescriptor = hkconstraint.limited_hinge
+                        n_bhkconstraint = self.nif_export.objecthelper.create_block("bhkMalleableConstraint", b_constr)
+                        n_bhkconstraint.type = 2
+                    n_bhkdescriptor = n_bhkconstraint.limited_hinge
                 else:
-                    raise nif_utils.NifError(
-                        "Unsupported rigid body joint type (%i),"
-                        " only ball and hinge are supported."
-                        % b_constr.type)
+                    raise nif_utils.NifError("Unsupported rigid body joint type ({0}), only ball and hinge are supported.".format(b_constr.type))
 
-                # defaults and getting object properties for user
-                # settings (should use constraint properties, but
-                # blender does not have those...)
+                # defaults and getting object properties for user settings (should use constraint properties,
+                # but blender does not have those...)
                 if b_constr.limit_angle_max_x != 0:
                     max_angle = b_constr.limit_angle_max_x
                 else:
@@ -125,34 +114,30 @@ class constraint_export():
                     min_angle = b_constr.limit_angle_min_x
                 else:
                     min_angle = 0.0
-                # friction: again, just picking a reasonable value if
-                # no real value given
+
+                # friction: again, just picking a reasonable value if no real value given
                 if b_obj.niftools_constraint.LHMaxFriction != 0:
                     max_friction = b_obj.niftools_constraint.LHMaxFriction
-                    
-                
                 else:
-                    if isinstance(hkconstraint,
-                                  NifFormat.bhkMalleableConstraint):
-                        # malleable typically have 0
-                        # (perhaps because they have a damping parameter)
+                    if isinstance(n_bhkconstraint, NifFormat.bhkMalleableConstraint):
+                        # malleable typically have 0 (perhaps because they have a damping parameter)
                         max_friction = 0
                     else:
                         # non-malleable typically have 10
                         if NifOp.props.game == 'FALLOUT_3':
                             max_friction = 100
-                        else: # oblivion
+                        else:  # oblivion
                             max_friction = 10
 
                 # parent constraint to hkbody
                 hkbody.num_constraints += 1
                 hkbody.constraints.update_size()
-                hkbody.constraints[-1] = hkconstraint
+                hkbody.constraints[-1] = n_bhkconstraint
 
-                # export hkconstraint settings
-                hkconstraint.num_entities = 2
-                hkconstraint.entities.update_size()
-                hkconstraint.entities[0] = hkbody
+                # export n_bhkconstraint settings
+                n_bhkconstraint.num_entities = 2
+                n_bhkconstraint.entities.update_size()
+                n_bhkconstraint.entities[0] = hkbody
                 # is there a target?
                 targetobj = b_constr.target
                 if not targetobj:
@@ -160,36 +145,31 @@ class constraint_export():
                     continue
                 # find target's bhkRigidBody
                 for otherbody, otherobj in self.nif_export.block_to_obj.items():
-                    if isinstance(otherbody, NifFormat.bhkRigidBody) \
-                        and otherobj == targetobj:
-                        hkconstraint.entities[1] = otherbody
+                    if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj == targetobj:
+                        n_bhkconstraint.entities[1] = otherbody
                         break
                 else:
                     # not found
-                    raise nif_utils.NifError(
-                        "Rigid body target not exported in nif tree"
-                        " check that %s is selected during export." % targetobj)
+                    raise nif_utils.NifError("Rigid body target not exported in nif tree check that {0} is selected during export.".format(targetobj))
+
                 # priority
-                hkconstraint.priority = 1
+                n_bhkconstraint.priority = 1
                 # extra malleable constraint settings
-                if isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
+                if isinstance(n_bhkconstraint, NifFormat.bhkMalleableConstraint):
                     # unknowns
-                    hkconstraint.unknown_int_2 = 2
-                    hkconstraint.unknown_int_3 = 1
+                    n_bhkconstraint.unknown_int_2 = 2
+                    n_bhkconstraint.unknown_int_3 = 1
                     # force required to keep bodies together
-                    hkconstraint.tau = b_obj.niftools_constraint.tau
-                    hkconstraint.damping = b_obj.niftools_constraint.damping
+                    n_bhkconstraint.tau = b_obj.niftools_constraint.tau
+                    n_bhkconstraint.damping = b_obj.niftools_constraint.damping
 
                 # calculate pivot point and constraint matrix
-                pivot = mathutils.Vector([
-                    b_constr.pivot_x,
-                    b_constr.pivot_y,
-                    b_constr.pivot_z,
-                    ]) / self.HAVOK_SCALE
-                constr_matrix = mathutils.Euler((
-                    b_constr.axis_x,
-                    b_constr.axis_y,
-                    b_constr.axis_z))
+                pivot = mathutils.Vector([b_constr.pivot_x,
+                                          b_constr.pivot_y,
+                                          b_constr.pivot_z]) / self.HAVOK_SCALE
+                constr_matrix = mathutils.Euler((b_constr.axis_x,
+                                                 b_constr.axis_y,
+                                                 b_constr.axis_z))
                 constr_matrix = constr_matrix.to_matrix()
 
                 # transform pivot point and constraint matrix into bhkRigidBody
@@ -214,73 +194,68 @@ class constraint_export():
 
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
-                transform = mathutils.Matrix(
-                    b_obj.matrix_local)
+                transform = mathutils.Matrix(b_obj.matrix_local)
                 # pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.to_3x3()
 
-                # export hkdescriptor pivot point
-                # hkdescriptor.pivot_a.x = pivot[0]
-                # hkdescriptor.pivot_a.y = pivot[1]
-                # hkdescriptor.pivot_a.z = pivot[2]
-                # export hkdescriptor axes and other parameters
+                # export n_bhkdescriptor pivot point
+                # n_bhkdescriptor.pivot_a.x = pivot[0]
+                # n_bhkdescriptor.pivot_a.y = pivot[1]
+                # n_bhkdescriptor.pivot_a.z = pivot[2]
+                # export n_bhkdescriptor axes and other parameters
                 # (also see import_nif.py NifImport.import_bhk_constraints)
-                axis_x = mathutils.Vector([1,0,0]) * constr_matrix
-                axis_y = mathutils.Vector([0,1,0]) * constr_matrix
-                axis_z = mathutils.Vector([0,0,1]) * constr_matrix
-                    
-                if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
+                axis_x = mathutils.Vector([1, 0, 0]) * constr_matrix
+                axis_y = mathutils.Vector([0, 1, 0]) * constr_matrix
+                axis_z = mathutils.Vector([0, 0, 1]) * constr_matrix
+
+                if isinstance(n_bhkdescriptor, NifFormat.RagdollDescriptor):
                     # z axis is the twist vector
-                    hkdescriptor.twist_a.x = axis_z[0]
-                    hkdescriptor.twist_a.y = axis_z[1]
-                    hkdescriptor.twist_a.z = axis_z[2]
+                    n_bhkdescriptor.twist_a.x = axis_z[0]
+                    n_bhkdescriptor.twist_a.y = axis_z[1]
+                    n_bhkdescriptor.twist_a.z = axis_z[2]
                     # x axis is the plane vector
-                    hkdescriptor.plane_a.x = axis_x[0]
-                    hkdescriptor.plane_a.y = axis_x[1]
-                    hkdescriptor.plane_a.z = axis_x[2]
+                    n_bhkdescriptor.plane_a.x = axis_x[0]
+                    n_bhkdescriptor.plane_a.y = axis_x[1]
+                    n_bhkdescriptor.plane_a.z = axis_x[2]
                     # angle limits
                     # take them twist and plane to be 45 deg (3.14 / 4 = 0.8)
 
-                    hkdescriptor.plane_min_angle = b_constr.limit_angle_min_x
-                    hkdescriptor.plane_max_angle = b_constr.limit_angle_max_x
+                    n_bhkdescriptor.plane_min_angle = b_constr.limit_angle_min_x
+                    n_bhkdescriptor.plane_max_angle = b_constr.limit_angle_max_x
 
-                    hkdescriptor.cone_max_angle = b_constr.limit_angle_max_y
+                    n_bhkdescriptor.cone_max_angle = b_constr.limit_angle_max_y
 
-                    hkdescriptor.twist_min_angle = b_constr.limit_angle_min_z
-                    hkdescriptor.twist_max_angle = b_constr.limit_angle_max_z
-                    
+                    n_bhkdescriptor.twist_min_angle = b_constr.limit_angle_min_z
+                    n_bhkdescriptor.twist_max_angle = b_constr.limit_angle_max_z
+
                     # same for maximum cone angle
-                    hkdescriptor.max_friction = max_friction
-                elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
+                    n_bhkdescriptor.max_friction = max_friction
+
+                elif isinstance(n_bhkdescriptor, NifFormat.LimitedHingeDescriptor):
                     # y axis is the zero angle vector on the plane of rotation
-                    hkdescriptor.perp_2_axle_in_a_1.x = axis_y[0]
-                    hkdescriptor.perp_2_axle_in_a_1.y = axis_y[1]
-                    hkdescriptor.perp_2_axle_in_a_1.z = axis_y[2]
+                    n_bhkdescriptor.perp_2_axle_in_a_1.x = axis_y[0]
+                    n_bhkdescriptor.perp_2_axle_in_a_1.y = axis_y[1]
+                    n_bhkdescriptor.perp_2_axle_in_a_1.z = axis_y[2]
                     # x axis is the axis of rotation
-                    hkdescriptor.axle_a.x = axis_x[0]
-                    hkdescriptor.axle_a.y = axis_x[1]
-                    hkdescriptor.axle_a.z = axis_x[2]
-                    # z is the remaining axis determining the positive
-                    # direction of rotation
-                    hkdescriptor.perp_2_axle_in_a_2.x = axis_z[0]
-                    hkdescriptor.perp_2_axle_in_a_2.y = axis_z[1]
-                    hkdescriptor.perp_2_axle_in_a_2.z = axis_z[2]
-                    # angle limits
-                    # typically, the constraint on one side is defined
-                    # by the z axis
-                    hkdescriptor.min_angle = min_angle
+                    n_bhkdescriptor.axle_a.x = axis_x[0]
+                    n_bhkdescriptor.axle_a.y = axis_x[1]
+                    n_bhkdescriptor.axle_a.z = axis_x[2]
+                    # z is the remaining axis determining the positive direction of rotation
+                    n_bhkdescriptor.perp_2_axle_in_a_2.x = axis_z[0]
+                    n_bhkdescriptor.perp_2_axle_in_a_2.y = axis_z[1]
+                    n_bhkdescriptor.perp_2_axle_in_a_2.z = axis_z[2]
+                    # angle limits typically, the constraint on one side is defined by the z axis
+                    n_bhkdescriptor.min_angle = min_angle
                     # the maximum axis is typically about 90 degrees
                     # 3.14 / 2 = 1.5
-                    hkdescriptor.max_angle = max_angle
+                    n_bhkdescriptor.max_angle = max_angle
                     # friction
-                    hkdescriptor.max_friction = max_friction
+                    n_bhkdescriptor.max_friction = max_friction
                 else:
-                    raise ValueError("unknown descriptor %s"
-                                     % hkdescriptor.__class__.__name__)
+                    raise ValueError("unknown descriptor {0}".format(n_bhkdescriptor.__class__.__name__))
 
                 # do AB
-                hkconstraint.update_a_b(root_block)
-                hkdescriptor.pivot_b.x = pivot[0]
-                hkdescriptor.pivot_b.y = pivot[1]
-                hkdescriptor.pivot_b.z = pivot[2]
-
+                n_bhkconstraint.update_a_b(root_block)
+                n_bhkdescriptor.pivot_b.x = pivot[0]
+                n_bhkdescriptor.pivot_b.y = pivot[1]
+                n_bhkdescriptor.pivot_b.z = pivot[2]

@@ -42,13 +42,13 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.io.nif import NifFile
 from io_scene_nif.io.kf import KFFile
-from io_scene_nif.io.egm import EGMFile 
+from io_scene_nif.io.egm import EGMFile
 
 from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import Collision
-from io_scene_nif.modules.constraint.constraint_import import constraint_import
+from io_scene_nif.modules.constraint.constraint_import import Constraint
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.texture.texture_import import Texture
 from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
@@ -74,7 +74,7 @@ class NifImport(NifCommon):
         self.animationhelper = Animation(parent=self)
         self.armaturehelper = Armature(parent=self)
         self.collisionhelper = Collision(parent=self)
-        self.constrainthelper = constraint_import(parent=self)
+        self.constrainthelper = Constraint(parent=self)
         self.textureloader = TextureLoader(parent=self)
         self.texturehelper = Texture(parent=self)
         self.texturehelper.set_texture_loader(self.textureloader)
