@@ -34,3 +34,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+HAVOK_SCALE = 6.996
+
+# dictionary mapping bhkRigidBody objects to objects imported in Blender;
+# we use this dictionary to set the physics constraints (ragdoll etc)
+DICT_HAVOK_OBJECTS = {}

@@ -43,15 +43,16 @@ from io_scene_nif.utility.nif_logging import NifLog
 from pyffi.formats.nif import NifFormat
 
 USER_VERSION = {
-    'OBLIVION' : 11,
-    'FALLOUT_3' : 11,
-    'DIVINITY_2' : 131072
+    'OBLIVION': 11,
+    'FALLOUT_3': 11,
+    'DIVINITY_2': 131072
 }
 
 USER_VERSION_2 = {
-    'OBLIVION' : 11,
-    'FALLOUT_3' : 34
+    'OBLIVION': 11,
+    'FALLOUT_3': 34
 }
+
 
 def get_version_data():
     """ Returns NifFormat.Data of the correct version and user versions """
