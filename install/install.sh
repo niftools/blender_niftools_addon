@@ -1,12 +1,12 @@
 #!/bin/sh
 
-BUILD_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 TEMP="${BUILD_DIR}"/temp
 ROOT="${BUILD_DIR}"/..
-VERSION=`cat ${ROOT}/io_scene_nif/VERSION`
+VERSION=$(cat "${ROOT}"/io_scene_nif/VERSION)
 NAME="blender_nif_plugin"
 
-function find_blender() {
+find_blender() {
     for BLENDER_VERSION in 2.79 2.78 2.77 2.76 2.75
     do
         BLENDER_ADDONS_DIR=~/.blender/"${BLENDER_VERSION}"/scripts/addons
