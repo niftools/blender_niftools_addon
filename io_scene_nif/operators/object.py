@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -40,6 +40,7 @@
 import bpy
 from bpy.types import Operator
 from io_scene_nif import properties
+
 
 class BSXExtraDataAdd(Operator):
     """Adds BSX Flag to extra data of the currently selected object"""
@@ -89,4 +90,3 @@ class NiExtraDataRemove(Operator):
         item = b_obj.niftools.extra_data_store.extra_data_index
         b_obj.niftools.extra_data_store.extra_data.remove(item)
         return {'FINISHED'}
-
