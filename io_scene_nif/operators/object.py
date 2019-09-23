@@ -37,8 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Operator
+
 from io_scene_nif import properties
 
 
@@ -47,20 +47,20 @@ class BSXExtraDataAdd(Operator):
     bl_idname = "object.niftools_extradata_bsx_add"
     bl_label = "Add BSX Flags"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     def execute(self, context):
         b_obj = context.active_object
         extradata = properties.object.BSXFlags
         b_obj.niftools.extra_data_store.extra_data.add()
         return {'FINISHED'}
-    
-    
+
+
 class UPBExtraDataAdd(Operator):
     """Adds BSX Flags to extra data"""
     bl_idname = "object.niftools_extradata_upb_add"
     bl_label = "Add UPB"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     def execute(self, context):
         b_obj = context.active_object
         b_obj.niftools.extra_data_store.extra_data.add()
@@ -72,7 +72,7 @@ class SampleExtraDataAdd(Operator):
     bl_idname = "object.niftools_extradata_sample_add"
     bl_label = "Sample 1"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     def execute(self, context):
         b_obj = context.active_object
         b_obj.niftools.extra_data_store.extra_data.add()

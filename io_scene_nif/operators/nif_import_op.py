@@ -38,12 +38,11 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy_extras.io_utils import ImportHelper, orientation_helper_factory
 from bpy.types import Operator
-
-from .nif_common_op import NifOperatorCommon
+from bpy_extras.io_utils import ImportHelper, orientation_helper_factory
 
 from io_scene_nif import nif_import
+from .nif_common_op import NifOperatorCommon
 
 OrientationHelper = orientation_helper_factory("OrientationHelper", axis_forward='Z', axis_up='Y')
 
