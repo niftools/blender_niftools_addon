@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Panel
 
 
@@ -46,24 +45,24 @@ class ObjectShader(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
-    bl_options =  {'DEFAULT_CLOSED'}
+    bl_options = {'DEFAULT_CLOSED'}
 
+    # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
         return True
-        
 
     def draw(self, context):
         nif_obj_props = context.object.niftools_shader
-        
+
         layout = self.layout
         row = layout.column()
-        
+
         row.prop(nif_obj_props, "bs_shadertype")
-        
+
         if nif_obj_props.bs_shadertype == 'BSShaderPPLightingProperty':
             row.prop(nif_obj_props, "bsspplp_shaderobjtype")
-                    
+
             row.prop(nif_obj_props, "sf_alpha_texture")
             row.prop(nif_obj_props, "sf_decal_single_pass")
             row.prop(nif_obj_props, "sf_dynamic_alpha")
@@ -164,5 +163,3 @@ class ObjectShader(Panel):
             row.prop(nif_obj_props, "slsf_2_weapon_blood")
             row.prop(nif_obj_props, "slsf_2_wireframe")
             row.prop(nif_obj_props, "slsf_2_z_buffer_write")
-
-
