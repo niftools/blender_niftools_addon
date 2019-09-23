@@ -1,4 +1,4 @@
-'''Blender operators, functions called through menus'''
+"""Blender operators, functions called through menus"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -40,37 +40,33 @@
 
 import bpy
 
+
 class NifOperatorCommon:
     """Abstract base class for import and export user interface."""
 
     # filepath is created by ImportHelper/ExportHelper
 
-    #: Default file name extension.
+    # Default file name extension.
     filename_ext = ".nif"
 
-    #: File name filter for file select dialog.
+    # File name filter for file select dialog.
     filter_glob = bpy.props.StringProperty(
         default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
 
-    #: Level of verbosity on the console.
+    # Level of verbosity on the console.
     log_level = bpy.props.EnumProperty(
         items=(
-            ("DEBUG", "Debug",
-             "Show all messages (only useful for debugging)."),
-            ("INFO", "Info",
-             "Show some informative messages, warnings, and errors."),
-            ("WARNING", "Warning",
-             "Only show warnings and errors."),
-            ("ERROR", "Error",
-             "Only show errors."),
-            ("CRITICAL", "Critical",
-             "Only show extremely critical errors."),
-            ),
+            ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
+            ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
+            ("WARNING", "Warning", "Only show warnings and errors.", 30),
+            ("ERROR", "Error", "Only show errors.", 40),
+            ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
+        ),
         name="Log Level",
         description="Level of verbosity on the console.",
-        default="WARNING")
+        default="DEBUG")  # TODO [general] Dev config, revert for release
 
-    #: Name of file where Python profiler dumps the profile.
+    # Name of file where Python profiler dumps the profile.
     profile_path = bpy.props.StringProperty(
         name="Profile Path",
         description="File where Python profiler dumps the profile. Set to empty string to turn off profiling.",
@@ -79,12 +75,10 @@ class NifOperatorCommon:
         subtype="FILE_PATH",
         options={'HIDDEN'})
 
-    #: Used for checking equality between floats.
+    # Used for checking equality between floats.
     epsilon = bpy.props.FloatProperty(
         name="Epsilon",
         description="Used for checking equality between floats.",
         default=0.0005,
         min=0.0, max=1.0, precision=5,
         options={'HIDDEN'})
-
-
