@@ -1,3 +1,6 @@
+""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
+
+
 # ***** BEGIN LICENSE BLOCK *****
 #
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
@@ -36,5 +39,6 @@
 # ***** END LICENSE BLOCK *****
 
 
+# TODO [ui] Update the classname so that they follow convention
 def register():
     from . import armature, collision, geometry, material, object, shader, scene
