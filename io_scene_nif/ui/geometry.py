@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Panel
 
 
@@ -46,31 +45,29 @@ class PartFlag(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "data"
-    bl_options =  {'DEFAULT_CLOSED'}
+    bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context):
-        if(context.active_object.type == 'MESH'):
+        if context.active_object.type == 'MESH':
             return True
         else:
             return False
-    
+
     def draw(self, context):
         nif_pf_panel_props = context.object.niftools_part_flags_panel
         nif_pf_list_props = context.object.niftools_part_flags
         layout = self.layout
         row = layout.row()
 
-                
         col = row.column(align=True)
         row.operator("object.niftools_part_flags_add", icon='ZOOMIN', text="")
         if context.object.niftools_part_flags:
             row.operator("object.niftools_part_flags_remove", icon='ZOOMOUT', text="")
         col.prop(nif_pf_panel_props, "pf_partcount")
-            
-        for i,x in enumerate(nif_pf_list_props):
-            col.separator()
-            col.prop(nif_pf_list_props[i], "name", index = i)
-            col.prop(nif_pf_list_props[i], "pf_startflag", index = i)
-            col.prop(nif_pf_list_props[i], "pf_editorflag", index = i)
 
+        for i, x in enumerate(nif_pf_list_props):
+            col.separator()
+            col.prop(nif_pf_list_props[i], "name", index=i)
+            col.prop(nif_pf_list_props[i], "pf_startflag", index=i)
+            col.prop(nif_pf_list_props[i], "pf_editorflag", index=i)
