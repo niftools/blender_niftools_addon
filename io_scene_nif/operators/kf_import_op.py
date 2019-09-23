@@ -1,4 +1,4 @@
-'''Blender Nif Plugin Main Import operators, function called through Import Menu'''
+"""Blender Nif Plugin Main Import operators, function called through Import Menu"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -39,12 +39,14 @@
 
 import bpy
 from bpy_extras.io_utils import ImportHelper
+from bpy.types import Operator
 
 from .nif_common_op import NifOperatorCommon
 
 from io_scene_nif import kf_import
 
-class KfImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
+
+class KfImportOperator(Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a kf file."""
         
     #: Name of function for calling the nif export operators.
@@ -65,7 +67,6 @@ class KfImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         default="*.kf", options={'HIDDEN'})
         
     files = bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
-    
 
     def execute(self, context):
         """Execute the import operators: first constructs a
@@ -75,4 +76,3 @@ class KfImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         """
         
         return kf_import.KfImport(self, context).execute()
-    

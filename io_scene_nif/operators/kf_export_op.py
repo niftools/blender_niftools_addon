@@ -1,4 +1,4 @@
-'''Blender Nif Plugin Main Export operators, function called through Export Menu'''
+"""Blender Nif Plugin Main Export operators, function called through Export Menu"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -39,6 +39,7 @@
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
+from bpy.types import Operator
 
 from pyffi.formats.nif import NifFormat
 
@@ -46,13 +47,15 @@ from io_scene_nif import kf_export
 
 from .nif_common_op import NifOperatorCommon
 
+
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
     table = str.maketrans(symbols, "_" * len(symbols))
     enum = game.upper().translate(table).replace("__", "_")
     return enum
 
-class KfExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
+
+class KfExportOperator(Operator, ExportHelper, NifOperatorCommon):
     """Operator for saving a kf file."""
 
     #: Name of function for calling the kf export operators.
@@ -100,4 +103,3 @@ class KfExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         method.
         """
         return kf_export.KfExport(self, context).execute()
-    
