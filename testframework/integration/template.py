@@ -37,19 +37,27 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
-import nose.tools
-import test
+from nose.tools import nottest
 
+from integration import SingleNif
+
+
+@nottest
 class TestFeature(SingleNif):
     """Test Feature"""
-    
-    n_name = ''
+
+    g_name = ''
     # location the nif will be created in
-    
+
     b_name = ''
     # name of blender object
-    
+
+    def n_create_header(self):
+        raise NotImplementedError
+
+    def b_create_header(self):
+        raise NotImplementedError
+
     def b_create_data(self):
         """Create blender objects in current blender scene for feature."""
         # call sub_methods for reusability
