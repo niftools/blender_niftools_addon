@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from scene.py into Blenders UI'''
+""" Nif User Interface, connect custom properties from scene.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,28 +37,27 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Panel
 
 
 class ScenePanel(Panel):
     bl_label = "Niftools Scene Panel"
-    
+
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
-    
+
+    # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
         return True
-        
 
+    # noinspection PyUnusedLocal
     def draw(self, context):
         nif_sceme_props = context.scene.niftools_scene
-        
+
         layout = self.layout
         row = layout.column()
         row.prop(nif_sceme_props, "nif_version")
         row.prop(nif_sceme_props, "user_version")
         row.prop(nif_sceme_props, "user_version_2")
-        
