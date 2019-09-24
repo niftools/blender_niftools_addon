@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom geometry properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom geometry properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -39,14 +39,14 @@
 
 import bpy
 from bpy.types import Operator
-from io_scene_nif import properties
 
-class BsInvMarkerAdd(bpy.types.Operator):
+
+class BsInvMarkerAdd(Operator):
     """Adds BsInvMarker set"""
     bl_idname = "object.niftools_bs_invmarker_add"
     bl_label = "Add Inventory Marker"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     def execute(self, context):
         obj = context.active_object
         b_obj_invmarker = obj.niftools_bs_invmarker.add()
@@ -57,6 +57,7 @@ class BsInvMarkerAdd(bpy.types.Operator):
         b_obj_invmarker.bs_inv_zoom = 1
         return {'FINISHED'}
 
+
 class BsInvMarkerRemove(bpy.types.Operator):
     """Removes BsInvMarker set"""
     bl_idname = "object.niftools_bs_invmarker_remove"
@@ -64,12 +65,12 @@ class BsInvMarkerRemove(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        item = len(context.active_object.niftools_bs_invmarker)-1
+        item = len(context.active_object.niftools_bs_invmarker) - 1
         obj = context.active_object
         obj.niftools_bs_invmarker.remove(item)
         return {'FINISHED'}
-    
-    
+
+
 class NfTlPartFlagRemove(bpy.types.Operator):
     """Removes Dismember partition Flag set"""
     bl_idname = "object.niftools_part_flags_remove"
@@ -77,9 +78,8 @@ class NfTlPartFlagRemove(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        item = len(context.active_object.niftools_part_flags)-1
+        item = len(context.active_object.niftools_part_flags) - 1
         obj = context.active_object
         obj.niftools_part_flags.remove(item)
         obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
         return {'FINISHED'}
-
