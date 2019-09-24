@@ -1,12 +1,11 @@
 import nose
 
-import bpy
 import os
 
 from io_scene_nif.io.kf import KFFile
-from io_scene_nif.utility.nif_logging import NifLog
 
-class Test_KF_IO:
+
+class TestKFIO:
  
     @classmethod
     def setup_class(cls):

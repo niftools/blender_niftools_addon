@@ -1,12 +1,11 @@
 import nose
 
-import bpy
 import os
 
 from io_scene_nif.io.egm import EGMFile
-from io_scene_nif.utility.nif_logging import NifLog
 
-class Test_EGM_IO:
+
+class TestEGMIO:
  
     @classmethod
     def setup_class(cls):

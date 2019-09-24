@@ -6,13 +6,14 @@ import nose.tools
 from pyffi.formats.nif import NifFormat
 
 from integration import SingleNif
-from integration.data import gen_data
+from integration.data import n_gen_header
 
 
 class TestNiNodeArmature(SingleNif):
     """Test NiNode base armature"""
-    
-    n_name = 'armature/ninode/test_armature'
+
+    g_path = 'armature/ninode'
+    g_name = 'test_armature'
     b_name = 'Armature'
 
     def b_create_data(self):
