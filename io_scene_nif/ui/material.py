@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -40,13 +40,14 @@
 import bpy
 from bpy.types import Panel
 
+
 class NifMatFlagPanel(Panel):
     bl_label = "Flag Panel"
-    
+
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "material"
-    
+
     @classmethod
     def poll(cls, context):
         mat = context.material
@@ -57,25 +58,25 @@ class NifMatFlagPanel(Panel):
                 return False
             return True
         return False
-    
+
     def draw(self, context):
         matalpha = context.material.niftools_alpha
-        
+
         layout = self.layout
         row = layout.column()
-        
+
         row.prop(matalpha, "alphaflag")
         row.prop(matalpha, "materialflag")
         row.prop(matalpha, "textureflag")
-        
+
 
 class NifMatColorPanel(Panel):
     bl_label = "Material Color Panel"
-    
+
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "material"
-    
+
     @classmethod
     def poll(cls, context):
         mat = context.material
@@ -86,10 +87,10 @@ class NifMatColorPanel(Panel):
                 return False
             return True
         return False
-    
+
     def draw(self, context):
         mat = context.material.niftools
-        
+
         layout = self.layout
         row = layout.column()
         col = row.column()
@@ -100,11 +101,12 @@ class NifMatColorPanel(Panel):
         col.prop(mat, "emissive_alpha")
         col.prop(mat, "lightingeffect1")
         col.prop(mat, "lightingeffect2")
-        
-        
+
+
 def register():
     bpy.utils.register_class(NifMatColorPanel)
     bpy.types.MATERIAL_PT_shading.prepend(NifMatColorPanel)
+
 
 def unregister():
     bpy.types.MATERIAL_PT_shading.remove(NifMatColorPanel)

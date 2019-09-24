@@ -1,4 +1,4 @@
-'''Blender Nif Plugin Main Export operators, function called through Export Menu'''
+"""Blender Nif Plugin Main Export operators, function called through Export Menu"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -38,13 +38,13 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
-
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif import kf_export
-
 from .nif_common_op import NifOperatorCommon
+
 
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
@@ -52,7 +52,8 @@ def _game_to_enum(game):
     enum = game.upper().translate(table).replace("__", "_")
     return enum
 
-class KfExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
+
+class KfExportOperator(Operator, ExportHelper, NifOperatorCommon):
     """Operator for saving a kf file."""
 
     #: Name of function for calling the kf export operators.
@@ -76,7 +77,7 @@ class KfExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
             # (at least with the current blender)
             for game in reversed(sorted(
                 [x for x in NifFormat.games.keys() if x != '?']))
-            ],
+        ],
         name="Game",
         description="For which game to export.",
         default='OBLIVION')
@@ -91,7 +92,7 @@ class KfExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
     version = {
         _game_to_enum(game): versions[-1]
         for game, versions in NifFormat.games.items() if game != '?'
-        }
+    }
 
     def execute(self, context):
         """Execute the export operators: first constructs a
@@ -100,4 +101,3 @@ class KfExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         method.
         """
         return kf_export.KfExport(self, context).execute()
-    
