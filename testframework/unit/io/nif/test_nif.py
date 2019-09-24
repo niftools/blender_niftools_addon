@@ -1,12 +1,11 @@
 import nose
 
-import bpy
 import os
 
 from io_scene_nif.io.nif import NifFile
-from io_scene_nif.utility.nif_logging import NifLog
 
-class Test_Nif_IO:
+
+class TestNifIO:
  
     @classmethod
     def setup_class(cls):
