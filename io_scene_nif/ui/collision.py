@@ -77,9 +77,7 @@ class CollisionBoundsPanel(Panel):
         box.prop(col_setting, "max_linear_velocity", text='Max Linear Velocity')  # oblivion layer prop
         box.prop(col_setting, "max_angular_velocity", text='Max Angular Velocity')  # oblivion layer prop
         box.prop(col_setting, "motion_system", text='Motion System')  # motion system prop
-        box.prop(col_setting, "havok_material", text='Havok Material')  # havok material prop
-        box.prop(col_setting, "skyrim_havok_material", text='Skyrim Havok Material')  # havok material prop
-
+        
         con_setting = context.active_object.niftools_constraint
 
         box.prop(con_setting, "LHMaxFriction", text='LHMaxFriction')
