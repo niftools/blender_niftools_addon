@@ -191,7 +191,10 @@ class Collision:
                 self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE
 
         # find physics properties/defaults
-        n_havok_mat = (b_obj.nifcollision.havok_material, b_obj.nifcollision.skyrim_havok_material)
+        # n_havok_mat = (b_obj.nifcollision.havok_material, b_obj.nifcollision.skyrim_havok_material)
+        # just hard code to the first entry for now until the version transition is settled
+        # then get it from material name
+        n_havok_mat = (0, 131151687)
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
         deactivator_type = b_obj.nifcollision.deactivator_type
