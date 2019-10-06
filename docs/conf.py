@@ -26,6 +26,8 @@ author = "NifTools"
 # The full version, including alpha/beta/rc tags
 with codecs.open("../io_scene_nif/VERSION", "rb", encoding="ascii") as f:
     release = f.read().strip()
+# The short X.Y version.
+version = '.'.join(release.split('.')[:2])
 
 
 # -- General configuration ---------------------------------------------------
