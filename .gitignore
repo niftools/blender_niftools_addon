@@ -4,6 +4,7 @@ docs/python_api
 docs/refresh_python_api.bat
 docs/refresh_python_api.lnk
 install/temp
+install/dependencies
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
