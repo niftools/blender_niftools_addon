@@ -2,28 +2,28 @@
 
 :: Command file for Sphinx documentation
 
-if "%BLENDERHOME%" == "" (
-	echo.Please set BLENDERHOME to the blender.exe folder
+if "%BLENDER_HOME%" == "" (
+	echo.Please set BLENDER_HOME to the blender.exe folder
 	goto end
 )
-set SPHINXBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-build.py --
-set SPHINXAPIBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-api-build.py --
-set BUILDDIR=_build
+set SPHINX_BUILD="%BLENDER_HOME%/blender.exe" --background --factory-startup --python blender-sphinx-build.py --
+set SPHINX_API_BUILD="%BLENDER_HOME%/blender.exe" --background --factory-startup --python blender-sphinx-api-build.py --
+set BUILD_DIR=_build
 
-set CODEAPI=../io_scene_nif/
-set CODEDIR=development/api/submodules
-set CODEOPTS=%CODEDIR% %CODEAPI%
+set CODE_API=../io_scene_nif/
+set CODE_DIR=development/api/submodules
+set CODE_OPTS=%CODE_DIR% %CODE_API%
 
-set TESTAPI=../testframework/
-set TESTDIR=development/testframework/api/submodules
-set TESTOPTS=%TESTDIR% %TESTAPI%
+set TEST_API=../testframework/
+set TEST_DIR=development/testframework/api/submodules
+set TEST_OPTS=%TEST_DIR% %TEST_API%
 
-set ALLAPIOPTS=%TESTOPTS% %CODEDIR%
-set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
-set I18NSPHINXOPTS=%SPHINXOPTS% .
+set ALL_API_OPTS=%TEST_OPTS% %CODE_DIR%
+set ALL_SPHINX_OPTS=-d %BUILD_DIR%/doctrees %SPHINXOPTS% .
+set I18N_SPHINX_OPTS=%SPHINXOPTS% .
 if NOT "%PAPER%" == "" (
-	set ALLSPHINXOPTS=-D latex_paper_size=%PAPER% %ALLSPHINXOPTS%
-	set I18NSPHINXOPTS=-D latex_paper_size=%PAPER% %I18NSPHINXOPTS%
+	set ALL_SPHINX_OPTS=-D latex_paper_size=%PAPER% %ALL_SPHINX_OPTS%
+	set I18N_SPHINX_OPTS=-D latex_paper_size=%PAPER% %I18N_SPHINX_OPTS%
 )
 
 if "%1" == "" goto help
@@ -61,18 +61,18 @@ if "%1" == "htmlfull" (
 )
 
 if "%1" == "clean" (
-	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
-	del /q /s %BUILDDIR%\*
-	del /q /s "%CODEDIR%\*"
-	del /q /s "%TESTDIR%\*"
+	for /d %%i in (%BUILD_DIR%\*) do rmdir /q /s %%i
+	del /q /s %BUILD_DIR%\*
+	del /q /s "%CODE_DIR%\*"
+	del /q /s "%TEST_DIR%\*"
 	goto end
 )
 
 if "%1" == "html" (
-	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
+	%SPHINX_BUILD% -b html %ALL_SPHINX_OPTS% %BUILD_DIR%/html
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished. The HTML pages are in %BUILDDIR%/html.
+	echo.Build finished. The HTML pages are in %BUILD_DIR%/html.
 	goto end
 )
 
@@ -80,7 +80,7 @@ if "%1" == "gencodeapi" (
 	echo.
 	echo.Generating auto-docs for plugin source api
 	echo.
-	%SPHINXAPIBUILD% -o %CODEOPTS%
+	%SPHINX_API_BUILD% -o %CODE_OPTS%
 	if errorlevel 1 exit /b 1
 	echo.Generated auto-docs
 	goto end
@@ -89,30 +89,30 @@ if "%1" == "gencodeapi" (
 if "%1" == "gentestapi" (
 	echo.
 	echo.Generating auto-docs for testframework api
-	%SPHINXAPIBUILD% -o %TESTOPTS%
+	%SPHINX_API_BUILD% -o %TEST_OPTS%
 	if errorlevel 1 exit /b 1
 	echo.Generated auto-docs for testframework
 	goto end
 )
 
 if "%1" == "dirhtml" (
-	%SPHINXBUILD% -b dirhtml %ALLSPHINXOPTS% %BUILDDIR%/dirhtml
+	%SPHINX_BUILD% -b dirhtml %ALL_SPHINX_OPTS% %BUILD_DIR%/dirhtml
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished. The HTML pages are in %BUILDDIR%/dirhtml.
+	echo.Build finished. The HTML pages are in %BUILD_DIR%/dirhtml.
 	goto end
 )
 
 if "%1" == "singlehtml" (
-	%SPHINXBUILD% -b singlehtml %ALLSPHINXOPTS% %BUILDDIR%/singlehtml
+	%SPHINX_BUILD% -b singlehtml %ALL_SPHINX_OPTS% %BUILD_DIR%/singlehtml
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished. The HTML pages are in %BUILDDIR%/singlehtml.
+	echo.Build finished. The HTML pages are in %BUILD_DIR%/singlehtml.
 	goto end
 )
 
 if "%1" == "pickle" (
-	%SPHINXBUILD% -b pickle %ALLSPHINXOPTS% %BUILDDIR%/pickle
+	%SPHINX_BUILD% -b pickle %ALL_SPHINX_OPTS% %BUILD_DIR%/pickle
 	if errorlevel 1 exit /b 1
 	echo.
 	echo.Build finished; now you can process the pickle files.
@@ -120,7 +120,7 @@ if "%1" == "pickle" (
 )
 
 if "%1" == "json" (
-	%SPHINXBUILD% -b json %ALLSPHINXOPTS% %BUILDDIR%/json
+	%SPHINX_BUILD% -b json %ALL_SPHINX_OPTS% %BUILD_DIR%/json
 	if errorlevel 1 exit /b 1
 	echo.
 	echo.Build finished; now you can process the JSON files.
@@ -128,28 +128,26 @@ if "%1" == "json" (
 )
 
 if "%1" == "htmlhelp" (
-	%SPHINXBUILD% -b htmlhelp %ALLSPHINXOPTS% %BUILDDIR%/htmlhelp
+	%SPHINX_BUILD% -b htmlhelp %ALL_SPHINX_OPTS% %BUILD_DIR%/htmlhelp
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished; now you can run HTML Help Workshop with the ^
-.hhp project file in %BUILDDIR%/htmlhelp.
+	echo.Build finished; now you can run HTML Help Workshop with the .hhp project file in %BUILD_DIR%/htmlhelp.
 	goto end
 )
 
 if "%1" == "qthelp" (
-	%SPHINXBUILD% -b qthelp %ALLSPHINXOPTS% %BUILDDIR%/qthelp
+	%SPHINX_BUILD% -b qthelp %ALL_SPHINX_OPTS% %BUILD_DIR%/qthelp
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished; now you can run "qcollectiongenerator" with the ^
-.qhcp project file in %BUILDDIR%/qthelp, like this:
-	echo.^> qcollectiongenerator %BUILDDIR%\qthelp\BlenderNIFScripts.qhcp
+	echo.Build finished; now you can run "qcollectiongenerator" with the .qhcp project file in %BUILD_DIR%/qthelp, like this:
+	echo.^> qcollectiongenerator %BUILD_DIR%\qthelp\BlenderNIFScripts.qhcp
 	echo.To view the help file:
-	echo.^> assistant -collectionFile %BUILDDIR%\qthelp\BlenderNIFScripts.ghc
+	echo.^> assistant -collectionFile %BUILD_DIR%\qthelp\BlenderNIFScripts.ghc
 	goto end
 )
 
 if "%1" == "devhelp" (
-	%SPHINXBUILD% -b devhelp %ALLSPHINXOPTS% %BUILDDIR%/devhelp
+	%SPHINX_BUILD% -b devhelp %ALL_SPHINX_OPTS% %BUILD_DIR%/devhelp
 	if errorlevel 1 exit /b 1
 	echo.
 	echo.Build finished.
@@ -157,76 +155,74 @@ if "%1" == "devhelp" (
 )
 
 if "%1" == "epub" (
-	%SPHINXBUILD% -b epub %ALLSPHINXOPTS% %BUILDDIR%/epub
+	%SPHINX_BUILD% -b epub %ALL_SPHINX_OPTS% %BUILD_DIR%/epub
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished. The epub file is in %BUILDDIR%/epub.
+	echo.Build finished. The epub file is in %BUILD_DIR%/epub.
 	goto end
 )
 
 if "%1" == "latex" (
-	%SPHINXBUILD% -b latex %ALLSPHINXOPTS% %BUILDDIR%/latex
+	%SPHINX_BUILD% -b latex %ALL_SPHINX_OPTS% %BUILD_DIR%/latex
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished; the LaTeX files are in %BUILDDIR%/latex.
+	echo.Build finished; the LaTeX files are in %BUILD_DIR%/latex.
 	goto end
 )
 
 if "%1" == "text" (
-	%SPHINXBUILD% -b text %ALLSPHINXOPTS% %BUILDDIR%/text
+	%SPHINX_BUILD% -b text %ALL_SPHINX_OPTS% %BUILD_DIR%/text
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished. The text files are in %BUILDDIR%/text.
+	echo.Build finished. The text files are in %BUILD_DIR%/text.
 	goto end
 )
 
 if "%1" == "man" (
-	%SPHINXBUILD% -b man %ALLSPHINXOPTS% %BUILDDIR%/man
+	%SPHINX_BUILD% -b man %ALL_SPHINX_OPTS% %BUILD_DIR%/man
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished. The manual pages are in %BUILDDIR%/man.
+	echo.Build finished. The manual pages are in %BUILD_DIR%/man.
 	goto end
 )
 
 if "%1" == "texinfo" (
-	%SPHINXBUILD% -b texinfo %ALLSPHINXOPTS% %BUILDDIR%/texinfo
+	%SPHINX_BUILD% -b texinfo %ALL_SPHINX_OPTS% %BUILD_DIR%/texinfo
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished. The Texinfo files are in %BUILDDIR%/texinfo.
+	echo.Build finished. The Texinfo files are in %BUILD_DIR%/texinfo.
 	goto end
 )
 
 if "%1" == "gettext" (
-	%SPHINXBUILD% -b gettext %I18NSPHINXOPTS% %BUILDDIR%/locale
+	%SPHINX_BUILD% -b gettext %I18N_SPHINX_OPTS% %BUILD_DIR%/locale
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Build finished. The message catalogs are in %BUILDDIR%/locale.
+	echo.Build finished. The message catalogs are in %BUILD_DIR%/locale.
 	goto end
 )
 
 if "%1" == "changes" (
-	%SPHINXBUILD% -b changes %ALLSPHINXOPTS% %BUILDDIR%/changes
+	%SPHINX_BUILD% -b changes %ALL_SPHINX_OPTS% %BUILD_DIR%/changes
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.The overview file is in %BUILDDIR%/changes.
+	echo.The overview file is in %BUILD_DIR%/changes.
 	goto end
 )
 
 if "%1" == "linkcheck" (
-	%SPHINXBUILD% -b linkcheck %ALLSPHINXOPTS% %BUILDDIR%/linkcheck
+	%SPHINX_BUILD% -b linkcheck %ALL_SPHINX_OPTS% %BUILD_DIR%/linkcheck
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Link check complete; look for any errors in the above output ^
-or in %BUILDDIR%/linkcheck/output.txt.
+	echo.Link check complete; look for any errors in the above output or in %BUILD_DIR%/linkcheck/output.txt.
 	goto end
 )
 
 if "%1" == "doctest" (
-	%SPHINXBUILD% -b doctest %ALLSPHINXOPTS% %BUILDDIR%/doctest
+	%SPHINX_BUILD% -b doctest %ALL_SPHINX_OPTS% %BUILD_DIR%/doctest
 	if errorlevel 1 exit /b 1
 	echo.
-	echo.Testing of doctests in the sources finished, look at the ^
-results in %BUILDDIR%/doctest/output.txt.
+	echo.Testing of doctests in the sources finished, look at the results in %BUILD_DIR%/doctest/output.txt.
 	goto end
 )
 
