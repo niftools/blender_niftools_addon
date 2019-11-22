@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 TEMP="${BUILD_DIR}"/temp
@@ -7,7 +7,7 @@ VERSION=$(cat "${ROOT}"/io_scene_nif/VERSION)
 NAME="blender_nif_plugin"
 
 find_blender() {
-    for BLENDER_VERSION in 2.79 2.78 2.77 2.76 2.75
+    for BLENDER_VERSION in 2.79
     do
         BLENDER_ADDONS_DIR=~/.blender/"${BLENDER_VERSION}"/scripts/addons
         if [[ -e ~/.blender/${BLENDER_VERSION}/ ]]; then
