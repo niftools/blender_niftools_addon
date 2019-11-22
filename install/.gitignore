@@ -1,2 +1,2 @@
-# Ignore any zip files
-*.zip
+# Ignore any generated files
+temp/
