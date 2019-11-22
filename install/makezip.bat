@@ -8,14 +8,10 @@ if "%DIR:~-1%" == "\" (
 
 set ROOT="%DIR%"\..
 set /p VERSION="%ROOT%"\io_scene_nif\VERSION
-set NAME=blender_nif_plugin
-set DEPS=io_scene_nif\dependencies
+set NAME="blender_nif_plugin"
+set PYFFI_VERSION="2.2.4.dev0"
+set DEPS="io_scene_nif\dependencies"
 if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
-
-pushd "%ROOT%"
-git clean -xfd
-git submodule foreach --recursive %git% clean -xfd
-popd
 
 mkdir "%DIR%"\temp
 
@@ -23,15 +19,9 @@ pushd "%DIR%"\temp
 mkdir io_scene_nif
 xcopy /s "%ROOT%"\io_scene_nif io_scene_nif
 mkdir "%DEPS%"
-mkdir "%DEPS%"\pyffi
-xcopy /s "%ROOT%"\pyffi\pyffi "%DEPS%"\pyffi
-xcopy "%ROOT%"\pyffi\*.rst "%DEPS%"\pyffi
-rmdir /s /q "%DEPS%"\pyffi\formats\cgf
-rmdir /s /q "%DEPS%"\pyffi\formats\dae
-rmdir /s /q "%DEPS%"\pyffi\formats\psk
-rmdir /s /q "%DEPS%"\pyffi\formats\rockstar
-rmdir /s /q "%DEPS%"\pyffi\formats\tga
-rmdir /s /q "%DEPS%"\pyffi\qskope
+
+python -m pip install "PyFFI==%PYFFI_VERSION%" --target="%DEPS%"
+
 xcopy "%ROOT%"\AUTHORS.rst io_scene_nif
 xcopy "%ROOT%"\CHANGELOG.rst io_scene_nif
 xcopy "%ROOT%"\LICENSE.rst io_scene_nif
