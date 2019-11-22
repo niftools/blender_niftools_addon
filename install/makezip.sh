@@ -1,6 +1,6 @@
 #!/bin/bash
 CUR_DIR=$(pwd)
-BUILD_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 ROOT="${BUILD_DIR}"/..
 PLUGIN_IN="${ROOT}"/io_scene_nif/
 VERSION=$(cat "${PLUGIN_IN}"/VERSION)
