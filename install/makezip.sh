@@ -9,11 +9,7 @@ ZIP_NAME="${NAME}-${VERSION}.zip"
 TEMP="${BUILD_DIR}"/temp
 PLUGIN_OUT="${TEMP}"/io_scene_nif
 DEPS_OUT="${PLUGIN_OUT}"/dependencies
-
-#cd "${ROOT}"
-#git clean -xfdq
-#git submodule foreach --recursive git clean -xfdq
-#cd "${DIR}"
+PYFFI_VERSION="2.2.4.dev0"
 
 if [[ -d "${TEMP}" ]]; then
   echo "Removing old temp directory"
@@ -26,17 +22,7 @@ echo "Copying io_scene_nif directory"
 cp -r "${PLUGIN_IN}" "${PLUGIN_OUT}"
 
 echo "Creating dependencies folder"
-mkdir -p "${DEPS_OUT}"
-
-echo "Moving pyffi to dependencies folder"
-cp -r "${ROOT}"/pyffi/pyffi "${DEPS_OUT}"
-cp "${ROOT}"/pyffi/*.rst "${DEPS_OUT}"/pyffi
-rm -rf "${DEPS_OUT}"/pyffi/formats/cgf
-rm -rf "${DEPS_OUT}"/pyffi/formats/dae
-rm -rf "${DEPS_OUT}"/pyffi/formats/psk
-rm -rf "${DEPS_OUT}"/pyffi/formats/rockstar
-rm -rf "${DEPS_OUT}"/pyffi/formats/tga
-rm -rf "${DEPS_OUT}"/pyffi/qskope
+python -m pip install "PyFFI==${PYFFI_VERSION}" --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 
 echo "Copying loose files"
 cp "${ROOT}"/AUTHORS.rst "${PLUGIN_OUT}"
@@ -46,6 +32,6 @@ cp "${ROOT}"/README.rst "${PLUGIN_OUT}"
 
 
 echo "Creating zip ${ZIP_NAME}"
-cd "${TEMP}"
+cd "${TEMP}" || exit
 zip -9rq "${TEMP}/${ZIP_NAME}" ./io_scene_nif -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
-cd "${CUR_DIR}"
+cd "${CUR_DIR}" || exit
