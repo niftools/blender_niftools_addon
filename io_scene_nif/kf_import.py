@@ -2,7 +2,7 @@
 
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2005, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,25 +37,26 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from io_scene_nif.nif_common import NifCommon
+import os
+
+import pyffi.spells.nif.fix
+
 from io_scene_nif.io.kf import KFFile
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.animation_import import Animation
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
-import pyffi.spells.nif.fix
-from pyffi.formats.nif import NifFormat
-import bpy
-import os
+from io_scene_nif.utility.nif_global import NifOp
+
 
 class KfImport(NifCommon):
 
     def __init__(self, operator, context):
-        NifCommon.__init__(self, operator)
-        
+        NifCommon.__init__(self, operator, context)
+
         # Helper systems
         self.animationhelper = Animation(parent=self)
-             
+
     def execute(self):
         """Main import function."""
 
@@ -64,11 +65,11 @@ class KfImport(NifCommon):
         b_armature = armature.get_armature()
         if not b_armature:
             raise nif_utils.NifError("No armature was found in scene, can not import KF animation!")
-        
-        #the axes used for bone correction depend on the armature in our scene
+
+        # the axes used for bone correction depend on the armature in our scene
         armature.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
-        
-        #get nif space bind pose of armature here for all anims
+
+        # get nif space bind pose of armature here for all anims
         bind_data = armature.get_bind_data(b_armature)
         for kf_file in kf_files:
             kfdata = KFFile.load_kf(kf_file)
@@ -77,7 +78,7 @@ class KfImport(NifCommon):
             toaster.scale = NifOp.props.scale_correction_import
             pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
             # calculate and set frames per second
-            self.animationhelper.set_frames_per_second( kfdata.roots )
+            self.animationhelper.set_frames_per_second(kfdata.roots)
             for kf_root in kfdata.roots:
-                self.animationhelper.armature_animation.import_kf_standalone( kf_root, b_armature, bind_data )
+                self.animationhelper.armature_animation.import_kf_standalone(kf_root, b_armature, bind_data)
         return {'FINISHED'}

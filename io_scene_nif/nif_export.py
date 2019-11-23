@@ -2,7 +2,7 @@
 
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2005, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -80,7 +80,7 @@ class NifExport(NifCommon):
     EXPORT_OB_SOLID = True
 
     def __init__(self, operator, context):
-        NifCommon.__init__(self, operator)
+        NifCommon.__init__(self, operator, context)
     
         # Helper systems
         self.collisionhelper = Collision(parent=self)
