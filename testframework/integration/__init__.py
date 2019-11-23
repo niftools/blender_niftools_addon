@@ -1,5 +1,42 @@
 """Package for regression testing of the blender nif scripts."""
 
+# ***** BEGIN LICENSE BLOCK *****
+#
+# Copyright © 2011, NIF File Format Library and Tools contributors.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above
+#      copyright notice, this list of conditions and the following
+#      disclaimer in the documentation and/or other materials provided
+#      with the distribution.
+#
+#    * Neither the name of the NIF File Format Library and Tools
+#      project nor the names of its contributors may be used to endorse
+#      or promote products derived from this software without specific
+#      prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# ***** END LICENSE BLOCK *****
+
 import os
 import os.path
 
@@ -17,22 +54,22 @@ def clear_bpy_data():
     def clear_bpy_prop_collection(col):
         for elem in col[:]:
             col.remove(elem)
-    
+
     def clear_users(col):
         for elem in col[:]:
             col[elem.name].user_clear()
             col.remove(col[elem.name])
-    
+
     # unlink objects
     for b_obj in bpy.data.objects[:]:
         bpy.context.scene.objects.unlink(b_obj)
-    
+
     # remove all data
     for collection in ("actions", "objects", "meshes", "armatures", "lamps", "lattices",
                        "particles", "metaballs", "shape_keys", "texts", "curves", "cameras",
                        "grease_pencil", "groups", "libraries", "node_groups", "materials"):
         clear_bpy_prop_collection(getattr(bpy.data, collection))
-    
+
     # need to remove any users first    
     for collection in ("brushes", "textures", "images"):
         clear_users(getattr(bpy.data, collection))
@@ -155,14 +192,14 @@ class SingleNif(Base):
     """The name of the blend file after import of *n_filepath_2*
     (set automatically from :attr:`SingleNif.n_name`).
     """
-    
+
     # Debug Settings
     gen_blender_scene = True
-    
+
     def __init__(self):
         """Initialize the test."""
         Base.__init__(self)
-        
+
         self.n_data = NifFormat.Data()
 
         fp = INTEGRATION_ROOT
@@ -213,8 +250,8 @@ class SingleNif(Base):
 
     @staticmethod
     def b_save(b_filepath):
-            """Save current scene to blend file."""
-            bpy.ops.wm.save_mainfile(filepath=b_filepath)
+        """Save current scene to blend file."""
+        bpy.ops.wm.save_mainfile(filepath=b_filepath)
 
     def b_create_header(self):
         """Select game version to export as"""
@@ -281,11 +318,11 @@ class SingleNif(Base):
         if self.gen_blender_scene:
             self.b_save(self.b_filepath_1)
         self.b_check_data()
-        
+
         # export and check data
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
-    
+
     def _import_user(self):
         """User : Import user generated file"""
         # import and check data
@@ -293,25 +330,25 @@ class SingleNif(Base):
         if self.gen_blender_scene:
             self.b_save(self.b_filepath_2)
         self.b_check_data()
-         
+
     def test_pycode_nif_fullflow(self):
         # create initial nif file and check data
         self.n_create_header()
         self.n_create_data()
         self.n_write(self.n_data, self.n_filepath_0)
         self.n_check(self.n_filepath_0)
-           
+
         # clear scene
         self.b_clear()
-          
+
         # import nif and check data
         self.n_import(self.n_filepath_0)
         if self.gen_blender_scene:
             self.b_save(self.b_filepath_0)
         self.b_check_data()
-        
+
         self._b_select_all()
-        
+
         # export and check data
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
