@@ -1,6 +1,8 @@
+"""This script contains helper methods allow decoration of mehods."""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2019, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +41,8 @@ import functools
 
 
 def overload_method(*types):
+    """Allows method overloading to enable polymorphic behaviour"""
+
     def register(func):
         name = func.__name__
         mm = overload_method.registry.get(name)
