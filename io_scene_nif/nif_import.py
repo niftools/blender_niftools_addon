@@ -370,7 +370,7 @@ class NifImport(NifCommon):
             cf_index = NifFormat.ConsistencyType._enumvalues.index(niBlock.data.consistency_flags)
             b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
             # just to be sure because the last line was only present on one copy of the code
-            if niBlock.data.bs_num_uv_sets:
+            if hasattr(niBlock.data, "bs_num_uv_sets"):
                 b_obj.niftools.bsnumuvset = niBlock.data.bs_num_uv_sets
         
     def import_shader_types(self, b_obj, b_prop):

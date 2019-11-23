@@ -191,7 +191,10 @@ class Collision:
                 self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE
 
         # find physics properties/defaults
-        n_havok_mat = (b_obj.nifcollision.havok_material, b_obj.nifcollision.skyrim_havok_material)
+        # n_havok_mat = (b_obj.nifcollision.havok_material, b_obj.nifcollision.skyrim_havok_material)
+        # just hard code to the first entry for now until the version transition is settled
+        # then get it from material name
+        n_havok_mat = (0, 131151687)
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
         deactivator_type = b_obj.nifcollision.deactivator_type
@@ -266,13 +269,20 @@ class Collision:
             n_bhkrigidbody.unknown_2_shorts[1] = 16336
             n_bhkrigidbody.layer_copy = n_bhkrigidbody.layer
             n_bhkrigidbody.col_filter_copy = n_bhkrigidbody.col_filter
-            n_bhkrigidbody.unknown_7_shorts[0] = 0
-            n_bhkrigidbody.unknown_7_shorts[1] = 21280
-            n_bhkrigidbody.unknown_7_shorts[2] = 4581
-            n_bhkrigidbody.unknown_7_shorts[3] = 62977
-            n_bhkrigidbody.unknown_7_shorts[4] = 65535
-            n_bhkrigidbody.unknown_7_shorts[5] = 44
-            n_bhkrigidbody.unknown_7_shorts[6] = 0
+            # n_bhkrigidbody.unknown_7_shorts[0] = 0
+            # n_bhkrigidbody.unknown_7_shorts[1] = 21280
+            # n_bhkrigidbody.unknown_7_shorts[2] = 4581
+            # n_bhkrigidbody.unknown_7_shorts[3] = 62977
+            # n_bhkrigidbody.unknown_7_shorts[4] = 65535
+            # n_bhkrigidbody.unknown_7_shorts[5] = 44
+            # n_bhkrigidbody.unknown_7_shorts[6] = 0
+            
+            n_bhkrigidbody.unknown_6_shorts[0] = 21280
+            n_bhkrigidbody.unknown_6_shorts[1] = 4581
+            n_bhkrigidbody.unknown_6_shorts[2] = 62977
+            n_bhkrigidbody.unknown_6_shorts[3] = 65535
+            n_bhkrigidbody.unknown_6_shorts[4] = 44
+            n_bhkrigidbody.unknown_6_shorts[5] = 0
 
             # mass is 1.0 at the moment (unless property was set on import or by the user)
             # will be fixed in update_rigid_bodies()
@@ -323,7 +333,7 @@ class Collision:
 
             n_col_mopp = self.nif_export.objecthelper.create_block("bhkMoppBvTreeShape", b_obj)
             n_col_body.shape = n_col_mopp
-            n_col_mopp.material = n_havok_mat[0]
+            # n_col_mopp.material = n_havok_mat[0]
             n_col_mopp.unknown_8_bytes[0] = 160
             n_col_mopp.unknown_8_bytes[1] = 13
             n_col_mopp.unknown_8_bytes[2] = 75
@@ -399,7 +409,7 @@ class Collision:
         if not n_col_body.shape:
             n_col_shape = self.nif_export.objecthelper.create_block("bhkListShape")
             n_col_body.shape = n_col_shape
-            n_col_shape.material = n_havok_mat[0]
+            # n_col_shape.material = n_havok_mat[0]
         else:
             n_col_shape = n_col_body.shape
             if not isinstance(n_col_shape, NifFormat.bhkListShape):
@@ -433,7 +443,7 @@ class Collision:
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
             n_coltf = self.nif_export.objecthelper.create_block("bhkConvexTransformShape", b_obj)
-            n_coltf.material = n_havok_mat[0]
+            # n_coltf.material = n_havok_mat[0]
             n_coltf.unknown_float_1 = 0.1
             n_coltf.unknown_8_bytes[0] = 96
             n_coltf.unknown_8_bytes[1] = 120
@@ -464,7 +474,7 @@ class Collision:
             if b_obj.game.collision_bounds_type == 'BOX':
                 n_colbox = self.nif_export.objecthelper.create_block("bhkBoxShape", b_obj)
                 n_coltf.shape = n_colbox
-                n_colbox.material = n_havok_mat[0]
+                # n_colbox.material = n_havok_mat[0]
                 n_colbox.radius = radius
                 n_colbox.unknown_8_bytes[0] = 0x6b
                 n_colbox.unknown_8_bytes[1] = 0xee
@@ -483,7 +493,7 @@ class Collision:
             elif b_obj.game.collision_bounds_type == 'SPHERE':
                 n_colsphere = self.nif_export.objecthelper.create_block("bhkSphereShape", b_obj)
                 n_coltf.shape = n_colsphere
-                n_colsphere.material = n_havok_mat[0]
+                # n_colsphere.material = n_havok_mat[0]
                 # TODO [object][collision] find out what this is: fix for havok coordinate system (6 * 7 = 42)
                 # take average radius
                 n_colsphere.radius = radius
@@ -508,8 +518,8 @@ class Collision:
             second_point /= self.HAVOK_SCALE
 
             n_col_caps = self.nif_export.objecthelper.create_block("bhkCapsuleShape", b_obj)
-            n_col_caps.material = n_havok_mat[0]
-            n_col_caps.skyrim_material = n_havok_mat[1]
+            # n_col_caps.material = n_havok_mat[0]
+            # n_col_caps.skyrim_material = n_havok_mat[1]
             n_col_caps.first_point.x = first_point.x
             n_col_caps.first_point.y = first_point.y
             n_col_caps.first_point.z = first_point.z
@@ -569,7 +579,7 @@ class Collision:
                     " Decimate/split your b_mesh and try again.")
 
             colhull = self.nif_export.objecthelper.create_block("bhkConvexVerticesShape", b_obj)
-            colhull.material = n_havok_mat[0]
+            # colhull.material = n_havok_mat[0]
             colhull.radius = radius
             colhull.unknown_6_floats[2] = -0.0  # enables arrow detection
             colhull.unknown_6_floats[5] = -0.0  # enables arrow detection

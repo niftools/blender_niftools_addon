@@ -112,20 +112,6 @@ class CollisionProperty(PropertyGroup):
             default=0
         )
 
-        cls.havok_material = EnumProperty(
-            name='Havok Material',
-            description='The Shapes material',
-            items=[(item, item, "", i) for i, item in enumerate(NifFormat.HavokMaterial._enumkeys)],
-            # default = 'HAV_MAT_WOOD'
-        )
-
-        cls.skyrim_havok_material = EnumProperty(
-            name='Skyrim Havok Material',
-            description='The Shapes material, for Skyrim',
-            items=[(item, item, "", i) for i, item in enumerate(NifFormat.SkyrimHavokMaterial._enumkeys)],
-            # default = 'HAV_MAT_WOOD'
-        )
-
         cls.export_bhklist = BoolProperty(
             name='Export BHKList',
             description='None',

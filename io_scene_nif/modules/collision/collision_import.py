@@ -49,6 +49,12 @@ from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
 
+def get_material(mat_name):
+    """Returns material of mat_name, create new one if required"""
+    if mat_name not in bpy.data.materials:
+        bpy.data.materials.new(mat_name)
+    return bpy.data.materials[mat_name]
+
 class Collision:
     """Import basic and Havok Collision Shapes"""
 
@@ -65,7 +71,8 @@ class Collision:
                 return self.import_bounding_volume(n_node.collision_object.bounding_volume)
         return []
 
-    def set_b_collider(self, b_obj, bounds_type, radius, material=None, skyrim_material=None):
+
+    def set_b_collider(self, b_obj, bounds_type, radius, n_obj = None):
         """ Helper function to set up b_obj so it becomes recognizable as a collision object """
         # set bounds type
         b_obj.draw_type = 'BOUNDS'
@@ -74,12 +81,15 @@ class Collision:
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = bounds_type
         b_obj.game.radius = radius
-        if material:
-            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[material]
-        for v, k in zip(NifFormat.SkyrimHavokMaterial._enumvalues, NifFormat.SkyrimHavokMaterial._enumkeys):
-            if v == skyrim_material:
-                b_obj.nifcollision.skyrim_havok_material = k
-                break
+        b_me = b_obj.data
+        if n_obj:
+            for mat_type in ("material", "oblivion_havok_material", "fallout_3_havok_material", "skyrim_havok_material"):
+                havok_material = getattr(n_obj, mat_type, None)
+                if havok_material:
+                    mat_name = str(havok_material.material)
+                    print(mat_name)
+                    b_mat = get_material(mat_name)
+                    b_me.materials.append(b_mat)
 
     @staticmethod
     def center_origin_to_matrix(n_center, n_dir):
@@ -254,9 +264,9 @@ class Collision:
 
             b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
             b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
-            b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
-            b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
-            b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
+            # b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
+            # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
+            # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
 
             b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
 
@@ -282,7 +292,7 @@ class Collision:
             b_col_obj.nifcollision.max_linear_velocity = bhkshape.max_linear_velocity
             b_col_obj.nifcollision.max_angular_velocity = bhkshape.max_angular_velocity
 
-            b_col_obj.nifcollision.col_filter = bhkshape.col_filter
+            # b_col_obj.nifcollision.col_filter = bhkshape.col_filter
 
         # import constraints
         # this is done once all objects are imported
@@ -305,14 +315,14 @@ class Collision:
 
         # create blender object
         b_obj = self.nif_import.objecthelper.box_from_extents("box", minx, maxx, miny, maxy, minz, maxz)
-        self.set_b_collider(b_obj, "BOX", r, bhkshape.material, bhkshape.skyrim_material)
+        self.set_b_collider(b_obj, "BOX", r, bhkshape)
         return [b_obj]
 
     def import_bhksphere_shape(self, bhkshape):
         """Import a BhkSphere block as a simple sphere collision object"""
         r = bhkshape.radius * self.HAVOK_SCALE
         b_obj = self.nif_import.objecthelper.box_from_extents("sphere", -r, r, -r, r, -r, r)
-        self.set_b_collider(b_obj, "SPHERE", r, bhkshape.material, bhkshape.skyrim_material)
+        self.set_b_collider(b_obj, "SPHERE", r, bhkshape)
         return [b_obj]
 
     def import_bhkcapsule_shape(self, bhkshape):
@@ -333,7 +343,7 @@ class Collision:
         # we do it like this so the rigid bodies are correctly drawn in blender
         # because they always draw around the object center
         b_obj.location.z += length / 2
-        self.set_b_collider(b_obj, "CAPSULE", radius, bhkshape.material, bhkshape.skyrim_material)
+        self.set_b_collider(b_obj, "CAPSULE", radius, bhkshape)
         return [b_obj]
 
     def import_bhkconvex_vertices_shape(self, bhkshape):
@@ -347,7 +357,7 @@ class Collision:
 
         b_obj = self.nif_import.objecthelper.mesh_from_data("convexpoly", verts, faces)
         radius = bhkshape.radius * self.HAVOK_SCALE
-        self.set_b_collider(b_obj, "BOX", radius, bhkshape.material, bhkshape.skyrim_material)
+        self.set_b_collider(b_obj, "BOX", radius, bhkshape)
         b_obj.game.collision_bounds_type = 'CONVEX_HULL'
         return [b_obj]
 
@@ -357,7 +367,8 @@ class Collision:
         verts = [(v.x, v.y, v.z) for v in bhkshape.vertices]
         faces = list(bhkshape.get_triangles())
         b_obj = self.nif_import.objecthelper.mesh_from_data("poly", verts, faces)
-        self.set_b_collider(b_obj, "BOX", bhkshape.radius, self.havok_mat, None)
+        # todo [collision] self.havok_mat!
+        self.set_b_collider(b_obj, "BOX", bhkshape.radius)
         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
         return [b_obj]
 
@@ -391,7 +402,7 @@ class Collision:
                     continue
             b_obj = self.nif_import.objecthelper.mesh_from_data('poly%i' % subshape_num, verts, faces)
             radius = min(vert.co.length for vert in b_obj.data.vertices)
-            self.set_b_collider(b_obj, "BOX", radius, subshape.material, subshape.skyrim_material)
+            self.set_b_collider(b_obj, "BOX", radius, subshape)
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
 
             vertex_offset += subshape.num_vertices
