@@ -1,4 +1,4 @@
-"""This module is used to for Nif file operations"""
+"""This module is used to for EmmerseGeoMorph file operations"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

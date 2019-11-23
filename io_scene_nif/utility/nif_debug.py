@@ -1,6 +1,8 @@
+"""This script contains helper methods to enable debugging the plugin execution during runtime."""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2012, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,24 +40,28 @@
 import sys
 import os
 
+CLIENT_PORT = 5678
+REMOTE_PORT = 1234
 
-def start_debug():
 
+def start_debug(port=REMOTE_PORT):
     try:
         pydev_src = os.environ['PYDEVDEBUG']
-        
+        print("Found: " + pydev_src)
         if sys.path.count(pydev_src) < 1:
             sys.path.append(pydev_src)
-             
-        import pydevd
-        print("Found: " + pydev_src)
-        
-        try:
-            pydevd.settrace(None, True, True, 5678, False, False)
-        except:    
-            print("Unable to connect to Remote debugging server")
-        pass
-    
-    except:
-        print("Python Remote Debugging Server not found")
-        pass
+    except KeyError:
+        print("Dev: Sys variable not set")
+        return
+
+    try:
+        from pydevd import settrace
+    except ImportError:
+        print("Dev: Import failed to find pydevd module.\nPython Remote Debugging Server not found")
+        return
+    try:
+        settrace('localhost', port=port, stdoutToServer=True, stderrToServer=True, suspend=True)
+    except Exception as e:
+        print("Unable to connect to Remote debugging server")
+        print(e)
+        return
