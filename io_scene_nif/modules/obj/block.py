@@ -1,6 +1,7 @@
+"""This module contains helper methods to store objects between nif and blender objects."""
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2019, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +35,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils

@@ -1,8 +1,8 @@
-"""This script contains helper methods for texture pathing."""
+"""This script contains helper methods for loading texture pathing."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2013, NIF File Format Library and Tools contributors.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without

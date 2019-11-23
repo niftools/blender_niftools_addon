@@ -1,3 +1,5 @@
+"""This modules contains any modules which provide access to scene level information and storage."""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
 # Copyright © 2016, NIF File Format Library and Tools contributors.

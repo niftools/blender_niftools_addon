@@ -1,8 +1,8 @@
-""" Nif Utilities, stores logging across the code base"""
+""" Nif Utilities, stores global access to initialising object of calling Blender function"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
-# Copyright © 2005-2016, NIF File Format Library and Tools contributors.
+# Copyright © 2016, NIF File Format Library and Tools contributors.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
