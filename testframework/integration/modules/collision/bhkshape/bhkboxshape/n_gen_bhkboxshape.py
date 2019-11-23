@@ -2,7 +2,7 @@
 
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2005, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -165,5 +165,4 @@ def n_check_bhkboxshape_data(n_bhkconvextransfrom):
     nose.tools.assert_equal(n_bhkconvextransfrom.shape != None, True)
     n_bhkboxshape = n_bhkconvextransfrom.shape
     nose.tools.assert_is_instance(n_bhkboxshape, NifFormat.bhkBoxShape)
-    
     

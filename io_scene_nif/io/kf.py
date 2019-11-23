@@ -1,4 +1,4 @@
-"""This module is used to for Nif file operations"""
+"""This module is used to for KeyFrame file operations"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

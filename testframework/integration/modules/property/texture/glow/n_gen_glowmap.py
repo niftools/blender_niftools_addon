@@ -1,6 +1,7 @@
+""" This class contains helper methods to craete and assert on a NiTextureProperty glowmap."""
 # ***** BEGIN LICENSE BLOCK *****
 # 
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2005, NIF File Format Library and Tools contributors.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -36,10 +37,8 @@
 # ***** END LICENSE BLOCK *****
 
 import nose
-from os import path
-
-from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
+from pyffi.utils.withref import ref
 
 from integration.modules.property.texture import n_gen_texture
 
