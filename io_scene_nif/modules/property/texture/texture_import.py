@@ -40,9 +40,10 @@
 
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.modules.property import texture
 
 
-class Texture():
+class Texture:
 
     def __init__(self, parent):
         self.nif_import = parent
@@ -81,41 +82,34 @@ class Texture():
     def set_texture_loader(self, textureloader):
         self.textureloader = textureloader
 
-    def import_nitextureprop_textures(self, b_mat, n_textureDesc):
-        if n_textureDesc.has_base_texture:
+    def import_nitextureprop_textures(self, b_mat, n_texturedesc):
+        if n_texturedesc.has_base_texture:
             self.has_diffusetex = True
-            self.diffuse_map = self.import_image_texture(b_mat,
-                                                         n_textureDesc.base_texture)
+            self.diffuse_map = self.import_image_texture(b_mat, n_texturedesc.base_texture)
 
-        if n_textureDesc.has_bump_map_texture:
+        if n_texturedesc.has_bump_map_texture:
             self.has_bumptex = True
-            self.bump_map = self.import_image_texture(b_mat,
-                                                      n_textureDesc.base_texture)
+            self.bump_map = self.import_image_texture(b_mat, n_texturedesc.base_texture)
 
-        if n_textureDesc.has_normal_texture:
+        if n_texturedesc.has_normal_texture:
             self.has_normaltex = True
-            self.normal_map = self.import_image_texture(b_mat,
-                                                        n_textureDesc.bump_map_texture)
+            self.normal_map = self.import_image_texture(b_mat, n_texturedesc.bump_map_texture)
 
-        if n_textureDesc.has_gloss_texture:
+        if n_texturedesc.has_gloss_texture:
             self.has_glosstex = True
-            self.gloss_map = self.import_image_texture(b_mat,
-                                                       n_textureDesc.glow_texture)
+            self.gloss_map = self.import_image_texture(b_mat, n_texturedesc.glow_texture)
 
-        if n_textureDesc.has_glow_texture:
+        if n_texturedesc.has_glow_texture:
             self.has_glowtex = True
-            self.glow_map = self.import_image_texture(b_mat,
-                                                      n_textureDesc.normal_map_texture)
+            self.glow_map = self.import_image_texture(b_mat, n_texturedesc.normal_map_texture)
 
-        if n_textureDesc.has_dark_texture:
+        if n_texturedesc.has_dark_texture:
             self.has_darktex = True
-            self.dark_map = self.import_image_texture(b_mat,
-                                                      n_textureDesc.base_texture)
+            self.dark_map = self.import_image_texture(b_mat, n_texturedesc.base_texture)
 
-        if n_textureDesc.has_detail_texture:
+        if n_texturedesc.has_detail_texture:
             self.has_detailtex = True
-            self.detail_map = self.import_image_texture(b_mat,
-                                                        n_textureDesc.base_texture)
+            self.detail_map = self.import_image_texture(b_mat, n_texturedesc.base_texture)
 
     def import_texture_extra_shader(self, b_mat, n_texture_prop, extra_datas):
         # extra texture shader slots
@@ -130,16 +124,13 @@ class Texture():
                     shader_name = extra.name
                     break
             else:
-                NifLog.warn("No slot for shader texture {0}.".format(
-                    shader_tex_desc.texture_data.source.file_name))
+                NifLog.warn("No slot for shader texture {0}.".format(shader_tex_desc.texture_data.source.file_name))
                 continue
             try:
-                extra_shader_index = (
-                    self.nif_import.EXTRA_SHADER_TEXTURES.index(shader_name))
+                extra_shader_index = (texture.EXTRA_SHADER_TEXTURES.index(shader_name))
             except ValueError:
-                # shader_name not in self.EXTRA_SHADER_TEXTURES
-                NifLog.warn("No slot for shader texture {0}.".format(
-                    shader_tex_desc.texture_data.source.file_name))
+                # shader_name not in texture.EXTRA_SHADER_TEXTURES
+                NifLog.warn("No slot for shader texture {0}.".format(shader_tex_desc.texture_data.source.file_name))
                 continue
 
             self.import_shader_by_type(shader_tex_desc, extra_shader_index)
@@ -173,13 +164,11 @@ class Texture():
             # EnvironmentIntensityIndex (this is reflection)
             refTexDesc = shader_tex_desc.texture_data
             self.has_reftex = True
-            self.reflection_map = self.reflection_map = self.import_image_texture(
-                b_mat, refTexDesc)
+            self.reflection_map = self.reflection_map = self.import_image_texture(b_mat, refTexDesc)
 
         elif extra_shader_index == 4:
             # LightCubeMapIndex
-            if shader_tex_desc.texture_data.source.file_name.lower().startswith(
-                    "rrt_cube_light_map"):
+            if shader_tex_desc.texture_data.source.file_name.lower().startswith("rrt_cube_light_map"):
                 # sid meier's railroads: light map generated by engine
                 # we can skip this
                 NifLog.info("Ignoring Env Map as generated by Engine")
@@ -224,30 +213,36 @@ class Texture():
             if ImageTexFile:
                 self.has_glosstex = True
                 self.gloss_map = self.import_image_texture(b_mat, ImageTexFile)
+
         if hasattr(bsShaderProperty, 'texture_clamp_mode'):
-            self.b_mat = self.import_clamp(b_mat, bsShaderProperty)
+            self.import_clamp(b_mat, bsShaderProperty)
+
         if hasattr(bsShaderProperty, 'uv_offset'):
-            self.b_mat = self.import_uv_offset(b_mat, bsShaderProperty)
+            self.import_uv_offset(b_mat, bsShaderProperty)
+
         if hasattr(bsShaderProperty, 'uv_scale'):
-            self.b_mat = self.import_uv_scale(b_mat, bsShaderProperty)
+            self.import_uv_scale(b_mat, bsShaderProperty)
 
     def import_bseffectshaderproperty(self, b_mat, bsEffectShaderProperty):
         self.reset_textures()
+
         ImageTexFile = bsEffectShaderProperty.source_texture.decode()
         if ImageTexFile:
             self.has_diffusetex = True
             self.diffuse_map = self.import_image_texture(b_mat, ImageTexFile)
+
         ImageTexFile = bsEffectShaderProperty.greyscale_texture.decode()
         if ImageTexFile:
             self.has_glowtex = True
             self.glow_map = self.import_image_texture(b_mat, ImageTexFile)
 
         if hasattr(bsEffectShaderProperty, 'uv_offset'):
-            self.b_mat = self.import_uv_offset(b_mat, bsEffectShaderProperty)
-        if hasattr(bsEffectShaderProperty, 'uv_scale'):
-            self.b_mat = self.import_uv_scale(b_mat, bsEffectShaderProperty)
+            self.import_uv_offset(b_mat, bsEffectShaderProperty)
 
-        self.b_mat = self.import_texture_game_properties(b_mat, bsEffectShaderProperty)
+        if hasattr(bsEffectShaderProperty, 'uv_scale'):
+            self.import_uv_scale(b_mat, bsEffectShaderProperty)
+
+        self.import_texture_game_properties(b_mat, bsEffectShaderProperty)
 
     def import_texture_effect(self, b_mat, textureEffect):
         ImageTexFile = textureEffect
@@ -325,7 +320,7 @@ class Texture():
             b_mat_texslot.texture.use_alpha = False
 
         # Influence
-        if (self.nif_import.ni_alpha_prop):
+        if self.nif_import.ni_alpha_prop:
             b_mat_texslot.use_map_alpha = True
 
         if self.has_diffusetex or self.has_darktex or self.has_detailtex or self.has_reftex or self.has_envtex:
