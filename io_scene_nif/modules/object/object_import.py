@@ -38,18 +38,17 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import mathutils
-
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.utility.nif_logging import NifLog
 
+
 class Object:
     # this will have to deal with all naming issues
     def __init__(self, parent):
         self.nif_import = parent
-    
+
     def import_extra_datas(self, root_block, b_obj):
         """ Only to be called on nif and blender root objects! """
         # store type of root node
@@ -99,14 +98,14 @@ class Object:
         me.from_pydata(verts, [], faces)
         me.update()
         return self.create_b_obj(None, me, name)
-        
+
     def box_from_extents(self, b_name, minx, maxx, miny, maxy, minz, maxz):
         verts = []
         for x in [minx, maxx]:
             for y in [miny, maxy]:
                 for z in [minz, maxz]:
-                    verts.append( (x,y,z) )
-        faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+                    verts.append((x, y, z))
+        faces = [[0, 1, 3, 2], [6, 7, 5, 4], [0, 2, 6, 4], [3, 1, 5, 7], [4, 5, 1, 0], [7, 6, 2, 3]]
         return self.mesh_from_data(b_name, verts, faces)
 
     def store_longname(self, b_obj, n_name):
@@ -114,14 +113,13 @@ class Object:
         if b_obj.name != n_name:
             b_obj.niftools.longname = n_name
             NifLog.debug("Stored long name for {0}".format(b_obj.name))
-   
+
     def import_range_lod_data(self, n_node, b_obj, b_children):
         """ Import LOD ranges and mark b_obj as a LOD node """
         if isinstance(n_node, NifFormat.NiLODNode):
             b_obj["type"] = "NiLODNode"
             range_data = n_node
-            # where lodlevels are stored is determined by version number
-            # need more examples - just a guess here
+            # where lodlevels are stored is determined by version number need more examples - just a guess here
             if not range_data.lod_levels:
                 range_data = n_node.lod_level_data
             # can't just take b_obj.children because the order doesn't match
@@ -159,7 +157,7 @@ class Object:
             b_mesh = b_obj.data
             b_mesh.validate()
             b_mesh.update()
-    
+
     def set_object_bind(self, b_obj, b_obj_children, b_armature):
         """ Sets up parent-child relationships for b_obj and all its children and corrects space for children of bones"""
         if isinstance(b_obj, bpy.types.Object):
@@ -173,7 +171,7 @@ class Object:
                 b_child.parent = b_armature
                 b_child.parent_type = 'BONE'
                 b_child.parent_bone = b_obj.name
-                
+
                 # this works even for arbitrary bone orientation
                 # note that matrix_parent_inverse is a unity matrix on import, so could be simplified further with a constant
                 mpi = armature.nif_bind_to_blender_bind(b_child.matrix_parent_inverse).inverted()
@@ -183,7 +181,7 @@ class Object:
                 b_child.matrix_local = mpi * b_child.matrix_basis
         else:
             raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
-    
+
     def get_skin_deformation_from_partition(self, n_geom):
         """ Workaround because pyffi does not support this skinning method """
 
@@ -195,10 +193,12 @@ class Object:
         skindata = skininst.data
         skinpartition = skininst.skin_partition
         skelroot = skininst.skeleton_root
-        vertices = [ NifFormat.Vector3() for i in range(n_geom.data.num_vertices) ]
+        vertices = [NifFormat.Vector3() for i in range(n_geom.data.num_vertices)]
+
         # ignore normals for now, not needed for import
-        sumweights = [ 0.0 for i in range(n_geom.data.num_vertices) ]
+        sumweights = [0.0 for i in range(n_geom.data.num_vertices)]
         skin_offset = skindata.get_transform()
+
         # store one transform per bone
         bone_transforms = []
         for i, bone_block in enumerate(skininst.bones):
@@ -207,6 +207,7 @@ class Object:
             bone_matrix = bone_block.get_transform(skelroot)
             transform = bone_offset * bone_matrix * skin_offset
             bone_transforms.append(transform)
+
         # now the actual unique bit
         for block in skinpartition.skin_partition_blocks:
             # create all vgroups for this block's bones
@@ -226,9 +227,9 @@ class Object:
                         vertices[vert_index] += weight * (n_geom.data.vertices[vert_index] * transform)
                         sumweights[vert_index] += weight
         for i, s in enumerate(sumweights):
-            if abs(s - 1.0) > 0.01: 
-                print( "vertex %i has weights not summing to one: %i" % (i, sumweights[i]))
-            
+            if abs(s - 1.0) > 0.01:
+                print("vertex %i has weights not summing to one: %i" % (i, sumweights[i]))
+
         return vertices
 
     def apply_skin_deformation(self, n_data):
@@ -250,4 +251,3 @@ class Object:
                 vold.x = vnew.x
                 vold.y = vnew.y
                 vold.z = vnew.z
-

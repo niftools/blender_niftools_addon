@@ -1,4 +1,5 @@
 """This script contains helper methods to import textures."""
+
 # ***** BEGIN LICENSE BLOCK *****
 # 
 # Copyright © 2012, NIF File Format Library and Tools contributors.
@@ -246,8 +247,7 @@ class Texture():
         if hasattr(bsEffectShaderProperty, 'uv_scale'):
             self.b_mat = self.import_uv_scale(b_mat, bsEffectShaderProperty)
 
-        self.b_mat = self.import_texture_game_properties(b_mat,
-                                                         bsEffectShaderProperty)
+        self.b_mat = self.import_texture_game_properties(b_mat, bsEffectShaderProperty)
 
     def import_texture_effect(self, b_mat, textureEffect):
         ImageTexFile = textureEffect
@@ -294,11 +294,9 @@ class Texture():
     def create_texture_slot(self, b_mat, image_texture):
         b_mat_texslot = b_mat.texture_slots.add()
         try:
-            b_mat_texslot.texture = self.textureloader.import_texture_source(
-                image_texture.source)
+            b_mat_texslot.texture = self.textureloader.import_texture_source(image_texture.source)
         except:
-            b_mat_texslot.texture = self.textureloader.import_texture_source(
-                image_texture)
+            b_mat_texslot.texture = self.textureloader.import_texture_source(image_texture)
         b_mat_texslot.use = True
 
         # Influence mapping
@@ -306,8 +304,7 @@ class Texture():
         # Mapping
         b_mat_texslot.texture_coords = 'UV'
         try:
-            b_mat_texslot.uv_layer = self.get_uv_layer_name(
-                image_texture.uv_set)
+            b_mat_texslot.uv_layer = self.get_uv_layer_name(image_texture.uv_set)
         except:
             b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
 
@@ -371,17 +368,14 @@ class Texture():
         elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:  # used by Oblivion for parallax
             return "MULTIPLY"
         else:
-            NifLog.warn(
-                "Unknown apply mode (%i) in material, using blend type 'MIX'".format(
-                    n_apply_mode))
+            NifLog.warn("Unknown apply mode ({0}) in material, using blend type 'MIX'".format(n_apply_mode))
             return "MIX"
 
     def get_uv_layer_name(self, uvset):
         return str(uvset)
 
     def get_used_textslots(self, b_mat):
-        self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if
-                           b_texslot != None]
+        self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None]
         return self.used_slots
 
     def has_base_texture(self, b_mat):
