@@ -64,7 +64,6 @@ from pyffi.formats.nif import NifFormat
 
 
 class NifImport(NifCommon):
-    IMPORT_EXPORTEMBEDDEDTEXTURES = False
 
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
