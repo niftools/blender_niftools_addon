@@ -36,3 +36,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+# dictionary of texture files, to reuse textures
+DICT_TEXTURES = {}
+
+# TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
+IMPORT_EMBEDDED_TEXTURES = False
+
+"""Names (ordered by default index) of shader texture slots for Sid Meier's Railroads and similar games."""
+EXTRA_SHADER_TEXTURES = [
+    "EnvironmentMapIndex",
+    "NormalMapIndex",
+    "SpecularIntensityIndex",
+    "EnvironmentIntensityIndex",
+    "LightCubeMapIndex",
+    "ShadowTextureIndex"]
+
+
+def get_used_textslots(b_mat):
+    used_slots = []
+    if b_mat is not None:
+        used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
+    return used_slots
