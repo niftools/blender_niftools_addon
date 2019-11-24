@@ -43,8 +43,10 @@ import os.path
 
 import bpy
 from pyffi.formats.nif import NifFormat
+
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.modules.property import texture
 
 
 class TextureLoader:
@@ -122,7 +124,7 @@ class TextureLoader:
                 break
             n += 1
 
-        if self.nif_import.IMPORT_EXPORTEMBEDDEDTEXTURES:
+        if texture.IMPORT_EMBEDDED_TEXTURES:
             # save embedded texture as dds file
             stream = open(tex, "wb")
             try:
