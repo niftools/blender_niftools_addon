@@ -1,4 +1,4 @@
-"""This script contains helper methods for loading texture pathing."""
+"""This script contains helper methods for loading n_texture pathing."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -56,7 +56,7 @@ class TextureLoader:
 
     def get_texture_hash(self, source):
         """Helper function for import_texture. Returns a key that uniquely
-        identifies a texture from its source (which is either a
+        identifies a n_texture from its source (which is either a
         NiSourceTexture block, or simply a path string).
         """
         if not source:
@@ -78,11 +78,11 @@ class TextureLoader:
         if not source:
             return None
 
-        # calculate the texture hash key
+        # calculate the n_texture hash key
         texture_hash = self.get_texture_hash(source)
 
         try:
-            # look up the texture in the dictionary of imported textures
+            # look up the n_texture in the dictionary of imported textures
             # and return it if found
             return self.nif_import.dict_textures[texture_hash]
         except KeyError:
@@ -102,13 +102,13 @@ class TextureLoader:
             b_image = bpy.data.images.new(name=b_text_name, width=1, height=1, alpha=False)
             b_image.filepath = fn
 
-        # create a texture
+        # create a n_texture
         b_texture = bpy.data.textures.new(name=b_text_name, type='IMAGE')
         b_texture.image = b_image
         b_texture.use_interpolation = True
         b_texture.use_mipmap = True
 
-        # save texture to avoid duplicate imports, and return it
+        # save n_texture to avoid duplicate imports, and return it
         self.nif_import.dict_textures[texture_hash] = b_texture
         return b_texture
 
@@ -125,10 +125,10 @@ class TextureLoader:
             n += 1
 
         if texture.IMPORT_EMBEDDED_TEXTURES:
-            # save embedded texture as dds file
+            # save embedded n_texture as dds file
             stream = open(tex, "wb")
             try:
-                NifLog.info("Saving embedded texture as {0}".format(tex))
+                NifLog.info("Saving embedded n_texture as {0}".format(tex))
                 source.pixel_data.save_as_dds(stream)
             except ValueError:
                 # value error means that the pixel format is not supported
@@ -152,7 +152,7 @@ class TextureLoader:
         b_image = None
         fn = None
 
-        # the texture uses an external image file
+        # the n_texture uses an external image file
         if isinstance(source, NifFormat.NiSourceTexture):
             fn = source.file_name.decode()
         elif isinstance(source, str):
@@ -168,21 +168,21 @@ class TextureLoader:
         if bpy.context.user_preferences.filepaths.texture_directory:
             searchPathList.append(bpy.context.user_preferences.filepaths.texture_directory)
 
-        # TODO [texture] Implement full texture path finding.
+        # TODO [n_texture] Implement full n_texture path finding.
         nif_dir = os.path.join(os.getcwd(), 'nif')
         searchPathList.append(nif_dir)
 
-        # if it looks like a Morrowind style path, use common sense to guess texture path
+        # if it looks like a Morrowind style path, use common sense to guess n_texture path
         meshes_index = importpath.lower().find("meshes")
         if meshes_index != -1:
             searchPathList.append(importpath[:meshes_index] + 'textures')
 
-        # if it looks like a Civilization IV style path, use common sense to guess texture path
+        # if it looks like a Civilization IV style path, use common sense to guess n_texture path
         art_index = importpath.lower().find("art")
         if art_index != -1:
             searchPathList.append(importpath[:art_index] + 'shared')
 
-        # go through all texture search paths
+        # go through all n_texture search paths
         for texdir in searchPathList:
             texdir = texdir.replace('\\', os.sep)
             texdir = texdir.replace('/', os.sep)
