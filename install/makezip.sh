@@ -1,15 +1,17 @@
 #!/bin/bash
+
+PYFFI_VERSION="2.2.4.dev2"
+NAME="blender_nif_plugin"
+
 CUR_DIR=$(pwd)
 BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 ROOT="${BUILD_DIR}"/..
 PLUGIN_IN="${ROOT}"/io_scene_nif/
 VERSION=$(cat "${PLUGIN_IN}"/VERSION)
-NAME="blender_nif_plugin"
 ZIP_NAME="${NAME}-${VERSION}.zip"
 TEMP="${BUILD_DIR}"/temp
 PLUGIN_OUT="${TEMP}"/io_scene_nif
 DEPS_OUT="${PLUGIN_OUT}"/dependencies
-PYFFI_VERSION="2.2.4.dev0"
 
 if [[ -d "${TEMP}" ]]; then
   echo "Removing old temp directory"
