@@ -42,15 +42,18 @@ from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 from pyffi.formats.nif import NifFormat
 
+# TODO [scene] Use this as global import and export values and remove from operator
 USER_VERSION = {
     'OBLIVION': 11,
     'FALLOUT_3': 11,
+    'SKYRIM': 12,
     'DIVINITY_2': 131072
 }
 
 USER_VERSION_2 = {
     'OBLIVION': 11,
-    'FALLOUT_3': 34
+    'FALLOUT_3': 34,
+    'SKYRIM': 83
 }
 
 
