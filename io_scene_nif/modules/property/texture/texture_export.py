@@ -434,8 +434,8 @@ class TextureHelper:
                 if b_mat_texslot.use_map_emit:
                     # multi-check
                     if self.glow_mtex:
-                        raise nif_utils.NifError("Multiple emissive textures in mesh '%s', material '%s'.\n"
-                                                 " Make sure there is only one texture set as Influence > emit" % (b_obj.name, b_mat.name))
+                        raise nif_utils.NifError("Multiple emissive textures in mesh '{0}', material '{1}''.\n"
+                                                 " Make sure there is only one texture set as Influence > emit".format(b_obj.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -447,8 +447,8 @@ class TextureHelper:
                 elif b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec:
                     # multi-check
                     if self.gloss_mtex:
-                        raise nif_utils.NifError("Multiple specular gloss textures in mesh '%s', material '%s'.\n"
-                                                 "Make sure there is only one texture set as Influence > specular" % (b_obj.name, b_mat.name))
+                        raise nif_utils.NifError("Multiple specular gloss textures in mesh '{0}', material '{1}'.\n"
+                                                 "Make sure there is only one texture set as Influence > specular".format(b_obj.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -458,12 +458,11 @@ class TextureHelper:
                     self.gloss_mtex = b_mat_texslot
 
                 # bump map
-                elif b_mat_texslot.use_map_normal and \
-                        b_mat_texslot.texture.use_normal_map == False:
+                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map is False:
                     # multi-check
                     if self.bump_mtex:
-                        raise nif_utils.NifError("Multiple bump/normal texture in mesh '%s', material '%s'.\n"
-                                                 "Make sure there is only one texture set as Influence > normal" % (b_obj.name, b_mat.name))
+                        raise nif_utils.NifError("Multiple bump/normal texture in mesh '{0}', material '{1}'.\n"
+                                                 "Make sure there is only one texture set as Influence > normal".format(b_obj.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -475,8 +474,8 @@ class TextureHelper:
                 elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
                     # multi-check
                     if self.normal_mtex:
-                        raise nif_utils.NifError("Multiple bump/normal textures in mesh '%s', material '%s'."
-                                                 " Make sure there is only one texture set as Influence > normal" % (b_obj.name, b_mat.name))
+                        raise nif_utils.NifError("Multiple bump/normal textures in mesh '{0}', material '{1}'.\n"
+                                                 "Make sure there is only one texture set as Influence > normal".format(b_obj.name, b_mat.name))
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
