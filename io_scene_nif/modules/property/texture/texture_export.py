@@ -43,6 +43,7 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
 
+from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.texture.texture_writer import TextureWriter
 
 
@@ -65,16 +66,9 @@ class TextureHelper:
         self.ref_mtex = None
 
     @staticmethod
-    def get_used_textslots(b_mat):
-        used_slots = []
-        if b_mat is not None:
-            used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
-        return used_slots
-
-    @staticmethod
     def get_uv_layers(b_mat):
         used_uvlayers = set()
-        texture_slots = TextureHelper.get_used_textslots(b_mat)
+        texture_slots = texture.get_used_textslots(b_mat)
         for slot in texture_slots:
             used_uvlayers.add(slot.uv_layer)
         return used_uvlayers
@@ -263,7 +257,7 @@ class TextureHelper:
         if self.normal_mtex:
             shadertexdesc = texprop.shader_textures[1]
             shadertexdesc.is_used = True
-            shadertexdesc.texture_data.source = self.texture_writer.export_source_texture(texture=self.normal_mtex.texture)
+            shadertexdesc.texture_data.source = self.texture_writer.export_source_texture(n_texture=self.normal_mtex.texture)
 
         if self.gloss_mtex:
             if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
@@ -274,7 +268,7 @@ class TextureHelper:
             else:
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = self.texture_writer.export_source_texture(texture=self.gloss_mtex.texture)
+                shadertexdesc.texture_data.source = self.texture_writer.export_source_texture(n_texture=self.gloss_mtex.texture)
 
         if self.dark_mtex:
             texprop.has_dark_texture = True
@@ -296,7 +290,7 @@ class TextureHelper:
             else:
                 shadertexdesc = texprop.shader_textures[3]
                 shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = self.texture_writer.export_source_texture(texture=self.ref_mtex.texture)
+                shadertexdesc.texture_data.source = self.texture_writer.export_source_texture(n_texture=self.ref_mtex.texture)
 
     def export_texture_shader_effect(self, texprop):
         # export extra shader textures
@@ -396,7 +390,7 @@ class TextureHelper:
 
     def determine_texture_types(self, b_obj, b_mat):
 
-        used_slots = self.get_used_textslots(b_mat)
+        used_slots = texture.get_used_textslots(b_mat)
         self.base_mtex = None
         self.bump_mtex = None
         self.dark_mtex = None

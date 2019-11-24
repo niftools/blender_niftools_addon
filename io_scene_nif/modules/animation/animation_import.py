@@ -418,7 +418,7 @@ class MaterialAnimation:
         for n_uvgroup, (data_path, array_ind) in zip(n_ctrl.data.uv_groups, dtypes):
             if n_uvgroup.keys:
                 interp = self.nif_import.animationhelper.get_b_interp_from_n_interp(n_uvgroup.interpolation)
-                # in blender, UV offset is stored per texture slot
+                # in blender, UV offset is stored per n_texture slot
                 # so we have to repeat the import for each used tex slot
                 for i, texture_slot in enumerate(b_material.texture_slots):
                     if texture_slot:
