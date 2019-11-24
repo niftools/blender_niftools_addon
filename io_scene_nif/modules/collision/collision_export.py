@@ -41,6 +41,8 @@ import bpy
 import mathutils
 
 from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules import collision
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
@@ -52,7 +54,7 @@ class Collision:
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.HAVOK_SCALE = parent.HAVOK_SCALE
+        self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     @staticmethod
     def has_collision():
@@ -98,9 +100,7 @@ class Collision:
         elif NifOp.props.game in ('ZOO_TYCOON_2',):
             self.export_nicollisiondata(b_obj, n_parent)
         else:
-            NifLog.warn(
-                "Collisions not supported for game '{0}', skipped collision object '{1}'".format(NifOp.props.game,
-                                                                                                 b_obj.name))
+            NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(NifOp.props.game, b_obj.name))
 
     def export_nicollisiondata(self, b_obj, n_parent):
         """ Export b_obj as a NiCollisionData """
@@ -186,9 +186,9 @@ class Collision:
         b_scene = bpy.context.scene.niftools_scene
         if b_scene.user_version == 12:
             if b_scene.user_version_2 == 83:
-                self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE * 10
+                self.HAVOK_SCALE = self.HAVOK_SCALE * 10
             else:
-                self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE
+                self.HAVOK_SCALE = self.HAVOK_SCALE
 
         # find physics properties/defaults
         # n_havok_mat = (b_obj.nifcollision.havok_material, b_obj.nifcollision.skyrim_havok_material)
