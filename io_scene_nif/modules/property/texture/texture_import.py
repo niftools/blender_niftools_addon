@@ -181,76 +181,76 @@ class Texture:
         else:
             NifLog.warn("Unknown n_texture type found in extra_shader_index")
 
-    def import_bsshaderproperty(self, b_mat, bsShaderProperty):
+    def import_bsshaderproperty(self, b_mat, bs_shader_property):
         self.reset_textures()
-        ImageTexFile = bsShaderProperty.texture_set.textures[0].decode()
-        if ImageTexFile:
+        image_tex_file = bs_shader_property.texture_set.textures[0].decode()
+        if image_tex_file:
             self.has_diffusetex = True
-            self.diffuse_map = self.import_image_texture(b_mat, ImageTexFile)
+            self.diffuse_map = self.import_image_texture(b_mat, image_tex_file)
 
-        ImageTexFile = bsShaderProperty.texture_set.textures[1].decode()
-        if ImageTexFile:
+        image_tex_file = bs_shader_property.texture_set.textures[1].decode()
+        if image_tex_file:
             self.has_normaltex = True
-            self.normal_map = self.import_image_texture(b_mat, ImageTexFile)
+            self.normal_map = self.import_image_texture(b_mat, image_tex_file)
 
-        ImageTexFile = bsShaderProperty.texture_set.textures[2].decode()
-        if ImageTexFile:
+        image_tex_file = bs_shader_property.texture_set.textures[2].decode()
+        if image_tex_file:
             self.has_glowtex = True
-            self.glow_map = self.import_image_texture(b_mat, ImageTexFile)
+            self.glow_map = self.import_image_texture(b_mat, image_tex_file)
 
-        ImageTexFile = bsShaderProperty.texture_set.textures[3].decode()
-        if ImageTexFile:
+        image_tex_file = bs_shader_property.texture_set.textures[3].decode()
+        if image_tex_file:
             self.has_detailtex = True
-            self.detail_map = self.import_image_texture(b_mat, ImageTexFile)
+            self.detail_map = self.import_image_texture(b_mat, image_tex_file)
 
-        if len(bsShaderProperty.texture_set.textures) > 6:
-            ImageTexFile = bsShaderProperty.texture_set.textures[6].decode()
-            if ImageTexFile:
+        if len(bs_shader_property.texture_set.textures) > 6:
+            image_tex_file = bs_shader_property.texture_set.textures[6].decode()
+            if image_tex_file:
                 self.has_decaltex = True
-                self.decal_map = self.import_image_texture(b_mat, ImageTexFile)
+                self.decal_map = self.import_image_texture(b_mat, image_tex_file)
 
-            ImageTexFile = bsShaderProperty.texture_set.textures[7].decode()
-            if ImageTexFile:
+            image_tex_file = bs_shader_property.texture_set.textures[7].decode()
+            if image_tex_file:
                 self.has_glosstex = True
-                self.gloss_map = self.import_image_texture(b_mat, ImageTexFile)
+                self.gloss_map = self.import_image_texture(b_mat, image_tex_file)
 
-        if hasattr(bsShaderProperty, 'texture_clamp_mode'):
-            self.import_clamp(b_mat, bsShaderProperty)
+        if hasattr(bs_shader_property, 'texture_clamp_mode'):
+            self.import_clamp(b_mat, bs_shader_property)
 
-        if hasattr(bsShaderProperty, 'uv_offset'):
-            self.import_uv_offset(b_mat, bsShaderProperty)
+        if hasattr(bs_shader_property, 'uv_offset'):
+            self.import_uv_offset(b_mat, bs_shader_property)
 
-        if hasattr(bsShaderProperty, 'uv_scale'):
-            self.import_uv_scale(b_mat, bsShaderProperty)
+        if hasattr(bs_shader_property, 'uv_scale'):
+            self.import_uv_scale(b_mat, bs_shader_property)
 
-    def import_bseffectshaderproperty(self, b_mat, bsEffectShaderProperty):
+    def import_bseffectshaderproperty(self, b_mat, bs_effect_shader_property):
         self.reset_textures()
 
-        ImageTexFile = bsEffectShaderProperty.source_texture.decode()
+        ImageTexFile = bs_effect_shader_property.source_texture.decode()
         if ImageTexFile:
             self.has_diffusetex = True
             self.diffuse_map = self.import_image_texture(b_mat, ImageTexFile)
 
-        ImageTexFile = bsEffectShaderProperty.greyscale_texture.decode()
+        ImageTexFile = bs_effect_shader_property.greyscale_texture.decode()
         if ImageTexFile:
             self.has_glowtex = True
             self.glow_map = self.import_image_texture(b_mat, ImageTexFile)
 
-        if hasattr(bsEffectShaderProperty, 'uv_offset'):
-            self.import_uv_offset(b_mat, bsEffectShaderProperty)
+        if hasattr(bs_effect_shader_property, 'uv_offset'):
+            self.import_uv_offset(b_mat, bs_effect_shader_property)
 
-        if hasattr(bsEffectShaderProperty, 'uv_scale'):
-            self.import_uv_scale(b_mat, bsEffectShaderProperty)
+        if hasattr(bs_effect_shader_property, 'uv_scale'):
+            self.import_uv_scale(b_mat, bs_effect_shader_property)
 
-        self.import_texture_game_properties(b_mat, bsEffectShaderProperty)
+        self.import_texture_game_properties(b_mat, bs_effect_shader_property)
 
-    def import_texture_effect(self, b_mat, textureEffect):
-        ImageTexFile = textureEffect
+    def import_texture_effect(self, b_mat, texture_effect):
+        ImageTexFile = texture_effect
         self.has_envtex = True
         self.env_map = self.import_image_texture(b_mat, ImageTexFile)
 
-    def import_clamp(self, b_mat, ShaderProperty):
-        clamp = ShaderProperty.texture_clamp_mode
+    def import_clamp(self, b_mat, shader_property):
+        clamp = shader_property.texture_clamp_mode
         for texslot in b_mat.texture_slots:
             if texslot:
                 if clamp == 3:
@@ -266,25 +266,25 @@ class Texture:
                     texslot.texture.image.use_clamp_x = True
                     texslot.texture.image.use_clamp_y = True
 
-    def import_uv_offset(self, b_mat, ShaderProperty):
+    def import_uv_offset(self, b_mat, shader_property):
         for texslot in b_mat.texture_slots:
             if texslot:
-                texslot.offset.x = ShaderProperty.uv_offset.u
-                texslot.offset.y = ShaderProperty.uv_offset.v
+                texslot.offset.x = shader_property.uv_offset.u
+                texslot.offset.y = shader_property.uv_offset.v
 
-    def import_uv_scale(self, b_mat, ShaderProperty):
+    def import_uv_scale(self, b_mat, shader_property):
         for texslot in b_mat.texture_slots:
             if texslot:
-                texslot.scale.x = ShaderProperty.uv_scale.u
-                texslot.scale.y = ShaderProperty.uv_scale.v
+                texslot.scale.x = shader_property.uv_scale.u
+                texslot.scale.y = shader_property.uv_scale.v
 
-    def import_texture_game_properties(self, b_mat, ShaderProperty):
+    def import_texture_game_properties(self, b_mat, shader_property):
         for texslot in b_mat.texture_slots:
             if texslot:
                 texslot.texture.image.use_animation = True
-                texslot.texture.image.fps = ShaderProperty.controller.frequency
-                texslot.texture.image.frame_start = ShaderProperty.controller.start_time
-                texslot.texture.image.frame_end = ShaderProperty.controller.stop_time
+                texslot.texture.image.fps = shader_property.controller.frequency
+                texslot.texture.image.frame_start = shader_property.controller.start_time
+                texslot.texture.image.frame_end = shader_property.controller.stop_time
 
     def create_texture_slot(self, b_mat, image_texture):
         b_mat_texslot = b_mat.texture_slots.add()
@@ -305,9 +305,9 @@ class Texture:
 
         return b_mat_texslot
 
-    def import_image_texture(self, b_mat, n_textureDesc):
+    def import_image_texture(self, b_mat, n_texture_desc):
 
-        image_texture = n_textureDesc
+        image_texture = n_texture_desc
 
         b_mat_texslot = self.create_texture_slot(b_mat, image_texture)
 
@@ -339,9 +339,9 @@ class Texture:
             b_mat_texslot.use_map_mirror = True
 
         # Blend mode
-        if hasattr(n_textureDesc, "apply_mode"):
+        if hasattr(n_texture_desc, "apply_mode"):
             b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                n_textureDesc.apply_mode)
+                n_texture_desc.apply_mode)
         elif self.has_envtex:
             b_mat_texslot.blend_type = 'ADD'
         else:
