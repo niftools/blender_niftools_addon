@@ -43,6 +43,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property import texture
+from io_scene_nif.modules.property.texture.texture_export import TextureHelper
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -52,6 +53,7 @@ class MeshHelper:
 
     def __init__(self, parent):
         self.nif_export = parent
+        self.texture_helper = TextureHelper(parent)
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """
@@ -162,8 +164,7 @@ class MeshHelper:
                 mesh_mat_specular_color = b_mat.specular_color
 
                 eps = NifOp.props.epsilon
-                if (mesh_mat_specular_color.r > eps) or (mesh_mat_specular_color.g > eps) or (
-                        mesh_mat_specular_color.b > eps):
+                if (mesh_mat_specular_color.r > eps) or (mesh_mat_specular_color.g > eps) or (mesh_mat_specular_color.b > eps):
                     mesh_hasspec = b_spec_prop
 
                 # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
@@ -177,8 +178,7 @@ class MeshHelper:
                         mesh_hasalpha = True
                 elif mesh_hasvcola:
                     mesh_hasalpha = True
-                elif b_mat.animation_data and \
-                        'Alpha' in b_mat.animation_data.action.fcurves:
+                elif b_mat.animation_data and 'Alpha' in b_mat.animation_data.action.fcurves:
                     mesh_hasalpha = True
 
                 # wire mat
@@ -195,9 +195,7 @@ class MeshHelper:
                             if b_groupname.group == vertex_group.index:
                                 vertices_list.add(b_vert.index)
                     NifLog.debug("Found body part {0}".format(bodypartgroupname))
-                    bodypartgroups.append(
-                        [bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname),
-                         vertices_list])
+                    bodypartgroups.append([bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
 
             # note: we can be in any of the following five situations
             # material + base texture        -> normal object
@@ -208,9 +206,9 @@ class MeshHelper:
 
             # create a trishape block
             if not NifOp.props.stripify:
-                trishape = self.nif_export.objecthelper.create_block("NiTriShape", b_obj)
+                trishape = block_store.create_block("NiTriShape", b_obj)
             else:
-                trishape = self.nif_export.objecthelper.create_block("NiTriStrips", b_obj)
+                trishape = block_store.create_block("NiTriStrips", b_obj)
 
             # fill in the NiTriShape's non-trivial values
             if isinstance(n_parent, NifFormat.RootCollisionNode):
@@ -228,7 +226,7 @@ class MeshHelper:
                 if len(mesh_materials) > 1:
                     trishape.name = trishape.name.decode() + ":%i" % materialIndex
                 else:
-                    trishape.name = self.nif_export.objecthelper.get_full_name(trishape)
+                    trishape.name = block_store.get_full_name(trishape)
 
             # Trishape Flags...
             if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
@@ -269,13 +267,13 @@ class MeshHelper:
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
-                    bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.texture_helper.export_bs_shader_property(b_obj, b_mat)
 
                     block_store.register_block(bsshader)
                     trishape.add_property(bsshader)
             elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
-                    bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.texture_helper.export_bs_shader_property(b_obj, b_mat)
 
                     block_store.register_block(bsshader)
                     num_props = trishape.num_properties
@@ -286,19 +284,19 @@ class MeshHelper:
                     # TODO [shader] Pull out to shader module
                     # trishape.add_property(bsshader)
                     if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
-                        effect_control = self.nif_export.objecthelper.create_block("BSEffectShaderPropertyFloatController", bsshader)
+                        effect_control = block_store.create_block("BSEffectShaderPropertyFloatController", bsshader)
                         effect_control.flags = b_mat.niftools_alpha.textureflag
                         effect_control.frequency = b_slot.texture.image.fps
                         effect_control.start_time = b_slot.texture.image.frame_start
                         effect_control.stop_time = b_slot.texture.image.frame_end
                         bsshader.add_controller(effect_control)
             else:
-                if NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
+                if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4: set shader slots in extra data
-                    self.nif_export.texturehelper.add_shader_integer_extra_datas(trishape)
+                    self.texture_helper.add_shader_integer_extra_datas(trishape)
 
                 if b_mat:
-                    n_nitextureprop = self.nif_export.texturehelper.export_texturing_property(
+                    n_nitextureprop = self.texture_helper.export_texturing_property(
                         flags=0x0001,  # standard
                         applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
@@ -308,7 +306,7 @@ class MeshHelper:
 
             # add texture effect block (must be added as preceeding child of the trishape)
             if n_parent:
-                ref_mtex = self.nif_export.texturehelper.ref_mtex
+                ref_mtex = self.texture_helper.ref_mtex
                 if NifOp.props.game == 'MORROWIND' and ref_mtex:
                     # create a new parent block for this shape
                     extra_node = block_store.create_block("NiNode", ref_mtex)
@@ -354,7 +352,7 @@ class MeshHelper:
                 # add NiTriShape's specular property
                 # but NOT for sid meier's railroads and other extra shader
                 # games (they use specularity even without this property)
-                if mesh_hasspec and (NifOp.props.game not in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES):
+                if mesh_hasspec and (NifOp.props.game not in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     # refer to the specular property in the trishape block
                     trishape.add_property(self.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
 
@@ -399,7 +397,7 @@ class MeshHelper:
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
-            mesh_uv_layers = self.nif_export.texturehelper.get_uv_layers(b_mat)
+            mesh_uv_layers = self.texture_helper.get_uv_layers(b_mat)
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
             vertlist = []
@@ -566,9 +564,9 @@ class MeshHelper:
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
-                tridata = self.nif_export.objecthelper.create_block("NiTriShapeData", b_obj)
+                tridata = block_store.create_block("NiTriShapeData", b_obj)
             else:
-                tridata = self.nif_export.objecthelper.create_block("NiTriStripsData", b_obj)
+                tridata = block_store.create_block("NiTriStripsData", b_obj)
             trishape.data = tridata
 
             # flags
@@ -629,7 +627,7 @@ class MeshHelper:
             # for extra shader texture games, only export it if those textures are actually exported
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if mesh_uv_layers and mesh_hasnormals:
-                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES):
+                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     trishape.update_tangent_space(as_extra=(NifOp.props.game == 'OBLIVION'))
 
             # now export the vertex weights, if there are any
@@ -647,25 +645,25 @@ class MeshHelper:
                     if boneinfluences:  # yes we have skinning!
                         # create new skinning instance block and link it
                         if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
-                            skininst = self.nif_export.objecthelper.create_block("BSDismemberSkinInstance", b_obj)
+                            skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
                         else:
-                            skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
+                            skininst = block_store.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
                         for block in block.block_to_obj:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature):
+                                if block.name.decode() == self.nif_export.get_full_name(b_obj_armature):
                                     skininst.skeleton_root = block
                                     break
                         else:
                             raise nif_utils.NifError("Skeleton root '%s' not found." % b_obj_armature.name)
 
                         # create skinning data and link it
-                        skindata = self.nif_export.objecthelper.create_block("NiSkinData", b_obj)
+                        skindata = block_store.create_block("NiSkinData", b_obj)
                         skininst.data = skindata
 
                         skindata.has_vertex_weights = True
                         # fix geometry rest pose: transform relative to skeleton root
-                        skindata.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj).get_inverse())
+                        skindata.set_transform(self.nif_export.get_object_matrix(b_obj).get_inverse())
 
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}
@@ -723,7 +721,7 @@ class MeshHelper:
                             bone_block = None
                             for block in block.block_to_obj:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature.data.bones[bone]):
+                                    if block.name.decode() == self.nif_export.get_full_name(b_obj_armature.data.bones[bone]):
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -822,7 +820,7 @@ class MeshHelper:
                             raise ValueError("Can only export relative shape keys.")
 
                         # create geometry morph controller
-                        morph_ctrl = self.nif_export.objecthelper.create_block("NiGeomMorpherController", keyipo)
+                        morph_ctrl = block_store.create_block("NiGeomMorpherController", keyipo)
                         morph_ctrl.target = trishape
                         morph_ctrl.frequency = 1.0
                         morph_ctrl.phase = 0.0
@@ -832,7 +830,7 @@ class MeshHelper:
                         ctrl_flags = 0x000c
 
                         # create geometry morph data
-                        morph_data = self.nif_export.objecthelper.create_block("NiMorphData", keyipo)
+                        morph_data = block_store.create_block("NiMorphData", keyipo)
                         morph_ctrl.data = morph_data
                         morph_data.num_morphs = len(key.key_blocks)
                         morph_data.num_vertices = len(vertlist)
@@ -876,7 +874,7 @@ class MeshHelper:
                             curve = keyipo[keyblock.name]
 
                             # create interpolator for shape key (needs to be there even if there is no curve)
-                            interpol = self.nif_export.objecthelper.create_block("NiFloatInterpolator")
+                            interpol = block_store.create_block("NiFloatInterpolator")
                             interpol.value = 0
                             morph_ctrl.interpolators[keyblocknum] = interpol
                             # fallout 3 stores interpolators inside the interpolator_weights block
@@ -889,7 +887,7 @@ class MeshHelper:
                             # note: we set data on morph for older nifs and on floatdata for newer nifs
                             # of course only one of these will be actually written to the file
                             NifLog.info("Exporting morph {0}: curve".format(keyblock.name))
-                            interpol.data = self.nif_export.objecthelper.create_block("NiFloatData", curve)
+                            interpol.data = block_store.create_block("NiFloatData", curve)
                             floatdata = interpol.data.data
                             if curve.getExtrapolation() == "Constant":
                                 ctrl_flags = 0x000c
