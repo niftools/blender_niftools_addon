@@ -41,6 +41,8 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.obj import block_registry
+from io_scene_nif.modules.obj.block_registry import BlockRegistry
 from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
@@ -87,12 +89,12 @@ class TextureWriter:
         srctex.unknown_byte = 1
 
         # search for duplicate
-        for block in self.nif_export.nif_export.block_to_obj:
+        for block in block_registry.block_to_obj:
             if isinstance(block, NifFormat.NiSourceTexture) and block.get_hash() == srctex.get_hash():
                 return block
 
         # no identical source texture found, so use and register the new one
-        return self.nif_export.nif_export.objecthelper.register_block(srctex, n_texture)
+        return BlockRegistry.register_block(srctex, n_texture)
 
     def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):
         """Helper function for export_texturing_property to export each texture slot."""

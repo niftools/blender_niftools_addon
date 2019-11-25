@@ -38,28 +38,27 @@
 # ***** END LICENSE BLOCK *****
 
 
-from io_scene_nif.nif_common import NifCommon
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_logging import NifLog
-
-from io_scene_nif.modules.animation.animation_export import Animation
-from io_scene_nif.modules.collision.collision_export import Collision
-from io_scene_nif.modules.armature.armature_export import Armature
-from io_scene_nif.modules import armature
-from io_scene_nif.modules.property.property_export import PropertyHelper
-from io_scene_nif.modules.constraint.constraint_export import Constraint
-from io_scene_nif.modules.property.texture.texture_export import TextureHelper
-from io_scene_nif.modules.object.object_export import ObjectHelper
-from io_scene_nif.modules.scene import scene_export
-from io_scene_nif.utility.nif_global import NifOp
-
-import pyffi.spells.nif.fix
-from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
-
 import os.path
 
 import bpy
+import pyffi.spells.nif.fix
+from pyffi.formats.egm import EgmFormat
+from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules import armature
+from io_scene_nif.modules.animation.animation_export import Animation
+from io_scene_nif.modules.armature.armature_export import Armature
+from io_scene_nif.modules.collision.collision_export import Collision
+from io_scene_nif.modules.constraint.constraint_export import Constraint
+from io_scene_nif.modules.obj import block_registry
+from io_scene_nif.modules.object.object_export import ObjectHelper
+from io_scene_nif.modules.property.property_export import PropertyHelper
+from io_scene_nif.modules.property.texture.texture_export import TextureHelper
+from io_scene_nif.modules.scene import scene_export
+from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.nif_logging import NifLog
 
 
 # main export class
@@ -112,7 +111,6 @@ class NifExport(NifCommon):
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
         self.dict_bone_priorities = {}
-        self.block_to_obj = {}
         self.dict_materials = {}
         self.dict_textures = {}
         self.dict_mesh_uvlayers = []
@@ -191,7 +189,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
-                for block in self.block_to_obj:
+                for block in block_registry.block_to_obj:
                     # has it a controller field?
                     if isinstance(block, NifFormat.NiObjectNET):
                         if block.controller:
@@ -208,7 +206,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking controllers")
             if animtxt and NifOp.props.game == 'MORROWIND':
                 has_keyframecontrollers = False
-                for block in self.block_to_obj:
+                for block in block_registry.block_to_obj:
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
@@ -218,7 +216,7 @@ class NifExport(NifCommon):
                     self.animationhelper.export_keyframes(root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
-                for block in self.block_to_obj:
+                for block in block_registry.block_to_obj:
                     if isinstance(block, NifFormat.NiNode):
                         # if any of the shape children has a controller or if the ninode has a controller convert its type
                         if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
@@ -232,13 +230,14 @@ class NifExport(NifCommon):
             # oblivion skeleton export: check that all bones have a transform controller and transform interpolator
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
 
+                # TODO [armature] Extract out to armature animation
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
-                for block in list(self.block_to_obj.keys()):
+                for block in list(block_registry.block_to_obj.keys()):
                     if isinstance(block, NifFormat.NiNode) and block.name.decode() == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
-                            ctrl = self.objecthelper.create_block("NiTransformController")
-                            interp = self.objecthelper.create_block("NiTransformInterpolator")
+                            ctrl = BlockRegistry.create_block("NiTransformController")
+                            interp = BlockRegistry.create_block("NiTransformInterpolator")
 
                             ctrl.interpolator = interp
                             bone.add_controller(ctrl)
@@ -267,12 +266,12 @@ class NifExport(NifCommon):
                     anim_textextra = None
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
-            # note: self.block_to_obj changes during iteration, so need list copy
-            for block in list(self.block_to_obj):
+            # note: block_registry.block_to_obj changes during iteration, so need list copy
+            for block in list(block_registry.block_to_obj):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
                         if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
-                            coltf = self.objecthelper.create_block("bhkConvexTransformShape")
+                            coltf = BlockRegistry.create_block("bhkConvexTransformShape")
                             coltf.material = sub_shape.material
                             coltf.unknown_float_1 = 0.1
                             coltf.unknown_8_bytes[0] = 96
@@ -309,7 +308,7 @@ class NifExport(NifCommon):
                 # flatten skins
                 skelroots = set()
                 affectedbones = []
-                for block in self.block_to_obj:
+                for block in block_registry.block_to_obj:
                     if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
                         NifLog.info("Flattening skin on geometry {0}".format(block.name))
                         affectedbones.extend(block.flatten_skin())
@@ -341,7 +340,7 @@ class NifExport(NifCommon):
 
             # generate mopps (must be done after applying scale!)
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                for block in self.block_to_obj:
+                for block in block_registry.block_to_obj:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         NifLog.info("Generating mopp...")
                         block.update_mopp()
@@ -406,16 +405,17 @@ class NifExport(NifCommon):
                         if node not in node_kfctrls:
                             node_kfctrls[node] = []
                         node_kfctrls[node].append(ctrl)
+
                 # morrowind
                 if NifOp.props.game in ('MORROWIND', 'FREEDOM_FORCE'):
                     # create kf root header
-                    kf_root = self.objecthelper.create_block("NiSequenceStreamHelper")
+                    kf_root = BlockRegistry.create_block("NiSequenceStreamHelper")
                     kf_root.add_extra_data(anim_textextra)
                     # reparent controller tree
                     for node, ctrls in node_kfctrls.items():
                         for ctrl in ctrls:
                             # create node reference by name
-                            nodename_extra = self.objecthelper.create_block("NiStringExtraData")
+                            nodename_extra = BlockRegistry.create_block("NiStringExtraData")
                             nodename_extra.bytes_remaining = len(node.name) + 4
                             nodename_extra.string_data = node.name
 
@@ -427,11 +427,13 @@ class NifExport(NifCommon):
                             kf_root.add_controller(ctrl)
                             # wipe controller target
                             ctrl.target = None
+
                 # oblivion
                 elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
                     # TODO [animation] allow for object kf only
+
                     # create kf root header
-                    kf_root = self.objecthelper.create_block("NiControllerSequence")
+                    kf_root = BlockRegistry.create_block("NiControllerSequence")
                     kf_root.name = filebase
                     kf_root.unknown_int_1 = 1
                     kf_root.weight = 1.0
@@ -440,6 +442,7 @@ class NifExport(NifCommon):
                     kf_root.frequency = 1.0
                     kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
                     kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
+
                     # quick hack to set correct target name
                     if "Bip01" in b_armature.data.bones:
                         targetname = "Bip01"
@@ -449,15 +452,18 @@ class NifExport(NifCommon):
                         targetname = root_block.name
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
+
                     # per-node animation
                     if b_armature:
                         for b_bone in b_armature.data.bones:
                             self.animationhelper.export_keyframes(kf_root, b_armature, b_bone)
+
                     # per-object animation
                     else:
                         for b_obj in bpy.data.objects:
                             self.animationhelper.export_keyframes(kf_root, b_obj)
 
+                    '''
                     # for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):
                         # # export a block for every interpolator in every controller
                         # for ctrl in ctrls:
@@ -499,6 +505,7 @@ class NifExport(NifCommon):
                                 # controlledblock.set_controller_type(ctrl.__class__.__name__)
                                 # if variable_2:
                                     # controlledblock.set_variable_2(variable_2)
+                    '''
                 else:
                     raise nif_utils.NifError("Keyframe export for '%s' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
                                              " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % NifOp.props.game)
@@ -530,8 +537,7 @@ class NifExport(NifCommon):
                         node.controller = node.controller.next_controller
                     ctrl = node.controller
                     while ctrl:
-                        if isinstance(ctrl.next_controller,
-                                      NifFormat.NiKeyframeController):
+                        if isinstance(ctrl.next_controller, NifFormat.NiKeyframeController):
                             ctrl.next_controller = ctrl.next_controller.next_controller
                         else:
                             ctrl = ctrl.next_controller
@@ -587,8 +593,9 @@ class NifExport(NifCommon):
                 morph = self.egm_data.add_asym_morph()
             else:
                 continue
-            self.info("Exporting morph %s to egm" % keyblock.name)
+            NifLog.info("Exporting morph %s to egm" % keyblock.name)
             relative_vertices = []
+
             # note: keyblocks[0] is base key
             for vert, key_vert in zip(keyblocks[0].data, keyblock.data):
                 relative_vertices.append(key_vert - vert)
