@@ -43,7 +43,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.nif_global import NifOp
 
 
-class Material():
+class Material:
     
     def __init__(self, parent):
         self.nif_export = parent
@@ -55,18 +55,15 @@ class Material():
         # create block
         matprop = NifFormat.NiMaterialProperty()
 
-        # list which determines whether the material name is relevant or not
-        # only for particular names this holds, such as EnvMap2
-        # by default, the material name does not affect rendering
+        # list which determines whether the material name is relevant or not  only for particular names this holds,
+        # such as EnvMap2 by default, the material name does not affect rendering
         specialnames = ("EnvMap2", "EnvMap", "skin", "Hair",
                         "dynalpha", "HideSecret", "Lava")
 
-        # hack to preserve EnvMap2, skinm, ... named blocks (even if they got
-        # renamed to EnvMap2.xxx or skin.xxx on import)
+        # hack to preserve EnvMap2, skinm, ... named blocks (even if they got renamed to EnvMap2.xxx or skin.xxx on import)
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             for specialname in specialnames:
-                if (name.lower() == specialname.lower()
-                    or name.lower().startswith(specialname.lower() + ".")):
+                if name.lower() == specialname.lower() or name.lower().startswith(specialname.lower() + "."):
                     if name != specialname:
                         NifLog.warn("Renaming material '{0}' to '{1}'".format(name, specialname))
                     name = specialname
@@ -117,6 +114,5 @@ class Material():
                 NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, block.name))
                 return block
 
-        # no material property with given settings found, so use and register
-        # the new one
+        # no material property with given settings found, so use and register the new one
         return matprop

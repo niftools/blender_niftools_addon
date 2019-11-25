@@ -42,6 +42,8 @@ from io_scene_nif.utility import nif_utils
 
 import bpy
 import mathutils
+
+from io_scene_nif.modules import collision
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -50,7 +52,7 @@ class Constraint:
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.HAVOK_SCALE = parent.HAVOK_SCALE
+        self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
