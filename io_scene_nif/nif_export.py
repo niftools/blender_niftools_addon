@@ -52,7 +52,7 @@ from io_scene_nif.modules.collision.collision_export import Collision
 from io_scene_nif.modules.constraint.constraint_export import Constraint
 from io_scene_nif.modules.obj import block_registry
 from io_scene_nif.modules.obj.block_registry import BlockRegistry
-from io_scene_nif.modules.object.object_export import ObjectHelper
+from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.modules.property.property_export import PropertyHelper
 from io_scene_nif.modules.property.texture.texture_export import TextureHelper
 from io_scene_nif.modules.scene import scene_export

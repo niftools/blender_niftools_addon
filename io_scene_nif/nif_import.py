@@ -41,7 +41,6 @@ from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.io.nif import NifFile
-from io_scene_nif.io.kf import KFFile
 from io_scene_nif.io.egm import EGMFile
 
 from io_scene_nif.modules.animation.animation_import import Animation
@@ -52,7 +51,7 @@ from io_scene_nif.modules.constraint.constraint_import import Constraint
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.texture.texture_import import Texture
 from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
-from io_scene_nif.modules.object.object_import import Object
+from io_scene_nif.modules.obj.object_import import Object
 from io_scene_nif.modules.scene import scene_import
 from io_scene_nif.utility.nif_global import NifOp
 
