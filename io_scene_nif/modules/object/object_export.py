@@ -42,7 +42,6 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
-from io_scene_nif.modules.obj import block_registry
 from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
@@ -60,7 +59,7 @@ class ObjectHelper:
         """Return a list of exported objects."""
         exported_objects = []
         # iterating over block.block_to_obj.itervalues() will count some objects twice
-        for b_obj in block_registry.block_to_obj.values():
+        for b_obj in block_store.block_to_obj.values():
             # skip empty & known objects
             if b_obj and b_obj not in exported_objects:
                 # append new object
@@ -179,7 +178,7 @@ class ObjectHelper:
 
     def update_rigid_bodies(self):
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_registry.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
+            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
             # update rigid body center of gravity and mass
             if self.nif_export.IGNORE_BLENDER_PHYSICS:
                 # we are not using blender properties to set the mass
@@ -327,8 +326,8 @@ class ObjectHelper:
             # special case: objects parented to armature bones - find the nif parent bone
             if b_parent.type == 'ARMATURE' and b_child.parent_bone != "":
                 parent_bone = b_parent.data.bones[b_child.parent_bone]
-                assert (parent_bone in block_registry.block_to_obj.values())
-                for n_parent, obj in block_registry.block_to_obj.items():
+                assert (parent_bone in block_store.block_to_obj.values())
+                for n_parent, obj in block_store.block_to_obj.items():
                     if obj == parent_bone:
                         break
             self.nif_export.objecthelper.export_node(b_child, n_parent)
