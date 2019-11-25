@@ -399,9 +399,9 @@ class TextureAnimation:
         # export a NiFlipController
         #
         # fliptxt is a blender text object containing the n_flip definitions
-        # n_texture is the n_texture object in blender ( n_texture is used to checked for pack and mipmap flags )
+        # texture is the texture object in blender ( texture is used to checked for pack and mipmap flags )
         # target is the NiTexturingProperty
-        # target_tex is the n_texture to n_flip ( 0 = base n_texture, 4 = glow n_texture )
+        # target_tex is the texture to n_flip ( 0 = base texture, 4 = glow texture )
         #
         # returns exported NiFlipController
         #
@@ -517,7 +517,7 @@ class MaterialAnimation:
         """Export the material UV controller data."""
 
         # get fcurves - a bit more elaborate here so we can zip with the NiUVData later
-        # nb. these are actually specific to the n_texture slot in blender
+        # nb. these are actually specific to the texture slot in blender
         # here we don't care and just take the first fcurve that matches
         fcurves = []
         for dp, ind in (("offset", 0), ("offset", 1), ("scale", 0), ("scale", 1)):
