@@ -70,6 +70,7 @@ class BoneProperty(PropertyGroup):
     def unregister(cls):
         del bpy.types.Bone.niftools
 
+
 class ArmatureProperty(PropertyGroup):
     @classmethod
     def register(cls):

@@ -39,8 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-# from io_scene_nif.modules.obj import block_registry
-from io_scene_nif.modules.obj.block_registry import BlockRegistry
+from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.texture.texture_writer import TextureWriter
 from io_scene_nif.utility import nif_utils
@@ -214,7 +213,7 @@ class TextureHelper:
         self.export_nitextureprop_tex_descs(texprop)
 
         # search for duplicate
-        for n_block in block_registry.block_to_obj:
+        for n_block in block_store.block_to_obj:
             if isinstance(n_block, NifFormat.NiTexturingProperty) and n_block.get_hash() == texprop.get_hash():
                 return n_block
 

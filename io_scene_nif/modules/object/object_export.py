@@ -43,7 +43,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.obj import block_registry
-from io_scene_nif.modules.obj.block_registry import BlockRegistry
+from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
@@ -125,7 +125,7 @@ class ObjectHelper:
                                                                                                                             15:]))
 
             # create furniture marker block
-            furnmark = BlockRegistry.create_block("BSFurnitureMarker")
+            furnmark = block_store.create_block("BSFurnitureMarker")
             furnmark.name = "FRN"
             furnmark.num_positions = 1
             furnmark.positions.update_size()
@@ -133,7 +133,7 @@ class ObjectHelper:
             furnmark.positions[0].position_ref_2 = furniturenumber
 
             # create extra string data sgoKeep
-            sgokeep = BlockRegistry.create_block("NiStringExtraData")
+            sgokeep = block_store.create_block("NiStringExtraData")
             sgokeep.name = "UPB"  # user property buffer
             sgokeep.string_data = "sgoKeep=1 ExportSel = Yes"  # Unyielding = 0, sgoKeep=1ExportSel = Yes
 
@@ -149,7 +149,7 @@ class ObjectHelper:
             b_obj = self.nif_export.collisionhelper.has_collision()
             if b_obj:
                 # enable collision
-                bsx = BlockRegistry.create_block("BSXFlags")
+                bsx = block_store.create_block("BSXFlags")
                 bsx.name = 'BSX'
                 bsx.integer_data = b_obj.niftools.bsxflags
                 root_block.add_extra_data(bsx)
@@ -157,7 +157,7 @@ class ObjectHelper:
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
                 if b_obj.niftools.upb:
-                    upb = BlockRegistry.create_block("NiStringExtraData")
+                    upb = block_store.create_block("NiStringExtraData")
                     upb.name = 'UPB'
                     if b_obj.niftools.upb == '':
                         upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
@@ -172,7 +172,7 @@ class ObjectHelper:
             loc = b_obj.niftools.prn_location
             if loc != "NONE":
                 # add string extra data
-                prn = BlockRegistry.create_block("NiStringExtraData")
+                prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
                 prn.string_data = self.nif_export.prn_dict[loc]
                 n_root.add_extra_data(prn)
@@ -337,7 +337,7 @@ class ObjectHelper:
         """Essentially a wrapper around create_block() that creates nodes of the right type"""
         # when no b_obj is passed, it means we create a root node
         if not b_obj:
-            return BlockRegistry.create_block("NiNode")
+            return block_store.create_block("NiNode")
 
         # get node type - some are stored as custom property of the b_obj
         try:
@@ -350,7 +350,7 @@ class ObjectHelper:
             n_node_type = "NiBillboardNode"
 
         # now create the node
-        n_node = BlockRegistry.create_block(n_node_type, b_obj)
+        n_node = block_store.create_block(n_node_type, b_obj)
 
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
@@ -393,7 +393,7 @@ class ObjectHelper:
         NiRangeLODData block on n_node.
         """
         # create range lod data object
-        n_range_data = BlockRegistry.create_block("NiRangeLODData", b_obj)
+        n_range_data = block_store.create_block("NiRangeLODData", b_obj)
         n_node.lod_level_data = n_range_data
 
         # get the children
@@ -692,13 +692,13 @@ class MeshHelper:
                 if b_mat:
                     bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
 
-                    BlockRegistry.register_block(bsshader)
+                    block_store.register_block(bsshader)
                     trishape.add_property(bsshader)
             elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
                     bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
 
-                    BlockRegistry.register_block(bsshader)
+                    block_store.register_block(bsshader)
                     num_props = trishape.num_properties
                     trishape.num_properties = num_props + 1
                     trishape.bs_properties.update_size()
@@ -724,7 +724,7 @@ class MeshHelper:
                         applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
 
-                    BlockRegistry.register_block(n_nitextureprop)
+                    block_store.register_block(n_nitextureprop)
                     trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceeding child of the trishape)
@@ -732,7 +732,7 @@ class MeshHelper:
                 ref_mtex = self.nif_export.texturehelper.ref_mtex
                 if NifOp.props.game == 'MORROWIND' and ref_mtex:
                     # create a new parent block for this shape
-                    extra_node = BlockRegistry.create_block("NiNode", ref_mtex)
+                    extra_node = block_store.create_block("NiNode", ref_mtex)
                     n_parent.add_child(extra_node)
                     # set default values for this ninode
                     extra_node.rotation.set_identity()
@@ -792,7 +792,7 @@ class MeshHelper:
                     alpha=mesh_mat_transparency,
                     emitmulti=mesh_mat_emitmulti)
 
-                BlockRegistry.register_block(trimatprop)
+                block_store.register_block(trimatprop)
 
                 # refer to the material property in the trishape block
                 trishape.add_property(trimatprop)

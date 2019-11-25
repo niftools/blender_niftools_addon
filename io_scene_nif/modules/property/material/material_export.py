@@ -38,9 +38,11 @@
 # ***** END LICENSE BLOCK *****
 
 
-from io_scene_nif.utility.nif_logging import NifLog
 from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.nif_logging import NifLog
 
 
 class Material:
@@ -96,7 +98,7 @@ class Material:
 
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different materials even when NiMaterialProperty is the same)
-        for n_block in block_registry.block_to_obj:
+        for n_block in block_store.block_to_obj:
             if not isinstance(n_block, NifFormat.NiMaterialProperty):
                 continue
 
