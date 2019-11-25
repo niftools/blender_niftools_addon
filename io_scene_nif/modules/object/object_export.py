@@ -43,6 +43,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.obj.block_registry import block_store
+from io_scene_nif.modules.obj.object_types import lod_export
 from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
@@ -353,7 +354,7 @@ class ObjectHelper:
 
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
-            self.export_range_lod_data(n_node, b_obj)
+            lod_export.export_range_lod_data(n_node, b_obj)
 
         return n_node
 
@@ -386,28 +387,6 @@ class ObjectHelper:
             if not longname:
                 longname = self.get_unique_name(b_obj.name)
         return longname
-
-    def export_range_lod_data(self, n_node, b_obj):
-        """Export range lod data for for the children of b_obj, as a
-        NiRangeLODData block on n_node.
-        """
-        # create range lod data object
-        n_range_data = block_store.create_block("NiRangeLODData", b_obj)
-        n_node.lod_level_data = n_range_data
-
-        # get the children
-        b_children = b_obj.children
-
-        # set the data
-        n_node.num_lod_levels = len(b_children)
-        n_range_data.num_lod_levels = len(b_children)
-        n_node.lod_levels.update_size()
-        n_range_data.lod_levels.update_size()
-        for b_child, n_lod_level, n_rd_lod_level in zip(b_children, n_node.lod_levels, n_range_data.lod_levels):
-            n_lod_level.near_extent = b_child["near_extent"]
-            n_lod_level.far_extent = b_child["far_extent"]
-            n_rd_lod_level.near_extent = n_lod_level.near_extent
-            n_rd_lod_level.far_extent = n_lod_level.far_extent
 
     def set_object_matrix(self, b_obj, block):
         """Set a blender object's transform matrix to a NIF object's transformation matrix in rest pose."""
