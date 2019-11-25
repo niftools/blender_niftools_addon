@@ -40,6 +40,7 @@
 import mathutils
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules import collision
 from io_scene_nif.utility.nif_logging import NifLog
 
 
@@ -47,7 +48,7 @@ class Constraint:
 
     def __init__(self, parent):
         self.nif_import = parent
-        self.HAVOK_SCALE = parent.HAVOK_SCALE
+        self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def import_bhk_constraints(self):
         for hkbody in self.nif_import.dict_havok_objects:
