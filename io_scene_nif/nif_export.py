@@ -110,6 +110,8 @@ class NifExport(NifCommon):
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
+        block_registry.block_to_obj = {}  # clear out previous iteration
+
         self.dict_bone_priorities = {}
         self.dict_materials = {}
         self.dict_textures = {}
