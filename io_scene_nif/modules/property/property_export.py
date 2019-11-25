@@ -39,8 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.obj import block_registry
-from io_scene_nif.modules.obj.block_registry import BlockRegistry
+from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property.material.material_export import Material
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -68,7 +67,7 @@ class ObjectProperty:
         @return: The new property block.
         """
         # create new vertex color property block
-        vcol_prop = BlockRegistry.create_block("NiVertexColorProperty")
+        vcol_prop = block_store.create_block("NiVertexColorProperty")
     
         # make it a property of the parent
         block_parent.add_property(vcol_prop)
@@ -90,7 +89,7 @@ class ObjectProperty:
         @return: The new property block.
         """
         # create new z-buffer property block
-        zbuf = BlockRegistry.create_block("NiZBufferProperty")
+        zbuf = block_store.create_block("NiZBufferProperty")
 
         # make it a property of the parent
         block_parent.add_property(zbuf)
@@ -106,12 +105,12 @@ class ObjectProperty:
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
         # search for duplicate
-        for block in block_registry.block_to_obj:
+        for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiAlphaProperty) and block.flags == flags and block.threshold == threshold:
                 return block
 
         # no alpha property with given flag found, so create new one
-        alpha_prop = BlockRegistry.create_block("NiAlphaProperty")
+        alpha_prop = block_store.create_block("NiAlphaProperty")
         alpha_prop.flags = flags
         alpha_prop.threshold = threshold
         return alpha_prop
@@ -120,12 +119,12 @@ class ObjectProperty:
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
-        for block in block_registry.block_to_obj:
+        for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiSpecularProperty) and block.flags == flags:
                 return block
 
         # no specular property with given flag found, so create new one
-        spec_prop = BlockRegistry.create_block("NiSpecularProperty")
+        spec_prop = block_store.create_block("NiSpecularProperty")
         spec_prop.flags = flags
         return spec_prop
 
@@ -133,12 +132,12 @@ class ObjectProperty:
         """Return existing wire property with given flags, or create new one
         if an wire property with required flags is not found."""
         # search for duplicate
-        for block in block_registry.block_to_obj:
+        for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiWireframeProperty) and block.flags == flags:
                 return block
 
         # no wire property with given flag found, so create new one
-        wire_prop = BlockRegistry.create_block("NiWireframeProperty")
+        wire_prop = block_store.create_block("NiWireframeProperty")
         wire_prop.flags = flags
         return wire_prop
 
@@ -146,14 +145,14 @@ class ObjectProperty:
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
         # search for duplicate
-        for block in block_registry.block_to_obj:
+        for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiStencilProperty):
                 # all these blocks have the same setting, no further check
                 # is needed
                 return block
 
         # no stencil property found, so create new one
-        stencil_prop = BlockRegistry.create_block("NiStencilProperty")
+        stencil_prop = block_store.create_block("NiStencilProperty")
         if NifOp.props.game == 'FALLOUT_3':
             stencil_prop.flags = 19840
         return stencil_prop
