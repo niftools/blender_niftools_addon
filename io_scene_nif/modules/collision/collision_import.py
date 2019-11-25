@@ -45,6 +45,8 @@ import operator
 
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
+
+from io_scene_nif.modules import collision
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -55,12 +57,13 @@ def get_material(mat_name):
         bpy.data.materials.new(mat_name)
     return bpy.data.materials[mat_name]
 
+
 class Collision:
     """Import basic and Havok Collision Shapes"""
 
     def __init__(self, parent):
         self.nif_import = parent
-        self.HAVOK_SCALE = parent.HAVOK_SCALE
+        self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def import_collision(self, n_node):
         """ Imports a NiNode's collision_object, if present"""
@@ -71,8 +74,7 @@ class Collision:
                 return self.import_bounding_volume(n_node.collision_object.bounding_volume)
         return []
 
-
-    def set_b_collider(self, b_obj, bounds_type, radius, n_obj = None):
+    def set_b_collider(self, b_obj, bounds_type, radius, n_obj=None):
         """ Helper function to set up b_obj so it becomes recognizable as a collision object """
         # set bounds type
         b_obj.draw_type = 'BOUNDS'
@@ -143,7 +145,7 @@ class Collision:
     def import_capsulebv(self, capsule):
         offset = capsule.center
         # always a normalized vector
-        dir = capsule.origin
+        direction = capsule.origin
         # nb properly named in newer nif.xmls
         extent = capsule.unknown_float_1
         radius = capsule.unknown_float_2
@@ -157,7 +159,7 @@ class Collision:
         # create blender object
         b_obj = self.nif_import.objecthelper.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
         # apply transform in local space
-        b_obj.matrix_local = self.center_origin_to_matrix(offset, dir)
+        b_obj.matrix_local = self.center_origin_to_matrix(offset, direction)
         self.set_b_collider(b_obj, "CAPSULE", radius)
         return [b_obj]
 
@@ -166,9 +168,9 @@ class Collision:
 
         if self.nif_import.data._user_version_value_._value == 12:
             if self.nif_import.data._user_version_2_value_._value == 83:
-                self.HAVOK_SCALE = self.nif_import.HAVOK_SCALE * 10
+                self.HAVOK_SCALE = collision.HAVOK_SCALE * 10
             else:
-                self.HAVOK_SCALE = self.nif_import.HAVOK_SCALE
+                self.HAVOK_SCALE = collision.HAVOK_SCALE
 
         if isinstance(bhkshape, NifFormat.bhkTransformShape):
             return self.import_bhktransform(bhkshape)
@@ -193,9 +195,7 @@ class Collision:
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
             self.havok_mat = bhkshape.material
-            return reduce(operator.add,
-                          (self.import_bhk_shape(strips)
-                           for strips in bhkshape.strips_data))
+            return reduce(operator.add, (self.import_bhk_shape(strips) for strips in bhkshape.strips_data))
 
         elif isinstance(bhkshape, NifFormat.NiTriStripsData):
             return self.import_nitristrips(bhkshape)
@@ -204,8 +204,7 @@ class Collision:
             return self.import_bhk_shape(bhkshape.shape)
 
         elif isinstance(bhkshape, NifFormat.bhkListShape):
-            return reduce(operator.add, (self.import_bhk_shape(subshape)
-                                         for subshape in bhkshape.sub_shapes))
+            return reduce(operator.add, (self.import_bhk_shape(subshape) for subshape in bhkshape.sub_shapes))
 
         NifLog.warn("Unsupported bhk shape {0}".format(bhkshape.__class__.__name__))
         return []
@@ -263,7 +262,8 @@ class Collision:
                 b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
 
             b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
-            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
+            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[
+                bhkshape.solver_deactivation]
             # b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
             # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
@@ -273,7 +273,6 @@ class Collision:
             b_col_obj.rigid_body.use_deactivation = True
             b_col_obj.rigid_body.friction = bhkshape.friction
             b_col_obj.rigid_body.restitution = bhkshape.restitution
-            # b_col_obj.rigid_body. = bhkshape.
             b_col_obj.rigid_body.linear_damping = bhkshape.linear_damping
             b_col_obj.rigid_body.angular_damping = bhkshape.angular_damping
             b_col_obj.rigid_body.deactivate_linear_velocity = mathutils.Vector([
@@ -295,8 +294,7 @@ class Collision:
             # b_col_obj.nifcollision.col_filter = bhkshape.col_filter
 
         # import constraints
-        # this is done once all objects are imported
-        # for now, store all imported havok shapes with object lists
+        # this is done once all objects are imported for now, store all imported havok shapes with object lists
         self.nif_import.dict_havok_objects[bhkshape] = collision_objs
 
         # and return a list of transformed collision shapes
@@ -367,7 +365,7 @@ class Collision:
         verts = [(v.x, v.y, v.z) for v in bhkshape.vertices]
         faces = list(bhkshape.get_triangles())
         b_obj = self.nif_import.objecthelper.mesh_from_data("poly", verts, faces)
-        # todo [collision] self.havok_mat!
+        # TODO [collision] self.havok_mat!
         self.set_b_collider(b_obj, "BOX", bhkshape.radius)
         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
         return [b_obj]
@@ -427,6 +425,7 @@ class Collision:
             maxy = n_block.bounding_box.translation.y - n_block.translation.y + n_block.bounding_box.radius.y
             maxz = n_block.bounding_box.translation.z - n_block.translation.z + n_block.bounding_box.radius.z
             bbox_center = n_block.bounding_box.translation.as_list()
+
         # we may still have a BSBound extra data attached to this node
         else:
             for n_extra in n_block.get_extra_datas():

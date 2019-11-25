@@ -69,19 +69,19 @@ class NifExport(NifCommon):
     IDENTITY44.set_identity()
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
-    
+
     # TODO: - Expose via properties
-    
+
     EXPORT_OPTIMIZE_MATERIALS = True
     IGNORE_BLENDER_PHYSICS = False
-    
+
     EXPORT_BHKLISTSHAPE = False
     EXPORT_OB_MASS = 10.0
     EXPORT_OB_SOLID = True
 
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
-    
+
         # Helper systems
         self.collisionhelper = Collision(parent=self)
         self.armaturehelper = Armature(parent=self)
@@ -90,7 +90,8 @@ class NifExport(NifCommon):
         self.constrainthelper = Constraint(parent=self)
         self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
-        
+
+    @property
     def execute(self):
         """Main export function."""
         if bpy.context.mode != 'OBJECT':
@@ -115,7 +116,7 @@ class NifExport(NifCommon):
         self.dict_materials = {}
         self.dict_textures = {}
         self.dict_mesh_uvlayers = []
-        
+
         # if an egm is exported, this will contain the data
         self.egm_data = None
 
@@ -126,7 +127,7 @@ class NifExport(NifCommon):
             # if none are selected, just get all of this scene's objects
             if not selected_objects:
                 selected_objects = bpy.context.scene.objects
-            
+
             # only export empties, meshes, and armatures
             self.export_types = ('EMPTY', 'MESH', 'ARMATURE')
             self.exportable_objects = [b_obj for b_obj in selected_objects if b_obj.type in self.export_types]
@@ -150,22 +151,22 @@ class NifExport(NifCommon):
                                     raise nif_utils.NifError("'%s': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
                                                              "If you don't have vertex groups, select the bones one by one press W to "
                                                              "convert their envelopes to vertex weights, and turn off envelopes." % b_obj.name)
-                                    
+
                 # check for non-uniform transforms
                 scale = b_obj.matrix_local.to_scale()
                 if abs(scale.x - scale.y) > NifOp.props.epsilon or abs(scale.y - scale.z) > NifOp.props.epsilon:
-                    NifLog.warn("Non-uniform scaling not supported.\n "
+                    NifLog.warn("Non-uniform scaling not supported.\n"
                                 "Workaround: apply size and rotation (CTRL-A) on '%s'." % b_obj.name)
 
             b_armature = armature.get_armature()
             # some scenes may not have an armature, so nothing to do here
             if b_armature:
                armature.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
-            
+
             # smooth seams of objects
             if NifOp.props.smooth_object_seams:
                 self.objecthelper.mesh_helper.smooth_mesh_seams(self.exportable_objects)
-                
+
             # TODO: use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
             try:
@@ -177,7 +178,7 @@ class NifExport(NifCommon):
 
             # find nif version to write
             self.version, data = scene_export.get_version_data()
-            
+
             # export the actual root node (the name is fixed later to avoid confusing the
             # exporter with duplicate names)
             root_block = self.objecthelper.export_root_node(filebase)
@@ -200,7 +201,7 @@ class NifExport(NifCommon):
                     NifLog.info("Defining default animation group.")
                     # write the animation group text buffer
                     animtxt = bpy.data.texts.new("Anim")
-                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" % (bpy.context.scene.frame_start, bpy.context.scene.frame_end))
+                    animtxt.write("{0}/Idle: Start/Idle: Loop Start\n{0}/Idle: Loop Stop/Idle: Stop".format(bpy.context.scene.frame_start, bpy.context.scene.frame_end))
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
@@ -211,8 +212,7 @@ class NifExport(NifCommon):
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
-                if ((not has_keyframecontrollers)
-                    and (not NifOp.props.bs_animation_node)):
+                if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.animationhelper.export_keyframes(root_block)
@@ -220,9 +220,7 @@ class NifExport(NifCommon):
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
                 for block in self.block_to_obj:
                     if isinstance(block, NifFormat.NiNode):
-                        # if any of the shape children has a controller
-                        # or if the ninode has a controller
-                        # convert its type
+                        # if any of the shape children has a controller or if the ninode has a controller convert its type
                         if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
                             new_block = NifFormat.NiBSAnimationNode().deepcopy(block)
                             # have to change flags to 42 to make it work
@@ -231,9 +229,9 @@ class NifExport(NifCommon):
                             if root_block is block:
                                 root_block = new_block
 
-            # oblivion skeleton export: check that all bones have a
-            # transform controller and transform interpolator
+            # oblivion skeleton export: check that all bones have a transform controller and transform interpolator
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
+
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
                 for block in list(self.block_to_obj.keys()):
@@ -260,15 +258,13 @@ class NifExport(NifCommon):
                             interp.rotation.w = quat.w
                             interp.scale = bone.scale
             else:
-                # here comes everything that should be exported EXCEPT
-                # for Oblivion skeleton exports
+                # here comes everything that should be exported EXCEPT for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
                     # TODO: removed temorarily to process bseffectshader export
                     anim_textextra = None  # self.animationhelper.export_text_keys(root_block)
                 else:
                     anim_textextra = None
-
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
             # note: self.block_to_obj changes during iteration, so need list copy
@@ -300,6 +296,7 @@ class NifExport(NifCommon):
             if NifOp.props.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
                 self.propertyhelper.object_property.export_vertex_color_property(root_block)
                 self.propertyhelper.object_property.export_z_buffer_property(root_block)
+
             elif NifOp.props.game in ('EMPIRE_EARTH_II',):
                 self.propertyhelper.object_property.export_vertex_color_property(root_block)
                 self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, function=1)
@@ -352,9 +349,8 @@ class NifExport(NifCommon):
                         # block.parse_mopp(verbose = True)
                         # print "=== END OF MOPP TREE ==="
                         # warn about mopps on non-static objects
-                        if any(sub_shape.layer != 1
-                            for sub_shape in block.shape.sub_shapes):
-                                NifLog.warn("Mopps for non-static objects may not function correctly in-game. You may wish to use simple primitives for collision.")
+                        if any(sub_shape.layer != 1 for sub_shape in block.shape.sub_shapes):
+                            NifLog.warn("Mopps for non-static objects may not function correctly in-game. You may wish to use simple primitives for collision.")
 
             if NifOp.props.animation == 'ALL_NIF':
                 NifLog.info("Exporting geometry and animation")
@@ -367,7 +363,6 @@ class NifExport(NifCommon):
 
             # export nif file:
             # ----------------
-
             if NifOp.props.animation != 'ANIM_KF':
                 if NifOp.props.game == 'EMPIRE_EARTH_II':
                     ext = ".nifcache"
@@ -379,7 +374,7 @@ class NifExport(NifCommon):
                 if fileext.lower() != ext:
                     NifLog.warn("Changing extension from {0} to {1} on output file".format(fileext, ext))
                 niffile = os.path.join(directory, filebase + ext)
-                
+
                 data.roots = [root_block]
                 if NifOp.props.game == 'NEOSTEAM':
                     data.modification = "neosteam"
@@ -462,7 +457,7 @@ class NifExport(NifCommon):
                     else:
                         for b_obj in bpy.data.objects:
                             self.animationhelper.export_keyframes(kf_root, b_obj)
-                        
+
                     # for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):
                         # # export a block for every interpolator in every controller
                         # for ctrl in ctrls:

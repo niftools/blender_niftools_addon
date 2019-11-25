@@ -42,6 +42,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
 from io_scene_nif.utility.nif_logging import NifLog
@@ -95,10 +96,10 @@ class ObjectHelper:
 
     def export_root_node(self, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
-        # todo: detect root collision
-        #     # -> root collision node (can be mesh or empty)
+        # TODO [collsion] detect root collision -> root collision node (can be mesh or empty)
         #     self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
         #     return None  # done; stop here
+
         # there is only one root object so that will be our final root
         if len(self.nif_export.root_objects) == 1:
             n_root = self.export_node(self.nif_export.root_objects[0], None)
@@ -121,7 +122,7 @@ class ObjectHelper:
         self.export_inventory_marker(n_root)
         self.export_furniture_marker(n_root, filebase)
         return n_root
-    
+
     def export_inventory_marker(self, n_root):
         if NifOp.props.game in ('SKYRIM',):
             for root_object in self.nif_export.root_objects:
@@ -145,9 +146,10 @@ class ObjectHelper:
             try:
                 furniturenumber = int(filebase[15:])
             except ValueError:
-                raise nif_utils.NifError("Furniture marker has invalid number (%s).\n"
-                                            "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19." % filebase[15:])
-            
+                raise nif_utils.NifError("Furniture marker has invalid number ({0}).\n"
+                                         "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.".format(filebase[
+                                                                                                                            15:]))
+
             # create furniture marker block
             furnmark = self.objecthelper.create_block("BSFurnitureMarker")
             furnmark.name = "FRN"
@@ -164,7 +166,7 @@ class ObjectHelper:
             # add extra blocks
             n_root.add_extra_data(furnmark)
             n_root.add_extra_data(sgokeep)
-    
+
     def export_bsxflags_upb(self, root_block):
         # FIXME:
         NifLog.info("Checking collision")
@@ -188,7 +190,7 @@ class ObjectHelper:
                     else:
                         upb.string_data = b_obj.niftools.upb.encode()
                     root_block.add_extra_data(upb)
-    
+
     def export_weapon_location(self, n_root):
         # export weapon location
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
@@ -231,7 +233,7 @@ class ObjectHelper:
                     if block.mass < 0.0001:
                         block.mass = 0.05
                     block.update_mass_center_inertia(mass=block.mass, solid=self.nif_export.EXPORT_OB_SOLID)
-      
+
     def set_node_flags(self, b_obj, n_node):
         # default node flags
         b_obj_type = b_obj.type
@@ -255,7 +257,7 @@ class ObjectHelper:
                     n_node.flags = 0x0310
                 else:
                     n_node.flags = 0x000C  # morrowind
-        
+
     def export_node(self, b_obj, n_parent):
         """Export a mesh/armature/empty object b_obj as child of n_parent.
         Export also all children of b_obj.
@@ -307,8 +309,7 @@ class ObjectHelper:
                 # don't create intermediate ninode for this guy
                 return self.mesh_helper.export_tri_shapes(b_obj, n_parent, b_obj.name)
 
-            # set transform on trishapes rather than on NiNode for skinned meshes
-            # this fixes an issue with clothing slots
+            # set transform on trishapes rather than on NiNode for skinned meshes this fixes an issue with clothing slots
             if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                 if b_obj_anim_data:
                     # mesh with armature parent should not have animation!
@@ -319,7 +320,7 @@ class ObjectHelper:
         else:
             # -> everything else (empty/armature) is a (more or less regular) node
             node = self.create_ninode(b_obj)
-            
+
         # make it child of its parent in the nif, if it has one
         if n_parent:
             n_parent.add_child(node)
@@ -352,7 +353,7 @@ class ObjectHelper:
             # special case: objects parented to armature bones - find the nif parent bone
             if b_parent.type == 'ARMATURE' and b_child.parent_bone != "":
                 parent_bone = b_parent.data.bones[b_child.parent_bone]
-                assert(parent_bone in self.nif_export.block_to_obj.values())
+                assert (parent_bone in self.nif_export.block_to_obj.values())
                 for n_parent, obj in self.nif_export.block_to_obj.items():
                     if obj == parent_bone:
                         break
@@ -367,17 +368,20 @@ class ObjectHelper:
         # get node type - some are stored as custom property of the b_obj
         try:
             n_node_type = b_obj["type"]
-        except:
+        except KeyError:
             n_node_type = "NiNode"
+
         # ...others by presence of constraints
         if self.has_track(b_obj):
             n_node_type = "NiBillboardNode"
-        # noew create the node
+
+        # now create the node
         n_node = self.create_block(n_node_type, b_obj)
+
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
             self.export_range_lod_data(n_node, b_obj)
-        # return the node
+
         return n_node
 
     def get_unique_name(self, b_name):
@@ -434,25 +438,25 @@ class ObjectHelper:
 
     def set_object_matrix(self, b_obj, block):
         """Set a blender object's transform matrix to a NIF object's transformation matrix in rest pose."""
-        block.set_transform( self.get_object_matrix(b_obj) )
-        
+        block.set_transform(self.get_object_matrix(b_obj))
+
     def get_object_matrix(self, b_obj):
         """Get a blender object's matrix as NifFormat.Matrix44"""
-        return self.mathutils_to_nifformat_matrix( self.get_object_bind(b_obj) )
-        
+        return self.mathutils_to_nifformat_matrix(self.get_object_bind(b_obj))
+
     def set_b_matrix_to_n_block(self, b_matrix, block):
         """Set a blender matrix to a NIF object's transformation matrix in rest pose."""
-        ### TODO [object] maybe favor this over the above two methods for more flexibility and transparency?
-        block.set_transform( self.mathutils_to_nifformat_matrix(b_matrix) )
+        # TODO [object] maybe favor this over the above two methods for more flexibility and transparency?
+        block.set_transform(self.mathutils_to_nifformat_matrix(b_matrix))
 
     def mathutils_to_nifformat_matrix(self, b_matrix):
         """Convert a blender matrix to a NifFormat.Matrix44"""
         # transpose to swap columns for rows so we can use pyffi's set_rows() directly
         # instead of setting every single value manually
         n_matrix = NifFormat.Matrix44()
-        n_matrix.set_rows( *b_matrix.transposed() )
+        n_matrix.set_rows(*b_matrix.transposed())
         return n_matrix
-        
+
     def get_object_bind(self, b_obj):
         """Get the bind matrix of a blender object.
         
@@ -465,7 +469,7 @@ class ObjectHelper:
             return armature.get_bind_matrix(b_obj)
 
         elif isinstance(b_obj, bpy.types.Object):
-            # TODO MOVE TO ARMATUREHELPER
+            # TODO [armature] Move to armaturehelper
 
             # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
             if b_obj.parent_bone:
@@ -479,7 +483,7 @@ class ObjectHelper:
             # just get the local matrix
             else:
                 return b_obj.matrix_local
-        #Nonetype, maybe other weird stuff
+        # Nonetype, maybe other weird stuff
         return mathutils.Matrix()
 
     def has_track(self, b_obj):
@@ -490,11 +494,11 @@ class ObjectHelper:
                 if constr.type == 'TRACK_TO':
                     return True
 
+
 class MeshHelper:
 
     def __init__(self, parent):
         self.nif_export = parent
-
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """ 
@@ -528,6 +532,7 @@ class MeshHelper:
         else:
             # ignore materials on collision trishapes
             mesh_materials = []
+
         # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
         if not mesh_materials:
             mesh_materials = [None]
@@ -556,7 +561,7 @@ class MeshHelper:
         # Textured materials, they represent lighting details
 
         # let's now export one trishape for every mesh material
-        # TODO: needs refactoring - move material, texture, etc. to separate function
+        # TODO [material] needs refactoring - move material, texture, etc. to separate function
         for materialIndex, b_mat in enumerate(mesh_materials):
 
             b_ambient_prop = False
@@ -568,7 +573,7 @@ class MeshHelper:
             b_emit_prop = False
 
             # use the texture properties as preference
-            for b_slot in self.nif_export.texturehelper.get_used_textslots(b_mat):
+            for b_slot in texture.get_used_textslots(b_mat):
                 # replace with texture helper queries
                 b_ambient_prop |= b_slot.use_map_ambient
                 b_diffuse_prop |= b_slot.use_map_color_diffuse
@@ -604,7 +609,8 @@ class MeshHelper:
                 mesh_mat_specular_color = b_mat.specular_color
 
                 eps = NifOp.props.epsilon
-                if (mesh_mat_specular_color.r > eps) or (mesh_mat_specular_color.g > eps) or (mesh_mat_specular_color.b > eps):
+                if (mesh_mat_specular_color.r > eps) or (mesh_mat_specular_color.g > eps) or (
+                        mesh_mat_specular_color.b > eps):
                     mesh_hasspec = b_spec_prop
 
                 # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
@@ -637,7 +643,8 @@ class MeshHelper:
                                 vertices_list.add(b_vert.index)
                     NifLog.debug("Found body part {0}".format(bodypartgroupname))
                     bodypartgroups.append(
-                        [bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
+                        [bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname),
+                         vertices_list])
 
             # note: we can be in any of the following five situations
             # material + base texture        -> normal object
@@ -664,8 +671,7 @@ class MeshHelper:
                 else:
                     trishape.name = trishape_name
 
-                # multimaterial meshes: add material index
-                # (Morrowind's child naming convention)
+                # multimaterial meshes: add material index (Morrowind's child naming convention)
                 if len(mesh_materials) > 1:
                     trishape.name = trishape.name.decode() + ":%i" % materialIndex
                 else:
@@ -706,7 +712,7 @@ class MeshHelper:
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
                 self.nif_export.objecthelper.set_object_matrix(b_obj, trishape)
-            
+
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
@@ -724,10 +730,8 @@ class MeshHelper:
                     trishape.bs_properties.update_size()
                     trishape.bs_properties[num_props] = bsshader
 
+                    # TODO [shader] Pull out to shader module
                     # trishape.add_property(bsshader)
-                    '''Neomonkeus I had to do this because you still have not merged those changes 
-                    ttl269 made to the xml can you make the effort to contact him and get him to 
-                    rebase and clear the conflict so it can be merged'''
                     if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
                         effect_control = self.nif_export.objecthelper.create_block("BSEffectShaderPropertyFloatController", bsshader)
                         effect_control.flags = b_mat.niftools_alpha.textureflag
@@ -737,8 +741,7 @@ class MeshHelper:
                         bsshader.add_controller(effect_control)
             else:
                 if NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
-                    # sid meier's railroad and civ4:
-                    # set shader slots in extra data
+                    # sid meier's railroad and civ4: set shader slots in extra data
                     self.nif_export.texturehelper.add_shader_integer_extra_datas(trishape)
 
                 if b_mat:
@@ -761,8 +764,7 @@ class MeshHelper:
                     extra_node.rotation.set_identity()
                     extra_node.scale = 1.0
                     extra_node.flags = 0x000C  # morrowind
-                    # create texture effect block and parent the
-                    # texture effect and trishape to it
+                    # create texture effect block and parent the texture effect and trishape to it
                     texeff = self.export_texture_effect(ref_mtex)
                     extra_node.add_child(texeff)
                     extra_node.add_child(trishape)
@@ -772,8 +774,7 @@ class MeshHelper:
                     n_parent.add_child(trishape)
 
             if mesh_hasalpha:
-                # add NiTriShape's alpha propery
-                # refer to the alpha property in the trishape block
+                # add NiTriShape's alpha propery refer to the alpha property in the trishape block
                 if b_mat.niftools_alpha.alphaflag != 0:
                     alphaflags = b_mat.niftools_alpha.alphaflag
                     alphathreshold = b_mat.offset_z
@@ -786,7 +787,8 @@ class MeshHelper:
                 else:
                     alphaflags = 0x12ED
                     alphathreshold = 0
-                trishape.add_property(self.nif_export.propertyhelper.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
+                trishape.add_property(self.nif_export.propertyhelper.object_property.export_alpha_property(
+                    flags=alphaflags, threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
@@ -893,14 +895,14 @@ class MeshHelper:
                     fuv = []
                     for uv_layer in mesh_uv_layers:
                         if uv_layer != "":
-                            # TODO: map uv layer to index
+                            # TODO [geomotry][uv]  map uv layer to index
                             # currently we have uv_layer names, but we need their index value
                             # b_mesh.uv_layers[0].data[poly.index].uv
                             fuv.append(b_mesh.uv_layers[uv_layer].data[loop_index].uv)
                         else:
                             NifLog.warn("Texture is set to use UV but no UV Map is Selected for Mapping > Map")
 
-                    # TODO: Need to map b_verts -> n_verts
+                    # TODO [geomotry][mesh] Need to map b_verts -> n_verts
                     if mesh_hasvcol:
                         # check for an alpha layer
                         b_color = b_mesh.vertex_colors[0].data[loop_index].color
@@ -994,8 +996,7 @@ class MeshHelper:
                     b_deselect_obj.select = False
                 bpy.context.scene.objects.active = b_obj
                 b_obj.select = True
-                # select bad polygons
-                # switch to edit mode to select polygons
+                # select bad polygons switch to edit mode to select polygons
                 bpy.ops.object.mode_set(mode='EDIT', toggle=False)
                 for face in b_mesh.polygons:
                     face.select = False
@@ -1068,15 +1069,13 @@ class MeshHelper:
                         uv.u = uvlist[i][j][0]
                         uv.v = 1.0 - uvlist[i][j][1]  # opengl standard
 
-            # set triangles
-            # stitch strips for civ4
+            # set triangles stitch strips for civ4
             tridata.set_triangles(trilist,
                                   stitchstrips=NifOp.props.stitch_strips)
 
             # update tangent space (as binary extra data only for Oblivion)
-            # for extra shader texture games, only export it if those
-            # textures are actually exported (civ4 seems to be consistent with
-            # not using tangent space on non shadered nifs)
+            # for extra shader texture games, only export it if those textures are actually exported
+            # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if mesh_uv_layers and mesh_hasnormals:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES):
                     trishape.update_tangent_space(as_extra=(NifOp.props.game == 'OBLIVION'))
@@ -1145,8 +1144,8 @@ class MeshHelper:
                                 else:
                                     vert_norm[v[0]] = v[1]
 
-                        # vertices must be assigned at least one vertex group
-                        # lets be nice and display them for the user 
+                        # TODO [object] Extract to method
+                        # vertices must be assigned at least one vertex group lets be nice and display them for the user
                         if len(unassigned_verts) > 0:
                             for b_scene_obj in bpy.context.scene.objects:
                                 b_scene_obj.select = False
@@ -1164,9 +1163,7 @@ class MeshHelper:
                             raise nif_utils.NifError("Cannot export mesh with unweighted vertices. "
                                                      "The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
-                        # for each bone, first we get the bone block
-                        # then we get the vertex weights
-                        # and then we add it to the NiSkinData
+                        # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                         # note: allocate memory for faster performance
                         vert_added = [False for i in range(len(vertlist))]
                         for bone_index, bone in enumerate(boneinfluences):
@@ -1191,10 +1188,8 @@ class MeshHelper:
                                 # v[0] is the original vertex index
                                 # v[1] is the weight
 
-                                # vertmap[v[0]] is the set of vertices (indices)
-                                # to which v[0] was mapped
-                                # so we simply export the same weight as the
-                                # original vertex for each new vertex
+                                # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
+                                # so we simply export the same weight as the original vertex for each new vertex
 
                                 # write the weights
                                 # extra check for multi material meshes
@@ -1202,16 +1197,14 @@ class MeshHelper:
                                     for vert_index in vertmap[v[0]]:
                                         vert_weights[vert_index] = v[1] / vert_norm[v[0]]
                                         vert_added[vert_index] = True
-                            # add bone as influence, but only if there were
-                            # actually any vertices influenced by the bone
+                            # add bone as influence, but only if there were actually any vertices influenced by the bone
                             if vert_weights:
                                 trishape.add_bone(bone_block, vert_weights)
 
                         # update bind position skinning data
                         trishape.update_bind_position()
 
-                        # calculate center and radius for each skin bone data
-                        # block
+                        # calculate center and radius for each skin bone data block
                         trishape.update_skin_center_radius()
 
                         if self.nif_export.version >= 0x04020100 and NifOp.props.skin_partition:
@@ -1225,6 +1218,7 @@ class MeshHelper:
                                 triangles=trilist,
                                 trianglepartmap=bodypartfacemap,
                                 maximize_bone_sharing=(NifOp.props.game in ('FALLOUT_3', 'SKYRIM')))
+
                             # warn on bad config settings
                             if NifOp.props.game == 'OBLIVION':
                                 if NifOp.props.pad_bones:
@@ -1238,7 +1232,8 @@ class MeshHelper:
                                     NifLog.warn("Using less than 24 bones per partition on Skyrim export."
                                                 "Set it to 24 to get higher quality skin partitions.")
                             if lostweight > NifOp.props.epsilon:
-                                NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')".format(str(lostweight), b_obj.name, trishape.name))
+                                NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')".format(
+                                        str(lostweight), b_obj.name, trishape.name))
 
                         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
                             partitions = skininst.partitions
@@ -1298,8 +1293,8 @@ class MeshHelper:
                         # interpolator weights (for Fallout 3)
                         morph_ctrl.interpolator_weights.update_size()
 
-                        # XXX some unknowns, bethesda only
-                        # XXX just guessing here, data seems to be zero always
+                        # TODO [morph] some unknowns, bethesda only
+                        # TODO [morph] just guessing here, data seems to be zero always
                         morph_ctrl.num_unknown_ints = len(key.key_blocks)
                         morph_ctrl.unknown_ints.update_size()
 
@@ -1335,8 +1330,7 @@ class MeshHelper:
                             # fallout 3 stores interpolators inside the interpolator_weights block
                             morph_ctrl.interpolator_weights[keyblocknum].interpolator = interpol
 
-                            # geometry only export has no float data
-                            # also skip keys that have no curve (such as base key)
+                            # geometry only export has no float data also skip keys that have no curve (such as base key)
                             if NifOp.props.animation == 'GEOM_NIF' or not curve:
                                 continue
 
@@ -1381,7 +1375,7 @@ class MeshHelper:
                         # fix data consistency type
                         tridata.consistency_flags = b_obj.niftools.consistency_flags
         return trishape
-    
+
     def smooth_mesh_seams(self, b_objs):
         """ Finds vertices that are shared between all blender objects and averages their normals"""
         # get shared vertices
