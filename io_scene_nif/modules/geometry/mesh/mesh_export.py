@@ -338,15 +338,15 @@ class MeshHelper:
                 else:
                     alphaflags = 0x12ED
                     alphathreshold = 0
-                trishape.add_property(self.nif_export.propertyhelper.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
+                trishape.add_property(self.nif_export.nif_export.propertyhelper.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.add_property(self.nif_export.propertyhelper.object_property.export_wireframe_property(flags=1))
+                trishape.add_property(self.nif_export.nif_export.propertyhelper.object_property.export_wireframe_property(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
-                trishape.add_property(self.nif_export.propertyhelper.object_property.export_stencil_property())
+                trishape.add_property(self.nif_export.nif_export.propertyhelper.object_property.export_stencil_property())
 
             if b_mat and not (NifOp.props.game == 'SKYRIM'):
                 # add NiTriShape's specular property
@@ -354,10 +354,10 @@ class MeshHelper:
                 # games (they use specularity even without this property)
                 if mesh_hasspec and (NifOp.props.game not in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     # refer to the specular property in the trishape block
-                    trishape.add_property(self.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
+                    trishape.add_property(self.nif_export.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
+                trimatprop = self.nif_export.nif_export.propertyhelper.material_property.export_material_property(
                     name=self.nif_export.objecthelper.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
