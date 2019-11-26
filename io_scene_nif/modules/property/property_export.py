@@ -40,18 +40,18 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.obj.block_registry import block_store
-from io_scene_nif.modules.property.material.material_export import Material
+from io_scene_nif.modules.property.material.material_export import MaterialProp
 from io_scene_nif.utility.util_global import NifOp
 
 
 class Property:
     
     def __init__(self, parent):
-        self.object_property = ObjectProperty(parent)
-        self.material_property = Material(parent)
+        self.object_property = ObjectProp(parent)
+        self.material_property = MaterialProp(parent)
         
         
-class ObjectProperty:
+class ObjectProp:
     
     def __init__(self, parent):
         self.nif_export = parent
