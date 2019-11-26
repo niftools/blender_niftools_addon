@@ -42,6 +42,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_global import NifOp
@@ -54,45 +55,17 @@ class ObjectHelper:
         self.nif_export = parent
         self.mesh_helper = MeshHelper(parent)
 
-    def create_block(self, blocktype, b_obj=None):
-        """Helper function to create a new block, register it in the list of
-        exported blocks, and associate it with a Blender object.
-
-        @param blocktype: The nif block type (for instance "NiNode").
-        @type blocktype: C{str}
-        @param b_obj: The Blender object.
-        @return: The newly created block."""
-        try:
-            block = getattr(NifFormat, blocktype)()
-        except AttributeError:
-            raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(blocktype))
-        return self.register_block(block, b_obj)
-
     def get_exported_objects(self):
         """Return a list of exported objects."""
         exported_objects = []
-        # iterating over self.nif_export.block_to_obj.itervalues() will count some objects twice
-        for b_obj in self.nif_export.block_to_obj.values():
+        # iterating over block.block_to_obj.itervalues() will count some objects twice
+        for b_obj in block_store.block_to_obj.values():
             # skip empty & known objects
             if b_obj and b_obj not in exported_objects:
                 # append new object
                 exported_objects.append(b_obj)
         # return the list of unique exported objects
         return exported_objects
-
-    def register_block(self, block, b_obj=None):
-        """Helper function to register a newly created block in the list of
-        exported blocks and to associate it with a Blender object.
-
-        @param block: The nif block.
-        @param b_obj: The Blender object.
-        @return: C{block}"""
-        if b_obj is None:
-            NifLog.info("Exporting {0} block".format(block.__class__.__name__))
-        else:
-            NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
-        self.nif_export.block_to_obj[block] = b_obj
-        return block
 
     def export_root_node(self, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
@@ -151,7 +124,7 @@ class ObjectHelper:
                                                                                                                             15:]))
 
             # create furniture marker block
-            furnmark = self.objecthelper.create_block("BSFurnitureMarker")
+            furnmark = block_store.create_block("BSFurnitureMarker")
             furnmark.name = "FRN"
             furnmark.num_positions = 1
             furnmark.positions.update_size()
@@ -159,7 +132,7 @@ class ObjectHelper:
             furnmark.positions[0].position_ref_2 = furniturenumber
 
             # create extra string data sgoKeep
-            sgokeep = self.objecthelper.create_block("NiStringExtraData")
+            sgokeep = block_store.create_block("NiStringExtraData")
             sgokeep.name = "UPB"  # user property buffer
             sgokeep.string_data = "sgoKeep=1 ExportSel = Yes"  # Unyielding = 0, sgoKeep=1ExportSel = Yes
 
@@ -168,14 +141,14 @@ class ObjectHelper:
             n_root.add_extra_data(sgokeep)
 
     def export_bsxflags_upb(self, root_block):
-        # FIXME:
+        # TODO [object][property] Fixme
         NifLog.info("Checking collision")
         # activate oblivion/Fallout 3 collision and physics
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             b_obj = self.nif_export.collisionhelper.has_collision()
             if b_obj:
                 # enable collision
-                bsx = self.create_block("BSXFlags")
+                bsx = block_store.create_block("BSXFlags")
                 bsx.name = 'BSX'
                 bsx.integer_data = b_obj.niftools.bsxflags
                 root_block.add_extra_data(bsx)
@@ -183,7 +156,7 @@ class ObjectHelper:
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
                 if b_obj.niftools.upb:
-                    upb = self.create_block("NiStringExtraData")
+                    upb = block_store.create_block("NiStringExtraData")
                     upb.name = 'UPB'
                     if b_obj.niftools.upb == '':
                         upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
@@ -198,41 +171,41 @@ class ObjectHelper:
             loc = b_obj.niftools.prn_location
             if loc != "NONE":
                 # add string extra data
-                prn = self.create_block("NiStringExtraData")
+                prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
                 prn.string_data = self.nif_export.prn_dict[loc]
                 n_root.add_extra_data(prn)
 
-    def update_rigid_bodies(self, ):
+    def update_rigid_bodies(self):
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            rigid_bodies = [block for block in self.block_to_obj if isinstance(block, NifFormat.bhkRigidBody)]
+            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
             # update rigid body center of gravity and mass
             if self.nif_export.IGNORE_BLENDER_PHYSICS:
                 # we are not using blender properties to set the mass
                 # so calculate mass automatically first calculate distribution of mass
                 total_mass = 0
-                for block in rigid_bodies:
-                    block.update_mass_center_inertia(solid=self.nif_export.EXPORT_OB_SOLID)
-                    total_mass += block.mass
+                for n_block in n_rigid_bodies:
+                    n_block.update_mass_center_inertia(solid=self.nif_export.EXPORT_OB_SOLID)
+                    total_mass += n_block.mass
 
                 # to avoid zero division error later (if mass is zero then this does not matter anyway)
                 if total_mass == 0:
                     total_mass = 1
 
                 # now update the mass ensuring that total mass is EXPORT_OB_MASS
-                for block in rigid_bodies:
-                    mass = self.nif_export.EXPORT_OB_MASS * block.mass / total_mass
+                for n_block in n_rigid_bodies:
+                    mass = self.nif_export.EXPORT_OB_MASS * n_block.mass / total_mass
                     # lower bound on mass
                     if mass < 0.0001:
                         mass = 0.05
-                    block.update_mass_center_inertia(mass=mass, solid=self.nif_export.EXPORT_OB_SOLID)
+                    n_block.update_mass_center_inertia(mass=mass, solid=self.nif_export.EXPORT_OB_SOLID)
             else:
-                # using blender properties, so block.mass *should* have been set properly
-                for block in rigid_bodies:
+                # using blender properties, so n_block.mass *should* have been set properly
+                for n_block in n_rigid_bodies:
                     # lower bound on mass
-                    if block.mass < 0.0001:
-                        block.mass = 0.05
-                    block.update_mass_center_inertia(mass=block.mass, solid=self.nif_export.EXPORT_OB_SOLID)
+                    if n_block.mass < 0.0001:
+                        n_block.mass = 0.05
+                    n_block.update_mass_center_inertia(mass=n_block.mass, solid=self.nif_export.EXPORT_OB_SOLID)
 
     def set_node_flags(self, b_obj, n_node):
         # default node flags
@@ -353,8 +326,8 @@ class ObjectHelper:
             # special case: objects parented to armature bones - find the nif parent bone
             if b_parent.type == 'ARMATURE' and b_child.parent_bone != "":
                 parent_bone = b_parent.data.bones[b_child.parent_bone]
-                assert (parent_bone in self.nif_export.block_to_obj.values())
-                for n_parent, obj in self.nif_export.block_to_obj.items():
+                assert (parent_bone in block_store.block_to_obj.values())
+                for n_parent, obj in block_store.block_to_obj.items():
                     if obj == parent_bone:
                         break
             self.nif_export.objecthelper.export_node(b_child, n_parent)
@@ -363,7 +336,7 @@ class ObjectHelper:
         """Essentially a wrapper around create_block() that creates nodes of the right type"""
         # when no b_obj is passed, it means we create a root node
         if not b_obj:
-            return self.create_block("NiNode")
+            return block_store.create_block("NiNode")
 
         # get node type - some are stored as custom property of the b_obj
         try:
@@ -376,7 +349,7 @@ class ObjectHelper:
             n_node_type = "NiBillboardNode"
 
         # now create the node
-        n_node = self.create_block(n_node_type, b_obj)
+        n_node = block_store.create_block(n_node_type, b_obj)
 
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
@@ -419,7 +392,7 @@ class ObjectHelper:
         NiRangeLODData block on n_node.
         """
         # create range lod data object
-        n_range_data = self.create_block("NiRangeLODData", b_obj)
+        n_range_data = block_store.create_block("NiRangeLODData", b_obj)
         n_node.lod_level_data = n_range_data
 
         # get the children
@@ -718,13 +691,13 @@ class MeshHelper:
                 if b_mat:
                     bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
 
-                    self.nif_export.objecthelper.register_block(bsshader)
+                    block_store.register_block(bsshader)
                     trishape.add_property(bsshader)
             elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
                     bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
 
-                    self.nif_export.objecthelper.register_block(bsshader)
+                    block_store.register_block(bsshader)
                     num_props = trishape.num_properties
                     trishape.num_properties = num_props + 1
                     trishape.bs_properties.update_size()
@@ -750,7 +723,7 @@ class MeshHelper:
                         applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
 
-                    self.nif_export.objecthelper.register_block(n_nitextureprop)
+                    block_store.register_block(n_nitextureprop)
                     trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceeding child of the trishape)
@@ -758,7 +731,7 @@ class MeshHelper:
                 ref_mtex = self.nif_export.texturehelper.ref_mtex
                 if NifOp.props.game == 'MORROWIND' and ref_mtex:
                     # create a new parent block for this shape
-                    extra_node = self.create_block("NiNode", ref_mtex)
+                    extra_node = block_store.create_block("NiNode", ref_mtex)
                     n_parent.add_child(extra_node)
                     # set default values for this ninode
                     extra_node.rotation.set_identity()
@@ -787,8 +760,7 @@ class MeshHelper:
                 else:
                     alphaflags = 0x12ED
                     alphathreshold = 0
-                trishape.add_property(self.nif_export.propertyhelper.object_property.export_alpha_property(
-                    flags=alphaflags, threshold=alphathreshold))
+                trishape.add_property(self.nif_export.propertyhelper.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
@@ -819,7 +791,7 @@ class MeshHelper:
                     alpha=mesh_mat_transparency,
                     emitmulti=mesh_mat_emitmulti)
 
-                self.nif_export.objecthelper.register_block(trimatprop)
+                block_store.register_block(trimatprop)
 
                 # refer to the material property in the trishape block
                 trishape.add_property(trimatprop)
@@ -1099,7 +1071,7 @@ class MeshHelper:
                         else:
                             skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
-                        for block in self.nif_export.block_to_obj:
+                        for block in block.block_to_obj:
                             if isinstance(block, NifFormat.NiNode):
                                 if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature):
                                     skininst.skeleton_root = block
@@ -1169,7 +1141,7 @@ class MeshHelper:
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
-                            for block in self.nif_export.block_to_obj:
+                            for block in block.block_to_obj:
                                 if isinstance(block, NifFormat.NiNode):
                                     if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature.data.bones[bone]):
                                         if not bone_block:

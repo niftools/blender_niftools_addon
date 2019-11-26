@@ -38,9 +38,11 @@
 # ***** END LICENSE BLOCK *****
 
 
-from io_scene_nif.utility.nif_logging import NifLog
 from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.nif_logging import NifLog
 
 
 class Material:
@@ -52,7 +54,7 @@ class Material:
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
-        # create block
+        # create n_block
         matprop = NifFormat.NiMaterialProperty()
 
         # list which determines whether the material name is relevant or not  only for particular names this holds,
@@ -95,24 +97,22 @@ class Material:
         matprop.emit_multi = emitmulti
 
         # search for duplicate
-        # (ignore the name string as sometimes import needs to create different
-        # materials even when NiMaterialProperty is the same)
-        for block in self.nif_export.block_to_obj:
-            if not isinstance(block, NifFormat.NiMaterialProperty):
+        # (ignore the name string as sometimes import needs to create different materials even when NiMaterialProperty is the same)
+        for n_block in block_store.block_to_obj:
+            if not isinstance(n_block, NifFormat.NiMaterialProperty):
                 continue
 
             # when optimization is enabled, ignore material name
             if self.nif_export.EXPORT_OPTIMIZE_MATERIALS:
-                ignore_strings = not(block.name in specialnames)
+                ignore_strings = not(n_block.name in specialnames)
             else:
                 ignore_strings = False
 
             # check hash
             first_index = 1 if ignore_strings else 0
-            if (block.get_hash()[first_index:] ==
-                matprop.get_hash()[first_index:]):
-                NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, block.name))
-                return block
+            if n_block.get_hash()[first_index:] == matprop.get_hash()[first_index:]:
+                NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, n_block.name))
+                return n_block
 
         # no material property with given settings found, so use and register the new one
         return matprop

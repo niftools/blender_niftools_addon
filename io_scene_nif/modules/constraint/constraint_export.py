@@ -38,12 +38,13 @@
 # ***** END LICENSE BLOCK *****
 
 from pyffi.formats.nif import NifFormat
-from io_scene_nif.utility import nif_utils
 
 import bpy
 import mathutils
 
 from io_scene_nif.modules import collision
+from io_scene_nif.modules.obj.block_registry import block_store
+from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 from io_scene_nif.utility.nif_global import NifOp
 
@@ -77,7 +78,7 @@ class Constraint:
                     NifLog.warn("Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {0}.".format(b_constr))
                     continue
                 # check that the object is a rigid body
-                for otherbody, otherobj in self.nif_export.block_to_obj.items():
+                for otherbody, otherobj in block_store.block_to_obj.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj is b_obj:
                         hkbody = otherbody
                         break
@@ -146,7 +147,7 @@ class Constraint:
                     NifLog.warn("Constraint {0} has no target, skipped".format(b_constr))
                     continue
                 # find target's bhkRigidBody
-                for otherbody, otherobj in self.nif_export.block_to_obj.items():
+                for otherbody, otherobj in block_store.block_to_obj.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj == targetobj:
                         n_bhkconstraint.entities[1] = otherbody
                         break
