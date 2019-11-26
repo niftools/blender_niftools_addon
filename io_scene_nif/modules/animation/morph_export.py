@@ -1,4 +1,4 @@
-"""This script contains classes to help import animations."""
+"""This script contains classes to help import morph animations."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
