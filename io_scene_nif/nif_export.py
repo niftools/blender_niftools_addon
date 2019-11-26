@@ -42,7 +42,6 @@ import os.path
 
 import bpy
 import pyffi.spells.nif.fix
-from pyffi.formats.egm import EgmFormat
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
@@ -117,9 +116,6 @@ class NifExport(NifCommon):
         self.dict_materials = {}
         self.dict_textures = {}
         self.dict_mesh_uvlayers = []
-
-        # if an egm is exported, this will contain the data
-        self.egm_data = None
 
         try:  # catch export errors
 
