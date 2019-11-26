@@ -1,4 +1,4 @@
-"""This module contains helper methods to store objects between nif and blender objects."""
+"""This module contains helper methods to block_store objects between nif and blender objects."""
 # ***** BEGIN LICENSE BLOCK *****
 #
 # Copyright © 2019, NIF File Format Library and Tools contributors.
@@ -41,14 +41,18 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_logging import NifLog
 
-DICT_BLOCKS = {}
-
 
 class BlockRegistry:
 
+    def __init__(self):
+        self._block_to_obj = {}
+
+    @property
+    def block_to_obj(self): 
+        return self._block_to_obj
+
     # TODO [object] Decide what to do with object registry for export
-    @staticmethod
-    def register_block(block, b_obj=None):
+    def register_block(self, block, b_obj=None):
         """Helper function to register a newly created block in the list of
         exported blocks and to associate it with a Blender object.
 
@@ -59,20 +63,22 @@ class BlockRegistry:
             NifLog.info("Exporting {0} block".format(block.__class__.__name__))
         else:
             NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
-        DICT_BLOCKS[block] = b_obj
+        self.block_to_obj[block] = b_obj
         return block
 
-    @staticmethod
-    def create_block(blocktype, b_obj=None):
+    def create_block(self, block_type, b_obj=None):
         """Helper function to create a new block, register it in the list of
         exported blocks, and associate it with a Blender object.
 
-        @param blocktype: The nif block type (for instance "NiNode").
-        @type blocktype: C{str}
+        @param block_type: The nif block type (for instance "NiNode").
+        @type block_type: C{str}
         @param b_obj: The Blender object.
         @return: The newly created block."""
         try:
-            block = getattr(NifFormat, blocktype)()
+            block = getattr(NifFormat, block_type)()
         except AttributeError:
-            raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(blocktype))
+            raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
         return BlockRegistry.register_block(block, b_obj)
+
+
+block_store = BlockRegistry()
