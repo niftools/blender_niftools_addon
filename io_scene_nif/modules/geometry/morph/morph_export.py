@@ -77,6 +77,8 @@ class Morph:
                 if key.key_blocks[1].name.startswith("EGM"):
                     # egm export!
                     self.export_egm(key.key_blocks)
-                # TODO [animation] pull out to
                 elif key.ipo:
-                    self.morph_animation.export_morph_animation(b_mesh, b_obj, key, tridata, trishape, vertlist, vertmap)
+                    self.morph_animation.export_morph_animation(b_mesh, key, trishape, len(vertlist), vertmap)
+
+                    # fix data consistency type
+                    tridata.consistency_flags = b_obj.niftools.consistency_flags

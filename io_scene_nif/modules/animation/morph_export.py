@@ -47,53 +47,59 @@ from io_scene_nif.utility.util_logging import NifLog
 
 class MorphAnimation:
 
-    def export_morph_animation(self, b_mesh, b_obj, key, tridata, trishape, vertlist, vertmap):
+    def export_morph_animation(self, b_mesh, key, trishape, num_verts, vertmap):
         # regular morph_data export
         # (there must be a shape ipo)
         keyipo = key.ipo
+
         # check that they are relative shape keys
         if not key.relative:
             # XXX if we do "key.relative = True"
             # XXX would this automatically fix the keys?
             raise ValueError("Can only export relative shape keys.")
+
         # create geometry morph controller
         morph_ctrl = block_store.create_block("NiGeomMorpherController", keyipo)
         morph_ctrl.target = trishape
         morph_ctrl.frequency = 1.0
         morph_ctrl.phase = 0.0
         trishape.add_controller(morph_ctrl)
+
         ctrl_start = 1000000.0
         ctrl_stop = -1000000.0
         ctrl_flags = 0x000c
+
         # create geometry morph data
         morph_data = block_store.create_block("NiMorphData", keyipo)
         morph_ctrl.data = morph_data
         morph_data.num_morphs = len(key.key_blocks)
-        morph_data.num_vertices = len(vertlist)
+        morph_data.num_vertices = num_verts
         morph_data.morphs.update_size()
+
         # create interpolators (for newer nif versions)
         morph_ctrl.num_interpolators = len(key.key_blocks)
         morph_ctrl.interpolators.update_size()
+
         # interpolator weights (for Fallout 3)
         morph_ctrl.interpolator_weights.update_size()
         # TODO [morph] some unknowns, bethesda only
         # TODO [morph] just guessing here, data seems to be zero always
         morph_ctrl.num_unknown_ints = len(key.key_blocks)
         morph_ctrl.unknown_ints.update_size()
-        for keyblocknum, keyblock in enumerate(key.key_blocks):
+        for key_block_num, key_block in enumerate(key.key_blocks):
             # export morphed vertices
-            morph = morph_data.morphs[keyblocknum]
-            morph.frame_name = keyblock.name
-            NifLog.info("Exporting morph {0}: vertices".format(keyblock.name))
+            morph = morph_data.morphs[key_block_num]
+            morph.frame_name = key_block.name
+            NifLog.info("Exporting morph {0}: vertices".format(key_block.name))
             morph.arg = morph_data.num_vertices
             morph.vectors.update_size()
-            for b_v_index, (vert_indices, vert) in enumerate(list(zip(vertmap, keyblock.data))):
+            for b_v_index, (vert_indices, vert) in enumerate(list(zip(vertmap, key_block.data))):
                 # vertmap check
                 if not vert_indices:
                     continue
                 # copy vertex and assign morph vertex
                 mv = vert.copy()
-                if keyblocknum > 0:
+                if key_block_num > 0:
                     mv.x -= b_mesh.vertices[b_v_index].co.x
                     mv.y -= b_mesh.vertices[b_v_index].co.y
                     mv.z -= b_mesh.vertices[b_v_index].co.z
@@ -103,14 +109,15 @@ class MorphAnimation:
                     morph.vectors[vert_index].z = mv.z
 
             # export ipo shape key curve
-            curve = keyipo[keyblock.name]
+            curve = keyipo[key_block.name]
 
             # create interpolator for shape key (needs to be there even if there is no curve)
             interpol = block_store.create_block("NiFloatInterpolator")
             interpol.value = 0
-            morph_ctrl.interpolators[keyblocknum] = interpol
+            morph_ctrl.interpolators[key_block_num] = interpol
+
             # fallout 3 stores interpolators inside the interpolator_weights block
-            morph_ctrl.interpolator_weights[keyblocknum].interpolator = interpol
+            morph_ctrl.interpolator_weights[key_block_num].interpolator = interpol
 
             # geometry only export has no float data also skip keys that have no curve (such as base key)
             if NifOp.props.animation == 'GEOM_NIF' or not curve:
@@ -118,7 +125,7 @@ class MorphAnimation:
 
             # note: we set data on morph for older nifs and on floatdata for newer nifs
             # of course only one of these will be actually written to the file
-            NifLog.info("Exporting morph {0}: curve".format(keyblock.name))
+            NifLog.info("Exporting morph {0}: curve".format(key_block.name))
             interpol.data = block_store.create_block("NiFloatData", curve)
             floatdata = interpol.data.data
             if curve.getExtrapolation() == "Constant":
@@ -153,5 +160,3 @@ class MorphAnimation:
         morph_ctrl.flags = ctrl_flags
         morph_ctrl.start_time = ctrl_start
         morph_ctrl.stop_time = ctrl_stop
-        # fix data consistency type
-        tridata.consistency_flags = b_obj.niftools.consistency_flags
