@@ -54,7 +54,7 @@ class ObjectHelper:
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.mesh_helper = MeshHelper(parent)
+        self.mesh_helper = MeshHelper(parent=self)
 
     def get_exported_objects(self):
         """Return a list of exported objects."""
