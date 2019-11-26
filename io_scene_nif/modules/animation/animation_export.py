@@ -47,6 +47,7 @@ from io_scene_nif.modules.animation.material_export import MaterialAnimation
 from io_scene_nif.modules.animation.mesh_export import MeshAnimation
 from io_scene_nif.modules.animation.object_export import ObjectAnimation
 from io_scene_nif.modules.animation.texture_export import TextureAnimation
+from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp
@@ -182,10 +183,10 @@ class Animation:
         # add a KeyframeController block, and refer to this block in the
         # parent's time controller
         if self.nif_export.version < 0x0A020000:
-            n_kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", exp_fcurves)
+            n_kfc = block_store.create_block("NiKeyframeController", exp_fcurves)
         else:
-            n_kfc = self.nif_export.objecthelper.create_block("NiTransformController", exp_fcurves)
-            n_kfi = self.nif_export.objecthelper.create_block("NiTransformInterpolator", exp_fcurves)
+            n_kfc = block_store.create_block("NiTransformController", exp_fcurves)
+            n_kfi = block_store.create_block("NiTransformInterpolator", exp_fcurves)
             # link interpolator from the controller
             n_kfc.interpolator = n_kfi
             # set interpolator default data
@@ -285,11 +286,11 @@ class Animation:
 
         # add the keyframe data
         if self.nif_export.version < 0x0A020000:
-            n_kfd = self.nif_export.objecthelper.create_block("NiKeyframeData", exp_fcurves)
+            n_kfd = block_store.create_block("NiKeyframeData", exp_fcurves)
             n_kfc.data = n_kfd
         else:
             # number of frames is > 1, so add transform data
-            n_kfd = self.nif_export.objecthelper.create_block("NiTransformData", exp_fcurves)
+            n_kfd = block_store.create_block("NiTransformData", exp_fcurves)
             n_kfi.data = n_kfd
 
         # TODO [animation] support other interpolation modes, get interpolation from blender?
@@ -380,7 +381,7 @@ class Animation:
 
         # add a NiTextKeyExtraData block, and refer to this block in the
         # parent node (we choose the root block)
-        n_text_extra = self.nif_export.objecthelper.create_block("NiTextKeyExtraData", anim_txt)
+        n_text_extra = block_store.create_block("NiTextKeyExtraData", anim_txt)
         block_parent.add_extra_data(n_text_extra)
 
         # create a text key for each frame descriptor
