@@ -586,20 +586,3 @@ class NifExport(NifCommon):
         self.root_blocks = [root_block]
 
         return {'FINISHED'}
-
-    def export_egm(self, keyblocks):
-        self.egm_data = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
-        for keyblock in keyblocks:
-            if keyblock.name.startswith("EGM SYM"):
-                morph = self.egm_data.add_sym_morph()
-            elif keyblock.name.startswith("EGM ASYM"):
-                morph = self.egm_data.add_asym_morph()
-            else:
-                continue
-            NifLog.info("Exporting morph %s to egm" % keyblock.name)
-            relative_vertices = []
-
-            # note: keyblocks[0] is base key
-            for vert, key_vert in zip(keyblocks[0].data, keyblock.data):
-                relative_vertices.append(key_vert - vert)
-            morph.set_relative_vertices(relative_vertices)
