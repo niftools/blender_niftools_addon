@@ -68,6 +68,10 @@ class NifData:
     def __init__(self):
         pass
 
+    @staticmethod
+    def init(data):
+        NifData.data = data
+
 
 class KFData:
 
@@ -76,6 +80,10 @@ class KFData:
     def __init__(self):
         pass
 
+    @staticmethod
+    def init(data):
+        KFData.data = data
+
 
 class EGMData:
 
@@ -83,3 +91,7 @@ class EGMData:
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def init(data):
+        EGMData.data = data

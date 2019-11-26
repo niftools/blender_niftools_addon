@@ -40,7 +40,6 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.utility.util_global import NifData
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.nif_utils import NifError
 
@@ -53,20 +52,20 @@ class NifFile:
         """Loads a nif from the given file path"""
         NifLog.info("Importing {0}".format(file_path))
 
-        NifData.data = NifFormat.Data()
+        data = NifFormat.Data()
 
         # open file for binary reading
         with open(file_path, "rb") as nif_stream:
             # check if nif file is valid
-            NifData.data.inspect_version_only(nif_stream)
-            if NifData.data.version >= 0:
+            data.inspect_version_only(nif_stream)
+            if data.version >= 0:
                 # it is valid, so read the file
-                NifLog.info("NIF file version: {0}".format(NifData.data.version, "x"))
+                NifLog.info("NIF file version: {0}".format(data.version, "x"))
                 NifLog.info("Reading file")
-                NifData.data.read(nif_stream)
-            elif NifData.data.version == -1:
+                data.read(nif_stream)
+            elif data.version == -1:
                 raise NifError("Unsupported NIF version.")
             else:
                 raise NifError("Not a NIF file.")
 
-        return NifData.data
+        return data
