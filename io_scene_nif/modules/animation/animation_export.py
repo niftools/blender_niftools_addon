@@ -45,6 +45,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.material_export import MaterialAnimation
 from io_scene_nif.modules.animation.object_export import ObjectAnimation
+from io_scene_nif.modules.animation.texture_export import TextureAnimation
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp
@@ -84,9 +85,9 @@ class Animation:
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.object_animation = ObjectAnimation()
-        self.material_animation = MaterialAnimation()
-        self.texture_animation = TextureAnimation(parent)
+        self.obj_anim = ObjectAnimation()
+        self.mat_anim = MaterialAnimation()
+        self.txt_anim = TextureAnimation(parent)
         self.fps = bpy.context.scene.render.fps
 
     @staticmethod
@@ -388,48 +389,3 @@ class Animation:
             key.value = dlist[i]
 
         return n_text_extra
-
-
-class TextureAnimation:
-
-    def __init__(self, parent):
-        self.nif_export = parent
-
-    def export_flip_controller(self, fliptxt, texture, target, target_tex):
-        # TODO [animation] port code to use native Blender n_texture flipping system
-        #
-        # export a NiFlipController
-        #
-        # fliptxt is a blender text object containing the n_flip definitions
-        # texture is the texture object in blender ( texture is used to checked for pack and mipmap flags )
-        # target is the NiTexturingProperty
-        # target_tex is the texture to n_flip ( 0 = base texture, 4 = glow texture )
-        #
-        # returns exported NiFlipController
-        #
-        tlist = fliptxt.asLines()
-
-        # create a NiFlipController
-        n_flip = self.nif_export.objecthelper.create_block("NiFlipController", fliptxt)
-        target.add_controller(n_flip)
-
-        # fill in NiFlipController's values
-        n_flip.flags = 8  # active
-        n_flip.frequency = 1.0
-        n_flip.start_time = (bpy.context.scene.frame_start - 1) * bpy.context.scene.render.fps
-        n_flip.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
-        n_flip.texture_slot = target_tex
-        count = 0
-        for t in tlist:
-            if len(t) == 0:
-                continue  # skip empty lines
-            # create a NiSourceTexture for each n_flip
-            tex = self.nif_export.texturehelper.texture_writer.export_source_texture(texture, t)
-            n_flip.num_sources += 1
-            n_flip.sources.update_size()
-            n_flip.sources[n_flip.num_sources - 1] = tex
-            count += 1
-        if count < 2:
-            raise nif_utils.NifError(
-                "Error in Texture Flip buffer '{}': must define at least two textures".format(fliptxt.name))
-        n_flip.delta = (n_flip.stop_time - n_flip.start_time) / count
