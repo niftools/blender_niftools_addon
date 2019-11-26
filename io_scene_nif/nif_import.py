@@ -88,7 +88,6 @@ class NifImport(NifCommon):
         self.dict_havok_objects = {}
         self.dict_materials = {}
         self.dict_textures = {}
-        self.dict_mesh_uvlayers = []
 
         # catch nif import errors
         try:

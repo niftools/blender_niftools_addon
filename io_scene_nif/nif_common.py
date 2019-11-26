@@ -62,7 +62,6 @@ class NifCommon:
 
     # dictionary of texture files, to reuse textures
     dict_textures = {}
-    dict_mesh_uvlayers = []
 
     VERTEX_RESOLUTION = 1000
     NORMAL_RESOLUTION = 100
