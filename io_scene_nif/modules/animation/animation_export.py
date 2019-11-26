@@ -44,6 +44,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.material_export import MaterialAnimation
+from io_scene_nif.modules.animation.mesh_export import MeshAnimation
 from io_scene_nif.modules.animation.object_export import ObjectAnimation
 from io_scene_nif.modules.animation.texture_export import TextureAnimation
 from io_scene_nif.utility import nif_utils
@@ -88,6 +89,7 @@ class Animation:
         self.obj_anim = ObjectAnimation()
         self.mat_anim = MaterialAnimation()
         self.txt_anim = TextureAnimation(parent)
+        self.mesh_anim = MeshAnimation()
         self.fps = bpy.context.scene.render.fps
 
     @staticmethod
