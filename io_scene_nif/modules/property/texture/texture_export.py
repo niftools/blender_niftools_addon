@@ -47,7 +47,7 @@ from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class TextureHelper:
+class Texture:
     # Default ordering of Extra data blocks for different games
     USED_EXTRA_SHADER_TEXTURES = {
         'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),

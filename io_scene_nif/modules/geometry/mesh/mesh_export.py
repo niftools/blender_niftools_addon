@@ -46,17 +46,17 @@ from io_scene_nif.modules.geometry import mesh
 from io_scene_nif.modules.geometry.morph.morph_export import Morph
 from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property import texture
-from io_scene_nif.modules.property.texture.texture_export import TextureHelper
+from io_scene_nif.modules.property.texture.texture_export import Texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class MeshHelper:
+class Mesh:
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.texture_helper = TextureHelper()
+        self.texture_helper = Texture()
         self.animation_helper = Animation(parent=self)
         self.morph_helper = Morph()
 
