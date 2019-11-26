@@ -325,13 +325,14 @@ class NifExport(NifCommon):
             # apply scale
             if abs(NifOp.props.scale_correction_export) > NifOp.props.epsilon:
                 NifLog.info("Applying scale correction {0}".format(str(NifOp.props.scale_correction_export)))
+                # TODO [object] Fix scale to use NifData
                 data = NifFormat.Data()
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
                 toaster.scale = NifOp.props.scale_correction_export
                 pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
+
                 # also scale egm
-                # TODO [morph] Move to morph helper
                 if EGMData.data:
                     EGMData.data.apply_scale(NifOp.props.scale_correction_export)
 
