@@ -57,7 +57,7 @@ class MeshHelper:
     def __init__(self, parent):
         self.nif_export = parent
         self.texture_helper = TextureHelper(parent)
-        self.animation_helper = Animation()
+        self.animation_helper = Animation(parent=self)
         self.morph_helper = Morph()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
