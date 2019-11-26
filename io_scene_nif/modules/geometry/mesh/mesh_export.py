@@ -268,7 +268,7 @@ class MeshHelper:
             # the trishape itself then needs identity transform (default)
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
-                self.nif_export.objecthelper.set_object_matrix(b_obj, trishape)
+                self.nif_export.set_object_matrix(b_obj, trishape)
 
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
@@ -304,7 +304,8 @@ class MeshHelper:
                 if b_mat:
                     n_nitextureprop = self.texture_helper.export_texturing_property(
                         flags=0x0001,  # standard
-                        applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
+                        # TODO [object][texture][material] Move out and break dependency
+                        applymode=self.nif_export.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
 
                     block_store.register_block(n_nitextureprop)
@@ -364,7 +365,7 @@ class MeshHelper:
 
                 # add NiTriShape's material property
                 trimatprop = self.nif_export.nif_export.propertyhelper.material_property.export_material_property(
-                    name=self.nif_export.objecthelper.get_full_name(b_mat),
+                    name=self.nif_export.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
