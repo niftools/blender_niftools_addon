@@ -49,8 +49,7 @@ from io_scene_nif.modules.animation.animation_export import Animation
 from io_scene_nif.modules.armature.armature_export import Armature
 from io_scene_nif.modules.collision.collision_export import Collision
 from io_scene_nif.modules.constraint.constraint_export import Constraint
-from io_scene_nif.modules.obj import block_registry
-from io_scene_nif.modules.obj.block_registry import BlockRegistry
+from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.modules.property.property_export import PropertyHelper
 from io_scene_nif.modules.property.texture.texture_export import TextureHelper
@@ -110,7 +109,7 @@ class NifExport(NifCommon):
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
-        block_registry.block_to_obj = {}  # clear out previous iteration
+        block_store.block_to_obj = {}  # clear out previous iteration
 
         self.dict_bone_priorities = {}
         self.dict_materials = {}
@@ -188,7 +187,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     # has it a controller field?
                     if isinstance(block, NifFormat.NiObjectNET):
                         if block.controller:
@@ -205,7 +204,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking controllers")
             if animtxt and NifOp.props.game == 'MORROWIND':
                 has_keyframecontrollers = False
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
@@ -215,7 +214,7 @@ class NifExport(NifCommon):
                     self.animationhelper.export_keyframes(root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.NiNode):
                         # if any of the shape children has a controller or if the ninode has a controller convert its type
                         if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
@@ -232,11 +231,11 @@ class NifExport(NifCommon):
                 # TODO [armature] Extract out to armature animation
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
-                for block in list(block_registry.block_to_obj.keys()):
+                for block in list(block_store.block_to_obj.keys()):
                     if isinstance(block, NifFormat.NiNode) and block.name.decode() == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
-                            ctrl = BlockRegistry.create_block("NiTransformController")
-                            interp = BlockRegistry.create_block("NiTransformInterpolator")
+                            ctrl = block_store.create_block("NiTransformController")
+                            interp = block_store.create_block("NiTransformInterpolator")
 
                             ctrl.interpolator = interp
                             bone.add_controller(ctrl)
@@ -265,12 +264,12 @@ class NifExport(NifCommon):
                     anim_textextra = None
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
-            # note: block_registry.block_to_obj changes during iteration, so need list copy
-            for block in list(block_registry.block_to_obj):
+            # note: block_store.block_to_obj changes during iteration, so need list copy
+            for block in list(block_store.block_to_obj):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
                         if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
-                            coltf = BlockRegistry.create_block("bhkConvexTransformShape")
+                            coltf = block_store.create_block("bhkConvexTransformShape")
                             coltf.material = sub_shape.material
                             coltf.unknown_float_1 = 0.1
                             coltf.unknown_8_bytes[0] = 96
@@ -307,7 +306,7 @@ class NifExport(NifCommon):
                 # flatten skins
                 skelroots = set()
                 affectedbones = []
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
                         NifLog.info("Flattening skin on geometry {0}".format(block.name))
                         affectedbones.extend(block.flatten_skin())
@@ -334,12 +333,13 @@ class NifExport(NifCommon):
                 toaster.scale = NifOp.props.scale_correction_export
                 pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
                 # also scale egm
+                # TODO [morph] Move to morph helper
                 if self.egm_data:
                     self.egm_data.apply_scale(NifOp.props.scale_correction_export)
 
             # generate mopps (must be done after applying scale!)
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         NifLog.info("Generating mopp...")
                         block.update_mopp()
@@ -408,13 +408,13 @@ class NifExport(NifCommon):
                 # morrowind
                 if NifOp.props.game in ('MORROWIND', 'FREEDOM_FORCE'):
                     # create kf root header
-                    kf_root = BlockRegistry.create_block("NiSequenceStreamHelper")
+                    kf_root = block_store.create_block("NiSequenceStreamHelper")
                     kf_root.add_extra_data(anim_textextra)
                     # reparent controller tree
                     for node, ctrls in node_kfctrls.items():
                         for ctrl in ctrls:
                             # create node reference by name
-                            nodename_extra = BlockRegistry.create_block("NiStringExtraData")
+                            nodename_extra = block_store.create_block("NiStringExtraData")
                             nodename_extra.bytes_remaining = len(node.name) + 4
                             nodename_extra.string_data = node.name
 
@@ -432,7 +432,7 @@ class NifExport(NifCommon):
                     # TODO [animation] allow for object kf only
 
                     # create kf root header
-                    kf_root = BlockRegistry.create_block("NiControllerSequence")
+                    kf_root = block_store.create_block("NiControllerSequence")
                     kf_root.name = filebase
                     kf_root.unknown_int_1 = 1
                     kf_root.weight = 1.0
@@ -544,9 +544,7 @@ class NifExport(NifCommon):
                 NifLog.info("Detaching animation text keys from nif")
                 # detach animation text keys
                 if root_block.extra_data is not anim_textextra:
-                    raise RuntimeError(
-                        "Oops, you found a bug! Animation extra data"
-                        " wasn't where expected...")
+                    raise RuntimeError("Oops, you found a bug! Animation extra data wasn't where expected...")
                 root_block.extra_data = None
 
                 prefix = "x"  # we are in morrowind 'nifxnifkf mode'
