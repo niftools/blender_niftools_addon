@@ -97,6 +97,7 @@ class ObjectHelper:
         self.export_furniture_marker(n_root, filebase)
         return n_root
 
+    # TODO [object][property] Move to object property
     def export_inventory_marker(self, n_root):
         if NifOp.props.game in ('SKYRIM',):
             for root_object in self.nif_export.root_objects:
@@ -113,6 +114,7 @@ class ObjectHelper:
                         n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
                         n_root.add_extra_data(n_extra_list)
 
+    # TODO [object][type] Move to new object type
     def export_furniture_marker(self, n_root, filebase):
         # oblivion and Fallout 3 furniture markers
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase[:15].lower() == 'furnituremarker':
@@ -141,6 +143,7 @@ class ObjectHelper:
             n_root.add_extra_data(furnmark)
             n_root.add_extra_data(sgokeep)
 
+    # TODO [object][property] Move to object property
     def export_bsxflags_upb(self, root_block):
         # TODO [object][property] Fixme
         NifLog.info("Checking collision")
@@ -165,6 +168,7 @@ class ObjectHelper:
                         upb.string_data = b_obj.niftools.upb.encode()
                     root_block.add_extra_data(upb)
 
+    # TODO [object][property] Move to new object type
     def export_weapon_location(self, n_root):
         # export weapon location
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
@@ -177,6 +181,7 @@ class ObjectHelper:
                 prn.string_data = self.nif_export.prn_dict[loc]
                 n_root.add_extra_data(prn)
 
+    # TODO [collision] Move to collision
     def update_rigid_bodies(self):
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
@@ -411,7 +416,7 @@ class ObjectHelper:
 
     def get_object_bind(self, b_obj):
         """Get the bind matrix of a blender object.
-        
+
         Returns the final NIF matrix for the given blender object.
         Blender space and axes order are corrected for the NIF.
         Returns a 4x4 mathutils.Matrix()
@@ -421,8 +426,8 @@ class ObjectHelper:
             return armature.get_bind_matrix(b_obj)
 
         elif isinstance(b_obj, bpy.types.Object):
-            # TODO [armature] Move to armaturehelper
 
+            # TODO [armature] Move to armaturehelper
             # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
             if b_obj.parent_bone:
                 # get parent bone
