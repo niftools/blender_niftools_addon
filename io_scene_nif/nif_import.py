@@ -783,7 +783,7 @@ class NifImport(NifCommon):
             self.animationhelper.object_animation.import_morph_controller(n_block, b_obj, v_map)
         # import facegen morphs
         if EGMData.data:
-            self.morph_helper.import_egm_morphs(self.egmdata, b_obj, v_map, n_verts)
+            self.morph_helper.import_egm_morphs(b_obj, v_map, n_verts)
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash
