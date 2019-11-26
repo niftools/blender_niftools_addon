@@ -52,7 +52,6 @@ from io_scene_nif.modules.constraint.constraint_export import Constraint
 from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.obj.object_export import ObjectHelper
 from io_scene_nif.modules.property.property_export import PropertyHelper
-from io_scene_nif.modules.property.texture.texture_export import TextureHelper
 from io_scene_nif.modules.scene import scene_export
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
@@ -86,7 +85,6 @@ class NifExport(NifCommon):
         self.animationhelper = Animation(parent=self)
         self.propertyhelper = PropertyHelper(parent=self)
         self.constrainthelper = Constraint(parent=self)
-        self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
 
     @property
