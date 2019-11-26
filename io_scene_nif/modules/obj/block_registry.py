@@ -67,7 +67,7 @@ class BlockRegistry:
             NifLog.info("Exporting {0} block".format(block.__class__.__name__))
         else:
             NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
-        self.block_to_obj[block] = b_obj
+        self._block_to_obj[block] = b_obj
         return block
 
     def create_block(self, block_type, b_obj=None):
@@ -82,7 +82,7 @@ class BlockRegistry:
             block = getattr(NifFormat, block_type)()
         except AttributeError:
             raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
-        return BlockRegistry.register_block(block, b_obj)
+        return self.register_block(block, b_obj)
 
 
 block_store = BlockRegistry()
