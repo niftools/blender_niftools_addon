@@ -51,6 +51,10 @@ class BlockRegistry:
     def block_to_obj(self): 
         return self._block_to_obj
 
+    @block_to_obj.setter
+    def block_to_obj(self, value):
+        self._block_to_obj = value
+
     # TODO [object] Decide what to do with object registry for export
     def register_block(self, block, b_obj=None):
         """Helper function to register a newly created block in the list of
