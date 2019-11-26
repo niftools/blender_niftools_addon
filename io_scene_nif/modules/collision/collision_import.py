@@ -47,8 +47,8 @@ from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 
 from io_scene_nif.modules import collision
-from io_scene_nif.utility.nif_logging import NifLog
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp
 
 
 def get_material(mat_name):

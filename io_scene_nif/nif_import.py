@@ -39,7 +39,7 @@
 
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.io.nif import NifFile
 from io_scene_nif.io.egm import EGMFile
 
@@ -53,7 +53,7 @@ from io_scene_nif.modules.property.texture.texture_import import Texture
 from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
 from io_scene_nif.modules.obj.object_import import Object
 from io_scene_nif.modules.scene import scene_import
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.util_global import NifOp
 
 import bpy
 import mathutils
