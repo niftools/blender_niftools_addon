@@ -316,7 +316,7 @@ class MeshHelper:
                     extra_node.scale = 1.0
                     extra_node.flags = 0x000C  # morrowind
                     # create texture effect block and parent the texture effect and trishape to it
-                    texeff = self.export_texture_effect(ref_mtex)
+                    texeff = self.texture_helper.export_texture_effect(ref_mtex)
                     extra_node.add_child(texeff)
                     extra_node.add_child(trishape)
                     extra_node.add_effect(texeff)
