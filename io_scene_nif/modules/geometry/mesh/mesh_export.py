@@ -56,7 +56,7 @@ class MeshHelper:
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.texture_helper = TextureHelper(parent)
+        self.texture_helper = TextureHelper()
         self.animation_helper = Animation(parent=self)
         self.morph_helper = Morph()
 
