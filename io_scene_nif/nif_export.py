@@ -55,8 +55,8 @@ from io_scene_nif.modules.property.property_export import PropertyHelper
 from io_scene_nif.modules.scene import scene_export
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_global import NifOp
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
 
 
 # main export class

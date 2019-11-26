@@ -43,8 +43,8 @@ from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.texture.texture_writer import TextureWriter
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_global import NifOp
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class TextureHelper:

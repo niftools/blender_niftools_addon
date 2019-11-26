@@ -39,7 +39,7 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class BlockRegistry:

@@ -54,6 +54,7 @@ class BoneProperty(PropertyGroup):
             description='Additional bone properties used by the Nif File Format',
             type=cls,
         )
+        # TODO [object][proprerty][flag] This is probably a general object flag which should be available to all generic objects
         cls.boneflags = IntProperty(
             name='Bone Flag',
             default=0

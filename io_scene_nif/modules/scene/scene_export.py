@@ -38,8 +38,8 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from io_scene_nif.utility.nif_global import NifOp
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
 from pyffi.formats.nif import NifFormat
 
 # TODO [scene] Use this as global import and export values and remove from operator

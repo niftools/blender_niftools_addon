@@ -40,7 +40,7 @@
 
 import nose
 
-from io_scene_nif.utility.nif_decorator import overload_method
+from io_scene_nif.utility.util_decorator import overload_method
 
 
 class Foo(object):

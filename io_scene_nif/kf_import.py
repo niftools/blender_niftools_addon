@@ -46,7 +46,7 @@ from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.util_global import NifOp
 
 
 class KfImport(NifCommon):

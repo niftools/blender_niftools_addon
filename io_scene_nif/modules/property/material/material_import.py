@@ -39,7 +39,7 @@
 
 
 import bpy
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class Material:
