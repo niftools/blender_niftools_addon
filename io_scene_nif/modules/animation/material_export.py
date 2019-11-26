@@ -73,7 +73,6 @@ class MaterialAnimation:
         # the actual export
         for b_dtype, n_dtype in colors:
             self.export_material_alpha_color_controller(b_material, n_matprop, b_dtype, n_dtype)
-        self.export_material_uv_controller(b_material, n_geom)
 
     def export_material_alpha_color_controller(self, b_material, n_matprop, b_dtype, n_dtype):
         """Export the material alpha or color controller data."""

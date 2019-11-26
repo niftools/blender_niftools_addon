@@ -41,6 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation import animation_export
+from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
@@ -51,6 +52,15 @@ class MeshAnimation:
 
     def export_uv_controller(self, b_material, n_geom):
         """Export the material UV controller data."""
+
+        # TODO [animation] This is also done in export material, should have higher level function.
+        if NifOp.props.animation == 'GEOM_NIF':
+            # geometry only: don't write controllers
+            return
+
+        # check if the material holds an animation
+        if b_material and not (b_material.animation_data and b_material.animation_data.action):
+            return
 
         # get fcurves - a bit more elaborate here so we can zip with the NiUVData later
         # nb. these are actually specific to the texture slot in blender
@@ -63,6 +73,7 @@ class MeshAnimation:
                     break
             else:
                 fcurves.append(None)
+
         # continue if at least one fcurve exists
         if not any(fcurves):
             return
