@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
+from io_scene_nif.modules.geometry.morph.morph_import import Morph
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
@@ -53,7 +53,7 @@ from io_scene_nif.modules.property.texture.texture_import import Texture
 from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
 from io_scene_nif.modules.obj.object_import import Object
 from io_scene_nif.modules.scene import scene_import
-from io_scene_nif.utility.util_global import NifOp, EGMData
+from io_scene_nif.utility.util_global import NifOp, EGMData, NifData
 
 import bpy
 import mathutils
@@ -101,43 +101,33 @@ class NifImport(NifCommon):
             # the axes used for bone correction depend on the nif version
             armature.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
 
-            self.data = NifFile.load_nif(NifOp.props.filepath)
-            if NifOp.props.override_scene_info:
-                scene_import.import_version_info(self.data)
-
-            egm_path = NifOp.props.egm_file
-            if egm_path:
-                self.egmdata = EGMFile.load_egm(egm_path)
-                # scale the data
-                self.egmdata.apply_scale(NifOp.props.scale_correction_import)
-            else:
-                self.egmdata = None
+            self.load_files()
 
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                self.animationhelper.set_frames_per_second(self.data.roots)
+                self.animationhelper.set_frames_per_second(NifData.data.roots)
                 # + (self.kfdata.roots if self.kfdata else []) )
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
-                pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=NifData.data).recurse()
             if NifOp.props.send_geoms_to_bind_pos:
-                pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.send_detached_geoms_to_node_pos:
-                pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=NifData.data).recurse()
             if NifOp.props.send_bones_to_bind_position:
-                pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.apply_skin_deformation:
-                self.objecthelper.apply_skin_deformation(self.data)
+                self.objecthelper.apply_skin_deformation(NifData.data)
 
             # scale tree
             toaster = pyffi.spells.nif.NifToaster()
             toaster.scale = NifOp.props.scale_correction_import
-            pyffi.spells.nif.fix.SpellScale(data=self.data, toaster=toaster).recurse()
+            pyffi.spells.nif.fix.SpellScale(data=NifData.data, toaster=toaster).recurse()
 
             # import all root blocks
-            for block in self.data.roots:
+            for block in NifData.data.roots:
                 root = block
                 # root hack for corrupt better bodies meshes and remove geometry from better bodies on skeleton import
                 for b in (b for b in block.tree() if isinstance(b, NifFormat.NiGeometry) and b.is_skin()):
@@ -160,6 +150,18 @@ class NifImport(NifCommon):
             NifLog.info("Finished")
 
         return {'FINISHED'}
+
+    def load_files(self):
+        NifData.data = NifFile.load_nif(NifOp.props.filepath)
+        if NifOp.props.override_scene_info:
+            scene_import.import_version_info(NifData.data)
+        egm_path = NifOp.props.egm_file
+        if egm_path:
+            EGMData.data = EGMFile.load_egm(egm_path)
+            # scale the data
+            EGMData.data.apply_scale(NifOp.props.scale_correction_import)
+        else:
+            EGMData.data = None
 
     def import_root(self, root_block):
         """Main import function."""
@@ -828,6 +830,4 @@ class NifImport(NifCommon):
         if node_name[-9:].lower() == " nonaccum":
             node_name = node_name[:-9]
         # get all geometry children
-        return [child for child in n_block.children
-                if (isinstance(child, NifFormat.NiTriBasedGeom)
-                    and child.name.find(node_name) != -1)]
+        return [child for child in n_block.children if (isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1)]
