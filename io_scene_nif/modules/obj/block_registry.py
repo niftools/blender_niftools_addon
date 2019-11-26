@@ -1,4 +1,5 @@
 """This module contains helper methods to block_store objects between nif and blender objects."""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
 # Copyright © 2019, NIF File Format Library and Tools contributors.
@@ -66,7 +67,7 @@ class BlockRegistry:
             NifLog.info("Exporting {0} block".format(block.__class__.__name__))
         else:
             NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
-            self._block_to_obj[block] = b_obj
+        self._block_to_obj[block] = b_obj
         return block
 
     def create_block(self, block_type, b_obj=None):

@@ -231,7 +231,7 @@ class MeshHelper:
                 if len(mesh_materials) > 1:
                     trishape.name = trishape.name.decode() + ":%i" % materialIndex
                 else:
-                    trishape.name = block_store.get_full_name(trishape)
+                    trishape.name = self.nif_export.get_full_name(trishape)
 
             # TODO [object][flags] Move up to object
             # Trishape Flags...
