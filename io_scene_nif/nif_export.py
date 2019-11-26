@@ -87,7 +87,6 @@ class NifExport(NifCommon):
         self.constrainthelper = Constraint(parent=self)
         self.objecthelper = Obj(parent=self)
 
-    @property
     def execute(self):
         """Main export function."""
         if bpy.context.mode != 'OBJECT':
@@ -95,7 +94,7 @@ class NifExport(NifCommon):
 
         NifLog.info("Exporting {0}".format(NifOp.props.filepath))
 
-        # TODO:
+        # TODO [animation[ Fix morrowind animation support
         '''
         if NifOp.props.animation == 'ALL_NIF_XNIF_XKF' and NifOp.props.game == 'MORROWIND':
             # if exporting in nif+xnif+kf mode, then first export
