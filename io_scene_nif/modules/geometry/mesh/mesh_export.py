@@ -42,7 +42,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.geometry import mesh
-from io_scene_nif.modules.geometry.morph.morph_export import MorphHelper
+from io_scene_nif.modules.geometry.morph.morph_export import Morph
 from io_scene_nif.modules.obj.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.texture.texture_export import TextureHelper
@@ -56,7 +56,7 @@ class MeshHelper:
     def __init__(self, parent):
         self.nif_export = parent
         self.texture_helper = TextureHelper(parent)
-        self.morph_helper = MorphHelper()
+        self.morph_helper = Morph()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """

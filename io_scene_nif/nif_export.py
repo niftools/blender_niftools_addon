@@ -55,7 +55,7 @@ from io_scene_nif.modules.property.property_export import PropertyHelper
 from io_scene_nif.modules.scene import scene_export
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utility.util_global import NifOp, EGMData
 from io_scene_nif.utility.util_logging import NifLog
 
 
@@ -332,8 +332,8 @@ class NifExport(NifCommon):
                 pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
                 # also scale egm
                 # TODO [morph] Move to morph helper
-                if self.egm_data:
-                    self.egm_data.apply_scale(NifOp.props.scale_correction_export)
+                if EGMData.data:
+                    EGMData.data.apply_scale(NifOp.props.scale_correction_export)
 
             # generate mopps (must be done after applying scale!)
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
@@ -560,14 +560,14 @@ class NifExport(NifCommon):
 
             # export egm file:
             # -----------------
-            if self.egm_data:
+            if EGMData.data:
                 ext = ".egm"
                 NifLog.info("Writing {0} file".format(ext))
 
                 egmfile = os.path.join(directory, filebase + ext)
                 stream = open(egmfile, "wb")
                 try:
-                    self.egm_data.write(stream)
+                    EGMData.data.write(stream)
                 finally:
                     stream.close()
         finally:
