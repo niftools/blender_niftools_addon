@@ -50,8 +50,8 @@ from io_scene_nif.modules.armature.armature_export import Armature
 from io_scene_nif.modules.collision.collision_export import Collision
 from io_scene_nif.modules.constraint.constraint_export import Constraint
 from io_scene_nif.modules.obj.block_registry import block_store
-from io_scene_nif.modules.obj.object_export import ObjectHelper
-from io_scene_nif.modules.property.property_export import PropertyHelper
+from io_scene_nif.modules.obj.object_export import Obj
+from io_scene_nif.modules.property.property_export import Property
 from io_scene_nif.modules.scene import scene_export
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
@@ -83,9 +83,9 @@ class NifExport(NifCommon):
         self.collisionhelper = Collision(parent=self)
         self.armaturehelper = Armature(parent=self)
         self.animationhelper = Animation(parent=self)
-        self.propertyhelper = PropertyHelper(parent=self)
+        self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint(parent=self)
-        self.objecthelper = ObjectHelper(parent=self)
+        self.objecthelper = Obj(parent=self)
 
     @property
     def execute(self):

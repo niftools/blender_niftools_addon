@@ -44,7 +44,7 @@ from io_scene_nif.modules.property.material.material_export import Material
 from io_scene_nif.utility.util_global import NifOp
 
 
-class PropertyHelper:
+class Property:
     
     def __init__(self, parent):
         self.object_property = ObjectProperty(parent)
