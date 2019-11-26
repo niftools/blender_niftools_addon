@@ -75,3 +75,11 @@ class KFData:
 
     def __init__(self):
         pass
+
+
+class EGMData:
+
+    data = None
+
+    def __init__(self):
+        pass

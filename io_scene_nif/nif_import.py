@@ -53,7 +53,7 @@ from io_scene_nif.modules.property.texture.texture_import import Texture
 from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
 from io_scene_nif.modules.obj.object_import import Object
 from io_scene_nif.modules.scene import scene_import
-from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utility.util_global import NifOp, EGMData
 
 import bpy
 import mathutils
@@ -69,6 +69,7 @@ class NifImport(NifCommon):
 
         # Helper systems
         self.animationhelper = Animation(parent=self)
+        self.morph_helper = Morph()
         self.armaturehelper = Armature(parent=self)
         self.collisionhelper = Collision(parent=self)
         self.constrainthelper = Constraint(parent=self)
@@ -778,8 +779,8 @@ class NifImport(NifCommon):
         if NifOp.props.animation:
             self.animationhelper.object_animation.import_morph_controller(n_block, b_obj, v_map)
         # import facegen morphs
-        if self.egmdata:
-            self.animationhelper.object_animation.import_egm_morphs(self.egmdata, b_obj, v_map, n_verts)
+        if EGMData.egmdata:
+            self.morph_helper.import_egm_morphs(self.egmdata, b_obj, v_map, n_verts)
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash
