@@ -149,17 +149,18 @@ def export_morph(self, b_mesh, b_obj, tridata, trishape, vertlist, vertmap):
                     floatdata.num_keys = len(curve.getPoints())
                     floatdata.keys.update_size()
 
+                    start = bpy.context.scene.frame_start
+                    fps = NifOp.context.scene.render.fps
                     for i, btriple in enumerate(curve.getPoints()):
                         knot = btriple.getPoints()
                         morph.keys[i].arg = morph.interpolation
-                        morph.keys[i].time = (knot[0] - bpy.context.scene.frame_start) * NifOp.context.scene.render.fps
+                        morph.keys[i].time = (knot[0] - start) * fps
                         morph.keys[i].value = curve.evaluate(knot[0])
                         # morph.keys[i].forwardTangent = 0.0 # ?
                         # morph.keys[i].backwardTangent = 0.0 # ?
                         floatdata.keys[i].arg = floatdata.interpolation
-                        floatdata.keys[i].time = (knot[0] - bpy.context.scene.frame_start) * NifOp.context.scene.render.fps
-                        floatdata.keys[i].value = curve.evaluate(
-                            knot[0])
+                        floatdata.keys[i].time = (knot[0] - start) * fps
+                        floatdata.keys[i].value = curve.evaluate(knot[0])
                         # floatdata.keys[i].forwardTangent = 0.0 # ?
                         # floatdata.keys[i].backwardTangent = 0.0 # ?
                         ctrl_start = min(ctrl_start, morph.keys[i].time)
