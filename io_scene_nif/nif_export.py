@@ -257,7 +257,7 @@ class NifExport(NifCommon):
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
                     # TODO: removed temorarily to process bseffectshader export
-                    anim_textextra = None  # self.animationhelper.export_text_keys(root_block)
+                    anim_textextra = None  # self.animation_helper.export_text_keys(root_block)
                 else:
                     anim_textextra = None
 

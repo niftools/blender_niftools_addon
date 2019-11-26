@@ -308,9 +308,9 @@ class ObjectAnimation:
 
                     # fcurves = (b_obj.data.shape_keys.animation_data.action.fcurves[-1], )
                     # # set extrapolation to fcurves
-                    # self.nif_import.animationhelper.set_extrapolation(n_morphCtrl.flags, fcurves)
+                    # self.nif_import.animation_helper.set_extrapolation(n_morphCtrl.flags, fcurves)
                     # # get the interpolation mode
-                    # interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( morph_data.interpolation)
+                    # interp = self.nif_import.animation_helper.get_b_interp_from_n_interp( morph_data.interpolation)
                     # TODO [animation] set interpolation once low level access works
 
 
