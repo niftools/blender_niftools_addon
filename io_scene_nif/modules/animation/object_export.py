@@ -82,8 +82,8 @@ class ObjectAnimation:
 
         # if alpha data is present (check this by checking if times were added) then add the controller so it is exported
         if fcurves[0].keyframe_points:
-            n_vis_ctrl = self.nif_export.objecthelper.create_block("NiVisController", fcurves)
-            n_vis_ipol = self.nif_export.objecthelper.create_block("NiBoolInterpolator", fcurves)
+            n_vis_ctrl = block_store.create_block("NiVisController", fcurves)
+            n_vis_ipol = block_store.create_block("NiBoolInterpolator", fcurves)
             animation_export.set_flags_and_timing(n_vis_ctrl, fcurves)
             n_vis_ctrl.interpolator = n_vis_ipol
             n_vis_ctrl.data = n_vis_data
