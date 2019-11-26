@@ -152,16 +152,17 @@ class NifImport(NifCommon):
         return {'FINISHED'}
 
     def load_files(self):
-        NifData.data = NifFile.load_nif(NifOp.props.filepath)
+        NifData.init(NifFile.load_nif(NifOp.props.filepath))
         if NifOp.props.override_scene_info:
             scene_import.import_version_info(NifData.data)
         egm_path = NifOp.props.egm_file
+
         if egm_path:
-            EGMData.data = EGMFile.load_egm(egm_path)
+            EGMData.init(EGMFile.load_egm(egm_path))
             # scale the data
             EGMData.data.apply_scale(NifOp.props.scale_correction_import)
         else:
-            EGMData.data = None
+            EGMData.init(None)
 
     def import_root(self, root_block):
         """Main import function."""
