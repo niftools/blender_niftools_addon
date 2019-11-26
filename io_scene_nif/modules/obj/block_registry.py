@@ -55,7 +55,6 @@ class BlockRegistry:
     def block_to_obj(self, value):
         self._block_to_obj = value
 
-    # TODO [object] Decide what to do with object registry for export
     def register_block(self, block, b_obj=None):
         """Helper function to register a newly created block in the list of
         exported blocks and to associate it with a Blender object.
@@ -67,7 +66,7 @@ class BlockRegistry:
             NifLog.info("Exporting {0} block".format(block.__class__.__name__))
         else:
             NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
-        self._block_to_obj[block] = b_obj
+            self._block_to_obj[block] = b_obj
         return block
 
     def create_block(self, block_type, b_obj=None):
