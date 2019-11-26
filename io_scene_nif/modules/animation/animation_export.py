@@ -43,6 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.animation.material_export import MaterialAnimation
 from io_scene_nif.modules.animation.object_export import ObjectAnimation
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
@@ -84,7 +85,7 @@ class Animation:
     def __init__(self, parent):
         self.nif_export = parent
         self.object_animation = ObjectAnimation()
-        self.material_animation = MaterialAnimation(parent)
+        self.material_animation = MaterialAnimation()
         self.texture_animation = TextureAnimation(parent)
         self.fps = bpy.context.scene.render.fps
 
@@ -432,130 +433,3 @@ class TextureAnimation:
             raise nif_utils.NifError(
                 "Error in Texture Flip buffer '{}': must define at least two textures".format(fliptxt.name))
         n_flip.delta = (n_flip.stop_time - n_flip.start_time) / count
-
-
-class MaterialAnimation:
-
-    def __init__(self, parent):
-        self.nif_export = parent
-        self.fps = bpy.context.scene.render.fps
-
-    def export_material_controllers(self, b_material, n_geom):
-        """Export material animation data for given geometry."""
-
-        if NifOp.props.animation == 'GEOM_NIF':
-            # geometry only: don't write controllers
-            return
-
-        # check if the material holds an animation
-        if b_material and not (b_material.animation_data and b_material.animation_data.action):
-            return
-
-        # find the nif material property to attach alpha & color controllers to
-        n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
-        if not n_matprop:
-            raise ValueError("Bug!! must add material property before exporting alpha controller")
-        colors = (("alpha", None),
-                  ("niftools.ambient_color", NifFormat.TargetColor.TC_AMBIENT),
-                  ("diffuse_color", NifFormat.TargetColor.TC_DIFFUSE),
-                  ("specular_color", NifFormat.TargetColor.TC_SPECULAR))
-        # the actual export
-        for b_dtype, n_dtype in colors:
-            self.export_material_alpha_color_controller(b_material, n_matprop, b_dtype, n_dtype)
-        self.export_material_uv_controller(b_material, n_geom)
-
-    def export_material_alpha_color_controller(self, b_material, n_matprop, b_dtype, n_dtype):
-        """Export the material alpha or color controller data."""
-
-        # get fcurves
-        fcurves = [fcu for fcu in b_material.animation_data.action.fcurves if b_dtype in fcu.data_path]
-        if not fcurves:
-            return
-
-        # just set the names of the nif data types, main difference between alpha and color
-        if b_dtype == "alpha":
-            keydata = "NiFloatData"
-            interpolator = "NiFloatInterpolator"
-            controller = "NiAlphaController"
-        else:
-            keydata = "NiPosData"
-            interpolator = "NiPoint3Interpolator"
-            controller = "NiMaterialColorController"
-
-        # create the key data
-        n_key_data = self.nif_export.objecthelper.create_block(keydata, fcurves)
-        n_key_data.data.num_keys = len(fcurves[0].keyframe_points)
-        n_key_data.data.interpolation = NifFormat.KeyType.LINEAR_KEY
-        n_key_data.data.keys.update_size()
-
-        # assumption: all curves have same amount of keys and are sampled at the same time
-        for i, n_key in enumerate(n_key_data.data.keys):
-            frame = fcurves[0].keyframe_points[i].co[0]
-            # add each point of the curves
-            n_key.arg = n_key_data.data.interpolation
-            n_key.time = frame / self.fps
-            if b_dtype == "alpha":
-                n_key.value = fcurves[0].keyframe_points[i].co[1]
-            else:
-                n_key.value.x, n_key.value.y, n_key.value.z = [fcu.keyframe_points[i].co[1] for fcu in fcurves]
-        # if key data is present
-        # then add the controller so it is exported
-        if fcurves[0].keyframe_points:
-            n_mat_ctrl = self.nif_export.objecthelper.create_block(controller, fcurves)
-            n_mat_ipol = self.nif_export.objecthelper.create_block(interpolator, fcurves)
-            n_mat_ctrl.interpolator = n_mat_ipol
-
-            set_flags_and_timing(n_mat_ctrl, fcurves)
-            # set target color only for color controller
-            if n_dtype:
-                n_mat_ctrl.set_target_color(n_dtype)
-            n_mat_ctrl.data = n_key_data
-            n_mat_ipol.data = n_key_data
-            # attach block to material property
-            n_matprop.add_controller(n_mat_ctrl)
-
-    def export_material_uv_controller(self, b_material, n_geom):
-        """Export the material UV controller data."""
-
-        # get fcurves - a bit more elaborate here so we can zip with the NiUVData later
-        # nb. these are actually specific to the texture slot in blender
-        # here we don't care and just take the first fcurve that matches
-        fcurves = []
-        for dp, ind in (("offset", 0), ("offset", 1), ("scale", 0), ("scale", 1)):
-            for fcu in b_material.animation_data.action.fcurves:
-                if dp in fcu.data_path and fcu.array_index == ind:
-                    fcurves.append(fcu)
-                    break
-            else:
-                fcurves.append(None)
-        # continue if at least one fcurve exists
-        if not any(fcurves):
-            return
-
-        # get the uv curves and translate them into nif data
-        n_uv_data = NifFormat.NiUVData()
-        for fcu, n_uv_group in zip(fcurves, n_uv_data.uv_groups):
-            if fcu:
-                # NifLog.info("Exporting {0} as NiUVData".format(b_curve))
-                n_uv_group.num_keys = len(fcu.keyframe_points)
-                n_uv_group.interpolation = NifFormat.KeyType.LINEAR_KEY
-                n_uv_group.keys.update_size()
-                for b_point, n_key in zip(fcu.keyframe_points, n_uv_group.keys):
-                    # add each point of the curve
-                    b_frame, b_value = b_point.co
-                    if "offset" in fcu.data_path:
-                        # offsets are negated in blender
-                        b_value = -b_value
-                    n_key.arg = n_uv_group.interpolation
-                    n_key.time = b_frame / self.fps
-                    n_key.value = b_value
-        # if uv data is present
-        # then add the controller so it is exported
-        if fcurves[0].keyframe_points:
-            n_uv_ctrl = NifFormat.NiUVController()
-            set_flags_and_timing(n_uv_ctrl, fcurves)
-            n_uv_ctrl.data = n_uv_data
-            # attach block to geometry
-            n_geom.add_controller(n_uv_ctrl)
-
-
