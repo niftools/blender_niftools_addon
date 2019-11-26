@@ -36,3 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+# TODO [scene][property][ui] Expose these either through the scene or as ui properties
+VERTEX_RESOLUTION = 1000
+NORMAL_RESOLUTION = 100
