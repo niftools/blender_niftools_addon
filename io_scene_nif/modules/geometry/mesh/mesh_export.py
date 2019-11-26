@@ -722,7 +722,7 @@ class Mesh:
 
                         # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                         # note: allocate memory for faster performance
-                        vert_added = [False for i in range(len(vertlist))]
+                        vert_added = [False for _ in range(len(vertlist))]
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
