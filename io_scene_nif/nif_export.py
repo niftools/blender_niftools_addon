@@ -112,7 +112,6 @@ class NifExport(NifCommon):
         self.dict_bone_priorities = {}
         self.dict_materials = {}
         self.dict_textures = {}
-        self.dict_mesh_uvlayers = []
 
         try:  # catch export errors
 
