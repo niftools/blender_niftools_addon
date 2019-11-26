@@ -45,7 +45,7 @@ from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class Material:
+class MaterialProp:
     
     def __init__(self, parent):
         self.nif_export = parent
