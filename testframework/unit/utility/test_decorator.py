@@ -39,6 +39,7 @@
 
 
 import nose
+from nose.tools import raises
 
 from io_scene_nif.utility.util_decorator import overload_method
 
@@ -101,6 +102,7 @@ class TestDispatachDecorator:
         nose.tools.assert_is_instance(out, int)
         nose.tools.assert_equal(out, int(f) + self.i)
 
+    @raises(TypeError)
     def test_no_overload(self):
         """Test base case as required to default case"""
 
@@ -108,6 +110,5 @@ class TestDispatachDecorator:
             pass
 
         obj = Bar()
-        out = self.foo.bah(obj)
-        nose.tools.assert_is_instance(out, Bar)
-        nose.tools.assert_equal(out, obj)
+        self.foo.bah(obj)
+
