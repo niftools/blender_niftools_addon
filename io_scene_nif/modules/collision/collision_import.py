@@ -48,7 +48,7 @@ from pyffi.utils.quickhull import qhull3d
 
 from io_scene_nif.modules import collision
 from io_scene_nif.utility.util_logging import NifLog
-from io_scene_nif.utility.util_global import NifOp, NifData
+from io_scene_nif.utility.util_global import NifData
 
 
 def get_material(mat_name):
@@ -89,7 +89,6 @@ class Collision:
                 havok_material = getattr(n_obj, mat_type, None)
                 if havok_material:
                     mat_name = str(havok_material.material)
-                    print(mat_name)
                     b_mat = get_material(mat_name)
                     b_me.materials.append(b_mat)
 
