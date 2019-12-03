@@ -41,7 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation import animation_export
-from io_scene_nif.modules.obj.block_registry import block_store
+from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 

@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from io_scene_nif.modules.obj.block_registry import block_store
+from io_scene_nif.modules.object.block_registry import block_store
 
 
 def export_range_lod_data(n_node, b_obj):
