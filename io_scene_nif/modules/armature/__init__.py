@@ -40,7 +40,6 @@
 import bpy
 from bpy_extras.io_utils import axis_conversion
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_logging import NifLog
 
 B_R_POSTFIX = "].R"
 B_L_POSTFIX = "].L"
@@ -98,7 +97,6 @@ def get_bone_name_for_nif(name):
     :return: Bone name in nif convention.
     :rtype: :class:`str`
     """
-    NifLog.info(name)
     if isinstance(name, bytes):
         name = name.decode()
     if name.startswith(BIP_01):
