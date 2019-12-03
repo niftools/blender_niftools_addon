@@ -16,4 +16,4 @@ python -m pip install Sphinx nose --target="%BLENDER_ADDONS_DIR%"
 
 :: Currently pyffi pypi distribution does not contain runtime generated files
 :: echo. "Installing nose to %BLENDER_ADDONS_DIR%\dependencies"
-:: python -m pip install pyffi --target="%BLENDER_ADDONS_DIR%"
+:: python -m pip install PyFFI==2.2.4.dev2 --target="${BLENDER_ADDONS_DIR}"
