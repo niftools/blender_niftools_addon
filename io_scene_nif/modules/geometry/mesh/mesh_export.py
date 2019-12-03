@@ -48,6 +48,7 @@ from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.texture.texture_export import Texture
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_utils import NifError
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
@@ -549,20 +550,7 @@ class Mesh:
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
-                # select mesh object
-                for b_deselect_obj in bpy.context.scene.objects:
-                    b_deselect_obj.select = False
-                bpy.context.scene.objects.active = b_obj
-                b_obj.select = True
-                for face in b_mesh.polygons:
-                    face.select = False
-                for face in polygons_without_bodypart:
-                    face.select = True
-                # select bad polygons switch to edit mode to select polygons
-                bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-                # raise exception
-                raise ValueError("Some polygons of {0} not assigned to any body part."
-                                 "The unassigned polygons have been selected in the mesh so they can easily be identified.".format(b_obj))
+                self.select_unweighted_vertices(b_mesh, b_obj, polygons_without_bodypart)
 
             if len(trilist) > 65535:
                 raise nif_utils.NifError("Too many polygons. Decimate your mesh and try again.")
@@ -809,6 +797,25 @@ class Mesh:
 
             self.morph_helper.export_morph(b_mesh, b_obj, tridata, trishape, vertlist, vertmap)
         return trishape
+
+    def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
+        """Select any faces which are not weighted to a vertex group"""
+        # select mesh object
+        for b_deselect_obj in bpy.context.scene.objects:
+            b_deselect_obj.select = False
+        bpy.context.scene.objects.active = b_obj
+        b_obj.select = True
+        for face in b_mesh.polygons:
+            face.select = False
+        for face in polygons_without_bodypart:
+            face.select = True
+
+        # select bad polygons switch to edit mode to select polygons
+        bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+
+        # raise exception
+        raise NifError("Some polygons of {0} not assigned to any body part."
+                       "The unassigned polygons have been selected in the mesh so they can easily be identified.".format(b_obj))
 
     def smooth_mesh_seams(self, b_objs):
         """ Finds vertices that are shared between all blender objects and averages their normals"""
