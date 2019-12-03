@@ -44,7 +44,7 @@ from io_scene_nif.modules import armature
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class Obj:
+class Object:
     # this will have to deal with all naming issues
     def __init__(self, parent):
         self.nif_import = parent

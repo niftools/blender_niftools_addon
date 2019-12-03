@@ -50,7 +50,7 @@ from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class Obj:
+class Object:
 
     def __init__(self, parent):
         self.nif_export = parent
