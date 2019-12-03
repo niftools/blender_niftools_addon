@@ -44,7 +44,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.modules.animation.animation_export import Animation
 from io_scene_nif.modules.geometry import mesh
 from io_scene_nif.modules.geometry.morph.morph_export import Morph
-from io_scene_nif.modules.obj.block_registry import block_store
+from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.texture.texture_export import Texture
 from io_scene_nif.utility import nif_utils
