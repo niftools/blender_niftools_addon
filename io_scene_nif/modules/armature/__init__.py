@@ -40,11 +40,31 @@
 import bpy
 from bpy_extras.io_utils import axis_conversion
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.util_logging import NifLog
+
+B_R_POSTFIX = "].R"
+B_L_POSTFIX = "].L"
+
+B_R_SUFFIX = ".R"
+B_L_SUFFIX = ".L"
+
+BRACE_L = "[L"
+BRACE_R = "[R"
+
+OPEN_BRACKET = "["
+CLOSE_BRACKET = "]"
+
+NPC_SUFFIX = "NPC "
+NPC_L = "NPC L "
+NPC_R = "NPC R "
+
+BIP_01 = "Bip01 "
+BIP01_R = "Bip01 R "
+BIP01_L = "Bip01 L "
 
 
 def get_bone_name_for_blender(name):
-    """Convert a bone name to a name that can be used by Blender: turns
-    'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
+    """Convert a bone name to a name that can be used by Blender: turns 'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
 
     :param name: The bone name as in the nif file.
     :type name: :class:`str`
@@ -53,51 +73,50 @@ def get_bone_name_for_blender(name):
     """
     if isinstance(name, bytes):
         name = name.decode()
-    if name.startswith("Bip01 L "):
-        return "Bip01 " + name[8:] + ".L"
-    elif name.startswith("Bip01 R "):
-        return "Bip01 " + name[8:] + ".R"
-    elif name.startswith("NPC L ") and name.endswith("]"):
-        name = name.replace("NPC L", "NPC")
-        name = name.replace("[L", "[")
-        name = name.replace("]", "].L")
-        return name
-    elif name.startswith("NPC R ") and name.endswith("]"):
-        name = name.replace("NPC R", "NPC")
-        name = name.replace("[R", "[")
-        name = name.replace("]", "].R")
-        return name
-
+    if name.startswith(BIP01_L):
+        name = BIP_01 + name[8:] + B_L_SUFFIX
+    elif name.startswith(BIP01_R):
+        name = BIP_01 + name[8:] + B_R_SUFFIX
+    elif name.startswith(NPC_L) and name.endswith(CLOSE_BRACKET):
+        name = replace_nif_name(name, NPC_L, NPC_SUFFIX, BRACE_L, B_L_POSTFIX)
+    elif name.startswith(NPC_R) and name.endswith(CLOSE_BRACKET):
+        name = replace_nif_name(name, NPC_R, NPC_SUFFIX, BRACE_R, B_R_POSTFIX)
     return name
 
 
+def replace_nif_name(name, original, replacement, open_replace, close_replace):
+    name = name.replace(original, replacement)
+    name = name.replace(open_replace, OPEN_BRACKET)
+    return name.replace(CLOSE_BRACKET, close_replace)
+
+
 def get_bone_name_for_nif(name):
-    """Convert a bone name to a name that can be used by the nif file:
-    turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
+    """Convert a bone name to a name that can be used by the nif file: turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
 
     :param name: The bone name as in Blender.
     :type name: :class:`str`
     :return: Bone name in nif convention.
     :rtype: :class:`str`
     """
+    NifLog.info(name)
     if isinstance(name, bytes):
         name = name.decode()
-    if name.startswith("Bip01 "):
-        if name.endswith(".L"):
-            return "Bip01 L " + name[6:-2]
-        elif name.endswith(".R"):
-            return "Bip01 R " + name[6:-2]
-    elif name.startswith("NPC ") and name.endswith("].L"):
-        name = name.replace("NPC ", "NPC L")
-        name = name.replace("[", "[L")
-        name = name.replace("].L", "]")
-        return name
-    elif name.startswith("NPC ") and name.endswith("].R"):
-        name = name.replace("NPC ", "NPC R")
-        name = name.replace("[", "[R")
-        name = name.replace("].R", "]")
-        return name
+    if name.startswith(BIP_01):
+        if name.endswith(B_L_SUFFIX):
+            name = BIP01_L + name[6:-2]
+        elif name.endswith(B_R_SUFFIX):
+            name = BIP01_R + name[6:-2]
+    elif name.startswith(NPC_SUFFIX) and name.endswith(B_L_POSTFIX):
+        name = replace_blender_name(name, NPC_SUFFIX, NPC_L, BRACE_L, B_L_POSTFIX)
+    elif name.startswith(NPC_SUFFIX) and name.endswith(B_R_POSTFIX):
+        name = replace_blender_name(name, NPC_SUFFIX, NPC_R, BRACE_R, B_R_POSTFIX)
     return name
+
+
+def replace_blender_name(name, original, replacement, open_replace, close_replace):
+    name = name.replace(original, replacement)
+    name = name.replace(OPEN_BRACKET, open_replace)
+    return name.replace(close_replace, CLOSE_BRACKET)
 
 
 def set_bone_orientation(from_forward, from_up):
@@ -121,16 +140,12 @@ correction_inv = None
 
 
 def import_keymat(rest_rot_inv, key_matrix):
-    """
-    Handles space conversions for imported keys
-    """
+    """Handles space conversions for imported keys """
     return correction * (rest_rot_inv * key_matrix) * correction_inv
 
 
 def export_keymat(rest_rot, key_matrix, bone):
-    """
-    Handles space conversions for exported keys
-    """
+    """Handles space conversions for exported keys """
     if bone:
         return rest_rot * (correction_inv * key_matrix * correction)
     else:
@@ -138,9 +153,7 @@ def export_keymat(rest_rot, key_matrix, bone):
 
 
 def get_bind_matrix(bone):
-    """
-    Get a nif armature-space matrix from a blender bone.
-    """
+    """Get a nif armature-space matrix from a blender bone. """
     bind = correction * correction_inv * bone.matrix_local * correction
     if bone.parent:
         p_bind_restored = correction * correction_inv * bone.parent.matrix_local * correction
@@ -153,10 +166,7 @@ def nif_bind_to_blender_bind(nif_armature_space_matrix):
 
 
 def get_armature():
-    """
-    Get an armature.
-    If there is more than one armature in the scene and some armatures are selected, return the first of the selected armatures.
-    """
+    """Get an armature. If there is more than one armature in the scene and some armatures are selected, return the first of the selected armatures. """
     src_armatures = [ob for ob in bpy.data.objects if type(ob.data) == bpy.types.Armature]
     # do we have armatures?
     if src_armatures:
@@ -169,13 +179,10 @@ def get_armature():
 
 
 def get_bind_data(b_armature):
-    """
-    Get the required bind data of an armature.
-    Used by standalone KF import and export.
-    """
+    """Get the required bind data of an armature. Used by standalone KF import and export. """
     if b_armature:
         bind_data = {}
         for b_bone in b_armature.data.bones:
-            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(get_bind_matrix(b_bone))
-            bind_data[b_bone.name] = (niBone_bind_scale, niBone_bind_rot.to_4x4().inverted(), niBone_bind_trans)
+            n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = nif_utils.decompose_srt(get_bind_matrix(b_bone))
+            bind_data[b_bone.name] = (n_bone_bind_scale, n_bone_bind_rot.to_4x4().inverted(), n_bone_bind_trans)
         return bind_data
