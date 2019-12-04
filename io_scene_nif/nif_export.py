@@ -42,7 +42,6 @@ import os.path
 
 import bpy
 import pyffi.spells.nif.fix
-from pyffi.formats.egm import EgmFormat
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
@@ -50,16 +49,14 @@ from io_scene_nif.modules.animation.animation_export import Animation
 from io_scene_nif.modules.armature.armature_export import Armature
 from io_scene_nif.modules.collision.collision_export import Collision
 from io_scene_nif.modules.constraint.constraint_export import Constraint
-from io_scene_nif.modules.obj import block_registry
-from io_scene_nif.modules.obj.block_registry import BlockRegistry
-from io_scene_nif.modules.object.object_export import ObjectHelper
-from io_scene_nif.modules.property.property_export import PropertyHelper
-from io_scene_nif.modules.property.texture.texture_export import TextureHelper
+from io_scene_nif.modules.object.block_registry import block_store
+from io_scene_nif.modules.object.object_export import Object
+from io_scene_nif.modules.property.property_export import Property
 from io_scene_nif.modules.scene import scene_export
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_global import NifOp
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp, EGMData
+from io_scene_nif.utility.util_logging import NifLog
 
 
 # main export class
@@ -86,12 +83,10 @@ class NifExport(NifCommon):
         self.collisionhelper = Collision(parent=self)
         self.armaturehelper = Armature(parent=self)
         self.animationhelper = Animation(parent=self)
-        self.propertyhelper = PropertyHelper(parent=self)
+        self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint(parent=self)
-        self.texturehelper = TextureHelper(parent=self)
-        self.objecthelper = ObjectHelper(parent=self)
+        self.objecthelper = Object(parent=self)
 
-    @property
     def execute(self):
         """Main export function."""
         if bpy.context.mode != 'OBJECT':
@@ -99,7 +94,7 @@ class NifExport(NifCommon):
 
         NifLog.info("Exporting {0}".format(NifOp.props.filepath))
 
-        # TODO:
+        # TODO [animation[ Fix morrowind animation support
         '''
         if NifOp.props.animation == 'ALL_NIF_XNIF_XKF' and NifOp.props.game == 'MORROWIND':
             # if exporting in nif+xnif+kf mode, then first export
@@ -111,15 +106,11 @@ class NifExport(NifCommon):
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
-        block_registry.block_to_obj = {}  # clear out previous iteration
+        block_store.block_to_obj = {}  # clear out previous iteration
 
         self.dict_bone_priorities = {}
         self.dict_materials = {}
         self.dict_textures = {}
-        self.dict_mesh_uvlayers = []
-
-        # if an egm is exported, this will contain the data
-        self.egm_data = None
 
         try:  # catch export errors
 
@@ -192,7 +183,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     # has it a controller field?
                     if isinstance(block, NifFormat.NiObjectNET):
                         if block.controller:
@@ -209,7 +200,7 @@ class NifExport(NifCommon):
             NifLog.info("Checking controllers")
             if animtxt and NifOp.props.game == 'MORROWIND':
                 has_keyframecontrollers = False
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
@@ -219,7 +210,7 @@ class NifExport(NifCommon):
                     self.animationhelper.export_keyframes(root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.NiNode):
                         # if any of the shape children has a controller or if the ninode has a controller convert its type
                         if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
@@ -236,11 +227,11 @@ class NifExport(NifCommon):
                 # TODO [armature] Extract out to armature animation
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
-                for block in list(block_registry.block_to_obj.keys()):
+                for block in list(block_store.block_to_obj.keys()):
                     if isinstance(block, NifFormat.NiNode) and block.name.decode() == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
-                            ctrl = BlockRegistry.create_block("NiTransformController")
-                            interp = BlockRegistry.create_block("NiTransformInterpolator")
+                            ctrl = block_store.create_block("NiTransformController")
+                            interp = block_store.create_block("NiTransformInterpolator")
 
                             ctrl.interpolator = interp
                             bone.add_controller(ctrl)
@@ -264,17 +255,17 @@ class NifExport(NifCommon):
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
                     # TODO: removed temorarily to process bseffectshader export
-                    anim_textextra = None  # self.animationhelper.export_text_keys(root_block)
+                    anim_textextra = None  # self.animation_helper.export_text_keys(root_block)
                 else:
                     anim_textextra = None
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
-            # note: block_registry.block_to_obj changes during iteration, so need list copy
-            for block in list(block_registry.block_to_obj):
+            # note: block_store.block_to_obj changes during iteration, so need list copy
+            for block in list(block_store.block_to_obj):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
                         if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
-                            coltf = BlockRegistry.create_block("bhkConvexTransformShape")
+                            coltf = block_store.create_block("bhkConvexTransformShape")
                             coltf.material = sub_shape.material
                             coltf.unknown_float_1 = 0.1
                             coltf.unknown_8_bytes[0] = 96
@@ -311,7 +302,7 @@ class NifExport(NifCommon):
                 # flatten skins
                 skelroots = set()
                 affectedbones = []
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
                         NifLog.info("Flattening skin on geometry {0}".format(block.name))
                         affectedbones.extend(block.flatten_skin())
@@ -332,18 +323,20 @@ class NifExport(NifCommon):
             # apply scale
             if abs(NifOp.props.scale_correction_export) > NifOp.props.epsilon:
                 NifLog.info("Applying scale correction {0}".format(str(NifOp.props.scale_correction_export)))
+                # TODO [object] Fix scale to use NifData
                 data = NifFormat.Data()
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
                 toaster.scale = NifOp.props.scale_correction_export
                 pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
+
                 # also scale egm
-                if self.egm_data:
-                    self.egm_data.apply_scale(NifOp.props.scale_correction_export)
+                if EGMData.data:
+                    EGMData.data.apply_scale(NifOp.props.scale_correction_export)
 
             # generate mopps (must be done after applying scale!)
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                for block in block_registry.block_to_obj:
+                for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         NifLog.info("Generating mopp...")
                         block.update_mopp()
@@ -412,13 +405,13 @@ class NifExport(NifCommon):
                 # morrowind
                 if NifOp.props.game in ('MORROWIND', 'FREEDOM_FORCE'):
                     # create kf root header
-                    kf_root = BlockRegistry.create_block("NiSequenceStreamHelper")
+                    kf_root = block_store.create_block("NiSequenceStreamHelper")
                     kf_root.add_extra_data(anim_textextra)
                     # reparent controller tree
                     for node, ctrls in node_kfctrls.items():
                         for ctrl in ctrls:
                             # create node reference by name
-                            nodename_extra = BlockRegistry.create_block("NiStringExtraData")
+                            nodename_extra = block_store.create_block("NiStringExtraData")
                             nodename_extra.bytes_remaining = len(node.name) + 4
                             nodename_extra.string_data = node.name
 
@@ -436,7 +429,7 @@ class NifExport(NifCommon):
                     # TODO [animation] allow for object kf only
 
                     # create kf root header
-                    kf_root = BlockRegistry.create_block("NiControllerSequence")
+                    kf_root = block_store.create_block("NiControllerSequence")
                     kf_root.name = filebase
                     kf_root.unknown_int_1 = 1
                     kf_root.weight = 1.0
@@ -548,9 +541,7 @@ class NifExport(NifCommon):
                 NifLog.info("Detaching animation text keys from nif")
                 # detach animation text keys
                 if root_block.extra_data is not anim_textextra:
-                    raise RuntimeError(
-                        "Oops, you found a bug! Animation extra data"
-                        " wasn't where expected...")
+                    raise RuntimeError("Oops, you found a bug! Animation extra data wasn't where expected...")
                 root_block.extra_data = None
 
                 prefix = "x"  # we are in morrowind 'nifxnifkf mode'
@@ -568,14 +559,14 @@ class NifExport(NifCommon):
 
             # export egm file:
             # -----------------
-            if self.egm_data:
+            if EGMData.data:
                 ext = ".egm"
                 NifLog.info("Writing {0} file".format(ext))
 
                 egmfile = os.path.join(directory, filebase + ext)
                 stream = open(egmfile, "wb")
                 try:
-                    self.egm_data.write(stream)
+                    EGMData.data.write(stream)
                 finally:
                     stream.close()
         finally:
@@ -586,20 +577,3 @@ class NifExport(NifCommon):
         self.root_blocks = [root_block]
 
         return {'FINISHED'}
-
-    def export_egm(self, keyblocks):
-        self.egm_data = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
-        for keyblock in keyblocks:
-            if keyblock.name.startswith("EGM SYM"):
-                morph = self.egm_data.add_sym_morph()
-            elif keyblock.name.startswith("EGM ASYM"):
-                morph = self.egm_data.add_asym_morph()
-            else:
-                continue
-            NifLog.info("Exporting morph %s to egm" % keyblock.name)
-            relative_vertices = []
-
-            # note: keyblocks[0] is base key
-            for vert, key_vert in zip(keyblocks[0].data, keyblock.data):
-                relative_vertices.append(key_vert - vert)
-            morph.set_relative_vertices(relative_vertices)

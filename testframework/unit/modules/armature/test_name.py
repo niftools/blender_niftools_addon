@@ -1,4 +1,5 @@
-"""This module contains helper methods to block_store objects between nif and blender objects."""
+"""Unit testing that the decorator utility"""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
 # Copyright © 2019, NIF File Format Library and Tools contributors.
@@ -36,49 +37,52 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.formats.nif import NifFormat
+import nose
 
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.modules import armature
 
+B_NPC_L = "NPC XXX [XXX].L"
+B_NPC_R = "NPC XXX [XXX].R"
+N_NPC_L = "NPC L XXX [LXXX]"
+N_NPC_R = "NPC R XXX [RXXX]"
 
-class BlockRegistry:
-
-    def __init__(self):
-        self._block_to_obj = {}
-
-    @property
-    def block_to_obj(self): 
-        return self._block_to_obj
-
-    # TODO [object] Decide what to do with object registry for export
-    def register_block(self, block, b_obj=None):
-        """Helper function to register a newly created block in the list of
-        exported blocks and to associate it with a Blender object.
-
-        @param block: The nif block.
-        @param b_obj: The Blender object.
-        @return: C{block}"""
-        if b_obj is None:
-            NifLog.info("Exporting {0} block".format(block.__class__.__name__))
-        else:
-            NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
-        self.block_to_obj[block] = b_obj
-        return block
-
-    def create_block(self, block_type, b_obj=None):
-        """Helper function to create a new block, register it in the list of
-        exported blocks, and associate it with a Blender object.
-
-        @param block_type: The nif block type (for instance "NiNode").
-        @type block_type: C{str}
-        @param b_obj: The Blender object.
-        @return: The newly created block."""
-        try:
-            block = getattr(NifFormat, block_type)()
-        except AttributeError:
-            raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
-        return BlockRegistry.register_block(block, b_obj)
+B_BIP01_L = "Bip01 XXX.L"
+B_BIP01_R = "Bip01 XXX.R"
+N_BIP01_L = "Bip01 L XXX"
+N_BIP01_R = "Bip01 R XXX"
 
 
-block_store = BlockRegistry()
+class TestArmature:
+
+    def test_nif_to_blender_left_conversion_npc(self):
+        l_side = armature.get_bone_name_for_blender(N_NPC_L)
+        nose.tools.assert_equals(l_side, B_NPC_L)
+
+    def test_nif_to_blender_right_conversion_npc(self):
+        r_side = armature.get_bone_name_for_blender(N_NPC_R)
+        nose.tools.assert_equals(r_side, B_NPC_R)
+
+    def test_blender_to_nif_name_left_conversion_npc(self):
+        l_side = armature.get_bone_name_for_nif(B_NPC_L)
+        nose.tools.assert_equals(l_side, N_NPC_L)
+
+    def test_blender_to_nif_name_right_conversion_npc(self):
+        r_side = armature.get_bone_name_for_nif(B_NPC_R)
+        nose.tools.assert_equals(r_side, N_NPC_R)
+
+    def test_nif_to_blender_left_conversion_bip(self):
+        l_side = armature.get_bone_name_for_blender(N_BIP01_L)
+        nose.tools.assert_equals(l_side, B_BIP01_L)
+
+    def test_nif_to_blender_right_conversion_bip(self):
+        r_side = armature.get_bone_name_for_blender(N_BIP01_R)
+        nose.tools.assert_equals(r_side, B_BIP01_R)
+
+    def test_blender_to_nif_name_left_conversion_bip(self):
+        l_side = armature.get_bone_name_for_nif(B_BIP01_L)
+        nose.tools.assert_equals(l_side, N_BIP01_L)
+
+    def test_blender_to_nif_name_right_conversion_bip(self):
+        r_side = armature.get_bone_name_for_nif(B_BIP01_R)
+        nose.tools.assert_equals(r_side, N_BIP01_R)
+

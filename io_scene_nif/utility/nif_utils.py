@@ -40,7 +40,7 @@ import math
 
 import mathutils
 
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class NifError(Exception):
@@ -136,12 +136,15 @@ def decompose_srt(matrix):
 
 def find_property(n_block, property_type):
     """Find a property."""
-    for prop in n_block.properties:
-        if isinstance(prop, property_type):
-            return prop
-    for prop in n_block.bs_properties:
-        if isinstance(prop, property_type):
-            return prop
+    if hasattr(n_block, "properties"):
+        for prop in n_block.properties:
+            if isinstance(prop, property_type):
+                return prop
+
+    if hasattr(n_block, "bs_properties"):
+        for prop in n_block.bs_properties:
+            if isinstance(prop, property_type):
+                return prop
     return None
 
 

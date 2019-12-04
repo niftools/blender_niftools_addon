@@ -41,7 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class Object:

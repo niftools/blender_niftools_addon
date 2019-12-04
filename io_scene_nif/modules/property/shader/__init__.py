@@ -1,4 +1,4 @@
-"""This module contains helper methods to import/export object data."""
+"""This module contains helper methods to import/export shader properties."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -36,17 +36,3 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-import mathutils
-
-# dictionary of names, to map NIF blocks to correct Blender names
-DICT_NAMES = {}
-
-# keeps track of names of exported blocks, to make sure they are unique
-BLOCK_NAMES_LIST = []
-
-# identity matrix, for comparisons
-IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
-                               [0.0, 1.0, 0.0, 0.0],
-                               [0.0, 0.0, 1.0, 0.0],
-                               [0.0, 0.0, 0.0, 1.0]])

@@ -41,8 +41,8 @@ import bpy
 import pyffi
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.utility.nif_global import NifOp
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class NifCommon:
@@ -62,7 +62,6 @@ class NifCommon:
 
     # dictionary of texture files, to reuse textures
     dict_textures = {}
-    dict_mesh_uvlayers = []
 
     VERTEX_RESOLUTION = 1000
     NORMAL_RESOLUTION = 100

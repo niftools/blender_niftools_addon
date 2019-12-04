@@ -46,7 +46,7 @@ from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.util_global import NifOp
 
 
 class KfImport(NifCommon):
@@ -55,7 +55,7 @@ class KfImport(NifCommon):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.animationhelper = Animation(parent=self)
+        self.animation_helper = Animation(parent=self)
 
     def execute(self):
         """Main import function."""
@@ -78,7 +78,7 @@ class KfImport(NifCommon):
             toaster.scale = NifOp.props.scale_correction_import
             pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
             # calculate and set frames per second
-            self.animationhelper.set_frames_per_second(kfdata.roots)
+            self.animation_helper.set_frames_per_second(kfdata.roots)
             for kf_root in kfdata.roots:
-                self.animationhelper.armature_animation.import_kf_standalone(kf_root, b_armature, bind_data)
+                self.animation_helper.armature_animation.import_kf_standalone(kf_root, b_armature, bind_data)
         return {'FINISHED'}

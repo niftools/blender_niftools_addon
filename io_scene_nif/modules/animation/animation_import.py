@@ -45,8 +45,8 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_global import NifOp
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
 
 
 # TODO [animation][util] interpolate() should perhaps be moved to utils?
@@ -252,20 +252,6 @@ class ObjectAnimation:
         for key in n_vis_ctrl.data.keys:
             self.nif_import.animationhelper.add_key(fcurves, key.time, (key.value,), "CONSTANT")
 
-    def morph_mesh(self, b_mesh, baseverts, morphverts, v_map):
-        """Transform a mesh to be in the shape given by morphverts."""
-        # for each vertex calculate the key position from base
-        # pos + delta offset
-        # length check disabled
-        # as sometimes, oddly, the morph has more vertices...
-        # assert(len(baseverts) == len(morphverts) == len(v_map))
-        for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
-            # pyffi vector3
-            v = bv + mv
-            # if applytransform:
-            # v *= transform
-            b_mesh.vertices[b_v_index].co = v.as_tuple()
-
     def import_morph_controller(self, n_node, b_obj, v_map):
         """Import NiGeomMorpherController as shape keys for blender object."""
 
@@ -322,35 +308,10 @@ class ObjectAnimation:
 
                     # fcurves = (b_obj.data.shape_keys.animation_data.action.fcurves[-1], )
                     # # set extrapolation to fcurves
-                    # self.nif_import.animationhelper.set_extrapolation(n_morphCtrl.flags, fcurves)
+                    # self.nif_import.animation_helper.set_extrapolation(n_morphCtrl.flags, fcurves)
                     # # get the interpolation mode
-                    # interp = self.nif_import.animationhelper.get_b_interp_from_n_interp( morph_data.interpolation)
+                    # interp = self.nif_import.animation_helper.get_b_interp_from_n_interp( morph_data.interpolation)
                     # TODO [animation] set interpolation once low level access works
-
-    def import_egm_morphs(self, egm_data, b_obj, v_map, n_verts):
-        """Import all EGM morphs as shape keys for blender object."""
-        # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
-        b_mesh = b_obj.data
-        sym_morphs = [list(morph.get_relative_vertices()) for morph in egm_data.sym_morphs]
-        asym_morphs = [list(morph.get_relative_vertices()) for morph in egm_data.asym_morphs]
-
-        # insert base key at frame 1, using absolute keys
-        sk_basis = b_obj.shape_key_add("Basis")
-        b_mesh.shape_keys.use_relative = False
-
-        morphs = ([(morph, "EGM SYM %i" % i) for i, morph in enumerate(sym_morphs)] +
-                  [(morph, "EGM ASYM %i" % i) for i, morph in enumerate(asym_morphs)])
-
-        for morph_verts, key_name in morphs:
-            # convert tuples into vector here so we can simply add in morph_mesh()
-            morphvert_out = []
-            for u in morph_verts:
-                v = NifFormat.Vector3()
-                v.x, v.y, v.z = u
-                morphvert_out.append(v)
-            self.morph_mesh(b_mesh, n_verts, morphvert_out, v_map)
-            # TODO [animation] unused variable is it required
-            shape_key = b_obj.shape_key_add(key_name, from_mix=False)
 
 
 class MaterialAnimation:

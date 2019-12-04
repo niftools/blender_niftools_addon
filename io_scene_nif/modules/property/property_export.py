@@ -39,22 +39,19 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.obj.block_registry import block_store
-from io_scene_nif.modules.property.material.material_export import Material
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.modules.object.block_registry import block_store
+from io_scene_nif.modules.property.material.material_export import MaterialProp
+from io_scene_nif.utility.util_global import NifOp
 
 
-class PropertyHelper:
+class Property:
     
     def __init__(self, parent):
-        self.object_property = ObjectProperty(parent)
-        self.material_property = Material(parent)
+        self.object_property = ObjectProp()
+        self.material_property = MaterialProp(parent)
         
         
-class ObjectProperty:
-    
-    def __init__(self, parent):
-        self.nif_export = parent
+class ObjectProp:
         
     def export_vertex_color_property(self, block_parent, flags=1, vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
