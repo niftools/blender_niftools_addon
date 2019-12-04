@@ -88,7 +88,9 @@ class Collision:
             for mat_type in ("material", "oblivion_havok_material", "fallout_3_havok_material", "skyrim_havok_material"):
                 havok_material = getattr(n_obj, mat_type, None)
                 if havok_material:
-                    mat_name = str(havok_material.material)
+                    # todo [collision] fix this
+                    # mat_name = str(havok_material.material)
+                    mat_name = str(havok_material)
                     b_mat = get_material(mat_name)
                     b_me.materials.append(b_mat)
 
