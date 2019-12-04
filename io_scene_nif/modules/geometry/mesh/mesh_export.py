@@ -751,7 +751,7 @@ class Mesh:
 
                         # calculate center and radius for each skin bone data block
                         trishape.update_skin_center_radius()
-                        print(self.nif_export)
+                        
                         if self.nif_export.version >= 0x04020100 and NifOp.props.skin_partition:
                             NifLog.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
