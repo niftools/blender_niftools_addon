@@ -1,27 +1,27 @@
-""" Nif Utilities, stores global access to initialising object of calling Blender function"""
+"""This module contains helper methods to import/export object type data."""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
-# Copyright © 2016, NIF File Format Library and Tools contributors.
+#
+# Copyright © 2019, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -37,33 +37,27 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from io_scene_nif.utility.nif_logging import NifLog
+from io_scene_nif.modules.object.block_registry import block_store
 
 
-class NifOp:
-    """A simple reference holder class but enables classes to be decoupled. 
-    This module require initialisation to function."""
+def export_range_lod_data(n_node, b_obj):
+    """Export range lod data for for the children of b_obj, as a
+    NiRangeLODData block on n_node.
+    """
+    # create range lod data object
+    n_range_data = block_store.create_block("NiRangeLODData", b_obj)
+    n_node.lod_level_data = n_range_data
 
-    def __init__(self):
-        pass
+    # get the children
+    b_children = b_obj.children
 
-    op = None
-    props = None
-    context = None
-
-    @staticmethod
-    def init(operator, context):
-        NifOp.op = operator
-        NifOp.props = operator.properties
-        NifOp.context = context
-
-        # init loggers logging level
-        NifLog.init(operator)
-
-
-class NifData:
-
-    data = None
-
-    def __init__(self):
-        pass
+    # set the data
+    n_node.num_lod_levels = len(b_children)
+    n_range_data.num_lod_levels = len(b_children)
+    n_node.lod_levels.update_size()
+    n_range_data.lod_levels.update_size()
+    for b_child, n_lod_level, n_rd_lod_level in zip(b_children, n_node.lod_levels, n_range_data.lod_levels):
+        n_lod_level.near_extent = b_child["near_extent"]
+        n_lod_level.far_extent = b_child["far_extent"]
+        n_rd_lod_level.near_extent = n_lod_level.near_extent
+        n_rd_lod_level.far_extent = n_lod_level.far_extent

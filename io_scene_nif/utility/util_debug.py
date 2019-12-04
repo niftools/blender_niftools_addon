@@ -37,8 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import sys
 import os
+import sys
 
 CLIENT_PORT = 5678
 REMOTE_PORT = 1234

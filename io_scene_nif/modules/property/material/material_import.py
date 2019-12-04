@@ -39,7 +39,9 @@
 
 
 import bpy
-from io_scene_nif.utility.nif_logging import NifLog
+
+from io_scene_nif.utility.util_global import NifData
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class Material:
@@ -155,7 +157,7 @@ class Material:
             b_mat.specular_color.g = n_mat_prop.specular_color.g
             b_mat.specular_color.b = n_mat_prop.specular_color.b
 
-            if (not n_specular_prop) and (self.nif_import.data.version != 0x14000004):
+            if (not n_specular_prop) and (NifData.data.version != 0x14000004):
                 b_mat.specular_intensity = 0.0  # no specular prop
             else:
                 b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value

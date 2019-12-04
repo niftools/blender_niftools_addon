@@ -43,10 +43,10 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import collision
-from io_scene_nif.modules.obj.block_registry import block_store
+from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_logging import NifLog
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp
 
 
 class Collision:
@@ -195,7 +195,7 @@ class Collision:
         # n_havok_mat = (b_obj.nifcollision.havok_material, b_obj.nifcollision.skyrim_havok_material)
         # just hard code to the first entry for now until the version transition is settled
         # then get it from material name
-        n_havok_mat = (0, 131151687)
+        n_havok_mat = (0, 131151687)[0]
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
         deactivator_type = b_obj.nifcollision.deactivator_type
@@ -372,8 +372,7 @@ class Collision:
                 raise ValueError('Not a packed list of collisions')
 
         mesh = b_obj.data
-        transform = mathutils.Matrix(
-            self.nif_export.objecthelper.get_object_matrix(b_obj).as_list())
+        transform = mathutils.Matrix(self.nif_export.objecthelper.get_object_matrix(b_obj).as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]

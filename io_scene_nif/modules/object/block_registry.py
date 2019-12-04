@@ -1,8 +1,8 @@
-"""This module is used to for Nif file operations"""
+"""This module contains helper methods to block_store objects between nif and blender objects."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2016, NIF File Format Library and Tools contributors.
+# Copyright © 2019, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,35 +37,52 @@
 #
 # ***** END LICENSE BLOCK *****
 
-
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
-from io_scene_nif.utility.nif_utils import NifError
 
 
-class NifFile:
-    """Class to load and save a NifFile"""
+class BlockRegistry:
 
-    @staticmethod
-    def load_nif(file_path):
-        """Loads a nif from the given file path"""
-        NifLog.info("Importing {0}".format(file_path))
+    def __init__(self):
+        self._block_to_obj = {}
 
-        data = NifFormat.Data()
+    @property
+    def block_to_obj(self): 
+        return self._block_to_obj
 
-        # open file for binary reading
-        with open(file_path, "rb") as nif_stream:
-            # check if nif file is valid
-            data.inspect_version_only(nif_stream)
-            if data.version >= 0:
-                # it is valid, so read the file
-                NifLog.info("NIF file version: {0}".format(data.version, "x"))
-                NifLog.info("Reading file")
-                data.read(nif_stream)
-            elif data.version == -1:
-                raise NifError("Unsupported NIF version.")
-            else:
-                raise NifError("Not a NIF file.")
+    @block_to_obj.setter
+    def block_to_obj(self, value):
+        self._block_to_obj = value
 
-        return data
+    def register_block(self, block, b_obj=None):
+        """Helper function to register a newly created block in the list of
+        exported blocks and to associate it with a Blender object.
+
+        @param block: The nif block.
+        @param b_obj: The Blender object.
+        @return: C{block}"""
+        if b_obj is None:
+            NifLog.info("Exporting {0} block".format(block.__class__.__name__))
+        else:
+            NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
+        self._block_to_obj[block] = b_obj
+        return block
+
+    def create_block(self, block_type, b_obj=None):
+        """Helper function to create a new block, register it in the list of
+        exported blocks, and associate it with a Blender object.
+
+        @param block_type: The nif block type (for instance "NiNode").
+        @type block_type: C{str}
+        @param b_obj: The Blender object.
+        @return: The newly created block."""
+        try:
+            block = getattr(NifFormat, block_type)()
+        except AttributeError:
+            raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
+        return self.register_block(block, b_obj)
+
+
+block_store = BlockRegistry()

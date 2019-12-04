@@ -46,8 +46,8 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_logging import NifLog
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utility.util_global import NifOp, NifData
 
 
 class Armature:
@@ -225,15 +225,14 @@ class Armature:
         # case where we import skeleton only,
         # or importing an Oblivion or Fallout 3 skeleton:
         # do all NiNode's as bones
-        if NifOp.props.skeleton == "SKELETON_ONLY" or (
-                self.nif_import.data.version in (0x14000005, 0x14020007) and
-                (os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif'))):
+        if NifOp.props.skeleton == "SKELETON_ONLY" or \
+                (NifData.data.version in (0x14000005, 0x14020007) and os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif')):
 
             if not isinstance(ni_block, NifFormat.NiNode):
                 raise nif_utils.NifError("Cannot import skeleton: root is not a NiNode")
 
             # for morrowind, take the Bip01 node to be the skeleton root
-            if self.nif_import.data.version == 0x04000002:
+            if NifData.data.version == 0x04000002:
                 skelroot = ni_block.find(block_name='Bip01', block_type=NifFormat.NiNode)
                 if not skelroot:
                     skelroot = ni_block

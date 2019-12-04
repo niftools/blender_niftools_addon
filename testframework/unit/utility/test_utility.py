@@ -181,10 +181,14 @@ class TestMatrixOperations:
 class TestFindBlockProperties:
     """Tests find_property method"""
 
+    ni_texture_prop = None
+    ni_mat_prop1 = None
+    ni_mat_prop = None
+    n_ninode = None
+
     @classmethod
     def setup_class(cls):
         print("Class setup: " + str(cls))
-        cls.niBlock = None
         cls.ni_mat_prop = NifFormat.NiMaterialProperty()
         cls.ni_mat_prop1 = NifFormat.NiMaterialProperty()
         cls.ni_texture_prop = NifFormat.NiTexturingProperty()
@@ -192,41 +196,41 @@ class TestFindBlockProperties:
     @classmethod
     def teardown_class(cls):
         print("Class teardown: " + str(cls))
-        del cls.nimatprop
-        del cls.nimatprop1
-        del cls.nitextureprop
-        del cls.niBlock
+        del cls.ni_mat_prop
+        del cls.ni_mat_prop1
+        del cls.ni_texture_prop
+        del cls.n_ninode
         print(str(cls))
 
     @classmethod
     def setup(cls):
         print("Method setup: ")
-        cls.niBlock = NifFormat.NiNode()
+        cls.n_ninode = NifFormat.NiNode()
 
     @classmethod
     def teardown(cls):
         print("Method teardown: ")
-        cls.niBlock = None
+        cls.n_ninode = None
 
     def test_find_no_prop(self):
         """Expect None, no proterty"""
-        prop = nif_utils.find_property(self.niBlock, NifFormat.NiMaterialProperty)
+        prop = nif_utils.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
         nose.tools.assert_true((prop is None))
 
     def test_find_property_no_matching(self):
         """Expect None, no matching property"""
-        self.niBlock.add_property(self.ni_texture_prop)
-        nose.tools.assert_equals(self.niBlock.num_properties, 1)
+        self.n_ninode.add_property(self.ni_texture_prop)
+        nose.tools.assert_equals(self.n_ninode.num_properties, 1)
 
-        prop = nif_utils.find_property(self.niBlock, NifFormat.NiMaterialProperty)
+        prop = nif_utils.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
         nose.tools.assert_true(prop is None)
 
     def test_find_property(self):
         """Expect to find first instance of property"""
-        self.niBlock.add_property(self.ni_texture_prop)
-        self.niBlock.add_property(self.ni_mat_prop)
-        self.niBlock.add_property(self.ni_mat_prop1)
-        nose.tools.assert_equals(self.niBlock.num_properties, 3)
+        self.n_ninode.add_property(self.ni_texture_prop)
+        self.n_ninode.add_property(self.ni_mat_prop)
+        self.n_ninode.add_property(self.ni_mat_prop1)
+        nose.tools.assert_equals(self.n_ninode.num_properties, 3)
 
-        prop = nif_utils.find_property(self.niBlock, NifFormat.NiMaterialProperty)
+        prop = nif_utils.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
         nose.tools.assert_true(prop == self.ni_mat_prop)

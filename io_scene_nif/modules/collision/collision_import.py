@@ -47,8 +47,8 @@ from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 
 from io_scene_nif.modules import collision
-from io_scene_nif.utility.nif_logging import NifLog
-from io_scene_nif.utility.nif_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utility.util_global import NifData
 
 
 def get_material(mat_name):
@@ -89,7 +89,6 @@ class Collision:
                 havok_material = getattr(n_obj, mat_type, None)
                 if havok_material:
                     mat_name = str(havok_material.material)
-                    print(mat_name)
                     b_mat = get_material(mat_name)
                     b_me.materials.append(b_mat)
 
@@ -166,8 +165,8 @@ class Collision:
     def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
 
-        if self.nif_import.data._user_version_value_._value == 12:
-            if self.nif_import.data._user_version_2_value_._value == 83:
+        if NifData.data._user_version_value_._value == 12:
+            if NifData.data._user_version_2_value_._value == 83:
                 self.HAVOK_SCALE = collision.HAVOK_SCALE * 10
             else:
                 self.HAVOK_SCALE = collision.HAVOK_SCALE

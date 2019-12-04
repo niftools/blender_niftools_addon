@@ -1,6 +1,8 @@
+"""This module contains helper methods to import/export object data."""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2013, NIF File Format Library and Tools contributors.
+# Copyright © 2019, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,3 +36,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+import mathutils
+
+# dictionary of names, to map NIF blocks to correct Blender names
+DICT_NAMES = {}
+
+# keeps track of names of exported blocks, to make sure they are unique
+BLOCK_NAMES_LIST = []
+
+# identity matrix, for comparisons
+IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
+                               [0.0, 1.0, 0.0, 0.0],
+                               [0.0, 0.0, 1.0, 0.0],
+                               [0.0, 0.0, 0.0, 1.0]])
