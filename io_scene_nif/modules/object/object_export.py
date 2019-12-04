@@ -54,7 +54,7 @@ class Object:
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.mesh_helper = Mesh(parent=self)
+        self.mesh_helper = Mesh(parent=parent)
 
     def get_exported_objects(self):
         """Return a list of exported objects."""
@@ -251,7 +251,7 @@ class Object:
         b_obj_type = b_obj.type
         b_obj_anim_data = b_obj.animation_data  # get animation data
         b_obj_children = b_obj.children
-        has_anim = True if b_obj_anim_data and b_obj_anim_data.action.fcurves else False
+        has_anim = True if b_obj_anim_data and b_obj_anim_data.action and b_obj_anim_data.action.fcurves else False
 
         # can we export this b_obj?
         if b_obj_type not in self.nif_export.export_types:
@@ -312,7 +312,7 @@ class Object:
         # export object animation
         if has_anim:
             self.nif_export.animationhelper.export_keyframes(node, b_obj)
-            self.nif_export.animationhelper.object_animation.export_object_vis_controller(node, b_obj)
+            self.nif_export.animationhelper.obj_anim.export_object_vis_controller(node, b_obj)
         # if it is a mesh, export the mesh as trishape children of this ninode
         if b_obj.type == 'MESH':
             return self.mesh_helper.export_tri_shapes(b_obj, node)
