@@ -95,6 +95,48 @@ class Animation:
         self.mesh_anim = MeshAnimation()
         self.fps = bpy.context.scene.render.fps
 
+    def create_controller(self, parent_block, target_name):
+        n_kfi = None
+        n_kfc = None
+        
+        if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
+            # keyframe controllers are not present in geometry only files
+            # for more recent versions, the controller and interpolators are
+            # present, only the data is not present (see further on)
+            return n_kfc, n_kfi
+
+        # add a KeyframeController block, and refer to this block in the
+        # parent's time controller
+        if self.nif_export.version < 0x0A020000:
+            n_kfc = block_store.create_block("NiKeyframeController", None)
+        else:
+            n_kfc = block_store.create_block("NiTransformController", None)
+            n_kfi = block_store.create_block("NiTransformInterpolator", None)
+            # link interpolator from the controller
+            n_kfc.interpolator = n_kfi
+            # set interpolator default data
+            n_kfi.scale, n_kfi.rotation, n_kfi.translation = parent_block.get_transform().get_scale_quat_translation()
+
+        # if parent is a node, attach controller to that node
+        if isinstance(parent_block, NifFormat.NiNode):
+            parent_block.add_controller(n_kfc)
+        # else ControllerSequence, so create a link
+        elif isinstance(parent_block, NifFormat.NiControllerSequence):
+            controlled_block = parent_block.add_controlled_block()
+            if self.nif_export.version < 0x0A020000:
+                # older versions need the actual controller blocks
+                controlled_block.target_name = target_name
+                controlled_block.controller = n_kfc
+                # erase reference to target node
+                n_kfc.target = None
+            else:
+                # newer versions need the interpolator blocks
+                controlled_block.interpolator = n_kfi
+        else:
+            raise nif_utils.NifError("Unsupported KeyframeController parent!")
+        
+        return n_kfc, n_kfi
+
     # todo [anim] currently not used, maybe reimplement this
     @staticmethod
     def get_n_interp_from_b_interp(b_ipol):

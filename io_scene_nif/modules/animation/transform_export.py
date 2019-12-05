@@ -74,7 +74,8 @@ class TransformAnimation:
         If called on an b_obj = type(armature), it expects a bone too.
         If called on an object, with bone=None, it exports object level animation.
         """
-
+        
+        target_name  = ""
         # sometimes we need to export an empty keyframe... 
         scale_curve = []
         quat_curve = []
@@ -97,12 +98,14 @@ class TransformAnimation:
                 exp_fcurves = action.groups[bone.name].channels
                 # just for more detailed error reporting later on
                 bonestr = " in bone " + bone.name
+                target_name = self.nif_export.objecthelper.get_full_name(bone)
             # object level animation - no coordinate corrections
             elif not bone:
                 # raise error on any objects parented to bones
                 if b_obj.parent and b_obj.parent_type == "BONE":
                     raise nif_utils.NifError( "{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
 
+                target_name = self.nif_export.objecthelper.get_full_name(b_obj)
                 # we have either a root object (Scene Root), in which case we take the coordinates without modification
                 # or a generic object parented to an empty = node
                 # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
@@ -123,48 +126,10 @@ class TransformAnimation:
             start_frame = bpy.context.scene.frame_start
             stop_frame = bpy.context.scene.frame_end
 
-        if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
-            # keyframe controllers are not present in geometry only files
-            # for more recent versions, the controller and interpolators are
-            # present, only the data is not present (see further on)
-            return
-
-        # add a KeyframeController block, and refer to this block in the
-        # parent's time controller
-        if self.nif_export.version < 0x0A020000:
-            n_kfc = block_store.create_block("NiKeyframeController", exp_fcurves)
-        else:
-            n_kfc = block_store.create_block("NiTransformController", exp_fcurves)
-            n_kfi = block_store.create_block("NiTransformInterpolator", exp_fcurves)
-            # link interpolator from the controller
-            n_kfc.interpolator = n_kfi
-            # set interpolator default data
-            n_kfi.scale, n_kfi.rotation, n_kfi.translation = parent_block.get_transform().get_scale_quat_translation()
-
-        # if parent is a node, attach controller to that node
-        if isinstance(parent_block, NifFormat.NiNode):
-            parent_block.add_controller(n_kfc)
-        # else ControllerSequence, so create a link
-        elif isinstance(parent_block, NifFormat.NiControllerSequence):
-            controlled_block = parent_block.add_controlled_block()
-            if self.nif_export.version < 0x0A020000:
-                # older versions need the actual controller blocks
-                controlled_block.target_name = armature.get_bone_name_for_nif(bone.name)
-                controlled_block.controller = n_kfc
-                # erase reference to target node
-                n_kfc.target = None
-            else:
-                # newer versions need the interpolator blocks
-                controlled_block.interpolator = n_kfi
-        else:
-            raise nif_utils.NifError("Unsupported KeyframeController parent!")
+        n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(parent_block, target_name)
 
         # fill in the non-trivial values
         animation_export.set_flags_and_timing(n_kfc, exp_fcurves, start_frame, stop_frame)
-
-        if NifOp.props.animation == 'GEOM_NIF':
-            # keyframe data is not present in geometry files
-            return
 
         # get the desired fcurves for each data type from exp_fcurves
         quaternions = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("quaternion")]
@@ -205,8 +170,7 @@ class TransformAnimation:
                     trans_curve.append((frame, trans))
 
         # finally we can export the data calculated above
-        if (max(len(quat_curve), len(euler_curve), len(trans_curve), len(scale_curve)) <= 1
-                and self.nif_export.version >= 0x0A020000):
+        if n_kfi and max(len(quat_curve), len(euler_curve), len(trans_curve), len(scale_curve)) <= 1:
             # only add data if number of keys is > 1
             # (see importer comments with import_kf_root: a single frame
             # keyframe denotes an interpolator without further data)
@@ -234,7 +198,7 @@ class TransformAnimation:
             return
 
         # add the keyframe data
-        if self.nif_export.version < 0x0A020000:
+        if not n_kfi:
             n_kfd = block_store.create_block("NiKeyframeData", exp_fcurves)
             n_kfc.data = n_kfd
         else:
