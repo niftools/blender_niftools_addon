@@ -207,7 +207,7 @@ class NifExport(NifCommon):
                 if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.export_keyframes(root_block)
+                    self.animationhelper.transform.export_transforms(root_block)
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
                 for block in block_store.block_to_obj:
@@ -452,12 +452,12 @@ class NifExport(NifCommon):
                     # per-node animation
                     if b_armature:
                         for b_bone in b_armature.data.bones:
-                            self.animationhelper.export_keyframes(kf_root, b_armature, b_bone)
+                            self.animationhelper.transform.export_transforms(kf_root, b_armature, b_bone)
 
                     # per-object animation
                     else:
                         for b_obj in bpy.data.objects:
-                            self.animationhelper.export_keyframes(kf_root, b_obj)
+                            self.animationhelper.transform.export_transforms(kf_root, b_obj)
 
                     '''
                     # for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):

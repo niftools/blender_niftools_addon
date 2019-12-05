@@ -102,7 +102,7 @@ class Armature:
             self.nif_export.objecthelper.set_object_matrix(bone, n_bone)
 
             # per-bone animation
-            self.nif_export.animationhelper.export_keyframes(n_bone, arm, bone)
+            self.nif_export.animationhelper.transform.export_transforms(n_bone, arm, bone)
 
         # now fix the linkage between the blocks
         for bone in bones:
