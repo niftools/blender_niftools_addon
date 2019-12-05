@@ -46,7 +46,7 @@ from io_scene_nif.modules.object.block_registry import block_store
 
 class ObjectAnimation:
 
-    def export_visibility_controller(self, n_node, b_obj):
+    def export_visibility(self, n_node, b_obj):
         """Export the visibility controller data."""
 
         if not b_obj.animation_data and not b_obj.animation_data.action:
