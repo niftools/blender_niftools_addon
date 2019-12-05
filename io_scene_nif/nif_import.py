@@ -68,7 +68,7 @@ class NifImport(NifCommon):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.animationhelper = Animation(parent=self)
+        self.animationhelper = Animation()
         self.morph_helper = Morph()
         self.armaturehelper = Armature(parent=self)
         self.collisionhelper = Collision(parent=self)

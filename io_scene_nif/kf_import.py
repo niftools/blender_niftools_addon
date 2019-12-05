@@ -55,7 +55,7 @@ class KfImport(NifCommon):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.animation_helper = Animation(parent=self)
+        self.animation_helper = Animation()
 
     def execute(self):
         """Main import function."""
