@@ -207,7 +207,7 @@ class NifExport(NifCommon):
                 if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.transform.export_transforms(root_block)
+                    self.animationhelper.create_controller(root_block, "DummyRoot")
 
             if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
                 for block in block_store.block_to_obj:
@@ -227,29 +227,15 @@ class NifExport(NifCommon):
                 # TODO [armature] Extract out to armature animation
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
-                for block in list(block_store.block_to_obj.keys()):
-                    if isinstance(block, NifFormat.NiNode) and block.name.decode() == "Bip01":
-                        for bone in block.tree(block_type = NifFormat.NiNode):
-                            ctrl = block_store.create_block("NiTransformController")
-                            interp = block_store.create_block("NiTransformInterpolator")
-
-                            ctrl.interpolator = interp
-                            bone.add_controller(ctrl)
-
-                            ctrl.flags = 12
-                            ctrl.frequency = 1.0
-                            ctrl.phase = 0.0
-                            ctrl.start_time = self.FLOAT_MAX
-                            ctrl.stop_time = self.FLOAT_MIN
-                            interp.translation.x = bone.translation.x
-                            interp.translation.y = bone.translation.y
-                            interp.translation.z = bone.translation.z
-                            scale, quat = bone.rotation.get_scale_quat()
-                            interp.rotation.x = quat.x
-                            interp.rotation.y = quat.y
-                            interp.rotation.z = quat.z
-                            interp.rotation.w = quat.w
-                            interp.scale = bone.scale
+                for n_block in block_store.block_to_obj.keys():
+                    if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
+                        for n_bone in n_block.tree(block_type = NifFormat.NiNode):
+                            n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(n_bone, n_bone.name.decode() )
+                            n_kfc.flags = 12
+                            n_kfc.frequency = 1.0
+                            n_kfc.phase = 0.0
+                            n_kfc.start_time = self.FLOAT_MAX
+                            n_kfc.stop_time = self.FLOAT_MIN
             else:
                 # here comes everything that should be exported EXCEPT for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
