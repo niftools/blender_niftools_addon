@@ -91,17 +91,17 @@ class Constraint:
                 if b_constr.pivot_type == 'CONE_TWIST':
                     # ball
                     if b_obj.rigid_body.enabled:
-                        n_bhkconstraint = self.nif_export.objecthelper.create_block("bhkRagdollConstraint", b_constr)
+                        n_bhkconstraint = block_store.create_block("bhkRagdollConstraint", b_constr)
                     else:
-                        n_bhkconstraint = self.nif_export.objecthelper.create_block("bhkMalleableConstraint", b_constr)
+                        n_bhkconstraint = block_store.create_block("bhkMalleableConstraint", b_constr)
                         n_bhkconstraint.type = 7
                     n_bhkdescriptor = n_bhkconstraint.ragdoll
                 elif b_constr.pivot_type == 'HINGE':
                     # hinge
                     if b_obj.rigid_body.enabled:
-                        n_bhkconstraint = self.nif_export.objecthelper.create_block("bhkLimitedHingeConstraint", b_constr)
+                        n_bhkconstraint = block_store.create_block("bhkLimitedHingeConstraint", b_constr)
                     else:
-                        n_bhkconstraint = self.nif_export.objecthelper.create_block("bhkMalleableConstraint", b_constr)
+                        n_bhkconstraint = block_store.create_block("bhkMalleableConstraint", b_constr)
                         n_bhkconstraint.type = 2
                     n_bhkdescriptor = n_bhkconstraint.limited_hinge
                 else:

@@ -40,6 +40,7 @@
 import bpy
 
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.modules.object.block_registry import block_store
 
 
 class TextureAnimation:
@@ -62,7 +63,7 @@ class TextureAnimation:
         tlist = fliptxt.asLines()
 
         # create a NiFlipController
-        n_flip = self.nif_export.objecthelper.create_block("NiFlipController", fliptxt)
+        n_flip = block_store.create_block("NiFlipController", fliptxt)
         target.add_controller(n_flip)
 
         # fill in NiFlipController's values
