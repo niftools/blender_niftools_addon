@@ -2,28 +2,10 @@
 
 pushd %~dp0
 
-if "%BLENDER_HOME%" == "" (
-	echo.Please set BLENDER_HOME to the blender.exe folder
-	goto end
-)
-set SPHINX_BUILD="%BLENDER_HOME%/blender.exe" --background --factory-startup --python blender-sphinx-build.py --
-set SPHINX_API_BUILD="%BLENDER_HOME%/blender.exe" --background --factory-startup --python blender-sphinx-api-build.py --
-set BUILD_DIR=_build
+REM Command file for Sphinx documentation
 
-set CODE_API=../io_scene_nif/
-set CODE_DIR=development/api/submodules
-set CODE_OPTS=%CODE_DIR% %CODE_API%
-
-set TEST_API=../testframework/
-set TEST_DIR=development/testframework/api/submodules
-set TEST_OPTS=%TEST_DIR% %TEST_API%
-
-set ALL_API_OPTS=%TEST_OPTS% %CODE_DIR%
-set ALL_SPHINX_OPTS=-d %BUILD_DIR%/doctrees %SPHINXOPTS% .
-set I18N_SPHINX_OPTS=%SPHINXOPTS% .
-if NOT "%PAPER%" == "" (
-	set ALL_SPHINX_OPTS=-D latex_paper_size=%PAPER% %ALL_SPHINX_OPTS%
-	set I18N_SPHINX_OPTS=-D latex_paper_size=%PAPER% %I18N_SPHINX_OPTS%
+if "%SPHINXBUILD%" == "" (
+	set SPHINXBUILD=sphinx-build
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
