@@ -1,13 +1,15 @@
 Current developers
 ------------------
 
-* neomonkeus (neomonkeus@users.sourceforge.net)
+* neomonkeus
+* Hendrix
+
 
 Former developers
 -----------------
 
-* Amorilia (amorilia@users.sourceforge.net)
-* Brandano (brandano@users.sourceforge.net)
+* Amorilia
+* Brandano
 * Ghostwalker71
 * m4444x
 
@@ -15,7 +17,7 @@ Contributors
 ------------
 
 * Aaron1178
-* Alphax (alphasigmax@users.sourceforge.net)
+* Alphax
 * Arcimaestro
 * Arthmoor
 * Artorp
@@ -30,7 +32,8 @@ Contributors
 * Lhammonds
 * malo
 * mgm101
-* Pacificmorrowind (pacmorrowind@users.sourceforge.net)
+* opusGlass
+* Pacificmorrowind
 * Pentinen
 * shon
 * Tamira

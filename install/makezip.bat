@@ -9,7 +9,7 @@ if "%DIR:~-1%" == "\" (
 set ROOT="%DIR%"\..
 set /p VERSION="%ROOT%"\io_scene_nif\VERSION
 set NAME="blender_nif_plugin"
-set PYFFI_VERSION="2.2.4.dev0"
+set PYFFI_VERSION="2.2.4.dev3"
 set DEPS="io_scene_nif\dependencies"
 if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
 
