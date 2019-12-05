@@ -232,7 +232,7 @@ class Mesh:
                 if len(mesh_materials) > 1:
                     trishape.name = trishape.name.decode() + ":%i" % materialIndex
                 else:
-                    trishape.name = self.nif_export.get_full_name(trishape)
+                    trishape.name = self.nif_export.objecthelper.get_full_name(trishape)
 
             # TODO [object][flags] Move up to object
             # Trishape Flags...
@@ -269,7 +269,7 @@ class Mesh:
             # the trishape itself then needs identity transform (default)
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
-                self.nif_export.set_object_matrix(b_obj, trishape)
+                self.nif_export.objecthelper.set_object_matrix(b_obj, trishape)
 
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
@@ -306,7 +306,7 @@ class Mesh:
                     n_nitextureprop = self.texture_helper.export_texturing_property(
                         flags=0x0001,  # standard
                         # TODO [object][texture][material] Move out and break dependency
-                        applymode=self.nif_export.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
+                        applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
 
                     block_store.register_block(n_nitextureprop)
@@ -346,15 +346,15 @@ class Mesh:
                 else:
                     alphaflags = 0x12ED
                     alphathreshold = 0
-                trishape.add_property(self.nif_export.nif_export.propertyhelper.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
+                trishape.add_property(self.nif_export.propertyhelper.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.add_property(self.nif_export.nif_export.propertyhelper.object_property.export_wireframe_property(flags=1))
+                trishape.add_property(self.nif_export.propertyhelper.object_property.export_wireframe_property(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
-                trishape.add_property(self.nif_export.nif_export.propertyhelper.object_property.export_stencil_property())
+                trishape.add_property(self.nif_export.propertyhelper.object_property.export_stencil_property())
 
             if b_mat and not (NifOp.props.game == 'SKYRIM'):
                 # add NiTriShape's specular property
@@ -362,11 +362,11 @@ class Mesh:
                 # games (they use specularity even without this property)
                 if mesh_hasspec and (NifOp.props.game not in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     # refer to the specular property in the trishape block
-                    trishape.add_property(self.nif_export.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
+                    trishape.add_property(self.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.nif_export.nif_export.propertyhelper.material_property.export_material_property(
-                    name=self.nif_export.get_full_name(b_mat),
+                trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
+                    name=self.nif_export.objecthelper.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
@@ -644,9 +644,9 @@ class Mesh:
                         else:
                             skininst = block_store.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
-                        for block in block.block_to_obj:
+                        for block in block_store.block_to_obj:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == self.nif_export.get_full_name(b_obj_armature):
+                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature):
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -658,7 +658,7 @@ class Mesh:
 
                         skindata.has_vertex_weights = True
                         # fix geometry rest pose: transform relative to skeleton root
-                        skindata.set_transform(self.nif_export.get_object_matrix(b_obj).get_inverse())
+                        skindata.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj).get_inverse())
 
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}
@@ -714,9 +714,9 @@ class Mesh:
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
-                            for block in block.block_to_obj:
+                            for block in block_store.block_to_obj:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == self.nif_export.get_full_name(b_obj_armature.data.bones[bone]):
+                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature.data.bones[bone]):
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -751,7 +751,7 @@ class Mesh:
 
                         # calculate center and radius for each skin bone data block
                         trishape.update_skin_center_radius()
-
+                        
                         if self.nif_export.version >= 0x04020100 and NifOp.props.skin_partition:
                             NifLog.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
