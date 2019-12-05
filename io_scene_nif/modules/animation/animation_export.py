@@ -41,7 +41,6 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.material_export import MaterialAnimation
 from io_scene_nif.modules.animation.transform_export import TransformAnimation
 from io_scene_nif.modules.animation.mesh_export import MeshAnimation
