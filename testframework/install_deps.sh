@@ -9,7 +9,6 @@ if [[ "${BLENDER_ADDONS_DIR}" == "" || ! -e "${BLENDER_ADDONS_DIR}"  ]]; then
 fi
 
 echo "Installing Sphinx to ${BLENDER_ADDONS_DIR}"
-python -m pip install Sphinx nose --target="${BLENDER_ADDONS_DIR}"
-
-# Currently installing pyffi from pypi fails for runtime classes
-# python -m pip install PyFFI==2.2.4.dev2 --target="${BLENDER_ADDONS_DIR}"
+python -m pip install Sphinx --target="${BLENDER_ADDONS_DIR:-${SCRIPT_DIR}}"
+python -m pip install nose --target="${BLENDER_ADDONS_DIR:-${SCRIPT_DIR}}"
+python -m pip install "PyFFI==2.2.4.dev3" --target="${BLENDER_ADDONS_DIR:-${SCRIPT_DIR}}"
