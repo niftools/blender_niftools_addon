@@ -56,18 +56,6 @@ class Object:
         self.nif_export = parent
         self.mesh_helper = Mesh(parent=parent)
 
-    def get_exported_objects(self):
-        """Return a list of exported objects."""
-        exported_objects = []
-        # iterating over block.block_to_obj.itervalues() will count some objects twice
-        for b_obj in block_store.block_to_obj.values():
-            # skip empty & known objects
-            if b_obj and b_obj not in exported_objects:
-                # append new object
-                exported_objects.append(b_obj)
-        # return the list of unique exported objects
-        return exported_objects
-
     def export_root_node(self, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
         # TODO [collsion] detect root collision -> root collision node (can be mesh or empty)
