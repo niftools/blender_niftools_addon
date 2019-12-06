@@ -384,7 +384,7 @@ class Mesh:
 
                 # material animation
                 self.animation_helper.mat_anim.export_material_controllers(b_material=b_mat, n_geom=trishape)
-                self.animation_helper.mesh_anim.export_uv_controller(b_material=b_mat, n_geom=trishape)
+                self.animation_helper.mat_anim.export_uv_controller(b_material=b_mat, n_geom=trishape)
 
             # -> now comes the real export
 
