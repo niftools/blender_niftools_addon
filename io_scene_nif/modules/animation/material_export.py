@@ -52,16 +52,22 @@ class MaterialAnimation:
     def __init__(self):
         self.fps = bpy.context.scene.render.fps
 
-    def export_material_controllers(self, b_material, n_geom):
-        """Export material animation data for given geometry."""
+    def export_material(self, b_material, n_geom):
+        """Export material animations for given geometry."""
 
         if NifOp.props.animation == 'GEOM_NIF':
             # geometry only: don't write controllers
             return
-
+        
         # check if the material holds an animation
         if b_material and not (b_material.animation_data and b_material.animation_data.action):
             return
+        
+        self.export_material_controllers(b_material, n_geom)
+        self.export_uv_controller(b_material, n_geom)
+
+    def export_material_controllers(self, b_material, n_geom):
+        """Export material animation data for given geometry."""
 
         # find the nif material property to attach alpha & color controllers to
         n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
@@ -127,15 +133,6 @@ class MaterialAnimation:
 
     def export_uv_controller(self, b_material, n_geom):
         """Export the material UV controller data."""
-
-        # TODO [animation] This is also done in export material, should have higher level function.
-        if NifOp.props.animation == 'GEOM_NIF':
-            # geometry only: don't write controllers
-            return
-
-        # check if the material holds an animation
-        if b_material and not (b_material.animation_data and b_material.animation_data.action):
-            return
 
         # get fcurves - a bit more elaborate here so we can zip with the NiUVData later
         # nb. these are actually specific to the texture slot in blender
