@@ -245,5 +245,4 @@ class TransformAnimation:
         if n_kfc:
             bone_bm = nif_utils.import_matrix(n_block)  # base pose
             n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = nif_utils.decompose_srt(bone_bm)
-            niBone_bind_rot_inv = n_bone_bind_rot.to_4x4().inverted()
-            self.import_keyframe_controller(n_kfc, b_armature_obj, bone_name, n_bone_bind_scale, niBone_bind_rot_inv, n_bone_bind_trans)
+            self.import_keyframe_controller(n_kfc, b_armature_obj, bone_name, n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)

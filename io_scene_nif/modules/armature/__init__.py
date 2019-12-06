@@ -182,5 +182,5 @@ def get_bind_data(b_armature):
         bind_data = {}
         for b_bone in b_armature.data.bones:
             n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = nif_utils.decompose_srt(get_bind_matrix(b_bone))
-            bind_data[b_bone.name] = (n_bone_bind_scale, n_bone_bind_rot.to_4x4().inverted(), n_bone_bind_trans)
+            bind_data[b_bone.name] = (n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
         return bind_data
