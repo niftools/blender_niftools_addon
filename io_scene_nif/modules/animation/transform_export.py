@@ -97,6 +97,7 @@ class TransformAnimation:
                 # just for more detailed error reporting later on
                 bonestr = " in bone " + bone.name
                 target_name = self.nif_export.objecthelper.get_full_name(bone)
+                priority = bone.niftools.bonepriority
             # object level animation - no coordinate corrections
             elif not bone:
                 # raise error on any objects parented to bones
@@ -104,6 +105,7 @@ class TransformAnimation:
                     raise nif_utils.NifError( "{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
 
                 target_name = self.nif_export.objecthelper.get_full_name(b_obj)
+                priority = 0
                 # we have either a root object (Scene Root), in which case we take the coordinates without modification
                 # or a generic object parented to an empty = node
                 # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
@@ -120,7 +122,7 @@ class TransformAnimation:
             return
         # decompose the bind matrix
         bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
-        n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(parent_block, target_name)
+        n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(parent_block, target_name, priority)
 
         # fill in the non-trivial values
         start_frame, stop_frame = action.frame_range

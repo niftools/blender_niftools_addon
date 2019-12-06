@@ -94,7 +94,7 @@ class Animation:
         self.fps = bpy.context.scene.render.fps
 
 
-    def create_kf_root(self, root_block, anim_textextra, filebase, b_armature):
+    def create_kf_root(self, root_block, anim_textextra, filebase, b_armature = None):
         # find all nodes and relevant controllers
         node_kfctrls = self.get_controllers( root_block.tree() )
 
@@ -135,26 +135,25 @@ class Animation:
             kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
             kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
 
-            # quick hack to set correct target name
-            if "Bip01" in b_armature.data.bones:
-                targetname = "Bip01"
-            elif "Bip02" in b_armature.data.bones:
-                targetname = "Bip02"
-            else:
-                targetname = root_block.name
-            kf_root.target_name = targetname
-            kf_root.string_palette = NifFormat.NiStringPalette()
+            targetname = root_block.name
 
             # per-node animation
             if b_armature:
                 for b_bone in b_armature.data.bones:
-                    self.animationhelper.transform.export_transforms(kf_root, b_armature, b_bone)
+                    self.transform.export_transforms(kf_root, b_armature, b_bone)
+                # quick hack to set correct target name
+                if "Bip01" in b_armature.data.bones:
+                    targetname = "Bip01"
+                elif "Bip02" in b_armature.data.bones:
+                    targetname = "Bip02"
 
             # per-object animation
             else:
                 for b_obj in bpy.data.objects:
-                    self.animationhelper.transform.export_transforms(kf_root, b_obj)
+                    self.transform.export_transforms(kf_root, b_obj)
 
+            kf_root.target_name = targetname
+            kf_root.string_palette = NifFormat.NiStringPalette()
             # todo [anim] the following seems to be post-processing of morph controllers
             # this will probably end up as redundant after refactoring is done
             # keep it here for now
@@ -224,7 +223,7 @@ class Animation:
                 node_kfctrls[node].append(ctrl)
         return node_kfctrls
     
-    def create_controller(self, parent_block, target_name):
+    def create_controller(self, parent_block, target_name, priority = 0):
         n_kfi = None
         n_kfc = None
         
@@ -243,15 +242,17 @@ class Animation:
             n_kfi = block_store.create_block("NiTransformInterpolator", None)
             # link interpolator from the controller
             n_kfc.interpolator = n_kfi
-            # set interpolator default data
-            n_kfi.scale, n_kfi.rotation, n_kfi.translation = parent_block.get_transform().get_scale_quat_translation()
-
         # if parent is a node, attach controller to that node
         if isinstance(parent_block, NifFormat.NiNode):
             parent_block.add_controller(n_kfc)
+            if n_kfi:
+                # set interpolator default data
+                n_kfi.scale, n_kfi.rotation, n_kfi.translation = parent_block.get_transform().get_scale_quat_translation()
+
         # else ControllerSequence, so create a link
         elif isinstance(parent_block, NifFormat.NiControllerSequence):
             controlled_block = parent_block.add_controlled_block()
+            controlled_block.priority = priority
             if self.nif_export.version < 0x0A020000:
                 # older versions need the actual controller blocks
                 controlled_block.target_name = target_name
