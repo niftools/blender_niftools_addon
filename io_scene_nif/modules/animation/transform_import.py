@@ -228,21 +228,18 @@ class TransformAnimation:
                 key = (val, val, val)
                 self.animationhelper.add_key(fcurves, t, key, interp_scale)
 
-    def import_object_animation(self, n_block, b_obj):
-        """Loads an animation attached to a nif block (non-skeletal). Becomes the object level animation of the blender object."""
-        NifLog.debug('Importing animation for object %s'.format(b_obj.name))
-
+    def import_transforms(self, n_block, b_obj, bone_name=None):
+        """Loads an animation attached to a nif block."""
+        # find keyframe controller
         n_kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
         if n_kfc:
-            self.animationhelper.create_action(b_obj, b_obj.name + "-Anim")
-            self.import_keyframe_controller(n_kfc, b_obj)
-
-    def import_bone_animation(self, n_block, b_armature_obj, bone_name):
-        """Loads an animation attached to a nif block (skeletal). Becomes the pose bone level animation of the blender object."""
-        NifLog.debug('Importing animation for bone %s'.format(bone_name))
-
-        n_kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
-        if n_kfc:
-            bone_bm = nif_utils.import_matrix(n_block)  # base pose
-            n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = nif_utils.decompose_srt(bone_bm)
-            self.import_keyframe_controller(n_kfc, b_armature_obj, bone_name, n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
+            # skeletal animation
+            if bone_name:
+                bone_bm = nif_utils.import_matrix(n_block)  # base pose
+                n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = nif_utils.decompose_srt(bone_bm)
+                self.import_keyframe_controller(n_kfc, b_obj, bone_name, n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
+            # object-level animation
+            else:
+                self.animationhelper.create_action(b_obj, b_obj.name + "-Anim")
+                self.import_keyframe_controller(n_kfc, b_obj)
+        
