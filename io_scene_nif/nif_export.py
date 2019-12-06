@@ -194,31 +194,32 @@ class NifExport(NifCommon):
                     animtxt = bpy.data.texts.new("Anim")
                     animtxt.write("{0}/Idle: Start/Idle: Loop Start\n{0}/Idle: Loop Stop/Idle: Stop".format(bpy.context.scene.frame_start, bpy.context.scene.frame_end))
 
-            # animations without keyframe animations crash the TESCS
-            # if we are in that situation, add a trivial keyframe animation
             NifLog.info("Checking controllers")
-            if animtxt and NifOp.props.game == 'MORROWIND':
-                has_keyframecontrollers = False
-                for block in block_store.block_to_obj:
-                    if isinstance(block, NifFormat.NiKeyframeController):
-                        has_keyframecontrollers = True
-                        break
-                if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
-                    NifLog.info("Defining dummy keyframe controller")
-                    # add a trivial keyframe controller on the scene root
-                    self.animationhelper.create_controller(root_block, "DummyRoot")
+            if NifOp.props.game == 'MORROWIND':
+                if animtxt:
+                    # animations without keyframe animations crash the TESCS
+                    # if we are in that situation, add a trivial keyframe animation
+                    has_keyframecontrollers = False
+                    for block in block_store.block_to_obj:
+                        if isinstance(block, NifFormat.NiKeyframeController):
+                            has_keyframecontrollers = True
+                            break
+                    if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
+                        NifLog.info("Defining dummy keyframe controller")
+                        # add a trivial keyframe controller on the scene root
+                        self.animationhelper.create_controller(root_block, root_block.name)
 
-            if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
-                for block in block_store.block_to_obj:
-                    if isinstance(block, NifFormat.NiNode):
-                        # if any of the shape children has a controller or if the ninode has a controller convert its type
-                        if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
-                            new_block = NifFormat.NiBSAnimationNode().deepcopy(block)
-                            # have to change flags to 42 to make it work
-                            new_block.flags = 42
-                            root_block.replace_global_node(block, new_block)
-                            if root_block is block:
-                                root_block = new_block
+                if NifOp.props.bs_animation_node:
+                    for block in block_store.block_to_obj:
+                        if isinstance(block, NifFormat.NiNode):
+                            # if any of the shape children has a controller or if the ninode has a controller convert its type
+                            if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
+                                new_block = NifFormat.NiBSAnimationNode().deepcopy(block)
+                                # have to change flags to 42 to make it work
+                                new_block.flags = 42
+                                root_block.replace_global_node(block, new_block)
+                                if root_block is block:
+                                    root_block = new_block
 
             # oblivion skeleton export: check that all bones have a transform controller and transform interpolator
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
@@ -267,8 +268,8 @@ class NifExport(NifCommon):
                             block.sub_shapes[i] = coltf
 
             # export constraints
-            for b_obj in self.objecthelper.get_exported_objects():
-                if isinstance(b_obj, bpy.types.Object) and b_obj.constraints:
+            for b_obj in self.exportable_objects:
+                if b_obj.constraints:
                     self.constrainthelper.export_constraints(b_obj, root_block)
 
             # add vertex color and zbuffer properties for civ4 and railroads
