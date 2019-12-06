@@ -215,7 +215,7 @@ class ObjectAnimation:
     def __init__(self, parent):
         self.animationhelper = parent
 
-    def import_object_vis_controller(self, n_node, b_obj):
+    def import_visibility(self, n_node, b_obj):
         """Import vis controller for blender object."""
 
         n_vis_ctrl = nif_utils.find_controller(n_node, NifFormat.NiVisController)
