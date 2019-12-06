@@ -327,7 +327,7 @@ class NifImport(NifCommon):
                 if NifOp.props.animation:
                     self.animationhelper.import_text_keys(n_block)
                     self.animationhelper.transform.import_object_animation(n_block, b_obj)
-                    self.animationhelper.object_animation.import_object_vis_controller(n_block, b_obj)
+                    self.animationhelper.object_animation.import_visibility(n_block, b_obj)
 
             return b_obj
         # all else is currently discarded
