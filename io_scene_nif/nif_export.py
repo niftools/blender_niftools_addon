@@ -227,7 +227,8 @@ class NifExport(NifCommon):
                 # TODO [armature] Extract out to armature animation
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
-                for n_block in block_store.block_to_obj.keys():
+                # note: block_store.block_to_obj changes during iteration, so need list copy
+                for n_block in list(block_store.block_to_obj.keys()):
                     if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
                         for n_bone in n_block.tree(block_type = NifFormat.NiNode):
                             n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(n_bone, n_bone.name.decode() )
@@ -248,7 +249,7 @@ class NifExport(NifCommon):
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
             # note: block_store.block_to_obj changes during iteration, so need list copy
-            for block in list(block_store.block_to_obj):
+            for block in list(block_store.block_to_obj.keys()):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
                         if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
