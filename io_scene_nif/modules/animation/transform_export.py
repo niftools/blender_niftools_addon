@@ -120,7 +120,6 @@ class TransformAnimation:
             return
         # decompose the bind matrix
         bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
-        bind_rot = bind_rot.to_4x4()
         n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(parent_block, target_name)
 
         # fill in the non-trivial values
