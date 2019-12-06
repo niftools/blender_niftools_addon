@@ -108,7 +108,6 @@ class NifExport(NifCommon):
 
         block_store.block_to_obj = {}  # clear out previous iteration
 
-        self.dict_bone_priorities = {}
         self.dict_materials = {}
         self.dict_textures = {}
 
@@ -231,6 +230,7 @@ class NifExport(NifCommon):
                     if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
                         for n_bone in n_block.tree(block_type = NifFormat.NiNode):
                             n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(n_bone, n_bone.name.decode() )
+                            # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
                             n_kfc.flags = 12
                             n_kfc.frequency = 1.0
                             n_kfc.phase = 0.0
