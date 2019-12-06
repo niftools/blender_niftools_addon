@@ -160,7 +160,6 @@ class Animation:
             # todo [anim] the following seems to be post-processing of morph controllers
             # this will probably end up as redundant after refactoring is done
             # keep it here for now
-            '''
             # for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):
                 # # export a block for every interpolator in every controller
                 # for ctrl in ctrls:
@@ -194,6 +193,7 @@ class Animation:
                                 # priority = 26
                                 # NifLog.warn("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
                         # else:
+                            # todo [anim] use custom property on bone, already created but not used
                             # priority = self.dict_bone_priorities[node.name]
                         # controlledblock.priority = priority
                         # # set palette, and node and controller type names, and variables
@@ -202,7 +202,6 @@ class Animation:
                         # controlledblock.set_controller_type(ctrl.__class__.__name__)
                         # if variable_2:
                             # controlledblock.set_variable_2(variable_2)
-            '''
         else:
             raise nif_utils.NifError("Keyframe export for '%s' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
                                         " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % NifOp.props.game)
