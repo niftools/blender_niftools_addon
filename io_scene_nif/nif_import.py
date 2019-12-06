@@ -326,7 +326,7 @@ class NifImport(NifCommon):
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:
                     self.animationhelper.import_text_keys(n_block)
-                    self.animationhelper.transform.import_object_animation(n_block, b_obj)
+                    self.animationhelper.transform.import_transforms(n_block, b_obj)
                     self.animationhelper.object_animation.import_visibility(n_block, b_obj)
 
             return b_obj
