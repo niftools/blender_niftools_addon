@@ -182,17 +182,7 @@ class Animation:
                         # else:
                             # # newer versions need the interpolator blocks
                             # controlledblock.interpolator = interpolator
-                        # # get bone animation priority (previously fetched from the constraints during export_bones)
-                        # if not node.name in self.dict_bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
-                            # if self.EXPORT_ANIMPRIORITY != 0:
-                                # priority = self.EXPORT_ANIMPRIORITY
-                            # else:
-                                # priority = 26
-                                # NifLog.warn("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
-                        # else:
-                            # todo [anim] use custom property on bone, already created but not used
-                            # priority = self.dict_bone_priorities[node.name]
-                        # controlledblock.priority = priority
+                            
                         # # set palette, and node and controller type names, and variables
                         # controlledblock.string_palette = kf_root.string_palette
                         # controlledblock.set_node_name(node.name)
