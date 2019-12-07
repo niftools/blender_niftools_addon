@@ -46,14 +46,14 @@ from io_scene_nif.modules.object.block_registry import block_store
 
 class ObjectAnimation:
 
-    def export_visibility(self, n_node, b_obj):
+    def export_visibility(self, n_node, b_obj, b_action):
         """Export the visibility controller data."""
 
-        if not b_obj.animation_data and not b_obj.animation_data.action:
+        if not b_action:
             return
 
         # get the hide fcurve
-        fcurves = [fcu for fcu in b_obj.animation_data.action.fcurves if "hide" in fcu.data_path]
+        fcurves = [fcu for fcu in b_action.fcurves if "hide" in fcu.data_path]
         if not fcurves:
             return
 

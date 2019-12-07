@@ -68,64 +68,59 @@ class TransformAnimation:
             key = [k.co[1] for k in point]
             yield frame, MathutilsClass(key)
 
-    def export_transforms(self, parent_block, b_obj, bone=None):
+    def export_transforms(self, parent_block, b_obj, b_action, bone=None):
         """
         If bone == None, object level animation is exported.
         If a bone is given, skeletal animation is exported.
         """
-
-        # todo [anim] maybe refactor calling behavior to specify desired blender action
-        #             will allow for simple batch export of multiple kf files later on
+        
+        # b_action may be None, then nothing is done.
+        if not b_action:
+            return
 
         # blender object must exist
         assert(b_obj)
-        # if a bone, b_obj must be an armature
+        # if a bone is given, b_obj must be an armature
         if bone:
             assert( type(b_obj.data) == bpy.types.Armature )
 
         # just for more detailed error reporting later on
         bonestr = ""
-        # check if the blender object has an action assigned to it
-        if b_obj.animation_data and b_obj.animation_data.action:
-            action = b_obj.animation_data.action
 
-            # skeletal animation - with bone correction & coordinate corrections
-            if bone and bone.name in action.groups:
-                # get bind matrix for bone or object
-                bind_matrix = self.nif_export.objecthelper.get_object_bind(bone)
-                exp_fcurves = action.groups[bone.name].channels
-                # just for more detailed error reporting later on
-                bonestr = " in bone " + bone.name
-                target_name = self.nif_export.objecthelper.get_full_name(bone)
-                priority = bone.niftools.bonepriority
-            # object level animation - no coordinate corrections
-            elif not bone:
-                # raise error on any objects parented to bones
-                if b_obj.parent and b_obj.parent_type == "BONE":
-                    raise nif_utils.NifError( "{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
+        # skeletal animation - with bone correction & coordinate corrections
+        if bone and bone.name in b_action.groups:
+            # get bind matrix for bone or object
+            bind_matrix = self.nif_export.objecthelper.get_object_bind(bone)
+            exp_fcurves = b_action.groups[bone.name].channels
+            # just for more detailed error reporting later on
+            bonestr = " in bone " + bone.name
+            target_name = self.nif_export.objecthelper.get_full_name(bone)
+            priority = bone.niftools.bonepriority
+        # object level animation - no coordinate corrections
+        elif not bone:
+            # raise error on any objects parented to bones
+            if b_obj.parent and b_obj.parent_type == "BONE":
+                raise nif_utils.NifError( "{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
 
-                target_name = self.nif_export.objecthelper.get_full_name(b_obj)
-                priority = 0
-                # we have either a root object (Scene Root), in which case we take the coordinates without modification
-                # or a generic object parented to an empty = node
-                # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
-                # we want to export matrix_local, and the keyframes are in matrix_basis, so do:
-                # matrix_local = matrix_parent_inverse * matrix_basis
-                bind_matrix = b_obj.matrix_parent_inverse
-                exp_fcurves = [fcu for fcu in action.fcurves if
-                               fcu.data_path in ("rotation_quaternion", "rotation_euler", "location", "scale")]
-            else:
-                # bone isn't keyframed in this action, nothing to do here
-                return
+            target_name = self.nif_export.objecthelper.get_full_name(b_obj)
+            priority = 0
+            # we have either a root object (Scene Root), in which case we take the coordinates without modification
+            # or a generic object parented to an empty = node
+            # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
+            # we want to export matrix_local, and the keyframes are in matrix_basis, so do:
+            # matrix_local = matrix_parent_inverse * matrix_basis
+            bind_matrix = b_obj.matrix_parent_inverse
+            exp_fcurves = [fcu for fcu in b_action.fcurves if
+                            fcu.data_path in ("rotation_quaternion", "rotation_euler", "location", "scale")]
         else:
-            # no action is attached to b_obj, nothing to do here
+            # bone isn't keyframed in this action, nothing to do here
             return
         # decompose the bind matrix
         bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
         n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(parent_block, target_name, priority)
 
         # fill in the non-trivial values
-        start_frame, stop_frame = action.frame_range
+        start_frame, stop_frame = b_action.frame_range
         animation_export.set_flags_and_timing(n_kfc, exp_fcurves, start_frame, stop_frame)
 
         # get the desired fcurves for each data type from exp_fcurves

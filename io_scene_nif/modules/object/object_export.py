@@ -239,7 +239,8 @@ class Object:
         b_obj_type = b_obj.type
         b_obj_anim_data = b_obj.animation_data  # get animation data
         b_obj_children = b_obj.children
-        has_anim = True if b_obj_anim_data and b_obj_anim_data.action and b_obj_anim_data.action.fcurves else False
+        
+        b_action = self.nif_export.animationhelper.get_active_action(b_obj)
 
         # can we export this b_obj?
         if b_obj_type not in self.nif_export.export_types:
@@ -269,7 +270,7 @@ class Object:
             if is_collision:
                 self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
                 return None  # done; stop here
-            elif has_anim or has_children or is_multimaterial or has_track:
+            elif b_action or has_children or is_multimaterial or has_track:
                 # create a ninode as parent of this mesh for the hierarchy to work out
                 node = self.create_ninode(b_obj)
             else:
@@ -282,7 +283,7 @@ class Object:
                     # mesh with armature parent should not have animation!
                     NifLog.warn("Mesh {0} is skinned but also has object animation. "
                                 "The nif format does not support this, ignoring object animation.".format(b_obj.name))
-                    has_anim = False
+                    b_action = False
 
         else:
             # -> everything else (empty/armature) is a (more or less regular) node
@@ -298,9 +299,8 @@ class Object:
         self.set_object_matrix(b_obj, node)
 
         # export object animation
-        if has_anim:
-            self.nif_export.animationhelper.transform.export_transforms(node, b_obj)
-            self.nif_export.animationhelper.obj_anim.export_visibility(node, b_obj)
+        self.nif_export.animationhelper.transform.export_transforms(node, b_obj, b_action)
+        self.nif_export.animationhelper.obj_anim.export_visibility(node, b_obj, b_action)
         # if it is a mesh, export the mesh as trishape children of this ninode
         if b_obj.type == 'MESH':
             return self.mesh_helper.export_tri_shapes(b_obj, node)

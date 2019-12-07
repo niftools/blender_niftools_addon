@@ -93,8 +93,14 @@ class Animation:
         self.transform = TransformAnimation(parent)
         self.fps = bpy.context.scene.render.fps
 
+    def get_active_action(self, b_obj):
+        # check if the blender object has a non-empty action assigned to it
+        if b_obj.animation_data and b_obj.animation_data.action:
+            b_action = b_obj.animation_data.action
+            if b_action.fcurves:
+                return b_action
 
-    def create_kf_root(self, root_block, anim_textextra, filebase, b_armature = None):
+    def create_kf_root(self, root_block, anim_textextra, b_armature = None):
         # find all nodes and relevant controllers
         node_kfctrls = self.get_controllers( root_block.tree() )
 
@@ -126,21 +132,13 @@ class Animation:
 
             # create kf root header
             kf_root = block_store.create_block("NiControllerSequence")
-            kf_root.name = filebase
-            kf_root.unknown_int_1 = 1
-            kf_root.weight = 1.0
-            kf_root.text_keys = anim_textextra
-            kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
-            kf_root.frequency = 1.0
-            kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
-            kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
-
             targetname = root_block.name
 
             # per-node animation
             if b_armature:
+                b_action = self.get_active_action(b_armature)
                 for b_bone in b_armature.data.bones:
-                    self.transform.export_transforms(kf_root, b_armature, b_bone)
+                    self.transform.export_transforms(kf_root, b_armature, b_action, b_bone)
                 # quick hack to set correct target name
                 if "Bip01" in b_armature.data.bones:
                     targetname = "Bip01"
@@ -150,7 +148,17 @@ class Animation:
             # per-object animation
             else:
                 for b_obj in bpy.data.objects:
-                    self.transform.export_transforms(kf_root, b_obj)
+                    b_action = self.get_active_action(b_obj)
+                    self.transform.export_transforms(kf_root, b_obj, b_action)
+
+            kf_root.name = b_action.name
+            kf_root.unknown_int_1 = 1
+            kf_root.weight = 1.0
+            kf_root.text_keys = anim_textextra
+            kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
+            kf_root.frequency = 1.0
+            kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
+            kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
 
             kf_root.target_name = targetname
             kf_root.string_palette = NifFormat.NiStringPalette()
