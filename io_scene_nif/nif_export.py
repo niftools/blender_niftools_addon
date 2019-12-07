@@ -170,6 +170,33 @@ class NifExport(NifCommon):
             # find nif version to write
             self.version, data = scene_export.get_version_data()
 
+            # write external animation to a KF tree
+            if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
+                NifLog.info("Creating keyframe tree")
+                kf_root = self.animationhelper.export_kf_root(b_armature)
+                # anim_textextra = self.animation_helper.export_text_keys(kf_root)
+
+                # write kf (and xkf if asked)
+                prefix = "" if (NifOp.props.animation != 'ALL_NIF_XNIF_XKF') else "x"
+
+                ext = ".kf"
+                NifLog.info("Writing {0} file".format(prefix + ext))
+
+                kffile = os.path.join(directory, prefix + filebase + ext)
+                data.roots = [kf_root]
+                data.neosteam = (NifOp.props.game == 'NEOSTEAM')
+                stream = open(kffile, "wb")
+                try:
+                    data.write(stream)
+                finally:
+                    stream.close()
+                # if only anim, no need to do the time consuming nif export
+                if NifOp.props.animation == 'ANIM_KF':
+                    # clear progress bar
+                    NifLog.info("Finished")
+                    return {'FINISHED'}
+
+            
             # export the actual root node (the name is fixed later to avoid confusing the
             # exporter with duplicate names)
             root_block = self.objecthelper.export_root_node(filebase)
@@ -369,25 +396,6 @@ class NifExport(NifCommon):
             # create and export keyframe file and xnif file:
             # ----------------------------------------------
 
-            # convert root_block tree into a keyframe tree
-            if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
-                NifLog.info("Creating keyframe tree")
-                kf_root = self.animationhelper.create_kf_root(root_block, anim_textextra, b_armature)
-
-                # write kf (and xnif if asked)
-                prefix = "" if (NifOp.props.animation != 'ALL_NIF_XNIF_XKF') else "x"
-
-                ext = ".kf"
-                NifLog.info("Writing {0} file".format(prefix + ext))
-
-                kffile = os.path.join(directory, prefix + filebase + ext)
-                data.roots = [kf_root]
-                data.neosteam = (NifOp.props.game == 'NEOSTEAM')
-                stream = open(kffile, "wb")
-                try:
-                    data.write(stream)
-                finally:
-                    stream.close()
 
             if NifOp.props.animation == 'ALL_NIF_XNIF_XKF':
                 NifLog.info("Detaching keyframe controllers from nif")
