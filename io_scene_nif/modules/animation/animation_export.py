@@ -152,10 +152,12 @@ class Animation:
                     b_action = self.get_active_action(b_obj)
                     self.transform.export_transforms(kf_root, b_obj, b_action)
 
+            anim_textextra = self.export_text_keys(b_action)
+
             kf_root.name = b_action.name
             kf_root.unknown_int_1 = 1
             kf_root.weight = 1.0
-            # kf_root.text_keys = anim_textextra
+            kf_root.text_keys = anim_textextra
             kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
             kf_root.frequency = 1.0
             kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
@@ -163,6 +165,7 @@ class Animation:
 
             kf_root.target_name = targetname
             kf_root.string_palette = NifFormat.NiStringPalette()
+        
             # todo [anim] the following seems to be post-processing of morph controllers
             # this will probably end up as redundant after refactoring is done
             # keep it here for now
@@ -278,64 +281,48 @@ class Animation:
 
         NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
         return NifFormat.KeyType.QUADRATIC_KEY
+    
+    def add_dummy_markers(self, b_action):
+        # if we exported animations, but no animation groups are defined,
+        # define a default animation group
+        NifLog.info("Checking action pose markers.")
+        if not b_action.pose_markers:
+            # has_controllers = False
+            # for block in block_store.block_to_obj:
+            #     # has it a controller field?
+            #     if isinstance(block, NifFormat.NiObjectNET):
+            #         if block.controller:
+            #             has_controllers = True
+            #             break
+            # if has_controllers:
+            NifLog.info("Defining default action pose markers.")
+            for frame, text in zip(b_action.frame_range, ("Idle: Start/Idle: Loop Start", "Idle: Loop Stop/Idle: Stop") ):
+                marker = b_action.pose_markers.new(text)
+                marker.frame = frame
 
-    def export_text_keys(self, block_parent):
-        """Parse the animation groups buffer and write an extra string data block,
-        and attach it to an existing block (typically, the root of the nif tree)."""
+    def export_text_keys(self, b_action):
+        """Process b_action's pose markers and return an extra string data block."""
         if NifOp.props.animation == 'GEOM_NIF':
             # animation group extra data is not present in geometry only files
             return
-        anim = "Anim"
-        if anim not in bpy.data.texts:
-            return
-        anim_txt = bpy.data.texts[anim]
         NifLog.info("Exporting animation groups")
-        # -> get animation groups information
 
-        # parse the anim text descriptor
+        self.add_dummy_markers(b_action)
 
-        # the format is:
-        # frame/string1[/string2[.../stringN]]
-
-        # example:
-        # 001/Idle: Start/Idle: Stop/Idle2: Start/Idle2: Loop Start
-        # 051/Idle2: Stop/Idle3: Start
-        # 101/Idle3: Loop Start/Idle3: Stop
-
-        slist = anim_txt.asLines()
-        flist = []
-        dlist = []
-        for s in slist:
-            # ignore empty lines
-            if not s:
-                continue
-            # parse line
-            t = s.split('/')
-            if len(t) < 2:
-                raise nif_utils.NifError("Syntax error in Anim buffer ('{0}')".format(s))
-            f = int(t[0])
-            if (f < bpy.context.scene.frame_start) or (f > bpy.context.scene.frame_end):
-                NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(
-                    str(f), str(bpy.context.scene.frame_start), str(bpy.context.scene.frame_end)))
-            d = t[1].strip()
-            for i in range(2, len(t)):
-                d = d + '\r\n' + t[i].strip()
-            # print 'frame %d'%f + ' -> \'%s\''%d # debug
-            flist.append(f)
-            dlist.append(d)
-
-        # -> now comes the real export
-
-        # add a NiTextKeyExtraData block, and refer to this block in the
-        # parent node (we choose the root block)
-        n_text_extra = block_store.create_block("NiTextKeyExtraData", anim_txt)
-        block_parent.add_extra_data(n_text_extra)
+        # add a NiTextKeyExtraData block
+        n_text_extra = block_store.create_block("NiTextKeyExtraData", b_action.pose_markers)
 
         # create a text key for each frame descriptor
-        n_text_extra.num_text_keys = len(flist)
+        n_text_extra.num_text_keys = len(b_action.pose_markers)
         n_text_extra.text_keys.update_size()
-        for i, key in enumerate(n_text_extra.text_keys):
-            key.time = flist[i] / self.fps
-            key.value = dlist[i]
+        f0, f1 = b_action.frame_range
+        for key, marker in zip(n_text_extra.text_keys, b_action.pose_markers):
+            f = marker.frame
+            if (f < f0) or (f > f1):
+                NifLog.warn("Marker out of animated range ({0} not between [{1}, {2}])".format(
+                    f, f0, f1))
+
+            key.time = f / self.fps
+            key.value = marker.name.replace('/', '\r\n')
 
         return n_text_extra
