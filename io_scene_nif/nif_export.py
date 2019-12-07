@@ -165,7 +165,19 @@ class NifExport(NifCommon):
             except NameError:
                 animtxt = None
 
+            prefix = ""
             NifLog.info("Exporting")
+            if NifOp.props.animation == 'ALL_NIF':
+                NifLog.info("Exporting geometry and animation")
+            elif NifOp.props.animation == 'GEOM_NIF':
+                # for morrowind: everything except keyframe controllers
+                NifLog.info("Exporting geometry only")
+            elif NifOp.props.animation == 'ANIM_KF':
+                # for morrowind: only keyframe controllers
+                NifLog.info("Exporting animation only (as .kf file)")
+            elif NifOp.props.animation == 'ALL_NIF_XNIF_XKF':
+                prefix = "x"
+                NifLog.info("Exporting geometry and animation in xnif-style")
 
             # find nif version to write
             self.version, data = scene_export.get_version_data()
@@ -177,19 +189,14 @@ class NifExport(NifCommon):
                 # anim_textextra = self.animation_helper.export_text_keys(kf_root)
 
                 # write kf (and xkf if asked)
-                prefix = "" if (NifOp.props.animation != 'ALL_NIF_XNIF_XKF') else "x"
-
                 ext = ".kf"
                 NifLog.info("Writing {0} file".format(prefix + ext))
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
                 data.roots = [kf_root]
                 data.neosteam = (NifOp.props.game == 'NEOSTEAM')
-                stream = open(kffile, "wb")
-                try:
+                with open(kffile, "wb") as stream:
                     data.write(stream)
-                finally:
-                    stream.close()
                 # if only anim, no need to do the time consuming nif export
                 if NifOp.props.animation == 'ANIM_KF':
                     # clear progress bar
@@ -360,78 +367,30 @@ class NifExport(NifCommon):
                         if any(sub_shape.layer != 1 for sub_shape in block.shape.sub_shapes):
                             NifLog.warn("Mopps for non-static objects may not function correctly in-game. You may wish to use simple primitives for collision.")
 
-            if NifOp.props.animation == 'ALL_NIF':
-                NifLog.info("Exporting geometry and animation")
-            elif NifOp.props.animation == 'GEOM_NIF':
-                # for morrowind: everything except keyframe controllers
-                NifLog.info("Exporting geometry only")
-            elif NifOp.props.animation == 'ANIM_KF':
-                # for morrowind: only keyframe controllers
-                NifLog.info("Exporting animation only (as .kf file)")
-
             # export nif file:
             # ----------------
-            if NifOp.props.animation != 'ANIM_KF':
-                if NifOp.props.game == 'EMPIRE_EARTH_II':
-                    ext = ".nifcache"
-                else:
-                    ext = ".nif"
-                NifLog.info("Writing {0} file".format(ext))
-
-                # make sure we have the right file extension
-                if fileext.lower() != ext:
-                    NifLog.warn("Changing extension from {0} to {1} on output file".format(fileext, ext))
-                niffile = os.path.join(directory, filebase + ext)
-
-                data.roots = [root_block]
-                if NifOp.props.game == 'NEOSTEAM':
-                    data.modification = "neosteam"
-                elif NifOp.props.game == 'ATLANTICA':
-                    data.modification = "ndoors"
-                elif NifOp.props.game == 'HOWLING_SWORD':
-                    data.modification = "jmihs1"
-                with open(niffile, "wb") as stream:
-                    data.write(stream)
-
-            # create and export keyframe file and xnif file:
-            # ----------------------------------------------
-
-
-            if NifOp.props.animation == 'ALL_NIF_XNIF_XKF':
-                NifLog.info("Detaching keyframe controllers from nif")
-                # detach the keyframe controllers from the nif (for xnif)
-                for node in root_block.tree():
-                    if not isinstance(node, NifFormat.NiNode):
-                        continue
-                    # remove references to keyframe controllers from node
-                    # (for xnif)
-                    while isinstance(node.controller, NifFormat.NiKeyframeController):
-                        node.controller = node.controller.next_controller
-                    ctrl = node.controller
-                    while ctrl:
-                        if isinstance(ctrl.next_controller, NifFormat.NiKeyframeController):
-                            ctrl.next_controller = ctrl.next_controller.next_controller
-                        else:
-                            ctrl = ctrl.next_controller
-
-                NifLog.info("Detaching animation text keys from nif")
-                # detach animation text keys
-                if root_block.extra_data is not anim_textextra:
-                    raise RuntimeError("Oops, you found a bug! Animation extra data wasn't where expected...")
-                root_block.extra_data = None
-
-                prefix = "x"  # we are in morrowind 'nifxnifkf mode'
+            if NifOp.props.game == 'EMPIRE_EARTH_II':
+                ext = ".nifcache"
+            else:
                 ext = ".nif"
-                NifLog.info("Writing {0} file" .format(prefix + ext))
+            NifLog.info("Writing {0} file".format(ext))
 
-                xniffile = os.path.join(directory, prefix + filebase + ext)
-                data.roots = [root_block]
-                data.neosteam = (NifOp.props.game == 'NEOSTEAM')
-                stream = open(xniffile, "wb")
-                try:
-                    data.write(stream)
-                finally:
-                    stream.close()
+            # make sure we have the right file extension
+            if fileext.lower() != ext:
+                NifLog.warn("Changing extension from {0} to {1} on output file".format(fileext, ext))
+            niffile = os.path.join(directory, prefix + filebase + ext)
+
+            data.roots = [root_block]
+            # todo [export] I believe this is redundant and setting modification only is the current way?
+            data.neosteam = (NifOp.props.game == 'NEOSTEAM')
+            if NifOp.props.game == 'NEOSTEAM':
+                data.modification = "neosteam"
+            elif NifOp.props.game == 'ATLANTICA':
+                data.modification = "ndoors"
+            elif NifOp.props.game == 'HOWLING_SWORD':
+                data.modification = "jmihs1"
+            with open(niffile, "wb") as stream:
+                data.write(stream)
 
             # export egm file:
             # -----------------
@@ -440,11 +399,8 @@ class NifExport(NifCommon):
                 NifLog.info("Writing {0} file".format(ext))
 
                 egmfile = os.path.join(directory, filebase + ext)
-                stream = open(egmfile, "wb")
-                try:
+                with open(egmfile, "wb") as stream:
                     EGMData.data.write(stream)
-                finally:
-                    stream.close()
         finally:
             # clear progress bar
             NifLog.info("Finished")
