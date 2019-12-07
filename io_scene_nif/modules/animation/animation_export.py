@@ -100,31 +100,32 @@ class Animation:
             if b_action.fcurves:
                 return b_action
 
-    def create_kf_root(self, root_block, anim_textextra, b_armature = None):
+    def export_kf_root(self, b_armature = None):
+        # todo [anim] export them properly, in the right tree to begin with
         # find all nodes and relevant controllers
-        node_kfctrls = self.get_controllers( root_block.tree() )
+        # node_kfctrls = self.get_controllers( root_block.tree() )
 
         # morrowind
         if NifOp.props.game in ('MORROWIND', 'FREEDOM_FORCE'):
             # create kf root header
             kf_root = block_store.create_block("NiSequenceStreamHelper")
-            kf_root.add_extra_data(anim_textextra)
-            # reparent controller tree
-            for node, ctrls in node_kfctrls.items():
-                for ctrl in ctrls:
-                    # create node reference by name
-                    nodename_extra = block_store.create_block("NiStringExtraData")
-                    nodename_extra.bytes_remaining = len(node.name) + 4
-                    nodename_extra.string_data = node.name
+            # kf_root.add_extra_data(anim_textextra)
+            # # reparent controller tree
+            # for node, ctrls in node_kfctrls.items():
+            #     for ctrl in ctrls:
+            #         # create node reference by name
+            #         nodename_extra = block_store.create_block("NiStringExtraData")
+            #         nodename_extra.bytes_remaining = len(node.name) + 4
+            #         nodename_extra.string_data = node.name
 
-                    # break the controller chain
-                    ctrl.next_controller = None
+            #         # break the controller chain
+            #         ctrl.next_controller = None
 
-                    # add node reference and controller
-                    kf_root.add_extra_data(nodename_extra)
-                    kf_root.add_controller(ctrl)
-                    # wipe controller target
-                    ctrl.target = None
+            #         # add node reference and controller
+            #         kf_root.add_extra_data(nodename_extra)
+            #         kf_root.add_controller(ctrl)
+            #         # wipe controller target
+            #         ctrl.target = None
 
         # oblivion
         elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
@@ -132,7 +133,7 @@ class Animation:
 
             # create kf root header
             kf_root = block_store.create_block("NiControllerSequence")
-            targetname = root_block.name
+            targetname = "Scene Root"
 
             # per-node animation
             if b_armature:
@@ -154,7 +155,7 @@ class Animation:
             kf_root.name = b_action.name
             kf_root.unknown_int_1 = 1
             kf_root.weight = 1.0
-            kf_root.text_keys = anim_textextra
+            # kf_root.text_keys = anim_textextra
             kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
             kf_root.frequency = 1.0
             kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
