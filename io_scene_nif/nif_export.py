@@ -372,7 +372,7 @@ class NifExport(NifCommon):
             # convert root_block tree into a keyframe tree
             if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
                 NifLog.info("Creating keyframe tree")
-                kf_root = self.animationhelper.create_kf_root(root_block, anim_textextra, filebase, b_armature)
+                kf_root = self.animationhelper.create_kf_root(root_block, anim_textextra, b_armature)
 
                 # write kf (and xnif if asked)
                 prefix = "" if (NifOp.props.animation != 'ALL_NIF_XNIF_XKF') else "x"
