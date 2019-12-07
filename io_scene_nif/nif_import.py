@@ -182,8 +182,8 @@ class NifImport(NifCommon):
         self.armaturehelper.mark_armatures_bones(root_block)
 
         # import the keyframe notes
-        if NifOp.props.animation:
-            self.animationhelper.import_text_keys(root_block)
+        # if NifOp.props.animation:
+        #     self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
         self.active_obj_name = ""
@@ -324,7 +324,7 @@ class NifImport(NifCommon):
 
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:
-                    self.animationhelper.import_text_keys(n_block)
+                    # self.animationhelper.import_text_keys(n_block)
                     self.animationhelper.transform.import_transforms(n_block, b_obj)
                     self.animationhelper.object_animation.import_visibility(n_block, b_obj)
 
