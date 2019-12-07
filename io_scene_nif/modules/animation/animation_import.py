@@ -139,33 +139,19 @@ class Animation:
             fcurve.keyframe_points.insert(frame, k).interpolation = interp
 
     # import animation groups
-    def import_text_keys(self, n_block):
-        """Stores the text keys that define animation start and end in a text
-        buffer, so that they can be re-exported. Since the text buffer is
-        cleared on each import only the last import will be exported
-        correctly."""
+    def import_text_keys(self, n_block, b_action):
+        """Stores the text keys as pose markers in a blender action."""
 
         if isinstance(n_block, NifFormat.NiControllerSequence):
             txk = n_block.text_keys
         else:
             txk = n_block.find(block_type=NifFormat.NiTextKeyExtraData)
-        if txk:
-            # get animation text buffer, and clear it if it already exists
-            name = "Anim"
-            if name in bpy.data.texts:
-                animtxt = bpy.data.texts[name]
-                animtxt.clear()
-            else:
-                animtxt = bpy.data.texts.new(name)
-
+        if txk and b_action:
             for key in txk.text_keys:
-                newkey = str(key.value).replace('\r\n', '/').rstrip('/')
+                newkey = key.value.decode().replace('\r\n', '/').rstrip('/')
                 frame = round(key.time * self.fps)
-                animtxt.write('%i/%s\n' % (frame, newkey))
-
-            # set start and end frames
-            bpy.context.scene.frame_start = 0
-            bpy.context.scene.frame_end = frame
+                marker = b_action.pose_markers.new(newkey)
+                marker.frame = frame
 
     def set_frames_per_second(self, roots):
         """Scan all blocks and set a reasonable number for FPS to this class and the scene."""

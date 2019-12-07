@@ -83,10 +83,12 @@ class TransformAnimation:
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
             raise nif_utils.NifError("KF root must be a NiControllerSequence, other styles are not supported")
 
-        # import text keys
-        self.animationhelper.import_text_keys(kf_root)
 
         b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode())
+
+        # import text keys
+        self.animationhelper.import_text_keys(kf_root, b_action)
+
         # go over all controlled blocks (NiKeyframeController)
         for controlledblock in kf_root.controlled_blocks:
             # get bone name
@@ -121,9 +123,6 @@ class TransformAnimation:
     def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None, n_bone_bind_scale=None, n_bone_bind_rot_inv=None, n_bone_bind_trans=None):
         b_action = b_obj.animation_data.action
 
-        # fallout, Loki - we set extrapolation elsewhere according to the root NiControllerSequence.cycle_type
-        flags = None
-
         if bone_name:
             b_obj = b_obj.pose.bones[bone_name]
 
@@ -131,6 +130,7 @@ class TransformAnimation:
         scales = []
         rotations = []
         eulers = []
+        n_kfd = None
 
         # B-spline curve import
         if isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
@@ -154,46 +154,50 @@ class TransformAnimation:
                 scales = zip(times, scale_temp)
             # Bsplines are Bezier curves
             interp_rot = interp_loc = interp_scale = "BEZIER"
-        
-        elif isinstance(n_kfc, NifFormat.NiKeyframeController):
-            # ZT2 - get extrapolation for every kfc
-            flags = n_kfc.flags
-
+        else:
             # ZT2 & Fallout
             n_kfd = n_kfc.data
-            if isinstance(n_kfd, NifFormat.NiKeyframeData):
-                interp_rot = self.animationhelper.get_b_interp_from_n_interp(n_kfd.rotation_type)
-                interp_loc = self.animationhelper.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
-                interp_scale = self.animationhelper.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
-                if n_kfd.rotation_type == 4:
-                    b_obj.rotation_mode = "XYZ"
-                    # uses xyz rotation
-                    if n_kfd.xyz_rotations[0].keys:
-                        # euler keys need not be sampled at the same time in KFs
-                        # but we need complete key sets to do the space conversion
-                        # so perform linear interpolation to import all keys properly
+        if isinstance(n_kfd, NifFormat.NiKeyframeData):
+            interp_rot = self.animationhelper.get_b_interp_from_n_interp(n_kfd.rotation_type)
+            interp_loc = self.animationhelper.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
+            interp_scale = self.animationhelper.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
+            if n_kfd.rotation_type == 4:
+                b_obj.rotation_mode = "XYZ"
+                # uses xyz rotation
+                if n_kfd.xyz_rotations[0].keys:
+                    # euler keys need not be sampled at the same time in KFs
+                    # but we need complete key sets to do the space conversion
+                    # so perform linear interpolation to import all keys properly
 
-                        # get all the keys' times
-                        times_x = [key.time for key in n_kfd.xyz_rotations[0].keys]
-                        times_y = [key.time for key in n_kfd.xyz_rotations[1].keys]
-                        times_z = [key.time for key in n_kfd.xyz_rotations[2].keys]
-                        # the unique time stamps we have to sample all curves at
-                        times_all = sorted(set(times_x + times_y + times_z))
-                        # the actual resampling
-                        x_r = interpolate(times_all, times_x, [key.value for key in n_kfd.xyz_rotations[0].keys])
-                        y_r = interpolate(times_all, times_y, [key.value for key in n_kfd.xyz_rotations[1].keys])
-                        z_r = interpolate(times_all, times_z, [key.value for key in n_kfd.xyz_rotations[2].keys])
-                    eulers = zip(times_all, zip(x_r, y_r, z_r))
-                else:
-                    b_obj.rotation_mode = "QUATERNION"
-                    rotations = [(key.time, key.value) for key in n_kfd.quaternion_keys]
+                    # get all the keys' times
+                    times_x = [key.time for key in n_kfd.xyz_rotations[0].keys]
+                    times_y = [key.time for key in n_kfd.xyz_rotations[1].keys]
+                    times_z = [key.time for key in n_kfd.xyz_rotations[2].keys]
+                    # the unique time stamps we have to sample all curves at
+                    times_all = sorted(set(times_x + times_y + times_z))
+                    # the actual resampling
+                    x_r = interpolate(times_all, times_x, [key.value for key in n_kfd.xyz_rotations[0].keys])
+                    y_r = interpolate(times_all, times_y, [key.value for key in n_kfd.xyz_rotations[1].keys])
+                    z_r = interpolate(times_all, times_z, [key.value for key in n_kfd.xyz_rotations[2].keys])
+                eulers = zip(times_all, zip(x_r, y_r, z_r))
+            else:
+                b_obj.rotation_mode = "QUATERNION"
+                rotations = [(key.time, key.value) for key in n_kfd.quaternion_keys]
 
-                if n_kfd.scales.keys:
-                    scales = [(key.time, key.value) for key in n_kfd.scales.keys]
+            if n_kfd.scales.keys:
+                scales = [(key.time, key.value) for key in n_kfd.scales.keys]
 
-                if n_kfd.translations.keys:
-                    translations = [(key.time, key.value) for key in n_kfd.translations.keys]
+            if n_kfd.translations.keys:
+                translations = [(key.time, key.value) for key in n_kfd.translations.keys]
 
+
+        # ZT2 - get extrapolation for every kfc
+        if isinstance(n_kfc, NifFormat.NiKeyframeController):
+            flags = n_kfc.flags
+        # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
+        else:
+            flags = None
+        
         if eulers:
             NifLog.debug('Rotation keys...(euler)')
             fcurves = self.animationhelper.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
