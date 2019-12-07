@@ -56,7 +56,17 @@ class Animation:
         self.transform = TransformAnimation(self)
         # set a dummy here, update via set_frames_per_second
         self.fps = 30
+        self.show_pose_markers()
 
+    @staticmethod
+    def show_pose_markers():
+        """Helper function to ensure that pose markers are shown"""
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                for space in area.spaces:
+                    if space.type == 'DOPESHEET_EDITOR':
+                        space.show_pose_markers = True
+				
     @staticmethod
     def get_b_interp_from_n_interp(n_ipol):
         if n_ipol in (NifFormat.KeyType.LINEAR_KEY, NifFormat.KeyType.XYZ_ROTATION_KEY):
