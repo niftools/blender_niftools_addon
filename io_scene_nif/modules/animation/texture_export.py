@@ -49,9 +49,9 @@ class TextureAnimation:
         self.nif_export = parent
 
     def export_flip_controller(self, fliptxt, texture, target, target_tex):
-        # TODO [animation] port code to use native Blender n_texture flipping system
-        #
-        # export a NiFlipController
+        # TODO [animation] port code to use native Blender image strip system
+        #                  despite its name a NiFlipController does not flip / mirror a texture
+        #                  instead it swaps through a list of textures for a sprite animation
         #
         # fliptxt is a blender text object containing the n_flip definitions
         # texture is the texture object in blender ( texture is used to checked for pack and mipmap flags )
