@@ -158,13 +158,6 @@ class NifExport(NifCommon):
             if NifOp.props.smooth_object_seams:
                 self.objecthelper.mesh_helper.smooth_mesh_seams(self.exportable_objects)
 
-            # TODO: use Blender actions for animation groups
-            # check for animation groups definition in a text buffer 'Anim'
-            try:
-                animtxt = None  # Changed for testing needs fix bpy.data.texts["Anim"]
-            except NameError:
-                animtxt = None
-
             prefix = ""
             NifLog.info("Exporting")
             if NifOp.props.animation == 'ALL_NIF':
@@ -186,7 +179,6 @@ class NifExport(NifCommon):
             if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
                 NifLog.info("Creating keyframe tree")
                 kf_root = self.animationhelper.export_kf_root(b_armature)
-                # anim_textextra = self.animation_helper.export_text_keys(kf_root)
 
                 # write kf (and xkf if asked)
                 ext = ".kf"
@@ -211,37 +203,19 @@ class NifExport(NifCommon):
             # post-processing:
             # ----------------
 
-            # if we exported animations, but no animation groups are defined,
-            # define a default animation group
-            NifLog.info("Checking animation groups")
-            if not animtxt:
-                has_controllers = False
-                for block in block_store.block_to_obj:
-                    # has it a controller field?
-                    if isinstance(block, NifFormat.NiObjectNET):
-                        if block.controller:
-                            has_controllers = True
-                            break
-                if has_controllers:
-                    NifLog.info("Defining default animation group.")
-                    # write the animation group text buffer
-                    animtxt = bpy.data.texts.new("Anim")
-                    animtxt.write("{0}/Idle: Start/Idle: Loop Start\n{0}/Idle: Loop Stop/Idle: Stop".format(bpy.context.scene.frame_start, bpy.context.scene.frame_end))
-
             NifLog.info("Checking controllers")
             if NifOp.props.game == 'MORROWIND':
-                if animtxt:
-                    # animations without keyframe animations crash the TESCS
-                    # if we are in that situation, add a trivial keyframe animation
-                    has_keyframecontrollers = False
-                    for block in block_store.block_to_obj:
-                        if isinstance(block, NifFormat.NiKeyframeController):
-                            has_keyframecontrollers = True
-                            break
-                    if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
-                        NifLog.info("Defining dummy keyframe controller")
-                        # add a trivial keyframe controller on the scene root
-                        self.animationhelper.create_controller(root_block, root_block.name)
+                # animations without keyframe animations crash the TESCS
+                # if we are in that situation, add a trivial keyframe animation
+                has_keyframecontrollers = False
+                for block in block_store.block_to_obj:
+                    if isinstance(block, NifFormat.NiKeyframeController):
+                        has_keyframecontrollers = True
+                        break
+                if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
+                    NifLog.info("Defining dummy keyframe controller")
+                    # add a trivial keyframe controller on the scene root
+                    self.animationhelper.create_controller(root_block, root_block.name)
 
                 if NifOp.props.bs_animation_node:
                     for block in block_store.block_to_obj:
@@ -275,11 +249,9 @@ class NifExport(NifCommon):
             else:
                 # here comes everything that should be exported EXCEPT for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
-                if animtxt:
-                    # TODO: removed temorarily to process bseffectshader export
-                    anim_textextra = None  # self.animation_helper.export_text_keys(root_block)
-                else:
-                    anim_textextra = None
+                # anim_textextra = self.animation_helper.export_text_keys(b_action)
+                pass
+
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
             # note: block_store.block_to_obj changes during iteration, so need list copy
