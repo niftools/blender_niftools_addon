@@ -46,52 +46,54 @@ class Armature:
     def __init__(self, parent):
         self.nif_export = parent
 
-    def export_bones(self, arm, parent_block):
+    def export_bones(self, b_obj, parent_block):
         """Export the bones of an armature."""
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
-        assert (arm.type == 'ARMATURE')
+        assert (b_obj.type == 'ARMATURE')
+
+        b_action = self.nif_export.animationhelper.get_active_action(b_obj)
 
         # find the root bones
         # list of all bones
-        bones = arm.data.bones.values()
+        bones = b_obj.data.bones.values()
 
-        # maps bone names to NiNode blocks
+        # maps b_bone names to NiNode blocks
         bones_node = {}
 
         # here all the bones are added
         # first create all bones with their keyframes
         # and then fix the links in a second run
 
-        # ok, let's create the bone NiNode blocks
-        for bone in bones:
-            # create a new block for this bone
-            n_bone = self.nif_export.objecthelper.create_ninode(bone)
-            # doing bone map now makes linkage very easy in second run
-            bones_node[bone.name] = n_bone
+        # ok, let's create the b_bone NiNode blocks
+        for b_bone in bones:
+            # create a new nif block for this b_bone
+            n_bone = self.nif_export.objecthelper.create_ninode(b_bone)
+            # doing b_bone map now makes linkage very easy in second run
+            bones_node[b_bone.name] = n_bone
 
-            # add the n_bone and the keyframe for this bone
-            n_bone.name = self.nif_export.objecthelper.get_full_name(bone)
+            # add the n_bone and the keyframe for this b_bone
+            n_bone.name = self.nif_export.objecthelper.get_full_name(b_bone)
 
-            if bone.niftools.boneflags != 0:
-                n_bone.flags = bone.niftools.boneflags
+            if b_bone.niftools.boneflags != 0:
+                n_bone.flags = b_bone.niftools.boneflags
             else:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     # default for Oblivion bones
                     # note: bodies have 0x000E, clothing has 0x000F
                     n_bone.flags = 0x000E
                 elif NifOp.props.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
-                    if bone.children:
+                    if b_bone.children:
                         # default for Civ IV/EE II bones with children
                         n_bone.flags = 0x0006
                     else:
                         # default for Civ IV/EE II final bones
                         n_bone.flags = 0x0016
                 elif NifOp.props.game in ('DIVINITY_2',):
-                    if bone.children:
+                    if b_bone.children:
                         # default for Div 2 bones with children
                         n_bone.flags = 0x0186
-                    elif bone.name.lower()[-9:] == 'footsteps':
+                    elif b_bone.name.lower()[-9:] == 'footsteps':
                         n_bone.flags = 0x0116
                     else:
                         # default for Div 2 final bones
@@ -99,17 +101,17 @@ class Armature:
                 else:
                     n_bone.flags = 0x0002  # default for Morrowind bones
             # rest pose
-            self.nif_export.objecthelper.set_object_matrix(bone, n_bone)
+            self.nif_export.objecthelper.set_object_matrix(b_bone, n_bone)
 
             # per-bone animation
-            self.nif_export.animationhelper.export_keyframes(n_bone, arm, bone)
+            self.nif_export.animationhelper.transform.export_transforms(n_bone, b_obj, b_action, b_bone)
 
         # now fix the linkage between the blocks
-        for bone in bones:
+        for b_bone in bones:
             # link the bone's children to the bone
-            NifLog.debug("Linking children of bone {0}".format(bone.name))
-            for child in bone.children:
-                bones_node[bone.name].add_child(bones_node[child.name])
+            NifLog.debug("Linking children of b_bone {0}".format(b_bone.name))
+            for child in b_bone.children:
+                bones_node[b_bone.name].add_child(bones_node[child.name])
             # if it is a root bone, link it to the armature
-            if not bone.parent:
-                parent_block.add_child(bones_node[bone.name])
+            if not b_bone.parent:
+                parent_block.add_child(bones_node[b_bone.name])

@@ -38,13 +38,11 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.material_export import MaterialAnimation
-from io_scene_nif.modules.animation.mesh_export import MeshAnimation
+from io_scene_nif.modules.animation.transform_export import TransformAnimation
 from io_scene_nif.modules.animation.object_export import ObjectAnimation
 from io_scene_nif.modules.animation.texture_export import TextureAnimation
 from io_scene_nif.modules.object.block_registry import block_store
@@ -61,6 +59,7 @@ def set_flags_and_timing(kfc, exp_fcurves, start_frame=None, stop_frame=None):
     kfc.phase = 0.0
     if not start_frame and not stop_frame:
         start_frame, stop_frame = exp_fcurves[0].range()
+    # todo [anim] this is a hack, move to scene
     kfc.start_time = start_frame / Animation.fps
     kfc.stop_time = stop_frame / Animation.fps
 
@@ -83,6 +82,7 @@ def get_flags_from_fcurves(fcurves):
 
 class Animation:
 
+    # todo [anim] this is a hack, move to scene
     fps = 30
 
     def __init__(self, parent):
@@ -90,9 +90,186 @@ class Animation:
         self.obj_anim = ObjectAnimation()
         self.mat_anim = MaterialAnimation()
         self.txt_anim = TextureAnimation(parent)
-        self.mesh_anim = MeshAnimation()
+        self.transform = TransformAnimation(parent)
         self.fps = bpy.context.scene.render.fps
 
+    def get_active_action(self, b_obj):
+        # check if the blender object has a non-empty action assigned to it
+        if b_obj.animation_data and b_obj.animation_data.action:
+            b_action = b_obj.animation_data.action
+            if b_action.fcurves:
+                return b_action
+
+    def export_kf_root(self, b_armature = None):
+        # todo [anim] export them properly, in the right tree to begin with
+        # find all nodes and relevant controllers
+        # node_kfctrls = self.get_controllers( root_block.tree() )
+
+        # morrowind
+        if NifOp.props.game in ('MORROWIND', 'FREEDOM_FORCE'):
+            # create kf root header
+            kf_root = block_store.create_block("NiSequenceStreamHelper")
+            # kf_root.add_extra_data(anim_textextra)
+            # # reparent controller tree
+            # for node, ctrls in node_kfctrls.items():
+            #     for ctrl in ctrls:
+            #         # create node reference by name
+            #         nodename_extra = block_store.create_block("NiStringExtraData")
+            #         nodename_extra.bytes_remaining = len(node.name) + 4
+            #         nodename_extra.string_data = node.name
+
+            #         # break the controller chain
+            #         ctrl.next_controller = None
+
+            #         # add node reference and controller
+            #         kf_root.add_extra_data(nodename_extra)
+            #         kf_root.add_controller(ctrl)
+            #         # wipe controller target
+            #         ctrl.target = None
+
+        # oblivion
+        elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
+            # TODO [animation] allow for object kf only
+
+            # create kf root header
+            kf_root = block_store.create_block("NiControllerSequence")
+            targetname = "Scene Root"
+
+            # per-node animation
+            if b_armature:
+                b_action = self.get_active_action(b_armature)
+                for b_bone in b_armature.data.bones:
+                    self.transform.export_transforms(kf_root, b_armature, b_action, b_bone)
+                # quick hack to set correct target name
+                if "Bip01" in b_armature.data.bones:
+                    targetname = "Bip01"
+                elif "Bip02" in b_armature.data.bones:
+                    targetname = "Bip02"
+
+            # per-object animation
+            else:
+                for b_obj in bpy.data.objects:
+                    b_action = self.get_active_action(b_obj)
+                    self.transform.export_transforms(kf_root, b_obj, b_action)
+
+            anim_textextra = self.export_text_keys(b_action)
+
+            kf_root.name = b_action.name
+            kf_root.unknown_int_1 = 1
+            kf_root.weight = 1.0
+            kf_root.text_keys = anim_textextra
+            kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
+            kf_root.frequency = 1.0
+            kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
+            kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
+
+            kf_root.target_name = targetname
+            kf_root.string_palette = NifFormat.NiStringPalette()
+        
+            # todo [anim] the following seems to be post-processing of morph controllers
+            # this will probably end up as redundant after refactoring is done
+            # keep it here for now
+            # for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):
+                # # export a block for every interpolator in every controller
+                # for ctrl in ctrls:
+                    # # XXX add get_interpolators to pyffi interface
+                    # if isinstance(ctrl, NifFormat.NiSingleInterpController):
+                        # interpolators = [ctrl.interpolator]
+                    # elif isinstance( ctrl, (NifFormat.NiGeomMorpherController, NifFormat.NiMorphWeightsController)):
+                        # interpolators = ctrl.interpolators
+
+                    # if isinstance(ctrl, NifFormat.NiGeomMorpherController):
+                        # variable_2s = [morph.frame_name for morph in ctrl.data.morphs]
+                    # else:
+                        # variable_2s = [None for interpolator in interpolators]
+                    # for interpolator, variable_2 in zip(interpolators, variable_2s):
+                        # # create ControlledLink for each interpolator
+                        # controlledblock = kf_root.add_controlled_block()
+                        # if self.version < 0x0A020000:
+                            # # older versions need the actual controller blocks
+                            # controlledblock.target_name = node.name
+                            # controlledblock.controller = ctrl
+                            # # erase reference to target node
+                            # ctrl.target = None
+                        # else:
+                            # # newer versions need the interpolator blocks
+                            # controlledblock.interpolator = interpolator
+                            
+                        # # set palette, and node and controller type names, and variables
+                        # controlledblock.string_palette = kf_root.string_palette
+                        # controlledblock.set_node_name(node.name)
+                        # controlledblock.set_controller_type(ctrl.__class__.__name__)
+                        # if variable_2:
+                            # controlledblock.set_variable_2(variable_2)
+        else:
+            raise nif_utils.NifError("Keyframe export for '%s' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
+                                        " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % NifOp.props.game)
+        return kf_root
+    
+    @staticmethod
+    def get_controllers(nodes):
+        """find all nodes and relevant controllers"""
+        node_kfctrls = {}
+        for node in nodes:
+            if not isinstance(node, NifFormat.NiAVObject):
+                continue
+            # get list of all controllers for this node
+            ctrls = node.get_controllers()
+            for ctrl in ctrls:
+                if NifOp.props.game == 'MORROWIND':
+                    # morrowind: only keyframe controllers
+                    if not isinstance(ctrl, NifFormat.NiKeyframeController):
+                        continue
+                if node not in node_kfctrls:
+                    node_kfctrls[node] = []
+                node_kfctrls[node].append(ctrl)
+        return node_kfctrls
+    
+    def create_controller(self, parent_block, target_name, priority = 0):
+        n_kfi = None
+        n_kfc = None
+        
+        if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
+            # keyframe controllers are not present in geometry only files
+            # for more recent versions, the controller and interpolators are
+            # present, only the data is not present (see further on)
+            return n_kfc, n_kfi
+
+        # add a KeyframeController block, and refer to this block in the
+        # parent's time controller
+        if self.nif_export.version < 0x0A020000:
+            n_kfc = block_store.create_block("NiKeyframeController", None)
+        else:
+            n_kfc = block_store.create_block("NiTransformController", None)
+            n_kfi = block_store.create_block("NiTransformInterpolator", None)
+            # link interpolator from the controller
+            n_kfc.interpolator = n_kfi
+        # if parent is a node, attach controller to that node
+        if isinstance(parent_block, NifFormat.NiNode):
+            parent_block.add_controller(n_kfc)
+            if n_kfi:
+                # set interpolator default data
+                n_kfi.scale, n_kfi.rotation, n_kfi.translation = parent_block.get_transform().get_scale_quat_translation()
+
+        # else ControllerSequence, so create a link
+        elif isinstance(parent_block, NifFormat.NiControllerSequence):
+            controlled_block = parent_block.add_controlled_block()
+            controlled_block.priority = priority
+            if self.nif_export.version < 0x0A020000:
+                # older versions need the actual controller blocks
+                controlled_block.target_name = target_name
+                controlled_block.controller = n_kfc
+                # erase reference to target node
+                n_kfc.target = None
+            else:
+                # newer versions need the interpolator blocks
+                controlled_block.interpolator = n_kfi
+        else:
+            raise nif_utils.NifError("Unsupported KeyframeController parent!")
+        
+        return n_kfc, n_kfi
+
+    # todo [anim] currently not used, maybe reimplement this
     @staticmethod
     def get_n_interp_from_b_interp(b_ipol):
         if b_ipol == "LINEAR":
@@ -104,291 +281,48 @@ class Animation:
 
         NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
         return NifFormat.KeyType.QUADRATIC_KEY
+    
+    def add_dummy_markers(self, b_action):
+        # if we exported animations, but no animation groups are defined,
+        # define a default animation group
+        NifLog.info("Checking action pose markers.")
+        if not b_action.pose_markers:
+            # has_controllers = False
+            # for block in block_store.block_to_obj:
+            #     # has it a controller field?
+            #     if isinstance(block, NifFormat.NiObjectNET):
+            #         if block.controller:
+            #             has_controllers = True
+            #             break
+            # if has_controllers:
+            NifLog.info("Defining default action pose markers.")
+            for frame, text in zip(b_action.frame_range, ("Idle: Start/Idle: Loop Start", "Idle: Loop Stop/Idle: Stop") ):
+                marker = b_action.pose_markers.new(text)
+                marker.frame = frame
 
-    @staticmethod
-    def iter_frame_key(fcurves, mathutils_class):
-        """
-        Iterator that yields a tuple of frame and key for all fcurves.
-        Assumes the fcurves are sampled at the same time and all have the same amount of keys
-        Return the key in the desired mathutils_class
-        """
-        for point in zip(*[fcu.keyframe_points for fcu in fcurves]):
-            frame = point[0].co[0]
-            key = [k.co[1] for k in point]
-            yield frame, mathutils_class(key)
-
-    def export_keyframes(self, parent_block, b_obj=None, bone=None):
-        """
-        If called on b_obj=None and bone=None it should save an empty controller.
-        If called on an b_obj = type(armature), it expects a bone too.
-        If called on an object, with bone=None, it exports object level animation.
-        """
-
-        # sometimes we need to export an empty keyframe... 
-        scale_curve = []
-        quat_curve = []
-        euler_curve = []
-        trans_curve = []
-
-        exp_fcurves = []
-
-        # just for more detailed error reporting later on
-        bonestr = ""
-
-        # we have either skeletal or object animation
-        if b_obj and b_obj.animation_data and b_obj.animation_data.action:
-            action = b_obj.animation_data.action
-
-            # skeletal animation - with bone correction & coordinate corrections
-            if bone and bone.name in action.groups:
-                # get bind matrix for bone or object
-                bind_matrix = self.nif_export.objecthelper.get_object_bind(bone)
-                exp_fcurves = action.groups[bone.name].channels
-                # just for more detailed error reporting later on
-                bonestr = " in bone " + bone.name
-            # object level animation - no coordinate corrections
-            elif not bone:
-                # raise error on any objects parented to bones
-                if b_obj.parent and b_obj.parent_type == "BONE":
-                    raise nif_utils.NifError(
-                       "{} is parented to a bone AND has animations."
-                       "The nif format does not support this!".format(b_obj.name))
-
-                # we have either a root object (Scene Root), in which case we take the coordinates without modification
-                # or a generic object parented to an empty = node
-                # objects may have an offset from their parent that is not apparent in the user input (ie. UI values and keyframes)
-                # we want to export matrix_local, and the keyframes are in matrix_basis, so do:
-                # matrix_local = matrix_parent_inverse * matrix_basis
-                bind_matrix = b_obj.matrix_parent_inverse
-                exp_fcurves = [fcu for fcu in action.fcurves if
-                               fcu.data_path in ("rotation_quaternion", "rotation_euler", "location", "scale")]
-            # decompose the bind matrix
-            if exp_fcurves:
-                bind_scale, bind_rot, bind_trans = nif_utils.decompose_srt(bind_matrix)
-                bind_rot = bind_rot.to_4x4()
-            start_frame, stop_frame = action.frame_range
-
-        # we are supposed to export an empty controller
-        else:
-            # only set frame range
-            start_frame = bpy.context.scene.frame_start
-            stop_frame = bpy.context.scene.frame_end
-
-        if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
-            # keyframe controllers are not present in geometry only files
-            # for more recent versions, the controller and interpolators are
-            # present, only the data is not present (see further on)
-            return
-
-        # add a KeyframeController block, and refer to this block in the
-        # parent's time controller
-        if self.nif_export.version < 0x0A020000:
-            n_kfc = block_store.create_block("NiKeyframeController", exp_fcurves)
-        else:
-            n_kfc = block_store.create_block("NiTransformController", exp_fcurves)
-            n_kfi = block_store.create_block("NiTransformInterpolator", exp_fcurves)
-            # link interpolator from the controller
-            n_kfc.interpolator = n_kfi
-            # set interpolator default data
-            n_kfi.scale, n_kfi.rotation, n_kfi.translation = parent_block.get_transform().get_scale_quat_translation()
-
-        # if parent is a node, attach controller to that node
-        if isinstance(parent_block, NifFormat.NiNode):
-            parent_block.add_controller(n_kfc)
-        # else ControllerSequence, so create a link
-        elif isinstance(parent_block, NifFormat.NiControllerSequence):
-            controlled_block = parent_block.add_controlled_block()
-            if self.nif_export.version < 0x0A020000:
-                # older versions need the actual controller blocks
-                controlled_block.target_name = armature.get_bone_name_for_nif(bone.name)
-                controlled_block.controller = n_kfc
-                # erase reference to target node
-                n_kfc.target = None
-            else:
-                # newer versions need the interpolator blocks
-                controlled_block.interpolator = n_kfi
-        else:
-            raise nif_utils.NifError("Unsupported KeyframeController parent!")
-
-        # fill in the non-trivial values
-        set_flags_and_timing(n_kfc, exp_fcurves, start_frame, stop_frame)
-
-        if NifOp.props.animation == 'GEOM_NIF':
-            # keyframe data is not present in geometry files
-            return
-
-        # get the desired fcurves for each data type from exp_fcurves
-        quaternions = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("quaternion")]
-        translations = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("location")]
-        eulers = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("euler")]
-        scales = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("scale")]
-
-        # go over all fcurves collected above and transform and store all keys
-        if scales:
-            # just use the first scale curve and assume even scale over all curves
-            for frame, scale in self.iter_frame_key(scales, mathutils.Vector):
-                scale_curve.append((frame, scale[0]))
-
-        if quaternions:
-            if len(quaternions) != 4:
-                raise nif_utils.NifError("Incomplete ROT key set {} for action {}".format(bonestr, action.name))
-            else:
-                for frame, quat in self.iter_frame_key(quaternions, mathutils.Quaternion):
-                    quat = armature.export_keymat(bind_rot, quat.to_matrix().to_4x4(), bone).to_quaternion()
-                    quat_curve.append((frame, quat))
-
-        if eulers:
-            if len(eulers) != 3:
-                raise nif_utils.NifError("Incomplete Euler key set {} for action {}".format(bonestr, action.name))
-            else:
-                for frame, euler in self.iter_frame_key(eulers, mathutils.Euler):
-                    keymat = armature.export_keymat(bind_rot, euler.to_matrix().to_4x4(), bone)
-                    euler = keymat.to_euler("XYZ", euler)
-                    euler_curve.append((frame, euler))
-
-        if translations:
-            if len(translations) != 3:
-                raise nif_utils.NifError("Incomplete LOC key set{} for action {}".format(bonestr, action.name))
-            else:
-                for frame, trans in self.iter_frame_key(translations, mathutils.Vector):
-                    keymat = armature.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone)
-                    trans = keymat.to_translation() + bind_trans
-                    trans_curve.append((frame, trans))
-
-        # finally we can export the data calculated above
-        if (max(len(quat_curve), len(euler_curve), len(trans_curve), len(scale_curve)) <= 1
-                and self.nif_export.version >= 0x0A020000):
-            # only add data if number of keys is > 1
-            # (see importer comments with import_kf_root: a single frame
-            # keyframe denotes an interpolator without further data)
-            # insufficient keys, so set the data and we're done!
-            if trans_curve:
-                trans = trans_curve[0][1]
-                n_kfi.translation.x = trans[0]
-                n_kfi.translation.y = trans[1]
-                n_kfi.translation.z = trans[2]
-            if quat_curve:
-                quat = quat_curve[0][1]
-                n_kfi.rotation.x = quat.x
-                n_kfi.rotation.y = quat.y
-                n_kfi.rotation.z = quat.z
-                n_kfi.rotation.w = quat.w
-            elif euler_curve:
-                quat = euler_curve[0][1].to_quaternion()
-                n_kfi.rotation.x = quat.x
-                n_kfi.rotation.y = quat.y
-                n_kfi.rotation.z = quat.z
-                n_kfi.rotation.w = quat.w
-            # ignore scale for now...
-            n_kfi.scale = 1.0
-            # done!
-            return
-
-        # add the keyframe data
-        if self.nif_export.version < 0x0A020000:
-            n_kfd = block_store.create_block("NiKeyframeData", exp_fcurves)
-            n_kfc.data = n_kfd
-        else:
-            # number of frames is > 1, so add transform data
-            n_kfd = block_store.create_block("NiTransformData", exp_fcurves)
-            n_kfi.data = n_kfd
-
-        # TODO [animation] support other interpolation modes, get interpolation from blender?
-        #                  probably requires additional data like tangents and stuff
-
-        # save all nif keys
-        if euler_curve:
-            n_kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
-            n_kfd.num_rotation_keys = 1  # *NOT* len(frames) this crashes the engine!
-            for i, coord in enumerate(n_kfd.xyz_rotations):
-                coord.num_keys = len(euler_curve)
-                coord.interpolation = NifFormat.KeyType.LINEAR_KEY
-                coord.keys.update_size()
-                for key, (frame, euler) in zip(coord.keys, euler_curve):
-                    key.time = frame / self.fps
-                    key.value = euler[i]
-        elif quat_curve:
-            n_kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
-            n_kfd.num_rotation_keys = len(quat_curve)
-            n_kfd.quaternion_keys.update_size()
-            for key, (frame, quat) in zip(n_kfd.quaternion_keys, quat_curve):
-                key.time = frame / self.fps
-                key.value.w = quat.w
-                key.value.x = quat.x
-                key.value.y = quat.y
-                key.value.z = quat.z
-
-        n_kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
-        n_kfd.translations.num_keys = len(trans_curve)
-        n_kfd.translations.keys.update_size()
-        for key, (frame, trans) in zip(n_kfd.translations.keys, trans_curve):
-            key.time = frame / self.fps
-            key.value.x, key.value.y, key.value.z = trans
-
-        n_kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
-        n_kfd.scales.num_keys = len(scale_curve)
-        n_kfd.scales.keys.update_size()
-        for key, (frame, scale) in zip(n_kfd.scales.keys, scale_curve):
-            key.time = frame / self.fps
-            key.value = scale
-
-    def export_text_keys(self, block_parent):
-        """Parse the animation groups buffer and write an extra string data block,
-        and attach it to an existing block (typically, the root of the nif tree)."""
+    def export_text_keys(self, b_action):
+        """Process b_action's pose markers and return an extra string data block."""
         if NifOp.props.animation == 'GEOM_NIF':
             # animation group extra data is not present in geometry only files
             return
-        anim = "Anim"
-        if anim not in bpy.data.texts:
-            return
-        anim_txt = bpy.data.texts[anim]
         NifLog.info("Exporting animation groups")
-        # -> get animation groups information
 
-        # parse the anim text descriptor
+        self.add_dummy_markers(b_action)
 
-        # the format is:
-        # frame/string1[/string2[.../stringN]]
-
-        # example:
-        # 001/Idle: Start/Idle: Stop/Idle2: Start/Idle2: Loop Start
-        # 051/Idle2: Stop/Idle3: Start
-        # 101/Idle3: Loop Start/Idle3: Stop
-
-        slist = anim_txt.asLines()
-        flist = []
-        dlist = []
-        for s in slist:
-            # ignore empty lines
-            if not s:
-                continue
-            # parse line
-            t = s.split('/')
-            if len(t) < 2:
-                raise nif_utils.NifError("Syntax error in Anim buffer ('{0}')".format(s))
-            f = int(t[0])
-            if (f < bpy.context.scene.frame_start) or (f > bpy.context.scene.frame_end):
-                NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(
-                    str(f), str(bpy.context.scene.frame_start), str(bpy.context.scene.frame_end)))
-            d = t[1].strip()
-            for i in range(2, len(t)):
-                d = d + '\r\n' + t[i].strip()
-            # print 'frame %d'%f + ' -> \'%s\''%d # debug
-            flist.append(f)
-            dlist.append(d)
-
-        # -> now comes the real export
-
-        # add a NiTextKeyExtraData block, and refer to this block in the
-        # parent node (we choose the root block)
-        n_text_extra = block_store.create_block("NiTextKeyExtraData", anim_txt)
-        block_parent.add_extra_data(n_text_extra)
+        # add a NiTextKeyExtraData block
+        n_text_extra = block_store.create_block("NiTextKeyExtraData", b_action.pose_markers)
 
         # create a text key for each frame descriptor
-        n_text_extra.num_text_keys = len(flist)
+        n_text_extra.num_text_keys = len(b_action.pose_markers)
         n_text_extra.text_keys.update_size()
-        for i, key in enumerate(n_text_extra.text_keys):
-            key.time = flist[i] / self.fps
-            key.value = dlist[i]
+        f0, f1 = b_action.frame_range
+        for key, marker in zip(n_text_extra.text_keys, b_action.pose_markers):
+            f = marker.frame
+            if (f < f0) or (f > f1):
+                NifLog.warn("Marker out of animated range ({0} not between [{1}, {2}])".format(
+                    f, f0, f1))
+
+            key.time = f / self.fps
+            key.value = marker.name.replace('/', '\r\n')
 
         return n_text_extra

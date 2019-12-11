@@ -106,7 +106,6 @@ class NifImport(NifCommon):
             # calculate and set frames per second
             if NifOp.props.animation:
                 self.animationhelper.set_frames_per_second(NifData.data.roots)
-                # + (self.kfdata.roots if self.kfdata else []) )
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -183,8 +182,8 @@ class NifImport(NifCommon):
         self.armaturehelper.mark_armatures_bones(root_block)
 
         # import the keyframe notes
-        if NifOp.props.animation:
-            self.animationhelper.import_text_keys(root_block)
+        # if NifOp.props.animation:
+        #     self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
         self.active_obj_name = ""
@@ -325,9 +324,9 @@ class NifImport(NifCommon):
 
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:
-                    self.animationhelper.import_text_keys(n_block)
-                    self.animationhelper.armature_animation.import_object_animation(n_block, b_obj)
-                    self.animationhelper.object_animation.import_object_vis_controller(n_block, b_obj)
+                    # self.animationhelper.import_text_keys(n_block)
+                    self.animationhelper.transform.import_transforms(n_block, b_obj)
+                    self.animationhelper.object_animation.import_visibility(n_block, b_obj)
 
             return b_obj
         # all else is currently discarded

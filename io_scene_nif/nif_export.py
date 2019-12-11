@@ -108,7 +108,6 @@ class NifExport(NifCommon):
 
         block_store.block_to_obj = {}  # clear out previous iteration
 
-        self.dict_bone_priorities = {}
         self.dict_materials = {}
         self.dict_textures = {}
 
@@ -159,18 +158,44 @@ class NifExport(NifCommon):
             if NifOp.props.smooth_object_seams:
                 self.objecthelper.mesh_helper.smooth_mesh_seams(self.exportable_objects)
 
-            # TODO: use Blender actions for animation groups
-            # check for animation groups definition in a text buffer 'Anim'
-            try:
-                animtxt = None  # Changed for testing needs fix bpy.data.texts["Anim"]
-            except NameError:
-                animtxt = None
-
+            prefix = ""
             NifLog.info("Exporting")
+            if NifOp.props.animation == 'ALL_NIF':
+                NifLog.info("Exporting geometry and animation")
+            elif NifOp.props.animation == 'GEOM_NIF':
+                # for morrowind: everything except keyframe controllers
+                NifLog.info("Exporting geometry only")
+            elif NifOp.props.animation == 'ANIM_KF':
+                # for morrowind: only keyframe controllers
+                NifLog.info("Exporting animation only (as .kf file)")
+            elif NifOp.props.animation == 'ALL_NIF_XNIF_XKF':
+                prefix = "x"
+                NifLog.info("Exporting geometry and animation in xnif-style")
 
             # find nif version to write
             self.version, data = scene_export.get_version_data()
 
+            # write external animation to a KF tree
+            if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
+                NifLog.info("Creating keyframe tree")
+                kf_root = self.animationhelper.export_kf_root(b_armature)
+
+                # write kf (and xkf if asked)
+                ext = ".kf"
+                NifLog.info("Writing {0} file".format(prefix + ext))
+
+                kffile = os.path.join(directory, prefix + filebase + ext)
+                data.roots = [kf_root]
+                data.neosteam = (NifOp.props.game == 'NEOSTEAM')
+                with open(kffile, "wb") as stream:
+                    data.write(stream)
+                # if only anim, no need to do the time consuming nif export
+                if NifOp.props.animation == 'ANIM_KF':
+                    # clear progress bar
+                    NifLog.info("Finished")
+                    return {'FINISHED'}
+
+            
             # export the actual root node (the name is fixed later to avoid confusing the
             # exporter with duplicate names)
             root_block = self.objecthelper.export_root_node(filebase)
@@ -178,27 +203,10 @@ class NifExport(NifCommon):
             # post-processing:
             # ----------------
 
-            # if we exported animations, but no animation groups are defined,
-            # define a default animation group
-            NifLog.info("Checking animation groups")
-            if not animtxt:
-                has_controllers = False
-                for block in block_store.block_to_obj:
-                    # has it a controller field?
-                    if isinstance(block, NifFormat.NiObjectNET):
-                        if block.controller:
-                            has_controllers = True
-                            break
-                if has_controllers:
-                    NifLog.info("Defining default animation group.")
-                    # write the animation group text buffer
-                    animtxt = bpy.data.texts.new("Anim")
-                    animtxt.write("{0}/Idle: Start/Idle: Loop Start\n{0}/Idle: Loop Stop/Idle: Stop".format(bpy.context.scene.frame_start, bpy.context.scene.frame_end))
-
-            # animations without keyframe animations crash the TESCS
-            # if we are in that situation, add a trivial keyframe animation
             NifLog.info("Checking controllers")
-            if animtxt and NifOp.props.game == 'MORROWIND':
+            if NifOp.props.game == 'MORROWIND':
+                # animations without keyframe animations crash the TESCS
+                # if we are in that situation, add a trivial keyframe animation
                 has_keyframecontrollers = False
                 for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.NiKeyframeController):
@@ -207,19 +215,19 @@ class NifExport(NifCommon):
                 if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.export_keyframes(root_block)
+                    self.animationhelper.create_controller(root_block, root_block.name)
 
-            if NifOp.props.bs_animation_node and NifOp.props.game == 'MORROWIND':
-                for block in block_store.block_to_obj:
-                    if isinstance(block, NifFormat.NiNode):
-                        # if any of the shape children has a controller or if the ninode has a controller convert its type
-                        if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
-                            new_block = NifFormat.NiBSAnimationNode().deepcopy(block)
-                            # have to change flags to 42 to make it work
-                            new_block.flags = 42
-                            root_block.replace_global_node(block, new_block)
-                            if root_block is block:
-                                root_block = new_block
+                if NifOp.props.bs_animation_node:
+                    for block in block_store.block_to_obj:
+                        if isinstance(block, NifFormat.NiNode):
+                            # if any of the shape children has a controller or if the ninode has a controller convert its type
+                            if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
+                                new_block = NifFormat.NiBSAnimationNode().deepcopy(block)
+                                # have to change flags to 42 to make it work
+                                new_block.flags = 42
+                                root_block.replace_global_node(block, new_block)
+                                if root_block is block:
+                                    root_block = new_block
 
             # oblivion skeleton export: check that all bones have a transform controller and transform interpolator
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
@@ -227,41 +235,27 @@ class NifExport(NifCommon):
                 # TODO [armature] Extract out to armature animation
                 # here comes everything that is Oblivion skeleton export specific
                 NifLog.info("Adding controllers and interpolators for skeleton")
-                for block in list(block_store.block_to_obj.keys()):
-                    if isinstance(block, NifFormat.NiNode) and block.name.decode() == "Bip01":
-                        for bone in block.tree(block_type = NifFormat.NiNode):
-                            ctrl = block_store.create_block("NiTransformController")
-                            interp = block_store.create_block("NiTransformInterpolator")
-
-                            ctrl.interpolator = interp
-                            bone.add_controller(ctrl)
-
-                            ctrl.flags = 12
-                            ctrl.frequency = 1.0
-                            ctrl.phase = 0.0
-                            ctrl.start_time = self.FLOAT_MAX
-                            ctrl.stop_time = self.FLOAT_MIN
-                            interp.translation.x = bone.translation.x
-                            interp.translation.y = bone.translation.y
-                            interp.translation.z = bone.translation.z
-                            scale, quat = bone.rotation.get_scale_quat()
-                            interp.rotation.x = quat.x
-                            interp.rotation.y = quat.y
-                            interp.rotation.z = quat.z
-                            interp.rotation.w = quat.w
-                            interp.scale = bone.scale
+                # note: block_store.block_to_obj changes during iteration, so need list copy
+                for n_block in list(block_store.block_to_obj.keys()):
+                    if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
+                        for n_bone in n_block.tree(block_type = NifFormat.NiNode):
+                            n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(n_bone, n_bone.name.decode() )
+                            # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
+                            n_kfc.flags = 12
+                            n_kfc.frequency = 1.0
+                            n_kfc.phase = 0.0
+                            n_kfc.start_time = self.FLOAT_MAX
+                            n_kfc.stop_time = self.FLOAT_MIN
             else:
                 # here comes everything that should be exported EXCEPT for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
-                if animtxt:
-                    # TODO: removed temorarily to process bseffectshader export
-                    anim_textextra = None  # self.animation_helper.export_text_keys(root_block)
-                else:
-                    anim_textextra = None
+                # anim_textextra = self.animation_helper.export_text_keys(b_action)
+                pass
+
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
             # note: block_store.block_to_obj changes during iteration, so need list copy
-            for block in list(block_store.block_to_obj):
+            for block in list(block_store.block_to_obj.keys()):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
                         if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
@@ -281,8 +275,8 @@ class NifExport(NifCommon):
                             block.sub_shapes[i] = coltf
 
             # export constraints
-            for b_obj in self.objecthelper.get_exported_objects():
-                if isinstance(b_obj, bpy.types.Object) and b_obj.constraints:
+            for b_obj in self.exportable_objects:
+                if b_obj.constraints:
                     self.constrainthelper.export_constraints(b_obj, root_block)
 
             # add vertex color and zbuffer properties for civ4 and railroads
@@ -323,8 +317,6 @@ class NifExport(NifCommon):
             # apply scale
             if abs(NifOp.props.scale_correction_export) > NifOp.props.epsilon:
                 NifLog.info("Applying scale correction {0}".format(str(NifOp.props.scale_correction_export)))
-                # TODO [object] Fix scale to use NifData
-                data = NifFormat.Data()
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
                 toaster.scale = NifOp.props.scale_correction_export
@@ -347,215 +339,30 @@ class NifExport(NifCommon):
                         if any(sub_shape.layer != 1 for sub_shape in block.shape.sub_shapes):
                             NifLog.warn("Mopps for non-static objects may not function correctly in-game. You may wish to use simple primitives for collision.")
 
-            if NifOp.props.animation == 'ALL_NIF':
-                NifLog.info("Exporting geometry and animation")
-            elif NifOp.props.animation == 'GEOM_NIF':
-                # for morrowind: everything except keyframe controllers
-                NifLog.info("Exporting geometry only")
-            elif NifOp.props.animation == 'ANIM_KF':
-                # for morrowind: only keyframe controllers
-                NifLog.info("Exporting animation only (as .kf file)")
-
             # export nif file:
             # ----------------
-            if NifOp.props.animation != 'ANIM_KF':
-                if NifOp.props.game == 'EMPIRE_EARTH_II':
-                    ext = ".nifcache"
-                else:
-                    ext = ".nif"
-                NifLog.info("Writing {0} file".format(ext))
-
-                # make sure we have the right file extension
-                if fileext.lower() != ext:
-                    NifLog.warn("Changing extension from {0} to {1} on output file".format(fileext, ext))
-                niffile = os.path.join(directory, filebase + ext)
-
-                data.roots = [root_block]
-                if NifOp.props.game == 'NEOSTEAM':
-                    data.modification = "neosteam"
-                elif NifOp.props.game == 'ATLANTICA':
-                    data.modification = "ndoors"
-                elif NifOp.props.game == 'HOWLING_SWORD':
-                    data.modification = "jmihs1"
-                with open(niffile, "wb") as stream:
-                    data.write(stream)
-
-            # create and export keyframe file and xnif file:
-            # ----------------------------------------------
-
-            # convert root_block tree into a keyframe tree
-            if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
-                NifLog.info("Creating keyframe tree")
-                # find all nodes and relevant controllers
-                node_kfctrls = {}
-                for node in root_block.tree():
-                    if not isinstance(node, NifFormat.NiAVObject):
-                        continue
-                    # get list of all controllers for this node
-                    ctrls = node.get_controllers()
-                    for ctrl in ctrls:
-                        if NifOp.props.game == 'MORROWIND':
-                            # morrowind: only keyframe controllers
-                            if not isinstance(ctrl, NifFormat.NiKeyframeController):
-                                continue
-                        if node not in node_kfctrls:
-                            node_kfctrls[node] = []
-                        node_kfctrls[node].append(ctrl)
-
-                # morrowind
-                if NifOp.props.game in ('MORROWIND', 'FREEDOM_FORCE'):
-                    # create kf root header
-                    kf_root = block_store.create_block("NiSequenceStreamHelper")
-                    kf_root.add_extra_data(anim_textextra)
-                    # reparent controller tree
-                    for node, ctrls in node_kfctrls.items():
-                        for ctrl in ctrls:
-                            # create node reference by name
-                            nodename_extra = block_store.create_block("NiStringExtraData")
-                            nodename_extra.bytes_remaining = len(node.name) + 4
-                            nodename_extra.string_data = node.name
-
-                            # break the controller chain
-                            ctrl.next_controller = None
-
-                            # add node reference and controller
-                            kf_root.add_extra_data(nodename_extra)
-                            kf_root.add_controller(ctrl)
-                            # wipe controller target
-                            ctrl.target = None
-
-                # oblivion
-                elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
-                    # TODO [animation] allow for object kf only
-
-                    # create kf root header
-                    kf_root = block_store.create_block("NiControllerSequence")
-                    kf_root.name = filebase
-                    kf_root.unknown_int_1 = 1
-                    kf_root.weight = 1.0
-                    kf_root.text_keys = anim_textextra
-                    kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
-                    kf_root.frequency = 1.0
-                    kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
-                    kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
-
-                    # quick hack to set correct target name
-                    if "Bip01" in b_armature.data.bones:
-                        targetname = "Bip01"
-                    elif "Bip02" in b_armature.data.bones:
-                        targetname = "Bip02"
-                    else:
-                        targetname = root_block.name
-                    kf_root.target_name = targetname
-                    kf_root.string_palette = NifFormat.NiStringPalette()
-
-                    # per-node animation
-                    if b_armature:
-                        for b_bone in b_armature.data.bones:
-                            self.animationhelper.export_keyframes(kf_root, b_armature, b_bone)
-
-                    # per-object animation
-                    else:
-                        for b_obj in bpy.data.objects:
-                            self.animationhelper.export_keyframes(kf_root, b_obj)
-
-                    '''
-                    # for node, ctrls in zip(iter(node_kfctrls.keys()), iter(node_kfctrls.values())):
-                        # # export a block for every interpolator in every controller
-                        # for ctrl in ctrls:
-                            # # XXX add get_interpolators to pyffi interface
-                            # if isinstance(ctrl, NifFormat.NiSingleInterpController):
-                                # interpolators = [ctrl.interpolator]
-                            # elif isinstance( ctrl, (NifFormat.NiGeomMorpherController, NifFormat.NiMorphWeightsController)):
-                                # interpolators = ctrl.interpolators
-
-                            # if isinstance(ctrl, NifFormat.NiGeomMorpherController):
-                                # variable_2s = [morph.frame_name for morph in ctrl.data.morphs]
-                            # else:
-                                # variable_2s = [None for interpolator in interpolators]
-                            # for interpolator, variable_2 in zip(interpolators, variable_2s):
-                                # # create ControlledLink for each interpolator
-                                # controlledblock = kf_root.add_controlled_block()
-                                # if self.version < 0x0A020000:
-                                    # # older versions need the actual controller blocks
-                                    # controlledblock.target_name = node.name
-                                    # controlledblock.controller = ctrl
-                                    # # erase reference to target node
-                                    # ctrl.target = None
-                                # else:
-                                    # # newer versions need the interpolator blocks
-                                    # controlledblock.interpolator = interpolator
-                                # # get bone animation priority (previously fetched from the constraints during export_bones)
-                                # if not node.name in self.dict_bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
-                                    # if self.EXPORT_ANIMPRIORITY != 0:
-                                        # priority = self.EXPORT_ANIMPRIORITY
-                                    # else:
-                                        # priority = 26
-                                        # NifLog.warn("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
-                                # else:
-                                    # priority = self.dict_bone_priorities[node.name]
-                                # controlledblock.priority = priority
-                                # # set palette, and node and controller type names, and variables
-                                # controlledblock.string_palette = kf_root.string_palette
-                                # controlledblock.set_node_name(node.name)
-                                # controlledblock.set_controller_type(ctrl.__class__.__name__)
-                                # if variable_2:
-                                    # controlledblock.set_variable_2(variable_2)
-                    '''
-                else:
-                    raise nif_utils.NifError("Keyframe export for '%s' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
-                                             " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % NifOp.props.game)
-
-                # write kf (and xnif if asked)
-                prefix = "" if (NifOp.props.animation != 'ALL_NIF_XNIF_XKF') else "x"
-
-                ext = ".kf"
-                NifLog.info("Writing {0} file".format(prefix + ext))
-
-                kffile = os.path.join(directory, prefix + filebase + ext)
-                data.roots = [kf_root]
-                data.neosteam = (NifOp.props.game == 'NEOSTEAM')
-                stream = open(kffile, "wb")
-                try:
-                    data.write(stream)
-                finally:
-                    stream.close()
-
-            if NifOp.props.animation == 'ALL_NIF_XNIF_XKF':
-                NifLog.info("Detaching keyframe controllers from nif")
-                # detach the keyframe controllers from the nif (for xnif)
-                for node in root_block.tree():
-                    if not isinstance(node, NifFormat.NiNode):
-                        continue
-                    # remove references to keyframe controllers from node
-                    # (for xnif)
-                    while isinstance(node.controller, NifFormat.NiKeyframeController):
-                        node.controller = node.controller.next_controller
-                    ctrl = node.controller
-                    while ctrl:
-                        if isinstance(ctrl.next_controller, NifFormat.NiKeyframeController):
-                            ctrl.next_controller = ctrl.next_controller.next_controller
-                        else:
-                            ctrl = ctrl.next_controller
-
-                NifLog.info("Detaching animation text keys from nif")
-                # detach animation text keys
-                if root_block.extra_data is not anim_textextra:
-                    raise RuntimeError("Oops, you found a bug! Animation extra data wasn't where expected...")
-                root_block.extra_data = None
-
-                prefix = "x"  # we are in morrowind 'nifxnifkf mode'
+            if NifOp.props.game == 'EMPIRE_EARTH_II':
+                ext = ".nifcache"
+            else:
                 ext = ".nif"
-                NifLog.info("Writing {0} file" .format(prefix + ext))
+            NifLog.info("Writing {0} file".format(ext))
 
-                xniffile = os.path.join(directory, prefix + filebase + ext)
-                data.roots = [root_block]
-                data.neosteam = (NifOp.props.game == 'NEOSTEAM')
-                stream = open(xniffile, "wb")
-                try:
-                    data.write(stream)
-                finally:
-                    stream.close()
+            # make sure we have the right file extension
+            if fileext.lower() != ext:
+                NifLog.warn("Changing extension from {0} to {1} on output file".format(fileext, ext))
+            niffile = os.path.join(directory, prefix + filebase + ext)
+
+            data.roots = [root_block]
+            # todo [export] I believe this is redundant and setting modification only is the current way?
+            data.neosteam = (NifOp.props.game == 'NEOSTEAM')
+            if NifOp.props.game == 'NEOSTEAM':
+                data.modification = "neosteam"
+            elif NifOp.props.game == 'ATLANTICA':
+                data.modification = "ndoors"
+            elif NifOp.props.game == 'HOWLING_SWORD':
+                data.modification = "jmihs1"
+            with open(niffile, "wb") as stream:
+                data.write(stream)
 
             # export egm file:
             # -----------------
@@ -564,11 +371,8 @@ class NifExport(NifCommon):
                 NifLog.info("Writing {0} file".format(ext))
 
                 egmfile = os.path.join(directory, filebase + ext)
-                stream = open(egmfile, "wb")
-                try:
+                with open(egmfile, "wb") as stream:
                     EGMData.data.write(stream)
-                finally:
-                    stream.close()
         finally:
             # clear progress bar
             NifLog.info("Finished")
