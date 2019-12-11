@@ -110,28 +110,23 @@ def import_matrix(n_block, relative_to=None):
     return mathutils.Matrix(n_block.get_transform(relative_to).as_list()).transposed()
 
 
-def decompose_srt(matrix):
-    """Decompose Blender transform matrix as a scale, rotation matrix, and
-    translation vector."""
+def decompose_srt(b_matrix):
+    """Decompose Blender transform matrix as a scale, 4x4 rotation matrix, and translation vector."""
 
     # get matrix components
-    trans_vec, rot_quat, scale_vec = matrix.decompose()
-
-    # obtain a combined scale and rotation matrix to test determinate
+    trans_vec, rot_quat, scale_vec = b_matrix.decompose()
     rotmat = rot_quat.to_matrix()
-    scalemat = mathutils.Matrix(((scale_vec[0], 0.0, 0.0),
-                                 (0.0, scale_vec[1], 0.0),
-                                 (0.0, 0.0, scale_vec[2])))
-    scale_rot = scalemat * rotmat
 
-    # and fix their sign
-    if scale_rot.determinant() < 0:
-        scale_vec.negate()
+    # todo [armature] negative scale is not generated on armature end
+    #                 no need to run costly operations here for now
+    # and fix the sign of scale
+    # if b_matrix.determinant() < 0:
+    #     scale_vec.negate()
 
     # only uniform scaling allow rather large error to accommodate some nifs
     if abs(scale_vec[0] - scale_vec[1]) + abs(scale_vec[1] - scale_vec[2]) > 0.02:
         NifLog.warn("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
-    return [scale_vec[0], rotmat, trans_vec]
+    return scale_vec[0], rotmat.to_4x4(), trans_vec
 
 
 def find_property(n_block, property_type):

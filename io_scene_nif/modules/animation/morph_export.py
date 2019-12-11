@@ -48,6 +48,8 @@ from io_scene_nif.utility.util_logging import NifLog
 class MorphAnimation:
 
     def export_morph_animation(self, b_mesh, key, trishape, num_verts, vertmap):
+        # todo [anim/morph] fix me, still uses 2.49 API!
+
         # regular morph_data export
         # (there must be a shape ipo)
         keyipo = key.ipo

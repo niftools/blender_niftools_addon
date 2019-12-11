@@ -90,7 +90,7 @@ class Armature:
             # the property is only available from object mode!
             self.nif_import.objecthelper.store_longname(b_bone, n_block.name.decode())
             if NifOp.props.animation:
-                self.nif_import.animationhelper.armature_animation.import_bone_animation(n_block, b_armature_obj, bone_name)
+                self.nif_import.animationhelper.transform.import_transforms(n_block, b_armature_obj, bone_name)
 
         return b_armature_obj
 
