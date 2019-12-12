@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 from io_scene_nif.modules.geometry.mesh.vertex_import import Vertex
+from io_scene_nif.modules.property.property_import import MeshProperty
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
@@ -405,16 +406,6 @@ class NifImport(NifCommon):
         b_empty.niftools.objectflags = n_block.flags
         return b_empty
 
-    def import_stencil_property(self, n_mesh, b_mesh):
-        """ Imports a NiStencilProperty attached to n_mesh """
-        # Stencil (for double sided meshes)
-        n_stencil_prop = nif_utils.find_property(n_mesh, NifFormat.NiStencilProperty)
-        # we don't check flags for now, nothing fancy
-        if n_stencil_prop:
-            b_mesh.show_double_sided = True
-        else:
-            b_mesh.show_double_sided = False
-
     def import_mesh(self, n_block, group_mesh=None, applytransform=False):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh.
@@ -482,7 +473,7 @@ class NifImport(NifCommon):
         '''
         Properties
         '''
-        self.import_stencil_property(n_block, b_mesh)
+        MeshProperty.import_stencil_property(n_block, b_mesh)
 
         # Material
         # note that NIF files only support one material for each trishape
