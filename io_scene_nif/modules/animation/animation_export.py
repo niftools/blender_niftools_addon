@@ -43,6 +43,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.material_export import MaterialAnimation
 from io_scene_nif.modules.animation.transform_export import TransformAnimation
+from io_scene_nif.modules.animation.morph_export import MorphAnimation
 from io_scene_nif.modules.animation.object_export import ObjectAnimation
 from io_scene_nif.modules.animation.texture_export import TextureAnimation
 from io_scene_nif.modules.object.block_registry import block_store
@@ -51,48 +52,48 @@ from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp
 
 
-def set_flags_and_timing(kfc, exp_fcurves, start_frame=None, stop_frame=None):
-    # fill in the non-trivial values
-    kfc.flags = 8  # active
-    kfc.flags |= get_flags_from_fcurves(exp_fcurves)
-    kfc.frequency = 1.0
-    kfc.phase = 0.0
-    if not start_frame and not stop_frame:
-        start_frame, stop_frame = exp_fcurves[0].range()
-    # todo [anim] this is a hack, move to scene
-    kfc.start_time = start_frame / Animation.fps
-    kfc.stop_time = stop_frame / Animation.fps
-
-
-def get_flags_from_fcurves(fcurves):
-    # see if there are cyclic extrapolation modifiers on exp_fcurves
-    cyclic = False
-    for fcu in fcurves:
-        # sometimes fcurves can include empty fcurves - see uv controller export
-        if fcu:
-            for mod in fcu.modifiers:
-                if mod.type == "CYCLES":
-                    cyclic = True
-                    break
-    if cyclic:
-        return 0
-    else:
-        return 4  # 0b100
-
 
 class Animation:
 
-    # todo [anim] this is a hack, move to scene
-    fps = 30
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.obj_anim = ObjectAnimation()
-        self.mat_anim = MaterialAnimation()
+        self.obj_anim = ObjectAnimation(self)
+        self.mat_anim = MaterialAnimation(self)
         self.txt_anim = TextureAnimation(parent)
         self.transform = TransformAnimation(parent)
+        self.morph = MorphAnimation(self)
+        # todo [scene / anim] move to scene?
         self.fps = bpy.context.scene.render.fps
 
+    def set_flags_and_timing(self, kfc, exp_fcurves, start_frame=None, stop_frame=None):
+        # fill in the non-trivial values
+        kfc.flags = 8  # active
+        kfc.flags |= self.get_flags_from_fcurves(exp_fcurves)
+        kfc.frequency = 1.0
+        kfc.phase = 0.0
+        if not start_frame and not stop_frame:
+            start_frame, stop_frame = exp_fcurves[0].range()
+        # todo [anim] this is a hack, move to scene
+        kfc.start_time = start_frame / self.fps
+        kfc.stop_time = stop_frame / self.fps
+
+    @staticmethod
+    def get_flags_from_fcurves(fcurves):
+        # see if there are cyclic extrapolation modifiers on exp_fcurves
+        cyclic = False
+        for fcu in fcurves:
+            # sometimes fcurves can include empty fcurves - see uv controller export
+            if fcu:
+                for mod in fcu.modifiers:
+                    if mod.type == "CYCLES":
+                        cyclic = True
+                        break
+        if cyclic:
+            return 0
+        else:
+            return 4  # 0b100
+        
     def get_active_action(self, b_obj):
         # check if the blender object has a non-empty action assigned to it
         if b_obj.animation_data and b_obj.animation_data.action:

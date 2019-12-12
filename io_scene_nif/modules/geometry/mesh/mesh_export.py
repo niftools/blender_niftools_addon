@@ -41,9 +41,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.animation.animation_export import Animation
 from io_scene_nif.modules.geometry import mesh
-from io_scene_nif.modules.geometry.morph.morph_export import Morph
 from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.texture.texture_export import Texture
@@ -58,8 +56,6 @@ class Mesh:
     def __init__(self, parent):
         self.nif_export = parent
         self.texture_helper = Texture()
-        self.animation_helper = Animation(parent=self)
-        self.morph_helper = Morph()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """
@@ -383,7 +379,7 @@ class Mesh:
                 trishape.add_property(trimatprop)
 
                 # material animation
-                self.animation_helper.mat_anim.export_material(b_mat, trishape)
+                self.nif_export.animationhelper.mat_anim.export_material(b_mat, trishape)
 
             # -> now comes the real export
 
@@ -794,7 +790,10 @@ class Mesh:
                         del vert_weights
                         del vert_added
 
-            self.morph_helper.export_morph(b_mesh, b_obj, tridata, trishape, vertlist, vertmap)
+            # fix data consistency type
+            tridata.consistency_flags = b_obj.niftools.consistency_flags
+            # export EGM or NiGeomMorpherController animation
+            self.nif_export.animationhelper.morph.export_morph(b_mesh, trishape, vertmap)
         return trishape
 
     def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
