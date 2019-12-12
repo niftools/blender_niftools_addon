@@ -36,7 +36,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.geometry.morph.morph_import import Morph
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
@@ -69,7 +68,6 @@ class NifImport(NifCommon):
 
         # Helper systems
         self.animationhelper = Animation()
-        self.morph_helper = Morph()
         self.armaturehelper = Armature(parent=self)
         self.collisionhelper = Collision(parent=self)
         self.constrainthelper = Constraint(parent=self)
@@ -778,10 +776,10 @@ class NifImport(NifCommon):
 
         # import morph controller
         if NifOp.props.animation:
-            self.animationhelper.object_animation.import_morph_controller(n_block, b_obj, v_map)
+            self.animationhelper.morph.import_morph_controller(n_block, b_obj, v_map)
         # import facegen morphs
         if EGMData.data:
-            self.morph_helper.import_egm_morphs(b_obj, v_map, n_verts)
+            self.animationhelper.morph.import_egm_morphs(b_obj, v_map, n_verts)
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash
