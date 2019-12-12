@@ -54,28 +54,24 @@ class MorphAnimation:
         self.fps = bpy.context.scene.render.fps
         EGMData.data = None
 
-    def export_morph(self, b_mesh, b_obj, tridata, n_trishape, vertlist, vertmap):
+    def export_morph(self, b_mesh, n_trishape, vertmap):
         # shape b_key morphing
         b_key = b_mesh.shape_keys
-        if b_key:
-            if len(b_key.key_blocks) > 1:
-                        
-                # check that they are relative shape keys
-                if not b_key.use_relative:
-                    # XXX if we do "b_key.use_relative = True"
-                    # XXX would this automatically fix the keys?
-                    raise ValueError("Can only export relative shape keys.")
-                
-                # yes, there is a b_key object attached
-                # export as egm, or as morph_data?
-                if b_key.key_blocks[1].name.startswith("EGM"):
-                    # egm export!
-                    self.export_egm(b_key.key_blocks)
-                elif b_key.animation_data:
-                    self.export_morph_animation(b_mesh, b_key, n_trishape, len(vertlist), vertmap)
-
-                    # fix data consistency type
-                    tridata.consistency_flags = b_obj.niftools.consistency_flags
+        if b_key and len(b_key.key_blocks) > 1:
+            
+            # check that they are relative shape keys
+            if not b_key.use_relative:
+                # XXX if we do "b_key.use_relative = True"
+                # XXX would this automatically fix the keys?
+                raise ValueError("Can only export relative shape keys.")
+            
+            # yes, there is a b_key object attached
+            # export as egm, or as morph_data?
+            if b_key.key_blocks[1].name.startswith("EGM"):
+                # egm export!
+                self.export_egm(b_key.key_blocks)
+            elif b_key.animation_data:
+                self.export_morph_animation(b_mesh, b_key, n_trishape, vertmap)
 
     def export_egm(self, key_blocks):
         EGMData.data = EgmFormat.Data(num_vertices=len(key_blocks[0].data))
@@ -94,7 +90,7 @@ class MorphAnimation:
                 relative_vertices.append(key_vert - vert)
             morph.set_relative_vertices(relative_vertices)
 
-    def export_morph_animation(self, b_mesh, b_key, n_trishape, num_verts, vertmap):
+    def export_morph_animation(self, b_mesh, b_key, n_trishape, vertmap):
         
         # regular morph_data export
         b_shape_action = self.animationhelper.get_active_action(b_key)
@@ -103,13 +99,13 @@ class MorphAnimation:
         morph_ctrl = block_store.create_block("NiGeomMorpherController", b_shape_action)
         morph_ctrl.target = n_trishape
         n_trishape.add_controller(morph_ctrl)
-
+        self.animationhelper.set_flags_and_timing(morph_ctrl, b_shape_action.fcurves, *b_shape_action.frame_range)
 
         # create geometry n_morph data
         morph_data = block_store.create_block("NiMorphData", b_shape_action)
         morph_ctrl.data = morph_data
         morph_data.num_morphs = len(b_key.key_blocks)
-        morph_data.num_vertices = num_verts
+        morph_data.num_vertices = n_trishape.data.num_vertices
         morph_data.morphs.update_size()
 
         # create interpolators (for newer nif versions)
@@ -129,20 +125,22 @@ class MorphAnimation:
             NifLog.info("Exporting n_morph {0}: vertices".format(key_block.name))
             n_morph.arg = morph_data.num_vertices
             n_morph.vectors.update_size()
-            for b_v_index, (vert_indices, vert) in enumerate(list(zip(vertmap, key_block.data))):
-                # vertmap check
-                if not vert_indices:
+            for b_v_index, (n_v_indices, b_vert) in enumerate(list(zip(vertmap, key_block.data))):
+                # see if this b_vert is used in the nif
+                if not n_v_indices:
                     continue
-                # copy vertex and assign n_morph vertex
-                mv = vert.co.copy()
+                # copy blender shapekey vertex
+                mv = b_vert.co.copy()
+                # make the consecutive keys relative to base shapekey
                 if key_block_num > 0:
                     mv.x -= b_mesh.vertices[b_v_index].co.x
                     mv.y -= b_mesh.vertices[b_v_index].co.y
                     mv.z -= b_mesh.vertices[b_v_index].co.z
-                for vert_index in vert_indices:
-                    n_morph.vectors[vert_index].x = mv.x
-                    n_morph.vectors[vert_index].y = mv.y
-                    n_morph.vectors[vert_index].z = mv.z
+                # update nif morph vectors
+                for n_v_index in n_v_indices:
+                    n_morph.vectors[n_v_index].x = mv.x
+                    n_morph.vectors[n_v_index].y = mv.y
+                    n_morph.vectors[n_v_index].z = mv.z
 
             # create interpolator for shape b_key (needs to be there even if there is no fcu)
             interpol = block_store.create_block("NiFloatInterpolator")
@@ -155,20 +153,18 @@ class MorphAnimation:
             # geometry only export has no float data also skip keys that have no fcu (such as base b_key)
             if NifOp.props.animation == 'GEOM_NIF' or not b_shape_action.fcurves:
                 continue
-
+            
+            # find fcurve that animates this shapekey's influence
             b_dtype = 'key_blocks["{}"].value'.format(key_block.name)
             fcurves = [fcu for fcu in b_shape_action.fcurves if b_dtype in fcu.data_path]
             if not fcurves:
                 continue
             fcu = fcurves[0]
-            # note: we set data on n_morph for older nifs and on floatdata for newer nifs
-            # of course only one of these will be actually written to the file
             NifLog.info("Exporting n_morph {0}: fcu".format(key_block.name))
             interpol.data = block_store.create_block("NiFloatData", fcu)
             n_floatdata = interpol.data.data
-            start_frame, stop_frame = b_shape_action.frame_range
-            self.animationhelper.set_flags_and_timing(morph_ctrl, fcurves, start_frame, stop_frame)
-
+            # note: we set data on n_morph for older nifs and on floatdata for newer nifs
+            # of course only one of these will be actually written to the file
             for n_data in (n_morph, n_floatdata):
                 n_data.interpolation = NifFormat.KeyType.LINEAR_KEY
                 n_data.num_keys = len(fcurves[0].keyframe_points)

@@ -790,7 +790,10 @@ class Mesh:
                         del vert_weights
                         del vert_added
 
-            self.nif_export.animationhelper.morph.export_morph(b_mesh, b_obj, tridata, trishape, vertlist, vertmap)
+            # fix data consistency type
+            tridata.consistency_flags = b_obj.niftools.consistency_flags
+            # export EGM or NiGeomMorpherController animation
+            self.nif_export.animationhelper.morph.export_morph(b_mesh, trishape, vertmap)
         return trishape
 
     def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
