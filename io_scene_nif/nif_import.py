@@ -36,6 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from io_scene_nif.modules.geometry.mesh.vertex_import import Vertex
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
@@ -576,6 +577,7 @@ class NifImport(NifCommon):
             if n_wire_prop:
                 b_obj.draw_type = 'WIRE'
             '''
+
         else:
             material = None
             materialIndex = 0
@@ -694,58 +696,10 @@ class NifImport(NifCommon):
             polysmooth = b_mesh.polygons[b_polysmooth_index]
             polysmooth.use_smooth = True if (n_norms or n_block.skin_instance) else False
             polysmooth.material_index = materialIndex
-        # vertex colors
 
-        if b_mesh.polygons and niData.vertex_colors:
-            n_vcol_map = list()
-            for n_vcol, n_vmap in zip(niData.vertex_colors, v_map):
-                n_vcol_map.append((n_vcol, n_vmap))
+        Vertex.map_vertex_colors(b_mesh, niData, v_map)
 
-            # create vertex_layers
-            if "VertexColor" not in b_mesh.vertex_colors:
-                b_mesh.vertex_colors.new(name="VertexColor")  # color layer
-                b_mesh.vertex_colors.new(name="VertexAlpha")  # greyscale
-
-            # Mesh Vertex Color / Mesh Face
-            for b_polygon_loop in b_mesh.loops:
-                b_loop_index = b_polygon_loop.index
-                vcol = b_mesh.vertex_colors["VertexColor"].data[b_loop_index]
-                vcola = b_mesh.vertex_colors["VertexAlpha"].data[b_loop_index]
-                for n_col_index, n_map_index in n_vcol_map:
-                    if n_map_index == b_polygon_loop.vertex_index:
-                        col_list = n_col_index
-                        vcol.color.r = col_list.r
-                        vcol.color.g = col_list.g
-                        vcol.color.b = col_list.b
-                        vcola.color.v = col_list.a
-            # vertex colors influence lighting...
-            # we have to set the use_vertex_color_light flag on the material, see below
-
-        # UV coordinates
-        # NIF files only support 'sticky' UV coordinates, and duplicates vertices to emulate hard edges and UV seam.
-        # So whenever a hard edge or a UV seam is present the mesh, vertices are duplicated.
-        # Blender only must duplicate vertices for hard edges; duplicating for UV seams would introduce unnecessary hard edges.
-
-        # only import UV if there are polygons
-        # (some corner cases have only one vertex, and no polygons,
-        # and b_mesh.faceUV = 1 on such mesh raises a runtime error)
-        if b_mesh.polygons:
-            for i in range(len(niData.uv_sets)):
-                # Set the face UV's for the mesh. The NIF format only supports vertex UV's, but Blender only allows explicit editing of face
-                # UV's, so load vertex UV's as face UV's
-                uvlayer = self.texturehelper.get_uv_layer_name(i)
-                if not uvlayer in b_mesh.uv_textures:
-                    b_mesh.uv_textures.new(uvlayer)
-                uvl = b_mesh.uv_layers[uvlayer].data[:]
-                for b_f_index, f in enumerate(n_triangles):
-                    if b_f_index is None:
-                        continue
-                    v1, v2, v3 = f
-                    b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
-                    uvl[b_poly_index.loop_start].uv = n_uvco[i][v1]
-                    uvl[b_poly_index.loop_start + 1].uv = n_uvco[i][v2]
-                    uvl[b_poly_index.loop_start + 2].uv = n_uvco[i][v3]
-            b_mesh.uv_textures.active_index = 0
+        Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, niData)
 
         if material:
             # fix up vertex colors depending on whether we had textures in the material
