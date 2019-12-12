@@ -44,7 +44,6 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.animation import animation_export
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp
@@ -121,7 +120,7 @@ class TransformAnimation:
 
         # fill in the non-trivial values
         start_frame, stop_frame = b_action.frame_range
-        animation_export.set_flags_and_timing(n_kfc, exp_fcurves, start_frame, stop_frame)
+        self.nif_export.animationhelper.set_flags_and_timing(n_kfc, exp_fcurves, start_frame, stop_frame)
 
         # get the desired fcurves for each data type from exp_fcurves
         quaternions = [fcu for fcu in exp_fcurves if fcu.data_path.endswith("quaternion")]

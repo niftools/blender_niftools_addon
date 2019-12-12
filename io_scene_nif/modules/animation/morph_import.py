@@ -1,4 +1,4 @@
-"""This script contains classes to help import animations."""
+"""This script contains classes to help import morph animations as shape keys."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -36,12 +36,74 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from pyffi.formats.nif import NifFormat
 
+import bpy
+from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility.util_global import EGMData
 
+from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.util_logging import NifLog
 
-class Morph:
+
+class MorphAnimation:
+
+    def __init__(self, parent):
+        self.animationhelper = parent
+        self.fps = bpy.context.scene.render.fps
+
+    def import_morph_controller(self, n_node, b_obj, v_map):
+        """Import NiGeomMorpherController as shape keys for blender object."""
+
+        n_morphCtrl = nif_utils.find_controller(n_node, NifFormat.NiGeomMorpherController)
+        if n_morphCtrl:
+            b_mesh = b_obj.data
+            morphData = n_morphCtrl.data
+            if morphData.num_morphs:
+                # get name for base key
+                keyname = morphData.morphs[0].frame_name.decode()
+                if not keyname:
+                    keyname = 'Base'
+
+                # insert base key at frame 1, using relative keys
+                sk_basis = b_obj.shape_key_add(keyname)
+
+                # get base vectors and import all morphs
+                baseverts = morphData.morphs[0].vectors
+
+                shape_action = self.animationhelper.create_action(b_obj.data.shape_keys, b_obj.name + "-Morphs")
+                
+                for idxMorph in range(1, morphData.num_morphs):
+                    # get name for key
+                    keyname = morphData.morphs[idxMorph].frame_name.decode()
+                    if not keyname:
+                        keyname = 'Key %i' % idxMorph
+                    NifLog.info("Inserting key '{0}'".format(keyname))
+                    # get vectors
+                    morph_verts = morphData.morphs[idxMorph].vectors
+                    self.morph_mesh(b_mesh, baseverts, morph_verts, v_map)
+                    shape_key = b_obj.shape_key_add(keyname, from_mix=False)
+
+                    # first find the keys
+                    # older versions store keys in the morphData
+                    morph_data = morphData.morphs[idxMorph]
+                    # newer versions store keys in the controller
+                    if not morph_data.keys:
+                        try:
+                            if n_morphCtrl.interpolators:
+                                morph_data = n_morphCtrl.interpolators[idxMorph].data.data
+                            elif n_morphCtrl.interpolator_weights:
+                                morph_data = n_morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
+                        except KeyError:
+                            NifLog.info("Unsupported interpolator '{0}'".format(type(n_morphCtrl.interpolator_weights[idxMorph].interpolator)))
+                            continue
+                        
+                    # get the interpolation mode
+                    interp = self.animationhelper.get_b_interp_from_n_interp( morph_data.interpolation)
+                    fcu = self.animationhelper.create_fcurves(shape_action, "value", (0,), flags=n_morphCtrl.flags, keyname=shape_key.name)
+                    
+                    # set keyframes
+                    for key in morph_data.keys:
+                        self.animationhelper.add_key(fcu, key.time, (key.value,), interp)
 
     def import_egm_morphs(self, b_obj, v_map, n_verts):
         """Import all EGM morphs as shape keys for blender object."""

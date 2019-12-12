@@ -43,6 +43,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.modules.animation.transform_import import TransformAnimation
 from io_scene_nif.modules.animation.object_import import ObjectAnimation
 from io_scene_nif.modules.animation.material_import import MaterialAnimation
+from io_scene_nif.modules.animation.morph_import import MorphAnimation
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
@@ -54,6 +55,7 @@ class Animation:
         self.object_animation = ObjectAnimation(self)
         self.material_animation = MaterialAnimation(self)
         self.transform = TransformAnimation(self)
+        self.morph = MorphAnimation(self)
         # set a dummy here, update via set_frames_per_second
         self.fps = 30
         self.show_pose_markers()
@@ -93,13 +95,16 @@ class Animation:
         b_obj.animation_data.action = b_action
         return b_action
 
-    def create_fcurves(self, action, dtype, drange, flags=None, bonename=None):
+    def create_fcurves(self, action, dtype, drange, flags=None, bonename=None, keyname=None):
         """ Create fcurves in action for desired conditions. """
         # armature pose bone animation
         if bonename:
             fcurves = [
                 action.fcurves.new(data_path='pose.bones["' + bonename + '"].' + dtype, index=i, action_group=bonename)
                 for i in drange]
+        # shapekey pose bone animation
+        elif keyname:
+            fcurves = [ action.fcurves.new(data_path='key_blocks["' + keyname + '"].' + dtype, index=0), ]
         else:
             # Object animation (non-skeletal) is lumped into the "LocRotScale" action_group
             if dtype in ("rotation_euler", "rotation_quaternion", "location", "scale"):
