@@ -72,12 +72,20 @@ class Morph:
         key = b_mesh.shape_keys
         if key:
             if len(key.key_blocks) > 1:
+                        
+                # check that they are relative shape keys
+                if not key.use_relative:
+                    # XXX if we do "key.use_relative = True"
+                    # XXX would this automatically fix the keys?
+                    raise ValueError("Can only export relative shape keys.")
+                
+                print(key.animation_data)
                 # yes, there is a key object attached
                 # export as egm, or as morph_data?
                 if key.key_blocks[1].name.startswith("EGM"):
                     # egm export!
                     self.export_egm(key.key_blocks)
-                elif key.ipo:
+                elif key.animation_data:
                     self.morph_animation.export_morph_animation(b_mesh, key, trishape, len(vertlist), vertmap)
 
                     # fix data consistency type

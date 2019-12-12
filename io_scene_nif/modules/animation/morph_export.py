@@ -49,19 +49,12 @@ class MorphAnimation:
 
     def export_morph_animation(self, b_mesh, key, trishape, num_verts, vertmap):
         # todo [anim/morph] fix me, still uses 2.49 API!
-
+        print("export_morph_animation")
         # regular morph_data export
-        # (there must be a shape ipo)
-        keyipo = key.ipo
-
-        # check that they are relative shape keys
-        if not key.relative:
-            # XXX if we do "key.relative = True"
-            # XXX would this automatically fix the keys?
-            raise ValueError("Can only export relative shape keys.")
+        anim_data = key.animation_data
 
         # create geometry morph controller
-        morph_ctrl = block_store.create_block("NiGeomMorpherController", keyipo)
+        morph_ctrl = block_store.create_block("NiGeomMorpherController", anim_data)
         morph_ctrl.target = trishape
         morph_ctrl.frequency = 1.0
         morph_ctrl.phase = 0.0
@@ -72,7 +65,7 @@ class MorphAnimation:
         ctrl_flags = 0x000c
 
         # create geometry morph data
-        morph_data = block_store.create_block("NiMorphData", keyipo)
+        morph_data = block_store.create_block("NiMorphData", anim_data)
         morph_ctrl.data = morph_data
         morph_data.num_morphs = len(key.key_blocks)
         morph_data.num_vertices = num_verts
@@ -100,7 +93,7 @@ class MorphAnimation:
                 if not vert_indices:
                     continue
                 # copy vertex and assign morph vertex
-                mv = vert.copy()
+                mv = vert.co.copy()
                 if key_block_num > 0:
                     mv.x -= b_mesh.vertices[b_v_index].co.x
                     mv.y -= b_mesh.vertices[b_v_index].co.y
@@ -111,7 +104,7 @@ class MorphAnimation:
                     morph.vectors[vert_index].z = mv.z
 
             # export ipo shape key curve
-            curve = keyipo[key_block.name]
+            curve = anim_data.action.fcurves[key_block.name]
 
             # create interpolator for shape key (needs to be there even if there is no curve)
             interpol = block_store.create_block("NiFloatInterpolator")
@@ -125,40 +118,40 @@ class MorphAnimation:
             if NifOp.props.animation == 'GEOM_NIF' or not curve:
                 continue
 
-            # note: we set data on morph for older nifs and on floatdata for newer nifs
-            # of course only one of these will be actually written to the file
-            NifLog.info("Exporting morph {0}: curve".format(key_block.name))
-            interpol.data = block_store.create_block("NiFloatData", curve)
-            floatdata = interpol.data.data
-            if curve.getExtrapolation() == "Constant":
-                ctrl_flags = 0x000c
-            elif curve.getExtrapolation() == "Cyclic":
-                ctrl_flags = 0x0008
+        #     # note: we set data on morph for older nifs and on floatdata for newer nifs
+        #     # of course only one of these will be actually written to the file
+        #     NifLog.info("Exporting morph {0}: curve".format(key_block.name))
+        #     interpol.data = block_store.create_block("NiFloatData", curve)
+        #     floatdata = interpol.data.data
+        #     if curve.getExtrapolation() == "Constant":
+        #         ctrl_flags = 0x000c
+        #     elif curve.getExtrapolation() == "Cyclic":
+        #         ctrl_flags = 0x0008
 
-            morph.interpolation = NifFormat.KeyType.LINEAR_KEY
-            morph.num_keys = len(curve.getPoints())
-            morph.keys.update_size()
+        #     morph.interpolation = NifFormat.KeyType.LINEAR_KEY
+        #     morph.num_keys = len(curve.getPoints())
+        #     morph.keys.update_size()
 
-            floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
-            floatdata.num_keys = len(curve.getPoints())
-            floatdata.keys.update_size()
+        #     floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
+        #     floatdata.num_keys = len(curve.getPoints())
+        #     floatdata.keys.update_size()
 
-            start = bpy.context.scene.frame_start
-            fps = NifOp.context.scene.render.fps
-            for i, btriple in enumerate(curve.getPoints()):
-                knot = btriple.getPoints()
-                morph.keys[i].arg = morph.interpolation
-                morph.keys[i].time = (knot[0] - start) * fps
-                morph.keys[i].value = curve.evaluate(knot[0])
-                # morph.keys[i].forwardTangent = 0.0 # ?
-                # morph.keys[i].backwardTangent = 0.0 # ?
-                floatdata.keys[i].arg = floatdata.interpolation
-                floatdata.keys[i].time = (knot[0] - start) * fps
-                floatdata.keys[i].value = curve.evaluate(knot[0])
-                # floatdata.keys[i].forwardTangent = 0.0 # ?
-                # floatdata.keys[i].backwardTangent = 0.0 # ?
-                ctrl_start = min(ctrl_start, morph.keys[i].time)
-                ctrl_stop = max(ctrl_stop, morph.keys[i].time)
-        morph_ctrl.flags = ctrl_flags
-        morph_ctrl.start_time = ctrl_start
-        morph_ctrl.stop_time = ctrl_stop
+        #     start = bpy.context.scene.frame_start
+        #     fps = NifOp.context.scene.render.fps
+        #     for i, btriple in enumerate(curve.getPoints()):
+        #         knot = btriple.getPoints()
+        #         morph.keys[i].arg = morph.interpolation
+        #         morph.keys[i].time = (knot[0] - start) * fps
+        #         morph.keys[i].value = curve.evaluate(knot[0])
+        #         # morph.keys[i].forwardTangent = 0.0 # ?
+        #         # morph.keys[i].backwardTangent = 0.0 # ?
+        #         floatdata.keys[i].arg = floatdata.interpolation
+        #         floatdata.keys[i].time = (knot[0] - start) * fps
+        #         floatdata.keys[i].value = curve.evaluate(knot[0])
+        #         # floatdata.keys[i].forwardTangent = 0.0 # ?
+        #         # floatdata.keys[i].backwardTangent = 0.0 # ?
+        #         ctrl_start = min(ctrl_start, morph.keys[i].time)
+        #         ctrl_stop = max(ctrl_stop, morph.keys[i].time)
+        # morph_ctrl.flags = ctrl_flags
+        # morph_ctrl.start_time = ctrl_start
+        # morph_ctrl.stop_time = ctrl_stop

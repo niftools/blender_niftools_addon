@@ -59,7 +59,6 @@ class MorphAnimation:
             b_mesh = b_obj.data
             morphData = n_morphCtrl.data
             if morphData.num_morphs:
-                b_obj_action = self.animationhelper.create_action(b_obj, b_obj.name + "-Morphs")
                 # get name for base key
                 keyname = morphData.morphs[0].frame_name.decode()
                 if not keyname:
@@ -71,6 +70,8 @@ class MorphAnimation:
                 # get base vectors and import all morphs
                 baseverts = morphData.morphs[0].vectors
 
+                shape_action = self.animationhelper.create_action(b_obj.data.shape_keys, b_obj.name + "-Morphs")
+                
                 for idxMorph in range(1, morphData.num_morphs):
                     # get name for key
                     keyname = morphData.morphs[idxMorph].frame_name.decode()
@@ -95,21 +96,14 @@ class MorphAnimation:
                         except KeyError:
                             NifLog.info("Unsupported interpolator '{0}'".format(type(n_morphCtrl.interpolator_weights[idxMorph].interpolator)))
                             continue
-                    # TODO [animation] can we create the fcurve manually - does not seem to work here?
-                    # as b_obj.data.shape_keys.animation_data is read-only
-
-                    # FYI shape_key = b_mesh.shape_keys.key_blocks[-1]
+                        
+                    # get the interpolation mode
+                    interp = self.animationhelper.get_b_interp_from_n_interp( morph_data.interpolation)
+                    fcu = self.animationhelper.create_fcurves(shape_action, "value", (0,), flags=n_morphCtrl.flags, keyname=shape_key.name)
+                    
                     # set keyframes
                     for key in morph_data.keys:
-                        shape_key.value = key.value
-                        shape_key.keyframe_insert(data_path="value", frame=round(key.time * self.fps))
-
-                    # fcurves = (b_obj.data.shape_keys.animation_data.action.fcurves[-1], )
-                    # # set extrapolation to fcurves
-                    # self.animation_helper.set_extrapolation(n_morphCtrl.flags, fcurves)
-                    # # get the interpolation mode
-                    # interp = self.animation_helper.get_b_interp_from_n_interp( morph_data.interpolation)
-                    # TODO [animation] set interpolation once low level access works
+                        self.animationhelper.add_key(fcu, key.time, (key.value,), interp)
 
     def import_egm_morphs(self, b_obj, v_map, n_verts):
         """Import all EGM morphs as shape keys for blender object."""
