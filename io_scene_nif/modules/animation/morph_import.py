@@ -1,4 +1,4 @@
-"""This script contains classes to help import object animations."""
+"""This script contains classes to help import morph animations as shape keys."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -49,6 +49,7 @@ class MorphAnimation:
 
     def __init__(self, parent):
         self.animationhelper = parent
+        self.fps = bpy.context.scene.render.fps
 
     def import_morph_controller(self, n_node, b_obj, v_map):
         """Import NiGeomMorpherController as shape keys for blender object."""
@@ -59,7 +60,6 @@ class MorphAnimation:
             morphData = n_morphCtrl.data
             if morphData.num_morphs:
                 b_obj_action = self.animationhelper.create_action(b_obj, b_obj.name + "-Morphs")
-                fps = bpy.context.scene.render.fps
                 # get name for base key
                 keyname = morphData.morphs[0].frame_name.decode()
                 if not keyname:
@@ -102,15 +102,14 @@ class MorphAnimation:
                     # set keyframes
                     for key in morph_data.keys:
                         shape_key.value = key.value
-                        shape_key.keyframe_insert(data_path="value", frame=round(key.time * fps))
+                        shape_key.keyframe_insert(data_path="value", frame=round(key.time * self.fps))
 
                     # fcurves = (b_obj.data.shape_keys.animation_data.action.fcurves[-1], )
                     # # set extrapolation to fcurves
-                    # self.nif_import.animation_helper.set_extrapolation(n_morphCtrl.flags, fcurves)
+                    # self.animation_helper.set_extrapolation(n_morphCtrl.flags, fcurves)
                     # # get the interpolation mode
-                    # interp = self.nif_import.animation_helper.get_b_interp_from_n_interp( morph_data.interpolation)
+                    # interp = self.animation_helper.get_b_interp_from_n_interp( morph_data.interpolation)
                     # TODO [animation] set interpolation once low level access works
-
 
     def import_egm_morphs(self, b_obj, v_map, n_verts):
         """Import all EGM morphs as shape keys for blender object."""
