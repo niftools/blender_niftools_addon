@@ -36,3 +36,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.utility import nif_utils
+
+
+class MeshProperty:
+
+    # TODO [property] This will be moved to dispatch method later
+    @staticmethod
+    def import_stencil_property(n_mesh, b_mesh):
+        """ Imports a NiStencilProperty attached to n_mesh """
+        # Stencil (for double sided meshes)
+        n_stencil_prop = nif_utils.find_property(n_mesh, NifFormat.NiStencilProperty)
+        # we don't check flags for now, nothing fancy
+        if n_stencil_prop:
+            b_mesh.show_double_sided = True
+        else:
+            b_mesh.show_double_sided = False
