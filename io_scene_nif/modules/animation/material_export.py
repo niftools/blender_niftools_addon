@@ -40,7 +40,6 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.animation import animation_export
 from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
@@ -49,7 +48,8 @@ from io_scene_nif.utility.util_logging import NifLog
 
 class MaterialAnimation:
 
-    def __init__(self):
+    def __init__(self, parent):
+        self.animationhelper = parent
         self.fps = bpy.context.scene.render.fps
 
     def export_material(self, b_material, n_geom):
@@ -122,7 +122,7 @@ class MaterialAnimation:
             n_mat_ipol = block_store.create_block(interpolator, fcurves)
             n_mat_ctrl.interpolator = n_mat_ipol
 
-            animation_export.set_flags_and_timing(n_mat_ctrl, fcurves)
+            self.animationhelper.set_flags_and_timing(n_mat_ctrl, fcurves)
             # set target color only for color controller
             if n_dtype:
                 n_mat_ctrl.set_target_color(n_dtype)
@@ -171,7 +171,7 @@ class MaterialAnimation:
         # if uv data is present then add the controller so it is exported
         if fcurves[0].keyframe_points:
             n_uv_ctrl = NifFormat.NiUVController()
-            animation_export.set_flags_and_timing(n_uv_ctrl, fcurves)
+            self.animationhelper.set_flags_and_timing(n_uv_ctrl, fcurves)
             n_uv_ctrl.data = n_uv_data
             # attach block to geometry
             n_geom.add_controller(n_uv_ctrl)
