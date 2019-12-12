@@ -380,6 +380,7 @@ class NifImport(NifCommon):
             if b_prop.shader_flags_2._items[sf_index]._value == 1:
                 b_obj.niftools_shader[b_flag_name_2] = True
 
+    # TODO [object] Move to object import
     def import_name(self, n_block):
         """Get name of n_block, ready for blender but not necessarily unique.
 
@@ -391,14 +392,13 @@ class NifImport(NifCommon):
 
         NifLog.debug("Importing name for {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
 
-        niName = n_block.name.decode()
+        n_name = n_block.name.decode()
         # if name is empty, create something non-empty
-        if not niName:
-            niName = "noname"
-        # todo[armature] should this be moved into armature?
-        niName = armature.get_bone_name_for_blender(niName)
+        if not n_name:
+            n_name = "noname"
+        n_name = armature.get_bone_name_for_blender(n_name)
 
-        return niName
+        return n_name
 
     def import_empty(self, n_block):
         """Creates and returns a grouping empty."""
