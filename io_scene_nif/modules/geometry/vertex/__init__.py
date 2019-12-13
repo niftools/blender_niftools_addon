@@ -1,4 +1,4 @@
-"""This module contains helper methods to import/export skinned geometry data."""
+"""This module contains helper methods to import/export vertex data."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

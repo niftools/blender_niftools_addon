@@ -36,7 +36,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.geometry.mesh.vertex_import import Vertex
+from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
+from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
 from io_scene_nif.modules.property.property_import import MeshProperty
 from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.nif_common import NifCommon
@@ -118,7 +119,7 @@ class NifImport(NifCommon):
             if NifOp.props.send_bones_to_bind_position:
                 pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.apply_skin_deformation:
-                self.objecthelper.apply_skin_deformation(NifData.data)
+                VertexGroup.apply_skin_deformation(NifData.data)
 
             # scale tree
             toaster = pyffi.spells.nif.NifToaster()
