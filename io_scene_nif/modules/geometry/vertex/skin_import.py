@@ -56,10 +56,10 @@ class VertexGroup:
         skin_data = skin_inst.data
         skin_partition = skin_inst.skin_partition
         skel_root = skin_inst.skeleton_root
-        vertices = [NifFormat.Vector3() for i in range(n_geom.data.num_vertices)]
+        vertices = [NifFormat.Vector3() for _ in range(n_geom.data.num_vertices)]
 
         # ignore normals for now, not needed for import
-        sum_weights = [0.0 for i in range(n_geom.data.num_vertices)]
+        sum_weights = [0.0 for _ in range(n_geom.data.num_vertices)]
         skin_offset = skin_data.get_transform()
 
         # store one transform per bone
@@ -109,7 +109,7 @@ class VertexGroup:
             if skindata.has_vertex_weights:
                 vertices = n_geom.get_skin_deformation()[0]
             else:
-                NifLog.info("PYFFI does not support this type of skinning, so here's a workaround...")
+                NifLog.info("PyFFI does not support this type of skinning, so here's a workaround...")
                 vertices = VertexGroup.get_skin_deformation_from_partition(n_geom)
 
             # finally we can actually set the data
