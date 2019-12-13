@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 from io_scene_nif.modules.geometry.mesh.vertex_import import Vertex
 from io_scene_nif.modules.property.property_import import MeshProperty
+from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
@@ -261,6 +262,7 @@ class NifImport(NifCommon):
             elif self.armaturehelper.is_bone(n_block):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[self.import_name(n_block)]
+                # TODO [object] flags, shouldn't be treated any different than object flags.
                 b_obj.niftools.boneflags = n_block.flags
 
             else:
@@ -299,8 +301,7 @@ class NifImport(NifCommon):
             b_children = []
             n_children = [child for child in n_block.children if child not in geom_group]
             for n_child in n_children:
-                b_child = self.import_branch(
-                    n_child, b_armature=b_armature, n_armature=n_armature)
+                b_child = self.import_branch(n_child, b_armature=b_armature, n_armature=n_armature)
                 if b_child and isinstance(b_child, bpy.types.Object):
                     b_children.append(b_child)
 
@@ -337,10 +338,10 @@ class NifImport(NifCommon):
         b_obj.niftools.objectflags = n_block.flags
         if n_block.properties:
             for b_prop in n_block.properties:
-                self.import_shader_types(b_obj, b_prop)
+                BSShader.import_shader_types(b_obj, b_prop)
         elif n_block.bs_properties:
             for b_prop in n_block.bs_properties:
-                self.import_shader_types(b_obj, b_prop)
+                BSShader.import_shader_types(b_obj, b_prop)
 
         if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
             cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
@@ -348,37 +349,6 @@ class NifImport(NifCommon):
             # just to be sure because the last line was only present on one copy of the code
             if hasattr(n_block.data, "bs_num_uv_sets"):
                 b_obj.niftools.bsnumuvset = n_block.data.bs_num_uv_sets
-
-    def import_shader_types(self, b_obj, b_prop):
-        if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
-            b_obj.niftools_shader.bs_shadertype = 'BSShaderPPLightingProperty'
-            sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
-            b_obj.niftools_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
-            for b_flag_name in b_prop.shader_flags._names:
-                sf_index = b_prop.shader_flags._names.index(b_flag_name)
-                if b_prop.shader_flags._items[sf_index]._value == 1:
-                    b_obj.niftools_shader[b_flag_name] = True
-
-        if isinstance(b_prop, NifFormat.BSLightingShaderProperty):
-            b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
-            sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
-            b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
-            self.import_shader_flags(b_obj, b_prop)
-
-        elif isinstance(b_prop, NifFormat.BSEffectShaderProperty):
-            b_obj.niftools_shader.bs_shadertype = 'BSEffectShaderProperty'
-            b_obj.niftools_shader.bslsp_shaderobjtype = 'Default'
-            self.import_shader_flags(b_obj, b_prop)
-
-    def import_shader_flags(self, b_obj, b_prop):
-        for b_flag_name_1 in b_prop.shader_flags_1._names:
-            sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
-            if b_prop.shader_flags_1._items[sf_index]._value == 1:
-                b_obj.niftools_shader[b_flag_name_1] = True
-        for b_flag_name_2 in b_prop.shader_flags_2._names:
-            sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
-            if b_prop.shader_flags_2._items[sf_index]._value == 1:
-                b_obj.niftools_shader[b_flag_name_2] = True
 
     # TODO [object] Move to object import
     def import_name(self, n_block):
