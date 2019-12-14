@@ -40,6 +40,7 @@
 import bpy
 import mathutils
 
+from functools import singledispatch
 from bisect import bisect_left
 from pyffi.formats.nif import NifFormat
 
@@ -74,16 +75,41 @@ class TransformAnimation:
 
     def __init__(self, parent):
         self.animationhelper = parent
+        self.import_kf_root = singledispatch(self.import_kf_root)
+        self.import_kf_root.register(NifFormat.NiControllerSequence, self.import_controller_sequence)
+        self.import_kf_root.register(NifFormat.NiSequenceStreamHelper, self.import_sequence_stream_helper)
 
-    def import_kf_standalone(self, kf_root, b_armature_obj, bind_data):
-        """Import a kf animation. Needs a suitable armature in blender scene."""
+    def import_kf_root(self, kf_root, b_armature_obj, bind_data):
+        """Base method to warn user that this root type is not supported"""
+        NifLog.warn("Unknown KF root block found : " + str(kf_root.name))
+        NifLog.warn("This type isn't currently supported: {}".format(type(kf_root)))
 
-        NifLog.info("Importing KF tree")
+    def import_sequence_stream_helper(self, kf_root, b_armature_obj, bind_data):
+        print("import_sequence_stream_helper")
+        b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode())
+        # import parallel trees of extra datas and keyframe controllers
+        extra = kf_root.extra_data
+        controller = kf_root.controller
+        while extra and controller:
+            # textkeys in the stack do not specify node names, import as markers
+            if isinstance(extra, NifFormat.NiTextKeyExtraData):
+                self.animationhelper.import_text_key_extra_data(extra, b_action)
+                extra = extra.next_extra_data
 
-        if not isinstance(kf_root, NifFormat.NiControllerSequence):
-            raise nif_utils.NifError("KF root must be a NiControllerSequence, other styles are not supported")
+            # grabe the node name from string data
+            node_name = None
+            if isinstance(extra, NifFormat.NiStringExtraData):
+                node_name = extra.string_data.decode()
+            # import keyframe controller
+            if node_name in bind_data:
+                niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[node_name]
+                self.import_keyframe_controller(controller, b_armature_obj, node_name, niBone_bind_scale,
+                                                    niBone_bind_rot_inv, niBone_bind_trans)
+            # grab next pair of extra and controller
+            extra = extra.next_extra_data
+            controller = controller.next_controller
 
-
+    def import_controller_sequence(self, kf_root, b_armature_obj, bind_data):
         b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode())
 
         # import text keys
