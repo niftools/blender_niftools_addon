@@ -85,7 +85,7 @@ class TransformAnimation:
         NifLog.warn("This type isn't currently supported: {}".format(type(kf_root)))
 
     def import_sequence_stream_helper(self, kf_root, b_armature_obj, bind_data):
-        print("import_sequence_stream_helper")
+        NifLog.debug('Importing NiSequenceStreamHelper...')
         b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode())
         # import parallel trees of extra datas and keyframe controllers
         extra = kf_root.extra_data
@@ -97,19 +97,21 @@ class TransformAnimation:
                 extra = extra.next_extra_data
 
             # grabe the node name from string data
-            node_name = None
+            bone_name = None
             if isinstance(extra, NifFormat.NiStringExtraData):
                 node_name = extra.string_data.decode()
+                bone_name = armature.get_bone_name_for_blender(node_name)
             # import keyframe controller
-            if node_name in bind_data:
-                niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[node_name]
-                self.import_keyframe_controller(controller, b_armature_obj, node_name, niBone_bind_scale,
+            if bone_name in bind_data:
+                niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
+                self.import_keyframe_controller(controller, b_armature_obj, bone_name, niBone_bind_scale,
                                                     niBone_bind_rot_inv, niBone_bind_trans)
             # grab next pair of extra and controller
             extra = extra.next_extra_data
             controller = controller.next_controller
 
     def import_controller_sequence(self, kf_root, b_armature_obj, bind_data):
+        NifLog.debug('Importing NiControllerSequence...')
         b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode())
 
         # import text keys
