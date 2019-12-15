@@ -82,16 +82,15 @@ class Animation:
         return "BEZIER"
 
     @staticmethod
-    def create_action(b_obj, action_name):
+    def create_action(b_obj, action_name, retrieve = True):
         """ Create or retrieve action and set it as active on the object. """
         # could probably skip this test and create always
         if not b_obj.animation_data:
             b_obj.animation_data_create()
-        # do not retrieve
-        # if action_name in bpy.data.actions:
-        #     b_action = bpy.data.actions[action_name]
-        # else:
-        b_action = bpy.data.actions.new(action_name)
+        if retrieve and action_name in bpy.data.actions:
+            b_action = bpy.data.actions[action_name]
+        else:
+            b_action = bpy.data.actions.new(action_name)
         # set as active action on object
         b_obj.animation_data.action = b_action
         return b_action
