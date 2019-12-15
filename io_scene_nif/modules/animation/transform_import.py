@@ -86,13 +86,13 @@ class TransformAnimation:
 
     def import_sequence_stream_helper(self, kf_root, b_armature_obj, bind_data):
         NifLog.debug('Importing NiSequenceStreamHelper...')
-        b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode())
+        b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode(), retrieve=False)
         # import parallel trees of extra datas and keyframe controllers
         extra = kf_root.extra_data
         controller = kf_root.controller
         while extra and controller:
             # textkeys in the stack do not specify node names, import as markers
-            if isinstance(extra, NifFormat.NiTextKeyExtraData):
+            while isinstance(extra, NifFormat.NiTextKeyExtraData):
                 self.animationhelper.import_text_key_extra_data(extra, b_action)
                 extra = extra.next_extra_data
 
@@ -120,6 +120,7 @@ class TransformAnimation:
         # go over all controlled blocks (NiKeyframeController)
         for controlledblock in kf_root.controlled_blocks:
             # get bone name
+            # todo [pyffi] fixed get_node_name() is up, make release and clean up here
             # ZT2 - old way is not supported by pyffi's get_node_name()
             n_name = controlledblock.target_name
             # fallout (node_name) & Loki (StringPalette)
