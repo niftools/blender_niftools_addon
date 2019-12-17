@@ -48,7 +48,7 @@ class ObjectAnimation:
     def __init__(self, parent):
         self.animationhelper = parent
 
-    def export_visibility(self, n_node, b_obj, b_action):
+    def export_visibility(self, n_node, b_action):
         """Export the visibility controller data."""
 
         if not b_action:
@@ -64,12 +64,12 @@ class ObjectAnimation:
         #                  we probably don't want both at the same time
         # NiVisData = old style, NiBoolData = new style
         n_vis_data = block_store.create_block("NiVisData", fcurves)
-        n_bool_data = block_store.create_block("NiBoolData", fcurves)
-
-        # we just leave interpolation at constant
-        n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
         n_vis_data.num_keys = len(fcurves[0].keyframe_points)
         n_vis_data.keys.update_size()
+
+        # we just leave interpolation at constant
+        n_bool_data = block_store.create_block("NiBoolData", fcurves)
+        n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
         n_bool_data.data.num_keys = len(fcurves[0].keyframe_points)
         n_bool_data.data.keys.update_size()
         for b_point, n_vis_key, n_bool_key in zip(fcurves[0].keyframe_points, n_vis_data.keys, n_bool_data.data.keys):

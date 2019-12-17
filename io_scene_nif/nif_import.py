@@ -328,7 +328,7 @@ class NifImport(NifCommon):
                 if NifOp.props.animation:
                     # self.animationhelper.import_text_keys(n_block)
                     self.animationhelper.transform.import_transforms(n_block, b_obj)
-                    self.animationhelper.object_animation.import_visibility(n_block, b_obj)
+                    self.animationhelper.object.import_visibility(n_block, b_obj)
 
             return b_obj
         # all else is currently discarded
@@ -525,7 +525,7 @@ class NifImport(NifCommon):
                                                            extra_datas)
 
             # TODO [animation][material] merge this call into import_material
-            self.animationhelper.material_animation.import_material_controllers(material, n_block)
+            self.animationhelper.material.import_material_controllers(material, n_block)
             b_mesh_materials = list(b_mesh.materials)
             try:
                 materialIndex = b_mesh_materials.index(material)

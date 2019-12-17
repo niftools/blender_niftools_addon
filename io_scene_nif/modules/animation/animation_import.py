@@ -52,8 +52,8 @@ from io_scene_nif.utility.util_logging import NifLog
 class Animation:
 
     def __init__(self):
-        self.object_animation = ObjectAnimation(self)
-        self.material_animation = MaterialAnimation(self)
+        self.object = ObjectAnimation(self)
+        self.material = MaterialAnimation(self)
         self.transform = TransformAnimation(self)
         self.morph = MorphAnimation(self)
         # set a dummy here, update via set_frames_per_second
