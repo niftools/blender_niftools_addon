@@ -379,7 +379,7 @@ class Mesh:
                 trishape.add_property(trimatprop)
 
                 # material animation
-                self.nif_export.animationhelper.mat_anim.export_material(b_mat, trishape)
+                self.nif_export.animationhelper.material.export_material(b_mat, trishape)
 
             # -> now comes the real export
 
