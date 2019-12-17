@@ -144,8 +144,7 @@ class ObjectProp:
         # search for duplicate
         for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiStencilProperty):
-                # all these blocks have the same setting, no further check
-                # is needed
+                # all these blocks have the same setting, no further check is needed
                 return block
 
         # no stencil property found, so create new one
