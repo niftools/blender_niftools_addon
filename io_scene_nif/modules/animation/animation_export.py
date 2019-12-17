@@ -96,10 +96,11 @@ class Animation:
         
     def get_active_action(self, b_obj):
         # check if the blender object has a non-empty action assigned to it
-        if b_obj.animation_data and b_obj.animation_data.action:
-            b_action = b_obj.animation_data.action
-            if b_action.fcurves:
-                return b_action
+        if b_obj:
+            if b_obj.animation_data and b_obj.animation_data.action:
+                b_action = b_obj.animation_data.action
+                if b_action.fcurves:
+                    return b_action
 
     def export_kf_root(self, b_armature = None):
         # todo [anim] export them properly, in the right tree to begin with
