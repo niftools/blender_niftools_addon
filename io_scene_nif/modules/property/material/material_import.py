@@ -116,12 +116,13 @@ class Material:
             self.texturehelper.import_nitextureprop_textures(b_mat, n_texture_prop)
             if extra_datas:
                 self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
-        if bs_shader_property:
-            self.texturehelper.import_bsshaderproperty(b_mat, bs_shader_property)
-        if bs_effect_shader_property:
-            self.texturehelper.import_bseffectshaderproperty(b_mat, bs_effect_shader_property)
         if texture_effect:
             self.texturehelper.import_texture_effect(b_mat, texture_effect)
+
+        if bs_shader_property:
+            self.texturehelper.import_bsshaderproperty_textures(b_mat, bs_shader_property)
+        if bs_effect_shader_property:
+            self.texturehelper.import_bseffectshaderproperty_textures(b_mat, bs_effect_shader_property)
 
         # material based properties
         if n_mat_prop:

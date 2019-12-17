@@ -430,10 +430,11 @@ class NifImport(NifCommon):
         # note that NIF files only support one material for each trishape
         # find material property
         n_mat_prop = nif_utils.find_property(n_block, NifFormat.NiMaterialProperty)
-        n_shader_prop = nif_utils.find_property(n_block, NifFormat.BSLightingShaderProperty)
         n_effect_shader_prop = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
+        bsEffectShaderProperty = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
+        bsShaderProperty = self.find_bsshaderproperty(n_block)
 
-        if n_mat_prop or n_shader_prop or n_effect_shader_prop:
+        if n_mat_prop or n_effect_shader_prop or bsShaderProperty or bsEffectShaderProperty:
             # Texture
             n_texture_prop = None
             if n_uvco:
@@ -447,23 +448,7 @@ class NifImport(NifCommon):
                         # yes, it describes the shader slot number
                         extra_datas.append(extra)
 
-                        # bethesda shader
-            bsShaderProperty = nif_utils.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
-            if bsShaderProperty is None:
-                bsShaderProperty = nif_utils.find_property(n_block, NifFormat.BSLightingShaderProperty)
-
-            if bsShaderProperty:
-                for textureslot in bsShaderProperty.texture_set.textures:
-                    if textureslot:
-                        self.bsShaderProperty1st = bsShaderProperty
-                        break
-                else:
-                    bsShaderProperty = self.bsShaderProperty1st
-
-            bsEffectShaderProperty = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
-
-            # texturing effect for environment map
-            # in official files this is activated by a NiTextureEffect child
+            # texturing effect for environment map in official files this is activated by a NiTextureEffect child
             # preceeding the n_block
             textureEffect = None
             if isinstance(n_block._parent, NifFormat.NiNode):
@@ -687,6 +672,22 @@ class NifImport(NifCommon):
         scn.objects.active = b_obj
 
         return b_obj
+
+    # TODO [shader] Move move out when nolonger required to reference
+    def find_bsshaderproperty(self, n_block):
+        # bethesda shader
+        bsShaderProperty = nif_utils.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
+        if bsShaderProperty is None:
+            bsShaderProperty = nif_utils.find_property(n_block, NifFormat.BSLightingShaderProperty)
+
+        if bsShaderProperty:
+            for textureslot in bsShaderProperty.texture_set.textures:
+                if textureslot:
+                    self.bsShaderProperty1st = bsShaderProperty
+                    break
+            else:
+                bsShaderProperty = self.bsShaderProperty1st
+        return bsShaderProperty
 
     def set_parents(self, n_block):
         """Set the parent block recursively through the tree, to allow
