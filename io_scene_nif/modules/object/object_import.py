@@ -41,6 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
@@ -182,3 +183,51 @@ class Object:
         else:
             raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
 
+    @staticmethod
+    def is_grouping_node(n_block):
+        """Determine whether node is grouping node.
+        Returns the children which are grouped, or empty list if it is not a
+        grouping node.
+        """
+        # combining shapes: disable grouping
+        if not NifOp.props.combine_shapes:
+            return []
+        # check that it is a ninode
+        if not isinstance(n_block, NifFormat.NiNode):
+            return []
+        # NiLODNodes are never grouping nodes (this ensures that they are imported as empties, with LODs as child meshes)
+        if isinstance(n_block, NifFormat.NiLODNode):
+            return []
+        # root collision node: join everything
+        if isinstance(n_block, NifFormat.RootCollisionNode):
+            return [child for child in n_block.children if isinstance(child, NifFormat.NiTriBasedGeom)]
+        # check that node has name
+        node_name = n_block.name
+        if not node_name:
+            return []
+        # strip "NonAccum" trailer, if present
+        if node_name[-9:].lower() == " nonaccum":
+            node_name = node_name[:-9]
+        # get all geometry children
+        return [child for child in n_block.children if (isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1)]
+
+    @staticmethod
+    def import_name(n_block):
+        """Get name of n_block, ready for blender but not necessarily unique.
+
+        :param n_block: A named nif block.
+        :type n_block: :class:`~pyffi.formats.nif.NifFormat.NiObjectNET`
+        """
+        if n_block is None:
+            return ""
+
+        NifLog.debug("Importing name for {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
+
+        n_name = n_block.name.decode()
+
+        # if name is empty, create something non-empty
+        if not n_name:
+            n_name = "noname"
+        n_name = armature.get_bone_name_for_blender(n_name)
+
+        return n_name

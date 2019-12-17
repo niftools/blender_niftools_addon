@@ -45,6 +45,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp, NifData
@@ -64,7 +65,7 @@ class Armature:
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
 
-        # armature_name = self.nif_import.import_name(n_armature)
+        # armature_name = Object.import_name(n_armature)
         armature_name = n_armature.name.decode()
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
@@ -100,16 +101,16 @@ class Armature:
         if not self.is_bone(n_block):
             return None
         # bone name
-        bone_name = self.nif_import.import_name(n_block)
+        bone_name = Object.import_name(n_block)
         # create a new bone
         b_edit_bone = b_armature_data.edit_bones.new(bone_name)
         # store nif block for access from object mode
         self.name_to_block[b_edit_bone.name] = n_block
-        # get the nif bone's armature space matrix
-        # (under the hood all bone space matrixes are multiplied together)
+        # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
         n_bind = nif_utils.import_matrix(n_block, relative_to=n_armature)
         # get transformation in blender's coordinate space
         b_bind = armature.nif_bind_to_blender_bind(n_bind)
+
         # the following is a workaround because blender can no longer set matrices to bones directly
         tail, roll = nif_utils.mat3_to_vec_roll(b_bind.to_3x3())
         b_edit_bone.head = b_bind.to_translation()
@@ -136,7 +137,7 @@ class Armature:
                     if not n_bone:
                         continue
                     vertex_weights = bone_weights[idx].vertex_weights
-                    group_name = self.nif_import.import_name(n_bone)
+                    group_name = Object.import_name(n_bone)
                     if group_name not in b_obj.vertex_groups:
                         v_group = b_obj.vertex_groups.new(group_name)
                     for skinWeight in vertex_weights:
@@ -148,14 +149,13 @@ class Armature:
                 skin_partition = skininst.skin_partition
                 for block in skin_partition.skin_partition_blocks:
                     # create all vgroups for this block's bones
-                    block_bone_names = [self.nif_import.import_name(bones[i]) for i in block.bones]
+                    block_bone_names = [Object.import_name(bones[i]) for i in block.bones]
                     for group_name in block_bone_names:
                         b_obj.vertex_groups.new(group_name)
 
                     # go over each vert in this block
-                    for vert, vertex_weights, bone_indices in zip(block.vertex_map,
-                                                                  block.vertex_weights,
-                                                                  block.bone_indices):
+                    for vert, vertex_weights, bone_indices in zip(block.vertex_map, block.vertex_weights, block.bone_indices):
+
                         # assign this vert's 4 weights to its 4 vgroups (at max)
                         for w, b_i in zip(vertex_weights, bone_indices):
                             if w > 0:
@@ -313,7 +313,7 @@ class Armature:
             if isinstance(bone, NifFormat.NiLODNode):
                 # LOD nodes are never bones
                 continue
-            if self.nif_import.is_grouping_node(bone):
+            if Object.is_grouping_node(bone):
                 continue
             if bone not in self.dict_armatures[skelroot]:
                 self.dict_armatures[skelroot].append(bone)

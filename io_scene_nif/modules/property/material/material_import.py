@@ -40,6 +40,7 @@
 
 import bpy
 
+from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.utility.util_global import NifData
 from io_scene_nif.utility.util_logging import NifLog
 
@@ -105,7 +106,7 @@ class Material:
             pass
 
         # name unique material
-        name = self.nif_import.import_name(n_mat_prop)
+        name = Object.import_name(n_mat_prop)
         if not name:
             name = (self.nif_import.active_obj_name + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
