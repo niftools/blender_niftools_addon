@@ -238,7 +238,7 @@ class NifExport(NifCommon):
                 # note: block_store.block_to_obj changes during iteration, so need list copy
                 for n_block in list(block_store.block_to_obj.keys()):
                     if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
-                        for n_bone in n_block.tree(block_type = NifFormat.NiNode):
+                        for n_bone in n_block.tree(block_type=NifFormat.NiNode):
                             n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(n_bone, n_bone.name.decode() )
                             # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
                             n_kfc.flags = 12
@@ -251,7 +251,6 @@ class NifExport(NifCommon):
                 # export animation groups (not for skeleton.nif export!)
                 # anim_textextra = self.animation_helper.export_text_keys(b_action)
                 pass
-
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
             # note: block_store.block_to_obj changes during iteration, so need list copy
