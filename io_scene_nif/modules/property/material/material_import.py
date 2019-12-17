@@ -56,7 +56,6 @@ class Material:
     def get_material_hash(self, n_mat_prop, n_texture_prop,
                           n_alpha_prop, n_specular_prop,
                           texture_effect, n_wire_prop,
-                          bs_shader_property, bs_effect_shader_property,
                           extra_datas):
         """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
@@ -69,9 +68,11 @@ class Material:
                 n_specular_prop.get_hash() if n_specular_prop else None,
                 texture_effect.get_hash() if texture_effect else None,
                 n_wire_prop.get_hash() if n_wire_prop else None,
-                bs_shader_property.get_hash() if bs_shader_property else None,
-                bs_effect_shader_property.get_hash() if bs_effect_shader_property else None,
                 tuple(extra.get_hash() for extra in extra_datas))
+
+    def get_bsshader_hash(self, bs_shader_property, bs_effect_shader_property):
+        return (bs_shader_property.get_hash()[1:] if bs_shader_property else None,  # skip first element, which is name
+                bs_effect_shader_property.get_hash() if bs_effect_shader_property else None)
 
     def set_alpha(self, b_mat, shader_property, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
@@ -86,20 +87,29 @@ class Material:
 
         return b_mat
 
-    def import_material(self, n_mat_prop, n_texture_prop,
-                        n_alpha_prop, n_specular_prop,
-                        texture_effect, n_wire_prop,
-                        bs_shader_property, bs_effect_shader_property,
-                        extra_datas):
+    def import_bsshader_material(self, bs_shader_property, bs_effect_shader_property):
+        material_hash = self.get_bsshader_hash(bs_shader_property, bs_effect_shader_property)
+        try:
+            return self.nif_import.dict_materials[material_hash]
+        except KeyError:
+            pass
+
+        # name unique material
+        name = Object.import_name(bs_shader_property)
+        if not name:
+            name = (self.nif_import.active_obj_name + "_nt_mat")
+        b_mat = bpy.data.materials.new(name)
+
+        if bs_shader_property:
+            self.texturehelper.import_bsshaderproperty_textures(b_mat, bs_shader_property)
+        if bs_effect_shader_property:
+            self.texturehelper.import_bseffectshaderproperty_textures(b_mat, bs_effect_shader_property)
+
+    def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas):
 
         """Creates and returns a material."""
         # First check if material has been created before.
-        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop,
-                                               n_alpha_prop, n_specular_prop,
-                                               texture_effect, n_wire_prop,
-                                               bs_shader_property,
-                                               bs_effect_shader_property,
-                                               extra_datas)
+        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas)
         try:
             return self.nif_import.dict_materials[material_hash]
         except KeyError:
@@ -118,11 +128,6 @@ class Material:
                 self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
         if texture_effect:
             self.texturehelper.import_texture_effect(b_mat, texture_effect)
-
-        if bs_shader_property:
-            self.texturehelper.import_bsshaderproperty_textures(b_mat, bs_shader_property)
-        if bs_effect_shader_property:
-            self.texturehelper.import_bseffectshaderproperty_textures(b_mat, bs_effect_shader_property)
 
         # material based properties
         if n_mat_prop:
