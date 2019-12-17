@@ -82,12 +82,12 @@ class Animation:
         return "BEZIER"
 
     @staticmethod
-    def create_action(b_obj, action_name):
+    def create_action(b_obj, action_name, retrieve = True):
         """ Create or retrieve action and set it as active on the object. """
         # could probably skip this test and create always
         if not b_obj.animation_data:
             b_obj.animation_data_create()
-        if action_name in bpy.data.actions:
+        if retrieve and action_name in bpy.data.actions:
             b_action = bpy.data.actions[action_name]
         else:
             b_action = bpy.data.actions.new(action_name)
@@ -155,12 +155,15 @@ class Animation:
 
     # import animation groups
     def import_text_keys(self, n_block, b_action):
-        """Stores the text keys as pose markers in a blender action."""
-
+        """Gets and imports a NiTextKeyExtraData"""
         if isinstance(n_block, NifFormat.NiControllerSequence):
             txk = n_block.text_keys
         else:
             txk = n_block.find(block_type=NifFormat.NiTextKeyExtraData)
+        self.import_text_key_extra_data(txk, b_action)
+
+    def import_text_key_extra_data(self, txk, b_action):
+        """Stores the text keys as pose markers in a blender action."""
         if txk and b_action:
             for key in txk.text_keys:
                 newkey = key.value.decode().replace('\r\n', '/').rstrip('/')

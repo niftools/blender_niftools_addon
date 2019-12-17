@@ -60,7 +60,7 @@ class MaterialAnimation:
             return
         
         # check if the material holds an animation
-        if b_material and not (b_material.animation_data and b_material.animation_data.action):
+        if not self.animationhelper.get_active_action(b_material):
             return
         
         self.export_material_controllers(b_material, n_geom)
