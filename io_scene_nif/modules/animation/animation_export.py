@@ -52,15 +52,13 @@ from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp
 
 
-
 class Animation:
-
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.obj_anim = ObjectAnimation(self)
-        self.mat_anim = MaterialAnimation(self)
-        self.txt_anim = TextureAnimation(parent)
+        self.object = ObjectAnimation(self)
+        self.material = MaterialAnimation(self)
+        self.texture = TextureAnimation()
         self.transform = TransformAnimation(parent)
         self.morph = MorphAnimation(self)
         # todo [scene / anim] move to scene?
