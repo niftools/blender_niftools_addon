@@ -144,6 +144,7 @@ class Armature:
                         vert = skinWeight.index
                         weight = skinWeight.weight
                         v_group.add([v_map[vert]], weight, 'REPLACE')
+
             # WLP2 - hides the weights in the partition
             else:
                 skin_partition = skininst.skin_partition
@@ -168,19 +169,21 @@ class Armature:
             skinpart_list = []
             bodypart_flag = []
             skinpart = ni_block.get_skin_partition()
-            for bodypart, skinpartblock in zip(
-                    skininst.partitions, skinpart.skin_partition_blocks):
+            for bodypart, skinpartblock in zip(skininst.partitions, skinpart.skin_partition_blocks):
                 bodypart_wrap = NifFormat.BSDismemberBodyPartType()
                 bodypart_wrap.set_value(bodypart.body_part)
                 group_name = bodypart_wrap.get_detail_display()
+
                 # create vertex group if it did not exist yet
                 if group_name not in b_obj.vertex_groups:
                     v_group = b_obj.vertex_groups.new(group_name)
                     skinpart_index = len(skinpart_list)
                     skinpart_list.append((skinpart_index, group_name))
                     bodypart_flag.append(bodypart.part_flag)
+
                 # find vertex indices of this group
                 groupverts = [v_map[v_index] for v_index in skinpartblock.vertex_map]
+
                 # create the group
                 v_group.add(groupverts, 1, 'ADD')
             b_obj.niftools_part_flags_panel.pf_partcount = len(skinpart_list)

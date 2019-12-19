@@ -44,7 +44,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.geometry.mesh.mesh_export import Mesh
 from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.object.object_types import lod_export
+from io_scene_nif.modules.object.object_types import type_export
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
@@ -347,7 +347,7 @@ class Object:
 
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
-            lod_export.export_range_lod_data(n_node, b_obj)
+            type_export.export_range_lod_data(n_node, b_obj)
 
         return n_node
 

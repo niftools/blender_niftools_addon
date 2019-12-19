@@ -79,7 +79,8 @@ class Object:
                 b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra.rotation_z
                 b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra.zoom
 
-    def create_b_obj(self, n_block, b_obj_data, name=""):
+    @staticmethod
+    def create_b_obj(n_block, b_obj_data, name=""):
         """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""
         # get the actual nif name
         n_name = n_block.name.decode() if n_block else ""
@@ -91,7 +92,7 @@ class Object:
         # make the object visible and active
         bpy.context.scene.objects.link(b_obj)
         bpy.context.scene.objects.active = b_obj
-        self.store_longname(b_obj, n_name)
+        Object.store_longname(b_obj, n_name)
         return b_obj
 
     def mesh_from_data(self, name, verts, faces):
@@ -109,42 +110,12 @@ class Object:
         faces = [[0, 1, 3, 2], [6, 7, 5, 4], [0, 2, 6, 4], [3, 1, 5, 7], [4, 5, 1, 0], [7, 6, 2, 3]]
         return self.mesh_from_data(b_name, verts, faces)
 
-    def store_longname(self, b_obj, n_name):
+    @staticmethod
+    def store_longname(b_obj, n_name):
         """Save original name as object property, for export"""
         if b_obj.name != n_name:
             b_obj.niftools.longname = n_name
             NifLog.debug("Stored long name for {0}".format(b_obj.name))
-
-    def import_range_lod_data(self, n_node, b_obj, b_children):
-        """ Import LOD ranges and mark b_obj as a LOD node """
-        if isinstance(n_node, NifFormat.NiLODNode):
-            b_obj["type"] = "NiLODNode"
-            range_data = n_node
-            # where lodlevels are stored is determined by version number need more examples - just a guess here
-            if not range_data.lod_levels:
-                range_data = n_node.lod_level_data
-            # can't just take b_obj.children because the order doesn't match
-            for lod_level, b_child in zip(range_data.lod_levels, b_children):
-                b_child["near_extent"] = lod_level.near_extent
-                b_child["far_extent"] = lod_level.far_extent
-
-    def import_billboard(self, n_node, b_obj):
-        """ Import a NiBillboardNode """
-        if isinstance(n_node, NifFormat.NiBillboardNode) and not isinstance(b_obj, bpy.types.Bone):
-            # find camera object
-            for obj in bpy.context.scene.objects:
-                if obj.type == 'CAMERA':
-                    b_obj_camera = obj
-                    break
-            # none exists, create one
-            else:
-                b_obj_camera_data = bpy.data.cameras.new("Camera")
-                b_obj_camera = self.create_b_obj(None, b_obj_camera_data)
-            # make b_obj track camera object
-            constr = b_obj.constraints.new('TRACK_TO')
-            constr.target = b_obj_camera
-            constr.track_axis = 'TRACK_Z'
-            constr.up_axis = 'UP_Y'
 
     def import_root_collision(self, n_node, b_obj):
         """ Import a RootCollisionNode """
