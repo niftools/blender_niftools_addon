@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
 from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
+from io_scene_nif.modules.object.object_types.type_import import NiTypes
 from io_scene_nif.modules.property.property_import import MeshProperty
 from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.nif_common import NifCommon
@@ -88,7 +89,7 @@ class NifImport(NifCommon):
         # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
         # we use this dictionary to set the physics constraints (ragdoll etc)
         self.dict_havok_objects = {}
-        self.dict_materials = {}
+
         self.dict_textures = {}
 
         # catch nif import errors
@@ -279,7 +280,7 @@ class NifImport(NifCommon):
                 if not geom_group or not NifOp.props.combine_shapes or len(geom_group) > 16:
                     # no grouping node, or too many materials to group the geometry into a single mesh
                     # so import it as an empty
-                    b_obj = self.import_empty(n_block)
+                    b_obj = NiTypes.import_empty(n_block)
 
                     geom_group = []
                 else:
@@ -315,9 +316,9 @@ class NifImport(NifCommon):
             self.objecthelper.set_object_bind(b_obj, b_children, b_armature)
 
             # import extra node data, such as node type
-            self.objecthelper.import_billboard(n_block, b_obj)
-            self.objecthelper.import_range_lod_data(n_block, b_obj, b_children)
             self.objecthelper.import_root_collision(n_block, b_obj)
+            NiTypes.import_billboard(n_block, b_obj)
+            NiTypes.import_range_lod_data(n_block, b_obj, b_children)
 
             # set object transform, this must be done after all children objects have been parented to b_obj
             if isinstance(b_obj, bpy.types.Object):
@@ -351,12 +352,6 @@ class NifImport(NifCommon):
             if hasattr(n_block.data, "bs_num_uv_sets"):
                 b_obj.niftools.bsnumuvset = n_block.data.bs_num_uv_sets
 
-    def import_empty(self, n_block):
-        """Creates and returns a grouping empty."""
-        b_empty = self.objecthelper.create_b_obj(n_block, None)
-        b_empty.niftools.objectflags = n_block.flags
-        return b_empty
-
     def import_mesh(self, n_block, group_mesh=None, applytransform=False):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh.
@@ -375,6 +370,7 @@ class NifImport(NifCommon):
 
         NifLog.info("Importing mesh data for geometry {0}".format(n_block.name))
 
+        # TODO [object] Not the responsibility of this method to create object level... object.
         if group_mesh:
             b_obj = group_mesh
             b_mesh = group_mesh.data
@@ -384,6 +380,7 @@ class NifImport(NifCommon):
             ni_name = n_block.name.decode()
             # create mesh data
             b_mesh = bpy.data.meshes.new(ni_name)
+
             # create mesh object and link to data
             b_obj = self.objecthelper.create_b_obj(n_block, b_mesh)
 
