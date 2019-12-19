@@ -231,22 +231,20 @@ class NifImport(NifCommon):
         if not n_block:
             return None
 
-        elif (isinstance(n_block, NifFormat.NiTriBasedGeom)
-              and NifOp.props.skeleton != "SKELETON_ONLY"):
+        elif isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
             # it's a shape node and we're not importing skeleton only
             NifLog.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             b_obj = self.import_mesh(n_block)
             self.active_obj_name = b_obj.name
             # store flags etc
-            self.import_props_and_consistency(n_block, b_obj)
+            Object.import_props_and_consistency(n_block, b_obj)
             # skinning? add armature modifier
             if n_block.skin_instance:
                 self.armaturehelper.append_armature_modifier(b_obj, b_armature)
             return b_obj
 
         elif isinstance(n_block, NifFormat.NiNode):
-            children = n_block.children
             # import object
             if self.armaturehelper.is_armature_root(n_block):
                 # all bones in the tree are also imported by import_armature
@@ -270,6 +268,7 @@ class NifImport(NifCommon):
             else:
                 # this may be a grouping node
                 geom_group = Object.is_grouping_node(n_block)
+
                 # if importing animation, remove children that have morph controllers from geometry group
                 if NifOp.props.animation:
                     for child in geom_group:
@@ -293,7 +292,7 @@ class NifImport(NifCommon):
                         # appears to be only used by material sys
                         self.active_obj_name = b_obj.name
                         # store flags etc
-                        self.import_props_and_consistency(child, b_obj)
+                        Object.import_props_and_consistency(child, b_obj)
 
                     # is there skinning on any of the grouped geometries?
                     if any(child.skin_instance for child in geom_group):
@@ -334,23 +333,6 @@ class NifImport(NifCommon):
             return b_obj
         # all else is currently discarded
         return None
-
-    def import_props_and_consistency(self, n_block, b_obj):
-        """ Various settings in b_obj's niftools panel """
-        b_obj.niftools.objectflags = n_block.flags
-        if n_block.properties:
-            for b_prop in n_block.properties:
-                BSShader.import_shader_types(b_obj, b_prop)
-        elif n_block.bs_properties:
-            for b_prop in n_block.bs_properties:
-                BSShader.import_shader_types(b_obj, b_prop)
-
-        if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
-            cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
-            b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
-            # just to be sure because the last line was only present on one copy of the code
-            if hasattr(n_block.data, "bs_num_uv_sets"):
-                b_obj.niftools.bsnumuvset = n_block.data.bs_num_uv_sets
 
     def import_mesh(self, n_block, group_mesh=None, applytransform=False):
         """Creates and returns a raw mesh, or appends geometry data to

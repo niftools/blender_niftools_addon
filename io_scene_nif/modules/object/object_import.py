@@ -41,6 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
@@ -202,3 +203,22 @@ class Object:
         n_name = armature.get_bone_name_for_blender(n_name)
 
         return n_name
+
+    # TODO [object][property] Replace with object level property processing
+    @staticmethod
+    def import_props_and_consistency(n_block, b_obj):
+        """ Various settings in b_obj's niftools panel """
+        b_obj.niftools.objectflags = n_block.flags
+        if n_block.properties:
+            for b_prop in n_block.properties:
+                BSShader.import_shader_types(b_obj, b_prop)
+        elif n_block.bs_properties:
+            for b_prop in n_block.bs_properties:
+                BSShader.import_shader_types(b_obj, b_prop)
+
+        if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
+            cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
+            b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+            # just to be sure because the last line was only present on one copy of the code
+            if hasattr(n_block.data, "bs_num_uv_sets"):
+                b_obj.niftools.bsnumuvset = n_block.data.bs_num_uv_sets
