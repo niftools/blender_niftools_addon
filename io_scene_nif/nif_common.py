@@ -57,9 +57,6 @@ class NifCommon:
                 "HELM": "Bip01 Head",
                 "RING": "Bip01 R Finger1"}
 
-    # dictionary of materials, to reuse materials
-    dict_materials = {}
-
     # dictionary of texture files, to reuse textures
     dict_textures = {}
 
