@@ -108,8 +108,6 @@ class NifExport(NifCommon):
 
         block_store.block_to_obj = {}  # clear out previous iteration
 
-        self.dict_textures = {}
-
         try:  # catch export errors
 
             # get the root object from selected object
