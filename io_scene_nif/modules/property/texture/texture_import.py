@@ -39,15 +39,16 @@
 
 
 from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.modules.property import texture
 
 
 class Texture:
 
-    def __init__(self, parent):
-        self.nif_import = parent
-        self.textureloader = None
+    def __init__(self):
+        self.textureloader = TextureLoader()
         self.used_slots = []
         self.b_mat = None
         self.reset_textures()
@@ -318,8 +319,9 @@ class Texture:
             b_mat_texslot.texture.use_alpha = False
 
         # Influence
-        if self.nif_import.ni_alpha_prop:
-            b_mat_texslot.use_map_alpha = True
+        # TODO [prop] Do an alpha pass
+        # if self.nif_import.ni_alpha_prop:
+        #     b_mat_texslot.use_map_alpha = True
 
         if self.has_diffusetex or self.has_darktex or self.has_detailtex or self.has_reftex or self.has_envtex:
             b_mat_texslot.use_map_color_diffuse = True
