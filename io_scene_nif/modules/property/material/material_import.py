@@ -41,6 +41,7 @@
 import bpy
 
 from io_scene_nif.modules.object.object_import import Object
+from io_scene_nif.modules.property.texture.texture_import import Texture
 from io_scene_nif.utility.util_global import NifData
 from io_scene_nif.utility.util_logging import NifLog
 
@@ -50,9 +51,7 @@ class Material:
     def __init__(self, parent):
         self.nif_import = parent
         self.dict_materials = {}
-
-    def set_texture_helper(self, texture_helper):
-        self.texturehelper = texture_helper
+        self.texturehelper = Texture()
 
     def get_material_hash(self, n_mat_prop, n_texture_prop,
                           n_alpha_prop, n_specular_prop,
@@ -236,3 +235,28 @@ class Material:
 
         self.dict_materials[material_hash] = b_mat
         return b_mat
+
+    def set_material_vertex_mapping(self, b_mesh, f_map, material, n_uvco):
+        if material:
+            # fix up vertex colors depending on whether we had textures in the material
+            mbasetex = self.texturehelper.has_base_texture(material)
+            mglowtex = self.texturehelper.has_glow_texture(material)
+            if b_mesh.vertex_colors:
+                if mbasetex or mglowtex:
+                    # textured material: vertex colors influence lighting
+                    material.use_vertex_color_light = True
+                else:
+                    # non-textured material: vertex colors incluence color
+                    material.use_vertex_color_paint = True
+
+            # if there's a base texture assigned to this material sets it
+            # to be displayed in Blender's 3D view
+            # but only if there are UV coordinates
+            if mbasetex and mbasetex.texture and n_uvco:
+                imgobj = mbasetex.texture.image
+                if imgobj:
+                    for b_polyimage_index in f_map:
+                        if b_polyimage_index is None:
+                            continue
+                        tface = b_mesh.uv_textures.active.data[b_polyimage_index]
+                        tface.image = imgobj
