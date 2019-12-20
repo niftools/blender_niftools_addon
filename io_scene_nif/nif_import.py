@@ -40,7 +40,6 @@ from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
 from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
 from io_scene_nif.modules.object.object_types.type_import import NiTypes
 from io_scene_nif.modules.property.property_import import MeshProperty
-from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
@@ -53,8 +52,6 @@ from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import Collision
 from io_scene_nif.modules.constraint.constraint_import import Constraint
 from io_scene_nif.modules.property.material.material_import import Material
-from io_scene_nif.modules.property.texture.texture_import import Texture
-from io_scene_nif.modules.property.texture.texture_loader import TextureLoader
 from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.modules.scene import scene_import
 from io_scene_nif.utility.util_global import NifOp, EGMData, NifData
@@ -76,11 +73,8 @@ class NifImport(NifCommon):
         self.armaturehelper = Armature(parent=self)
         self.collisionhelper = Collision(parent=self)
         self.constrainthelper = Constraint(parent=self)
-        self.textureloader = TextureLoader(parent=self)
-        self.texturehelper = Texture(parent=self)
-        self.texturehelper.set_texture_loader(self.textureloader)
+
         self.materialhelper = Material(parent=self)
-        self.materialhelper.set_texture_helper(self.texturehelper)
         self.objecthelper = Object(parent=self)
 
     def execute(self):
@@ -89,8 +83,6 @@ class NifImport(NifCommon):
         # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
         # we use this dictionary to set the physics constraints (ragdoll etc)
         self.dict_havok_objects = {}
-
-        self.dict_textures = {}
 
         # catch nif import errors
         try:
@@ -287,6 +279,7 @@ class NifImport(NifCommon):
                     NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name for child in geom_group], n_block.name))
                     b_obj = None
                     for child in geom_group:
+                        NifLog.info("HERE" + str(b_obj))
                         b_obj = self.import_mesh(child, group_mesh=b_obj, applytransform=True)
                         b_obj.name = Object.import_name(n_block)
                         # appears to be only used by material sys
@@ -405,88 +398,7 @@ class NifImport(NifCommon):
         '''
         MeshProperty.import_stencil_property(n_block, b_mesh)
 
-        # Material
-        # note that NIF files only support one material for each trishape
-        # find material property
-        n_mat_prop = nif_utils.find_property(n_block, NifFormat.NiMaterialProperty)
-        n_effect_shader_prop = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
-        bsEffectShaderProperty = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
-        bsShaderProperty = self.find_bsshaderproperty(n_block)
-
-        if n_mat_prop or n_effect_shader_prop or bsShaderProperty or bsEffectShaderProperty:
-            # Texture
-            n_texture_prop = None
-            if n_uvco:
-                n_texture_prop = nif_utils.find_property(n_block,NifFormat.NiTexturingProperty)
-
-            # extra datas (for sid meier's railroads) that have material info
-            extra_datas = []
-            for extra in n_block.get_extra_datas():
-                if isinstance(extra, NifFormat.NiIntegerExtraData):
-                    if extra.name in self.EXTRA_SHADER_TEXTURES:
-                        # yes, it describes the shader slot number
-                        extra_datas.append(extra)
-
-            # texturing effect for environment map in official files this is activated by a NiTextureEffect child
-            # preceeding the n_block
-            textureEffect = None
-            if isinstance(n_block._parent, NifFormat.NiNode):
-                lastchild = None
-                for child in n_block._parent.children:
-                    if child is n_block:
-                        if isinstance(lastchild, NifFormat.NiTextureEffect):
-                            textureEffect = lastchild
-                        break
-                    lastchild = child
-                else:
-                    raise RuntimeError("texture effect scanning bug")
-                # in some mods the NiTextureEffect child follows the n_block
-                # but it still works because it is listed in the effect list
-                # so handle this case separately
-                if not textureEffect:
-                    for effect in n_block._parent.effects:
-                        if isinstance(effect, NifFormat.NiTextureEffect):
-                            textureEffect = effect
-                            break
-
-            # Alpha
-            n_alpha_prop = nif_utils.find_property(n_block, NifFormat.NiAlphaProperty)
-            self.ni_alpha_prop = n_alpha_prop
-
-            # Specularity
-            n_specular_prop = nif_utils.find_property(n_block, NifFormat.NiSpecularProperty)
-
-            # Wireframe
-            n_wire_prop = nif_utils.find_property(n_block, NifFormat.NiWireframeProperty)
-
-            # create material and assign it to the mesh
-            # TODO [material] delegate search for properties to import_material
-            material = self.materialhelper.import_material(n_mat_prop, n_texture_prop,
-                                                           n_alpha_prop, n_specular_prop,
-                                                           textureEffect, n_wire_prop,
-                                                           bsShaderProperty,
-                                                           bsEffectShaderProperty,
-                                                           extra_datas)
-
-            # TODO [animation][material] merge this call into import_material
-            self.animationhelper.material.import_material_controllers(material, n_block)
-            b_mesh_materials = list(b_mesh.materials)
-            try:
-                materialIndex = b_mesh_materials.index(material)
-            except ValueError:
-                materialIndex = len(b_mesh_materials)
-                b_mesh.materials.append(material)
-
-            '''
-            # if mesh has one material with n_wire_prop, then make the mesh
-            # wire in 3D view
-            if n_wire_prop:
-                b_obj.draw_type = 'WIRE'
-            '''
-
-        else:
-            material = None
-            materialIndex = 0
+        material, material_index = MeshProperty.process_properties(b_mesh, n_block)
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
@@ -601,35 +513,14 @@ class NifImport(NifCommon):
                 continue
             polysmooth = b_mesh.polygons[b_polysmooth_index]
             polysmooth.use_smooth = True if (n_norms or n_block.skin_instance) else False
-            polysmooth.material_index = materialIndex
+            polysmooth.material_index = material_index
 
         Vertex.map_vertex_colors(b_mesh, niData, v_map)
 
         Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, niData)
 
-        if material:
-            # fix up vertex colors depending on whether we had textures in the material
-            mbasetex = self.texturehelper.has_base_texture(material)
-            mglowtex = self.texturehelper.has_glow_texture(material)
-            if b_mesh.vertex_colors:
-                if mbasetex or mglowtex:
-                    # textured material: vertex colors influence lighting
-                    material.use_vertex_color_light = True
-                else:
-                    # non-textured material: vertex colors incluence color
-                    material.use_vertex_color_paint = True
-
-            # if there's a base texture assigned to this material sets it
-            # to be displayed in Blender's 3D view
-            # but only if there are UV coordinates
-            if mbasetex and mbasetex.texture and n_uvco:
-                imgobj = mbasetex.texture.image
-                if imgobj:
-                    for b_polyimage_index in f_map:
-                        if b_polyimage_index is None:
-                            continue
-                        tface = b_mesh.uv_textures.active.data[b_polyimage_index]
-                        tface.image = imgobj
+        # TODO [material][texture] Break out texture/material
+        self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, material, n_uvco)
 
         # import skinning info, for meshes affected by bones
         self.armaturehelper.import_skin(n_block, b_obj, v_map)
@@ -651,22 +542,6 @@ class NifImport(NifCommon):
         scn.objects.active = b_obj
 
         return b_obj
-
-    # TODO [shader] Move move out when nolonger required to reference
-    def find_bsshaderproperty(self, n_block):
-        # bethesda shader
-        bsShaderProperty = nif_utils.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
-        if bsShaderProperty is None:
-            bsShaderProperty = nif_utils.find_property(n_block, NifFormat.BSLightingShaderProperty)
-
-        if bsShaderProperty:
-            for textureslot in bsShaderProperty.texture_set.textures:
-                if textureslot:
-                    self.bsShaderProperty1st = bsShaderProperty
-                    break
-            else:
-                bsShaderProperty = self.bsShaderProperty1st
-        return bsShaderProperty
 
     def set_parents(self, n_block):
         """Set the parent block recursively through the tree, to allow
