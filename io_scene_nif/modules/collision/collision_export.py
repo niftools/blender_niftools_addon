@@ -270,13 +270,13 @@ class Collision:
             n_bhkrigidbody.unknown_2_shorts[1] = 16336
             n_bhkrigidbody.layer_copy = n_bhkrigidbody.layer
             n_bhkrigidbody.col_filter_copy = n_bhkrigidbody.col_filter
-            n_bhkrigidbody.unknown_7_shorts[0] = 0
-            n_bhkrigidbody.unknown_7_shorts[1] = 21280
-            n_bhkrigidbody.unknown_7_shorts[2] = 4581
-            n_bhkrigidbody.unknown_7_shorts[3] = 62977
-            n_bhkrigidbody.unknown_7_shorts[4] = 65535
-            n_bhkrigidbody.unknown_7_shorts[5] = 44
-            n_bhkrigidbody.unknown_7_shorts[6] = 0
+
+            n_bhkrigidbody.unknown_6_shorts[0] = 21280
+            n_bhkrigidbody.unknown_6_shorts[1] = 4581
+            n_bhkrigidbody.unknown_6_shorts[2] = 62977
+            n_bhkrigidbody.unknown_6_shorts[3] = 65535
+            n_bhkrigidbody.unknown_6_shorts[4] = 44
+            n_bhkrigidbody.unknown_6_shorts[5] = 0
 
             # mass is 1.0 at the moment (unless property was set on import or by the user)
             # will be fixed in update_rigid_bodies()
