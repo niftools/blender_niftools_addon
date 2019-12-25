@@ -44,8 +44,10 @@ from io_scene_nif.utility import nif_utils
 
 class MeshProperty:
 
-    def __init__(self):
+    def __init__(self, materialhelper, animationhelper):
         self.bsShaderProperty1st = None
+        self.materialhelper = materialhelper
+        self.animationhelper = animationhelper
 
     # TODO [property] This will be moved to dispatch method later
     @staticmethod
@@ -64,15 +66,17 @@ class MeshProperty:
         # note that NIF files only support one material for each trishape
         # find material property
 
+        self.import_stencil_property(n_block, b_mesh)
+
         material = None
         material_index = 0
 
         n_mat_prop = nif_utils.find_property(n_block, NifFormat.NiMaterialProperty)
         n_effect_shader_prop = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
-        bsEffectShaderProperty = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
-        bsShaderProperty = self.find_bsshaderproperty(n_block)
+        bs_effect_shader_property = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
+        bs_shader_property = self.find_bsshaderproperty(n_block)
 
-        if n_mat_prop or n_effect_shader_prop or bsShaderProperty or bsEffectShaderProperty:
+        if n_mat_prop or n_effect_shader_prop or bs_shader_property or bs_effect_shader_property:
 
             # Texture
             n_texture_prop = nif_utils.find_property(n_block, NifFormat.NiTexturingProperty)
@@ -109,7 +113,6 @@ class MeshProperty:
 
             # Alpha
             n_alpha_prop = nif_utils.find_property(n_block, NifFormat.NiAlphaProperty)
-            self.ni_alpha_prop = n_alpha_prop
 
             # Specularity
             n_specular_prop = nif_utils.find_property(n_block, NifFormat.NiSpecularProperty)
@@ -119,8 +122,12 @@ class MeshProperty:
 
             # create material and assign it to the mesh
             # TODO [material] delegate search for properties to import_material
-            material = self.materialhelper.import_material(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop,
-                                                           textureEffect, n_wire_prop, extra_datas)
+            if n_mat_prop:
+                material = self.materialhelper.import_material(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop,
+                                                               textureEffect, n_wire_prop, extra_datas)
+            # TODO [property] Extract to shader import
+            if bs_shader_property or bs_effect_shader_property:
+                material = self.materialhelper.import_bsshader_material(bs_shader_property, bs_effect_shader_property, n_alpha_prop)
 
             # TODO [animation][material] merge this call into import_material
             self.animationhelper.material.import_material_controllers(material, n_block)
@@ -154,4 +161,3 @@ class MeshProperty:
             else:
                 bsshaderproperty = self.bsShaderProperty1st
         return bsshaderproperty
-

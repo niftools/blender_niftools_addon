@@ -74,13 +74,10 @@ class Material:
         return (bs_shader_property.get_hash()[1:] if bs_shader_property else None,  # skip first element, which is name
                 bs_effect_shader_property.get_hash() if bs_effect_shader_property else None)
 
-    def set_alpha(self, b_mat, shader_property, n_alpha_prop):
+    def set_alpha(self, b_mat, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
         b_mat.use_transparency = True
-        if hasattr(shader_property, 'alpha'):
-            b_mat.alpha = (1 - shader_property.alpha)
-        else:
-            b_mat.alpha = 0
+        # TODO [property][material] map alpha material property value
         b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
         b_mat.offset_z = n_alpha_prop.threshold  # transparency threshold
         b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
