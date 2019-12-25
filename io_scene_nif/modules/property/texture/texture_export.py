@@ -56,7 +56,7 @@ class Texture:
     }
 
     def __init__(self):
-        self.animation_helper = Animation()
+        self.animation_helper = Animation(parent=self)
         self.dict_mesh_uvlayers = []
         self.texture_writer = TextureWriter()
 
