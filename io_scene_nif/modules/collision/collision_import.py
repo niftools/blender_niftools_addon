@@ -85,12 +85,20 @@ class Collision:
         b_obj.game.radius = radius
         b_me = b_obj.data
         if n_obj:
+            # todo [pyffi] nif xml 0.7.1.1 HavokMaterial is a union of 3 enums under the HavokMaterial.material field, probably broken!
+            #              needs union support on pyffi end
             for mat_type in ("material", "oblivion_havok_material", "fallout_3_havok_material", "skyrim_havok_material"):
                 havok_material = getattr(n_obj, mat_type, None)
                 if havok_material:
-                    # todo [collision] fix this
-                    # mat_name = str(havok_material.material)
-                    mat_name = str(havok_material)
+                    if hasattr(havok_material, "material"):
+                        # HavokMaterial.material is an enum under the hood
+                        # pyffi exposes it as an int (struct.get_basic_attribute) and returns the enum's default value
+                        # we treat it as if it was non-basic to get the enum itself
+                        mat_enum = havok_material.get_attribute("material")
+                        mat_name = str(mat_enum)
+                    else:
+                        # fallback, not sure if we should do this
+                        mat_name = str(havok_material)
                     b_mat = get_material(mat_name)
                     b_me.materials.append(b_mat)
 

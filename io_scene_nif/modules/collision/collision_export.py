@@ -192,10 +192,11 @@ class Collision:
                 self.HAVOK_SCALE = self.HAVOK_SCALE
 
         # find physics properties/defaults
-        # n_havok_mat = (b_obj.nifcollision.havok_material, b_obj.nifcollision.skyrim_havok_material)
-        # just hard code to the first entry for now until the version transition is settled
-        # then get it from material name
-        n_havok_mat = (0, 131151687)[0]
+        # get havok material name from material name
+        if b_obj.data.materials:
+            n_havok_mat = b_obj.data.materials[0].name
+        else:
+            n_havok_mat = "HAV_MAT_STONE"
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
         deactivator_type = b_obj.nifcollision.deactivator_type
@@ -270,13 +271,13 @@ class Collision:
             n_bhkrigidbody.unknown_2_shorts[1] = 16336
             n_bhkrigidbody.layer_copy = n_bhkrigidbody.layer
             n_bhkrigidbody.col_filter_copy = n_bhkrigidbody.col_filter
-            n_bhkrigidbody.unknown_7_shorts[0] = 0
-            n_bhkrigidbody.unknown_7_shorts[1] = 21280
-            n_bhkrigidbody.unknown_7_shorts[2] = 4581
-            n_bhkrigidbody.unknown_7_shorts[3] = 62977
-            n_bhkrigidbody.unknown_7_shorts[4] = 65535
-            n_bhkrigidbody.unknown_7_shorts[5] = 44
-            n_bhkrigidbody.unknown_7_shorts[6] = 0
+
+            n_bhkrigidbody.unknown_6_shorts[0] = 21280
+            n_bhkrigidbody.unknown_6_shorts[1] = 4581
+            n_bhkrigidbody.unknown_6_shorts[2] = 62977
+            n_bhkrigidbody.unknown_6_shorts[3] = 65535
+            n_bhkrigidbody.unknown_6_shorts[4] = 44
+            n_bhkrigidbody.unknown_6_shorts[5] = 0
 
             # mass is 1.0 at the moment (unless property was set on import or by the user)
             # will be fixed in update_rigid_bodies()
