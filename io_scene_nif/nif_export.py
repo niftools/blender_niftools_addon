@@ -86,6 +86,7 @@ class NifExport(NifCommon):
         self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint(parent=self)
         self.objecthelper = Object(parent=self)
+        self.exportable_objects = []
 
     def execute(self):
         """Main export function."""
@@ -117,8 +118,7 @@ class NifExport(NifCommon):
                 selected_objects = bpy.context.scene.objects
 
             # only export empties, meshes, and armatures
-            self.export_types = ('EMPTY', 'MESH', 'ARMATURE')
-            self.exportable_objects = [b_obj for b_obj in selected_objects if b_obj.type in self.export_types]
+            self.exportable_objects = [b_obj for b_obj in selected_objects if b_obj.type in Object.export_types]
             if not self.exportable_objects:
                 NifLog.warn("No objects can be exported!")
                 return {'FINISHED'}
@@ -192,10 +192,8 @@ class NifExport(NifCommon):
                     NifLog.info("Finished")
                     return {'FINISHED'}
 
-            
-            # export the actual root node (the name is fixed later to avoid confusing the
-            # exporter with duplicate names)
-            root_block = self.objecthelper.export_root_node(filebase)
+            # export the actual root node (the name is fixed later to avoid confusing the exporter with duplicate names)
+            root_block = self.objecthelper.export_root_node(self.root_objects, filebase)
 
             # post-processing:
             # ----------------
@@ -236,7 +234,7 @@ class NifExport(NifCommon):
                 for n_block in list(block_store.block_to_obj.keys()):
                     if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
                         for n_bone in n_block.tree(block_type=NifFormat.NiNode):
-                            n_kfc, n_kfi = self.nif_export.animationhelper.create_controller(n_bone, n_bone.name.decode() )
+                            n_kfc, n_kfi = self.animationhelper.create_controller(n_bone, n_bone.name.decode())
                             # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
                             n_kfc.flags = 12
                             n_kfc.frequency = 1.0
