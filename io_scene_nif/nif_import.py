@@ -75,6 +75,7 @@ class NifImport(NifCommon):
         self.constrainthelper = Constraint(parent=self)
 
         self.materialhelper = Material(parent=self)
+        self.meshproperty = MeshProperty(self.materialhelper, self.animationhelper)  # TODO [property] Swap out with generic property helper
         self.objecthelper = Object(parent=self)
 
     def execute(self):
@@ -396,9 +397,8 @@ class NifImport(NifCommon):
         '''
         Properties
         '''
-        MeshProperty.import_stencil_property(n_block, b_mesh)
 
-        material, material_index = MeshProperty.process_properties(b_mesh, n_block)
+        material, material_index = self.meshproperty.process_properties(b_mesh, n_block)
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
