@@ -138,9 +138,8 @@ class BSShader:
                 self.export_shader_flags(b_obj, bsshader)
 
         if b_obj.niftools_shader.bs_shadertype == 'None':
-            raise nif_utils.NifError("Export version expected shader. "
-                                     "No shader applied to mesh '%s', these cannot be exported to NIF."
-                                     " Set shader before exporting." % b_obj)
+            raise nif_utils.NifError("Export version expected shader. No shader applied to mesh '{0}', these cannot be exported to NIF."
+                                     "Set shader before exporting.".format(b_obj))
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset

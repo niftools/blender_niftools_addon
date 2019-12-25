@@ -280,7 +280,6 @@ class NifImport(NifCommon):
                     NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name for child in geom_group], n_block.name))
                     b_obj = None
                     for child in geom_group:
-                        NifLog.info("HERE" + str(b_obj))
                         b_obj = self.import_mesh(child, group_mesh=b_obj, applytransform=True)
                         b_obj.name = Object.import_name(n_block)
                         # appears to be only used by material sys
