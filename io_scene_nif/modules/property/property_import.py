@@ -36,13 +36,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.property import texture
 from io_scene_nif.utility import nif_utils
 
 
-class MeshProperty:
+class Property:
 
     def __init__(self, materialhelper, animationhelper):
         self.bsShaderProperty1st = None
@@ -72,14 +73,26 @@ class MeshProperty:
         material_index = 0
 
         n_mat_prop = nif_utils.find_property(n_block, NifFormat.NiMaterialProperty)
+
         n_effect_shader_prop = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
+
         bs_effect_shader_property = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
+
         bs_shader_property = self.find_bsshaderproperty(n_block)
 
-        if n_mat_prop or n_effect_shader_prop or bs_shader_property or bs_effect_shader_property:
+        # Alpha
+        n_alpha_prop = nif_utils.find_property(n_block, NifFormat.NiAlphaProperty)
 
-            # Texture
-            n_texture_prop = nif_utils.find_property(n_block, NifFormat.NiTexturingProperty)
+        # Specularity
+        n_specular_prop = nif_utils.find_property(n_block, NifFormat.NiSpecularProperty)
+
+        # Wireframe
+        n_wire_prop = nif_utils.find_property(n_block, NifFormat.NiWireframeProperty)
+
+        # Texture
+        n_texture_prop = nif_utils.find_property(n_block, NifFormat.NiTexturingProperty)
+
+        if n_mat_prop or n_effect_shader_prop or bs_shader_property or bs_effect_shader_property:
 
             # extra datas (for sid meier's railroads) that have material info
             extra_datas = []
@@ -111,15 +124,6 @@ class MeshProperty:
                             textureEffect = effect
                             break
 
-            # Alpha
-            n_alpha_prop = nif_utils.find_property(n_block, NifFormat.NiAlphaProperty)
-
-            # Specularity
-            n_specular_prop = nif_utils.find_property(n_block, NifFormat.NiSpecularProperty)
-
-            # Wireframe
-            n_wire_prop = nif_utils.find_property(n_block, NifFormat.NiWireframeProperty)
-
             # create material and assign it to the mesh
             # TODO [material] delegate search for properties to import_material
             if n_mat_prop:
@@ -145,19 +149,3 @@ class MeshProperty:
                 b_obj.draw_type = 'WIRE'
             '''
         return material, material_index
-
-    # TODO [shader] Move move out when nolonger required to reference
-    def find_bsshaderproperty(self, n_block):
-        # bethesda shader
-        bsshaderproperty = nif_utils.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
-        if not bsshaderproperty:
-            bsshaderproperty = nif_utils.find_property(n_block, NifFormat.BSLightingShaderProperty)
-
-        if bsshaderproperty:
-            for textureslot in bsshaderproperty.texture_set.textures:
-                if textureslot:
-                    self.bsShaderProperty1st = bsshaderproperty
-                    break
-            else:
-                bsshaderproperty = self.bsShaderProperty1st
-        return bsshaderproperty

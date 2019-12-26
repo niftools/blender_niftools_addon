@@ -70,10 +70,6 @@ class Material:
                 n_wire_prop.get_hash() if n_wire_prop else None,
                 tuple(extra.get_hash() for extra in extra_datas))
 
-    def get_bsshader_hash(self, bs_shader_property, bs_effect_shader_property):
-        return (bs_shader_property.get_hash()[1:] if bs_shader_property else None,  # skip first element, which is name
-                bs_effect_shader_property.get_hash() if bs_effect_shader_property else None)
-
     def set_alpha(self, b_mat, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
         b_mat.use_transparency = True
@@ -83,83 +79,6 @@ class Material:
         b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
 
         return b_mat
-
-    def set_alpha_bsshader(self, b_mat, shader_property):
-        NifLog.debug("Alpha prop detected")
-        b_mat.use_transparency = True
-        b_mat.alpha = (1 - shader_property.alpha)
-        b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-        return b_mat
-
-    def import_bsshader_material(self, bs_shader_property, bs_effect_shader_property, n_alpha_prop):
-        material_hash = self.get_bsshader_hash(bs_shader_property, bs_effect_shader_property)
-        try:
-            return self.dict_materials[material_hash]
-        except KeyError:
-            pass
-
-        # name unique material
-        name = Object.import_name(bs_shader_property)
-        if not name:
-            name = (self.nif_import.active_obj_name + "_nt_mat")
-        b_mat = bpy.data.materials.new(name)
-
-        if bs_shader_property:
-            self.texturehelper.import_bsshaderproperty_textures(b_mat, bs_shader_property)
-        if bs_effect_shader_property:
-            self.texturehelper.import_bseffectshaderproperty_textures(b_mat, bs_effect_shader_property)
-
-        # shader based properties
-        if bs_shader_property:
-
-            # Diffuse color
-            if bs_shader_property.skin_tint_color:
-                b_mat.diffuse_color.r = bs_shader_property.skin_tint_color.r
-                b_mat.diffuse_color.g = bs_shader_property.skin_tint_color.g
-                b_mat.diffuse_color.b = bs_shader_property.skin_tint_color.b
-                b_mat.diffuse_intensity = 1.0
-
-            if (b_mat.diffuse_color.r + b_mat.diffuse_color.g + b_mat.diffuse_color.g) == 0:
-                b_mat.diffuse_color.r = bs_shader_property.hair_tint_color.r
-                b_mat.diffuse_color.g = bs_shader_property.hair_tint_color.g
-                b_mat.diffuse_color.b = bs_shader_property.hair_tint_color.b
-                b_mat.diffuse_intensity = 1.0
-
-            # Emissive
-            b_mat.niftools.emissive_color.r = bs_shader_property.emissive_color.r
-            b_mat.niftools.emissive_color.g = bs_shader_property.emissive_color.g
-            b_mat.niftools.emissive_color.b = bs_shader_property.emissive_color.b
-            b_mat.emit = bs_shader_property.emissive_multiple
-
-            # Alpha
-            if n_alpha_prop:
-                b_mat = self.set_alpha(b_mat, bs_shader_property, n_alpha_prop)
-
-            # gloss
-            b_mat.specular_hardness = bs_shader_property.glossiness
-
-            # Specular color
-            b_mat.specular_color.r = bs_shader_property.specular_color.r
-            b_mat.specular_color.g = bs_shader_property.specular_color.g
-            b_mat.specular_color.b = bs_shader_property.specular_color.b
-            b_mat.specular_intensity = bs_shader_property.specular_strength
-
-            # lighting effect
-            b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
-            b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
-
-        if bs_effect_shader_property:
-            # Alpha
-            if n_alpha_prop:
-                b_mat = self.set_alpha(b_mat, bs_shader_property, n_alpha_prop)
-
-            if bs_effect_shader_property.emissive_color:
-                b_mat.niftools.emissive_color.r = bs_effect_shader_property.emissive_color.r
-                b_mat.niftools.emissive_color.g = bs_effect_shader_property.emissive_color.g
-                b_mat.niftools.emissive_color.b = bs_effect_shader_property.emissive_color.b
-                b_mat.niftools.emissive_alpha = bs_effect_shader_property.emissive_color.a
-                b_mat.emit = bs_effect_shader_property.emissive_multiple
-            b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
 
     def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas):
 
