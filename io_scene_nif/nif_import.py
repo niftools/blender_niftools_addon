@@ -77,7 +77,7 @@ class NifImport(NifCommon):
 
         self.materialhelper = Material(parent=self)
         self.propertyhelper = Property(self.materialhelper, self.animationhelper)  # TODO [property] Implement fully generic property helper
-        self.objecthelper = Object(parent=self)
+        self.objecthelper = Object()
 
     def execute(self):
         """Main import function."""
@@ -183,7 +183,8 @@ class NifImport(NifCommon):
         #     self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
-        self.active_obj_name = ""
+        Object.ACTIVE_OBJ_NAME = ""
+
         if isinstance(root_block, (NifFormat.NiNode, NifFormat.NiTriBasedGeom)):
             b_obj = self.import_branch(root_block)
             self.objecthelper.import_extra_datas(root_block, b_obj)
