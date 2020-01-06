@@ -43,6 +43,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.geometry.mesh.mesh_export import Mesh
+from io_scene_nif.modules.object import PRN_DICT
 from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.object.object_types import type_export
 from io_scene_nif.utility import nif_utils
@@ -168,7 +169,7 @@ class Object:
                 # add string extra data
                 prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
-                prn.string_data = self.nif_export.prn_dict[loc]
+                prn.string_data = PRN_DICT[loc]
                 n_root.add_extra_data(prn)
 
     # TODO [collision] Move to collision

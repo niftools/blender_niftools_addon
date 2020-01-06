@@ -50,3 +50,12 @@ IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
                                [0.0, 1.0, 0.0, 0.0],
                                [0.0, 0.0, 1.0, 0.0],
                                [0.0, 0.0, 0.0, 1.0]])
+
+# used for weapon locations or attachments to a body
+PRN_DICT = {"BACK": "BackWeapon",
+            "SIDE": "SideWeapon",
+            "QUIVER": "Quiver",
+            "SHIELD": "Bip01 L ForearmTwist",
+            "HELM": "Bip01 Head",
+            "RING": "Bip01 R Finger1"}
+

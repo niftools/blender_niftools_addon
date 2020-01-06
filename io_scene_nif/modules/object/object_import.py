@@ -41,14 +41,12 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.object import PRN_DICT
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
 class Object:
-    # this will have to deal with all naming issues
-    def __init__(self, parent):
-        self.nif_import = parent
 
     def import_extra_datas(self, root_block, b_obj):
         """ Only to be called on nif and blender root objects! """
@@ -64,7 +62,7 @@ class Object:
             if isinstance(n_extra, NifFormat.NiStringExtraData):
                 # weapon location or attachment position
                 if n_extra.name.decode() == "Prn":
-                    for k, v in self.nif_import.prn_dict.items():
+                    for k, v in PRN_DICT.items():
                         if v.lower() == n_extra.string_data.decode().lower():
                             b_obj.niftools.prn_location = k
                 elif n_extra.name.decode() == "UPB":

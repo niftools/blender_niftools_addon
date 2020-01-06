@@ -49,13 +49,6 @@ class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
     """
-    # used for weapon locations or attachments to a body
-    prn_dict = {"BACK": "BackWeapon",
-                "SIDE": "SideWeapon",
-                "QUIVER": "Quiver",
-                "SHIELD": "Bip01 L ForearmTwist",
-                "HELM": "Bip01 Head",
-                "RING": "Bip01 R Finger1"}
 
     VERTEX_RESOLUTION = 1000
     NORMAL_RESOLUTION = 100
