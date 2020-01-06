@@ -76,7 +76,7 @@ class NifImport(NifCommon):
         self.constrainthelper = Constraint(parent=self)
 
         self.materialhelper = Material(parent=self)
-        self.meshproperty = Property(self.materialhelper, self.animationhelper)  # TODO [property] Implement fully generic property helper
+        self.propertyhelper = Property(self.materialhelper, self.animationhelper)  # TODO [property] Implement fully generic property helper
         self.objecthelper = Object(parent=self)
 
     def execute(self):
@@ -232,7 +232,7 @@ class NifImport(NifCommon):
             b_obj = self.import_mesh(n_block)
             self.active_obj_name = b_obj.name
             # store flags etc
-            Object.import_props_and_consistency(n_block, b_obj)
+            Object.import_object_flags(n_block, b_obj)
             # skinning? add armature modifier
             if n_block.skin_instance:
                 self.armaturehelper.append_armature_modifier(b_obj, b_armature)
@@ -286,7 +286,7 @@ class NifImport(NifCommon):
                         # appears to be only used by material sys
                         self.active_obj_name = b_obj.name
                         # store flags etc
-                        Object.import_props_and_consistency(child, b_obj)
+                        Object.import_object_flags(child, b_obj)
 
                     # is there skinning on any of the grouped geometries?
                     if any(child.skin_instance for child in geom_group):
@@ -325,6 +325,7 @@ class NifImport(NifCommon):
                     self.animationhelper.object.import_visibility(n_block, b_obj)
 
             return b_obj
+
         # all else is currently discarded
         return None
 
@@ -398,7 +399,7 @@ class NifImport(NifCommon):
         Properties
         '''
 
-        material, material_index = self.meshproperty.process_properties(b_mesh, n_block)
+        material, material_index = self.propertyhelper.process_properties(b_mesh, n_block)
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
