@@ -36,31 +36,32 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
-from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
-from io_scene_nif.modules.object.object_types.type_import import NiTypes
-from io_scene_nif.modules.property.property_import import MeshProperty
-from io_scene_nif.nif_common import NifCommon
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_logging import NifLog
-from io_scene_nif.io.nif import NifFile
-from io_scene_nif.io.egm import EGMFile
 
-from io_scene_nif.modules.animation.animation_import import Animation
-from io_scene_nif.modules import armature
-from io_scene_nif.modules.armature.armature_import import Armature
-from io_scene_nif.modules.collision.collision_import import Collision
-from io_scene_nif.modules.constraint.constraint_import import Constraint
-from io_scene_nif.modules.property.material.material_import import Material
-from io_scene_nif.modules.object.object_import import Object
-from io_scene_nif.modules.scene import scene_import
-from io_scene_nif.utility.util_global import NifOp, EGMData, NifData
 
 import bpy
 import mathutils
-
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.io.egm import EGMFile
+from io_scene_nif.io.nif import NifFile
+from io_scene_nif.modules import armature
+from io_scene_nif.modules.animation.animation_import import Animation
+from io_scene_nif.modules.armature.armature_import import Armature
+from io_scene_nif.modules.collision.collision_import import Collision
+from io_scene_nif.modules.constraint.constraint_import import Constraint
+from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
+from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
+from io_scene_nif.modules.object.object_import import Object
+from io_scene_nif.modules.object.object_types.type_import import NiTypes
+from io_scene_nif.modules.property.material.material_import import Material
+from io_scene_nif.modules.property.property_import import Property
+from io_scene_nif.modules.scene import scene_import
+
+from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.util_global import NifOp, EGMData, NifData
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class NifImport(NifCommon):
@@ -75,7 +76,7 @@ class NifImport(NifCommon):
         self.constrainthelper = Constraint(parent=self)
 
         self.materialhelper = Material(parent=self)
-        self.meshproperty = MeshProperty(self.materialhelper, self.animationhelper)  # TODO [property] Swap out with generic property helper
+        self.meshproperty = Property(self.materialhelper, self.animationhelper)  # TODO [property] Implement fully generic property helper
         self.objecthelper = Object(parent=self)
 
     def execute(self):
