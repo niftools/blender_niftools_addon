@@ -212,21 +212,19 @@ class NifImport(NifCommon):
             NifLog.warn("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
 
     def import_branch(self, n_block, b_armature=None, n_armature=None):
-        """Read the content of the current NIF tree branch to Blender
-        recursively.
+        """Read the content of the current NIF tree branch to Blender recursively.
 
         :param n_block: The nif block to import.
         :param b_armature: The blender armature for the current branch.
-        :param n_armature: The corresponding nif block for the armature for
-            the current branch.
+        :param n_armature: The corresponding nif block for the armature for  the current branch.
         """
-        NifLog.info("Importing data")
-        # start with no grouping
-        geom_group = []
         if not n_block:
             return None
 
-        elif isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
+        # start with no grouping
+        geom_group = []
+        NifLog.info("Importing data for block '{0}'".format(n_block.name.decode()))
+        if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
             # it's a shape node and we're not importing skeleton only
             NifLog.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
@@ -346,7 +344,7 @@ class NifImport(NifCommon):
         """
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
-        NifLog.info("Importing mesh data for geometry {0}".format(n_block.name.decode()))
+        NifLog.info("Importing mesh data for geometry '{0}'".format(n_block.name.decode()))
 
         # TODO [object] Not the responsibility of this method to create object level... object.
         if group_mesh:
