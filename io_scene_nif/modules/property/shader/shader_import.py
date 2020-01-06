@@ -79,6 +79,7 @@ class BSShader:
             sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
             if b_prop.shader_flags_1._items[sf_index]._value == 1:
                 b_obj.niftools_shader[b_flag_name_1] = True
+
         for b_flag_name_2 in b_prop.shader_flags_2._names:
             sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
             if b_prop.shader_flags_2._items[sf_index]._value == 1:
@@ -94,7 +95,7 @@ class BSShader:
         # name unique material
         name = Object.import_name(bs_shader_property)
         if not name:
-            name = (self.nif_import.active_obj_name + "_nt_mat")
+            name = (Object.ACTIVE_OBJ_NAME + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
 
         if bs_shader_property:
