@@ -48,6 +48,8 @@ from io_scene_nif.utility.util_logging import NifLog
 
 class Object:
 
+    ACTIVE_OBJ_NAME = ""
+
     def import_extra_datas(self, root_block, b_obj):
         """ Only to be called on nif and blender root objects! """
         # store type of root node

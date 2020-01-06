@@ -75,7 +75,7 @@ class NifImport(NifCommon):
         self.collisionhelper = Collision(parent=self)
         self.constrainthelper = Constraint(parent=self)
 
-        self.materialhelper = Material(parent=self)
+        self.materialhelper = Material()
         self.propertyhelper = Property(self.materialhelper, self.animationhelper)  # TODO [property] Implement fully generic property helper
         self.objecthelper = Object()
 
@@ -231,7 +231,7 @@ class NifImport(NifCommon):
             NifLog.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             b_obj = self.import_mesh(n_block)
-            self.active_obj_name = b_obj.name
+            Object.ACTIVE_OBJ_NAME = b_obj.name
             # store flags etc
             Object.import_object_flags(n_block, b_obj)
             # skinning? add armature modifier
@@ -285,7 +285,7 @@ class NifImport(NifCommon):
                         b_obj = self.import_mesh(child, group_mesh=b_obj, applytransform=True)
                         b_obj.name = Object.import_name(n_block)
                         # appears to be only used by material sys
-                        self.active_obj_name = b_obj.name
+                        Object.ACTIVE_OBJ_NAME = b_obj.name
                         # store flags etc
                         Object.import_object_flags(child, b_obj)
 

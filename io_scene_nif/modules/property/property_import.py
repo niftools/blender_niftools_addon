@@ -40,34 +40,46 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.property import texture
+from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.utility import nif_utils
 
 
 class Property:
 
     def __init__(self, materialhelper, animationhelper):
-        self.bsShaderProperty1st = None
         self.materialhelper = materialhelper
         self.animationhelper = animationhelper
 
     # TODO [property] This will be moved to dispatch method later
     @staticmethod
-    def import_stencil_property(n_mesh, b_mesh):
+    def import_stencil_property(b_mesh, b_obj):
         """ Imports a NiStencilProperty attached to n_mesh """
         # Stencil (for double sided meshes)
-        n_stencil_prop = nif_utils.find_property(n_mesh, NifFormat.NiStencilProperty)
+        n_stencil_prop = nif_utils.find_property(b_obj, NifFormat.NiStencilProperty)
         # we don't check flags for now, nothing fancy
         if n_stencil_prop:
             b_mesh.show_double_sided = True
         else:
             b_mesh.show_double_sided = False
 
-    def process_properties(self, b_mesh, n_block):
+    def import_shader_property(self, b_obj, n_block):
+        if n_block.properties:
+            for b_prop in n_block.properties:
+                BSShader.import_shader_types(b_obj, b_prop)
+        elif n_block.bs_properties:
+            for b_prop in n_block.bs_properties:
+                BSShader.import_shader_types(b_obj, b_prop)
+
+    def process_properties(self, b_obj, n_block):
         # Material
         # note that NIF files only support one material for each trishape
         # find material property
 
-        self.import_stencil_property(n_block, b_mesh)
+        self.import_stencil_property(n_block, b_obj)
+        # self.import_shader_property(n_block, b_obj)
+        return self.process_material(n_block, b_obj)
+
+    def process_material(self, n_block, b_mesh):
 
         material = None
         material_index = 0
@@ -75,10 +87,6 @@ class Property:
         n_mat_prop = nif_utils.find_property(n_block, NifFormat.NiMaterialProperty)
 
         n_effect_shader_prop = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
-
-        bs_effect_shader_property = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
-
-        bs_shader_property = self.find_bsshaderproperty(n_block)
 
         # Alpha
         n_alpha_prop = nif_utils.find_property(n_block, NifFormat.NiAlphaProperty)
@@ -92,7 +100,7 @@ class Property:
         # Texture
         n_texture_prop = nif_utils.find_property(n_block, NifFormat.NiTexturingProperty)
 
-        if n_mat_prop or n_effect_shader_prop or bs_shader_property or bs_effect_shader_property:
+        if n_mat_prop or n_effect_shader_prop:  # TODO [shader] or bs_shader_property or bs_effect_shader_property:
 
             # extra datas (for sid meier's railroads) that have material info
             extra_datas = []
@@ -130,8 +138,8 @@ class Property:
                 material = self.materialhelper.import_material(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop,
                                                                textureEffect, n_wire_prop, extra_datas)
             # TODO [property] Extract to shader import
-            if bs_shader_property or bs_effect_shader_property:
-                material = self.materialhelper.import_bsshader_material(bs_shader_property, bs_effect_shader_property, n_alpha_prop)
+            # if bs_shader_property or bs_effect_shader_property:
+            #     material = self.materialhelper.import_bsshader_material(bs_shader_property, bs_effect_shader_property, n_alpha_prop)
 
             # TODO [animation][material] merge this call into import_material
             self.animationhelper.material.import_material_controllers(material, n_block)

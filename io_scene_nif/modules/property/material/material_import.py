@@ -48,8 +48,7 @@ from io_scene_nif.utility.util_logging import NifLog
 
 class Material:
 
-    def __init__(self, parent):
-        self.nif_import = parent
+    def __init__(self):
         self.dict_materials = {}
         self.texturehelper = Texture()
 
@@ -93,7 +92,7 @@ class Material:
         # name unique material
         name = Object.import_name(n_mat_prop)
         if not name:
-            name = (self.nif_import.active_obj_name + "_nt_mat")
+            name = (Object.ACTIVE_OBJ_NAME + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
 
         # texures
@@ -165,14 +164,12 @@ class Material:
                     # non-textured material: vertex colors incluence color
                     material.use_vertex_color_paint = True
 
-            # if there's a base texture assigned to this material sets it
-            # to be displayed in Blender's 3D view
-            # but only if there are UV coordinates
+            # if there's a base texture assigned to this material display it in Blender's 3D view, but only if there are UV coordinates
             if mbasetex and mbasetex.texture and n_uvco:
-                imgobj = mbasetex.texture.image
-                if imgobj:
+                image = mbasetex.texture.image
+                if image:
                     for b_polyimage_index in f_map:
                         if b_polyimage_index is None:
                             continue
                         tface = b_mesh.uv_textures.active.data[b_polyimage_index]
-                        tface.image = imgobj
+                        tface.image = image
