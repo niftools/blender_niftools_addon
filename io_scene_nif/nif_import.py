@@ -346,7 +346,7 @@ class NifImport(NifCommon):
         """
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
-        NifLog.info("Importing mesh data for geometry {0}".format(n_block.name))
+        NifLog.info("Importing mesh data for geometry {0}".format(n_block.name.decode()))
 
         # TODO [object] Not the responsibility of this method to create object level... object.
         if group_mesh:
@@ -380,21 +380,21 @@ class NifImport(NifCommon):
             transform = nif_utils.import_matrix(n_block)
 
         # shortcut for mesh geometry data
-        niData = n_block.data
-        if not niData:
-            raise nif_utils.NifError("No shape data in {0}".format(ni_name))
+        n_tri_data = n_block.data
+        if not n_tri_data:
+            raise nif_utils.NifError("No shape data in {0}".format(n_block.name.decode()))
 
         # vertices
-        n_verts = niData.vertices
+        n_verts = n_tri_data.vertices
 
         # polygons
-        n_triangles = [list(tri) for tri in niData.get_triangles()]
+        n_triangles = [list(tri) for tri in n_tri_data.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
-        n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in niData.uv_sets)
+        n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in n_tri_data.uv_sets)
 
         # vertex normals
-        n_norms = niData.normals
+        n_norms = n_tri_data.normals
 
         '''
         Properties
@@ -517,9 +517,9 @@ class NifImport(NifCommon):
             polysmooth.use_smooth = True if (n_norms or n_block.skin_instance) else False
             polysmooth.material_index = material_index
 
-        Vertex.map_vertex_colors(b_mesh, niData, v_map)
+        Vertex.map_vertex_colors(b_mesh, n_tri_data, v_map)
 
-        Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, niData)
+        Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, n_tri_data)
 
         # TODO [material][texture] Break out texture/material
         self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, material, n_uvco)
