@@ -352,14 +352,11 @@ class NifImport(NifCommon):
         if not n_tri_data:
             raise nif_utils.NifError("No shape data in {0}".format(n_block.name.decode()))
 
-
-
         # polygons
         n_triangles = [list(tri) for tri in n_tri_data.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
         n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in n_tri_data.uv_sets)
-
 
 
         '''
@@ -368,7 +365,7 @@ class NifImport(NifCommon):
 
         material, material_index = self.propertyhelper.process_properties(b_obj.data, n_block)
 
-        v_map = self.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
+        v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
 
         bf2_index, f_map = Mesh.add_triangles_to_bmesh(b_mesh, n_triangles, v_map)
 
@@ -402,76 +399,6 @@ class NifImport(NifCommon):
 
         b_mesh.validate()
         b_mesh.update()
-
-    def map_n_verts_to_b_verts(self, b_mesh, n_tri_data, transform):
-        # vertices
-        n_verts = n_tri_data.vertices
-
-        # vertex normals
-        n_norms = n_tri_data.normals
-
-        # v_map will store the vertex index mapping
-        # nif vertex i maps to blender vertex v_map[i]
-        v_map = [_ for _ in range(len(n_verts))]  # pre-allocate memory, for faster performance
-        # Following code avoids introducing unwanted cracks in UV seams:
-        # Construct vertex map to get unique vertex / normal pair list.
-        # We use a Python dictionary to remove doubles and to keep track of indices.
-        # While we are at it, we also add vertices while constructing the map.
-        n_map = {}
-        b_v_index = len(b_mesh.vertices)  # case we are adding to mesh with existing vertices
-        for n_vert_index, n_vert in enumerate(n_verts):
-            # The key k identifies unique vertex /normal pairs.
-            # We use a tuple of ints for key, this works MUCH faster than a tuple of floats.
-            if n_norms:
-                n_norm = n_norms[n_vert_index]
-                key = (int(n_vert.x * self.VERTEX_RESOLUTION),
-                       int(n_vert.y * self.VERTEX_RESOLUTION),
-                       int(n_vert.z * self.VERTEX_RESOLUTION),
-                       int(n_norm.x * self.NORMAL_RESOLUTION),
-                       int(n_norm.y * self.NORMAL_RESOLUTION),
-                       int(n_norm.z * self.NORMAL_RESOLUTION))
-            else:
-                key = (int(n_vert.x * self.VERTEX_RESOLUTION),
-                       int(n_vert.y * self.VERTEX_RESOLUTION),
-                       int(n_vert.z * self.VERTEX_RESOLUTION))
-
-            # check if vertex was already added, and if so, what index
-            try:
-                # this is the bottle neck...
-                # can we speed this up?
-                if not NifOp.props.combine_vertices:
-                    n_map_k = None
-                else:
-                    n_map_k = n_map[key]
-            except KeyError:
-                n_map_k = None
-
-            if not n_map_k:
-                # no entry: new vertex / normal pair
-                n_map[key] = n_vert_index  # unique vertex / normal pair with key k was added, with NIF index i
-                v_map[n_vert_index] = b_v_index  # NIF vertex i maps to blender vertex b_v_index
-                if transform:
-                    n_vert = mathutils.Vector([n_vert.x, n_vert.y, n_vert.z])
-                    n_vert = n_vert * transform
-
-                # add the vertex
-                b_mesh.vertices.add(1)
-                b_mesh.vertices[-1].co = [n_vert.x, n_vert.y, n_vert.z]
-                # adds normal info if present (Blender recalculates these when switching between edit mode and object mode, handled further)
-                # if n_norms:
-                #    mv = b_mesh.vertices[b_v_index]
-                #    n = n_norms[i]
-                #    mv.normal = mathutils.Vector(n.x, n.y, n.z)
-                b_v_index += 1
-            else:
-                # already added
-                # NIF vertex i maps to Blender vertex v_map[n_map_k]
-                v_map[n_vert_index] = v_map[n_map_k]
-        # report
-        NifLog.debug("{0} unique vertex-normal pairs".format(str(len(n_map))))
-        # release memory
-        del n_map
-        return v_map
 
     def set_parents(self, n_block):
         """Set the parent block recursively through the tree, to allow

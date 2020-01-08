@@ -35,9 +35,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-
+from io_scene_nif.modules.geometry import mesh
+from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
+
+import mathutils
 
 
 class Mesh:
@@ -92,3 +94,74 @@ class Mesh:
         # at this point, deleted polygons (degenerate or duplicate) satisfy f_map[i] = None
         NifLog.debug("{0} unique polygons".format(num_unique_faces))
         return b_poly_offset, f_map
+
+    @staticmethod
+    def map_n_verts_to_b_verts(b_mesh, n_tri_data, transform):
+        # vertices
+        n_verts = n_tri_data.vertices
+
+        # vertex normals
+        n_norms = n_tri_data.normals
+
+        # v_map will store the vertex index mapping
+        # nif vertex i maps to blender vertex v_map[i]
+        v_map = [_ for _ in range(len(n_verts))]  # pre-allocate memory, for faster performance
+        # Following code avoids introducing unwanted cracks in UV seams:
+        # Construct vertex map to get unique vertex / normal pair list.
+        # We use a Python dictionary to remove doubles and to keep track of indices.
+        # While we are at it, we also add vertices while constructing the map.
+        n_map = {}
+        b_v_index = len(b_mesh.vertices)  # case we are adding to mesh with existing vertices
+        for n_vert_index, n_vert in enumerate(n_verts):
+            # The key k identifies unique vertex /normal pairs.
+            # We use a tuple of ints for key, this works MUCH faster than a tuple of floats.
+            if n_norms:
+                n_norm = n_norms[n_vert_index]
+                key = (int(n_vert.x * mesh.VERTEX_RESOLUTION),
+                       int(n_vert.y * mesh.VERTEX_RESOLUTION),
+                       int(n_vert.z * mesh.VERTEX_RESOLUTION),
+                       int(n_norm.x * mesh.NORMAL_RESOLUTION),
+                       int(n_norm.y * mesh.NORMAL_RESOLUTION),
+                       int(n_norm.z * mesh.NORMAL_RESOLUTION))
+            else:
+                key = (int(n_vert.x * mesh.VERTEX_RESOLUTION),
+                       int(n_vert.y * mesh.VERTEX_RESOLUTION),
+                       int(n_vert.z * mesh.VERTEX_RESOLUTION))
+
+            # check if vertex was already added, and if so, what index
+            try:
+                # this is the bottle neck...
+                # can we speed this up?
+                if not NifOp.props.combine_vertices:
+                    n_map_k = None
+                else:
+                    n_map_k = n_map[key]
+            except KeyError:
+                n_map_k = None
+
+            if not n_map_k:
+                # no entry: new vertex / normal pair
+                n_map[key] = n_vert_index  # unique vertex / normal pair with key k was added, with NIF index i
+                v_map[n_vert_index] = b_v_index  # NIF vertex i maps to blender vertex b_v_index
+                if transform:
+                    n_vert = mathutils.Vector([n_vert.x, n_vert.y, n_vert.z])
+                    n_vert = n_vert * transform
+
+                # add the vertex
+                b_mesh.vertices.add(1)
+                b_mesh.vertices[-1].co = [n_vert.x, n_vert.y, n_vert.z]
+                # adds normal info if present (Blender recalculates these when switching between edit mode and object mode, handled further)
+                # if n_norms:
+                #    mv = b_mesh.vertices[b_v_index]
+                #    n = n_norms[i]
+                #    mv.normal = mathutils.Vector(n.x, n.y, n.z)
+                b_v_index += 1
+            else:
+                # already added
+                # NIF vertex i maps to Blender vertex v_map[n_map_k]
+                v_map[n_vert_index] = v_map[n_map_k]
+        # report
+        NifLog.debug("{0} unique vertex-normal pairs".format(str(len(n_map))))
+        # release memory
+        del n_map
+        return v_map
