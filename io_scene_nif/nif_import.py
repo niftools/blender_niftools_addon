@@ -183,8 +183,6 @@ class NifImport(NifCommon):
         #     self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
-        Object.ACTIVE_OBJ_NAME = ""
-
         if isinstance(root_block, (NifFormat.NiNode, NifFormat.NiTriBasedGeom)):
             b_obj = self.import_branch(root_block)
             self.objecthelper.import_extra_datas(root_block, b_obj)
@@ -226,10 +224,13 @@ class NifImport(NifCommon):
         NifLog.info("Importing data for block '{0}'".format(n_block.name.decode()))
         if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
             # it's a shape node and we're not importing skeleton only
-            NifLog.debug("Building mesh in import_branch")
-            # note: transform matrix is set during import
-            b_obj = self.import_mesh(n_block)
-            Object.ACTIVE_OBJ_NAME = b_obj.name
+            b_obj = self.objecthelper.create_mesh_object(n_block)
+
+            transform = nif_utils.import_matrix(n_block)  # set transform matrix for the mesh
+            self.import_mesh(n_block, b_obj, transform)
+
+            bpy.context.scene.objects.active = b_obj
+
             # store flags etc
             Object.import_object_flags(n_block, b_obj)
             # skinning? add armature modifier
@@ -278,12 +279,14 @@ class NifImport(NifCommon):
                 else:
                     # node groups geometries, so import it as a mesh
                     NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name for child in geom_group], n_block.name))
-                    b_obj = None
+
+                    b_obj = self.objecthelper.create_mesh_object(n_block)
+                    b_obj.matrix_local = nif_utils.import_matrix(n_block)
+                    bpy.context.scene.objects.active = b_obj
+
                     for child in geom_group:
-                        b_obj = self.import_mesh(child, group_mesh=b_obj, applytransform=True)
-                        b_obj.name = Object.import_name(n_block)
-                        # appears to be only used by material sys
-                        Object.ACTIVE_OBJ_NAME = b_obj.name
+                        self.import_mesh(child, b_obj)
+
                         # store flags etc
                         Object.import_object_flags(child, b_obj)
 
@@ -328,54 +331,20 @@ class NifImport(NifCommon):
         # all else is currently discarded
         return None
 
-    def import_mesh(self, n_block, group_mesh=None, applytransform=False):
-        """Creates and returns a raw mesh, or appends geometry data to
-        group_mesh.
+    def import_mesh(self, n_block, b_obj, transform=None):
+        """Creates and returns a raw mesh, or appends geometry data to group_mesh.
 
         :param n_block: The nif block whose mesh data to import.
         :type n_block: C{NiTriBasedGeom}
-        :param group_mesh: The mesh to which to append the geometry
-            data. If C{None}, a new mesh is created.
-        :type group_mesh: A Blender object that has mesh data.
-        :param applytransform: Whether to apply the n_block's
-            transformation to the mesh. If group_mesh is not C{None},
-            then applytransform must be C{True}.
+        :param b_obj: The mesh to which to append the geometry data. If C{None}, a new mesh is created.
+        :type b_obj: A Blender object that has mesh data.
+        :param transform: Apply the n_block's transformation to the mesh.
         :type applytransform: C{bool}
         """
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
         NifLog.info("Importing mesh data for geometry '{0}'".format(n_block.name.decode()))
-
-        # TODO [object] Not the responsibility of this method to create object level... object.
-        if group_mesh:
-            b_obj = group_mesh
-            b_mesh = group_mesh.data
-        else:
-            # Mesh name -> must be unique, so tag it if needed
-
-            ni_name = n_block.name.decode()
-            # create mesh data
-            b_mesh = bpy.data.meshes.new(ni_name)
-
-            # create mesh object and link to data
-            b_obj = self.objecthelper.create_b_obj(n_block, b_mesh)
-
-            # Mesh hidden flag
-            if n_block.flags & 1 == 1:
-                b_obj.draw_type = 'WIRE'  # hidden: wire
-            else:
-                b_obj.draw_type = 'TEXTURED'  # not hidden: shaded
-
-        # set transform matrix for the mesh
-        if not applytransform:
-            if group_mesh:
-                raise nif_utils.NifError("BUG: cannot set matrix when importing meshes in groups; use applytransform = True")
-
-            b_obj.matrix_local = nif_utils.import_matrix(n_block)
-
-        else:
-            # used later on
-            transform = nif_utils.import_matrix(n_block)
+        b_mesh = b_obj.data
 
         # shortcut for mesh geometry data
         n_tri_data = n_block.data
@@ -398,11 +367,11 @@ class NifImport(NifCommon):
         Properties
         '''
 
-        material, material_index = self.propertyhelper.process_properties(b_mesh, n_block)
+        material, material_index = self.propertyhelper.process_properties(b_obj.data, n_block)
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
-        v_map = [(i) for i in range(len(n_verts))]  # pre-allocate memory, for faster performance
+        v_map = [(_) for _ in range(len(n_verts))]  # pre-allocate memory, for faster performance
 
         # Following code avoids introducing unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
@@ -442,16 +411,13 @@ class NifImport(NifCommon):
                 n_map[k] = i  # unique vertex / normal pair with key k was added, with NIF index i
                 v_map[i] = b_v_index  # NIF vertex i maps to blender vertex b_v_index
                 # add the vertex
-                if applytransform:
+                if transform:
                     v = mathutils.Vector([v.x, v.y, v.z])
                     v = v * transform
-                    b_mesh.vertices.add(1)
-                    b_mesh.vertices[-1].co = [v.x, v.y, v.z]
-                else:
-                    b_mesh.vertices.add(1)
-                    b_mesh.vertices[-1].co = [v.x, v.y, v.z]
-                # adds normal info if present (Blender recalculates these when
-                # switching between edit mode and object mode, handled further)
+
+                b_mesh.vertices.add(1)
+                b_mesh.vertices[-1].co = [v.x, v.y, v.z]
+                # adds normal info if present (Blender recalculates these when switching between edit mode and object mode, handled further)
                 # if n_norms:
                 #    mv = b_mesh.vertices[b_v_index]
                 #    n = n_norms[i]
@@ -537,11 +503,6 @@ class NifImport(NifCommon):
 
         b_mesh.validate()
         b_mesh.update()
-        b_obj.select = True
-        scn = bpy.context.scene
-        scn.objects.active = b_obj
-
-        return b_obj
 
     def set_parents(self, n_block):
         """Set the parent block recursively through the tree, to allow
