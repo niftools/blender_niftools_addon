@@ -69,6 +69,7 @@ class Armature:
         armature_name = n_armature.name.decode()
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
+
         # set axis orientation for export
         b_armature_data.niftools.axis_forward = NifOp.props.axis_forward
         b_armature_data.niftools.axis_up = NifOp.props.axis_up
@@ -85,13 +86,14 @@ class Armature:
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes and store the bones' long names.
         if NifOp.props.animation:
-            self.nif_import.animationhelper.create_action(b_armature_obj, armature_name + "-Anim")
+            self.nif_import.transform_anim.create_action(b_armature_obj, armature_name + "-Anim")
+
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]
             # the property is only available from object mode!
             self.nif_import.objecthelper.store_longname(b_bone, n_block.name.decode())
             if NifOp.props.animation:
-                self.nif_import.animationhelper.transform.import_transforms(n_block, b_armature_obj, bone_name)
+                self.nif_import.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
         return b_armature_obj
 
