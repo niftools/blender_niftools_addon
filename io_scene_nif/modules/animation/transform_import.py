@@ -45,13 +45,11 @@ from bisect import bisect_left
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
-from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.animation import animation_export
+from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
-from io_scene_nif.utility.util_global import NifOp
 
-# TODO [animation][util] interpolate() should perhaps be moved to utils?
+
 def interpolate(x_out, x_in, y_in):
     """
     sample (x_in I y_in) at x coordinates x_out
@@ -70,11 +68,10 @@ def interpolate(x_out, x_in, y_in):
     return y_out
 
 
+class TransformAnimation(Animation):
 
-class TransformAnimation:
-
-    def __init__(self, parent):
-        self.animationhelper = parent
+    def __init__(self):
+        super().__init__()
         self.import_kf_root = singledispatch(self.import_kf_root)
         self.import_kf_root.register(NifFormat.NiControllerSequence, self.import_controller_sequence)
         self.import_kf_root.register(NifFormat.NiSequenceStreamHelper, self.import_sequence_stream_helper)
@@ -86,14 +83,14 @@ class TransformAnimation:
 
     def import_sequence_stream_helper(self, kf_root, b_armature_obj, bind_data):
         NifLog.debug('Importing NiSequenceStreamHelper...')
-        b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode(), retrieve=False)
+        b_action = self.create_action(b_armature_obj, kf_root.name.decode(), retrieve=False)
         # import parallel trees of extra datas and keyframe controllers
         extra = kf_root.extra_data
         controller = kf_root.controller
         while extra and controller:
             # textkeys in the stack do not specify node names, import as markers
             while isinstance(extra, NifFormat.NiTextKeyExtraData):
-                self.animationhelper.import_text_key_extra_data(extra, b_action)
+                self.import_text_key_extra_data(extra, b_action)
                 extra = extra.next_extra_data
 
             # grabe the node name from string data
@@ -112,10 +109,10 @@ class TransformAnimation:
 
     def import_controller_sequence(self, kf_root, b_armature_obj, bind_data):
         NifLog.debug('Importing NiControllerSequence...')
-        b_action = self.animationhelper.create_action(b_armature_obj, kf_root.name.decode())
+        b_action = self.create_action(b_armature_obj, kf_root.name.decode())
 
         # import text keys
-        self.animationhelper.import_text_keys(kf_root, b_action)
+        self.import_text_keys(kf_root, b_action)
 
         # go over all controlled blocks (NiKeyframeController)
         for controlledblock in kf_root.controlled_blocks:
@@ -145,8 +142,8 @@ class TransformAnimation:
                                                     niBone_bind_rot_inv, niBone_bind_trans)
         # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
         if kf_root.cycle_type:
-            extend = self.animationhelper.get_extend_from_cycle_type(kf_root.cycle_type)
-            self.animationhelper.set_extrapolation(extend, b_action.fcurves)
+            extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
+            self.set_extrapolation(extend, b_action.fcurves)
 
     # TODO [animation] Is scale param required or can be removed, not used
     def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None, n_bone_bind_scale=None, n_bone_bind_rot_inv=None, n_bone_bind_trans=None):
@@ -187,9 +184,9 @@ class TransformAnimation:
             # ZT2 & Fallout
             n_kfd = n_kfc.data
         if isinstance(n_kfd, NifFormat.NiKeyframeData):
-            interp_rot = self.animationhelper.get_b_interp_from_n_interp(n_kfd.rotation_type)
-            interp_loc = self.animationhelper.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
-            interp_scale = self.animationhelper.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
+            interp_rot = self.get_b_interp_from_n_interp(n_kfd.rotation_type)
+            interp_loc = self.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
+            interp_scale = self.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
             if n_kfd.rotation_type == 4:
                 b_obj.rotation_mode = "XYZ"
                 # uses xyz rotation
@@ -219,7 +216,6 @@ class TransformAnimation:
             if n_kfd.translations.keys:
                 translations = [(key.time, key.value) for key in n_kfd.translations.keys]
 
-
         # ZT2 - get extrapolation for every kfc
         if isinstance(n_kfc, NifFormat.NiKeyframeController):
             flags = n_kfc.flags
@@ -228,36 +224,35 @@ class TransformAnimation:
             flags = None
         
         if eulers:
-            NifLog.debug('Rotation keys...(euler)')
-            fcurves = self.animationhelper.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
+            NifLog.debug('Rotation keys..(euler)')
+            fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
             for t, val in eulers:
                 key = mathutils.Euler(val)
                 if bone_name:
                     key = armature.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
-                self.animationhelper.add_key(fcurves, t, key, interp_rot)
+                self.add_key(fcurves, t, key, interp_rot)
         elif rotations:
             NifLog.debug('Rotation keys...(quaternions)')
-            fcurves = self.animationhelper.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
+            fcurves = self.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
             for t, val in rotations:
                 key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                 if bone_name:
                     key = armature.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
-                self.animationhelper.add_key(fcurves, t, key, interp_rot)
+                self.add_key(fcurves, t, key, interp_rot)
         if translations:
             NifLog.debug('Translation keys...')
-            fcurves = self.animationhelper.create_fcurves(b_action, "location", range(3), flags, bone_name)
+            fcurves = self.create_fcurves(b_action, "location", range(3), flags, bone_name)
             for t, val in translations:
                 key = mathutils.Vector([val.x, val.y, val.z])
                 if bone_name:
-                    key = armature.import_keymat(n_bone_bind_rot_inv,
-                                                 mathutils.Matrix.Translation(key - n_bone_bind_trans)).to_translation()
-                self.animationhelper.add_key(fcurves, t, key, interp_loc)
+                    key = armature.import_keymat(n_bone_bind_rot_inv, mathutils.Matrix.Translation(key - n_bone_bind_trans)).to_translation()
+                self.add_key(fcurves, t, key, interp_loc)
         if scales:
             NifLog.debug('Scale keys...')
-            fcurves = self.animationhelper.create_fcurves(b_action, "scale", range(3), flags, bone_name)
+            fcurves = self.create_fcurves(b_action, "scale", range(3), flags, bone_name)
             for t, val in scales:
                 key = (val, val, val)
-                self.animationhelper.add_key(fcurves, t, key, interp_scale)
+                self.add_key(fcurves, t, key, interp_scale)
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""
@@ -271,6 +266,5 @@ class TransformAnimation:
                 self.import_keyframe_controller(n_kfc, b_obj, bone_name, n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
             # object-level animation
             else:
-                self.animationhelper.create_action(b_obj, b_obj.name + "-Anim")
+                self.create_action(b_obj, b_obj.name + "-Anim")
                 self.import_keyframe_controller(n_kfc, b_obj)
-        
