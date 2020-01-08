@@ -377,7 +377,7 @@ class NifImport(NifCommon):
             if b_polysmooth_index is None:
                 continue
             polysmooth = b_mesh.polygons[b_polysmooth_index]
-            polysmooth.use_smooth = True if (n_tri_data.normals or n_block.skin_instance) else False
+            polysmooth.use_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
             polysmooth.material_index = material_index
 
         Vertex.map_vertex_colors(b_mesh, n_tri_data, v_map)
