@@ -278,7 +278,7 @@ class NifImport(NifCommon):
                     geom_group = []
                 else:
                     # node groups geometries, so import it as a mesh
-                    NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name for child in geom_group], n_block.name))
+                    NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name.decode() for child in geom_group], n_block.name.decode()))
 
                     b_obj = self.objecthelper.create_mesh_object(n_block)
                     b_obj.matrix_local = nif_utils.import_matrix(n_block)
@@ -410,11 +410,11 @@ class NifImport(NifCommon):
                 # not added: new vertex / normal pair
                 n_map[k] = i  # unique vertex / normal pair with key k was added, with NIF index i
                 v_map[i] = b_v_index  # NIF vertex i maps to blender vertex b_v_index
-                # add the vertex
                 if transform:
                     v = mathutils.Vector([v.x, v.y, v.z])
                     v = v * transform
 
+                # add the vertex
                 b_mesh.vertices.add(1)
                 b_mesh.vertices[-1].co = [v.x, v.y, v.z]
                 # adds normal info if present (Blender recalculates these when switching between edit mode and object mode, handled further)
@@ -433,45 +433,7 @@ class NifImport(NifCommon):
         # release memory
         del n_map
 
-        # Adds the polygons to the mesh
-        f_map = [None] * len(n_triangles)
-        b_f_index = len(b_mesh.polygons)
-        bf2_index = len(b_mesh.polygons)
-        bl_index = len(b_mesh.loops)
-        poly_count = len(n_triangles)
-        b_mesh.polygons.add(poly_count)
-        b_mesh.loops.add(poly_count * 3)
-        num_new_faces = 0  # counter for debugging
-        unique_faces = list()  # to avoid duplicate polygons
-        tri_point_list = list()
-        for i, f in enumerate(n_triangles):
-            # get face index
-            f_verts = [v_map[vert_index] for vert_index in f]
-            if tuple(f_verts) in unique_faces:
-                continue
-            unique_faces.append(tuple(f_verts))
-            f_map[i] = b_f_index
-            tri_point_list.append(len(n_triangles[i]))
-            ls_list = list()
-            b_f_index += 1
-            num_new_faces += 1
-        for ls1 in range(0, num_new_faces * (tri_point_list[len(ls_list)]), (tri_point_list[len(ls_list)])):
-            ls_list.append((ls1 + bl_index))
-        for i in range(len(unique_faces)):
-            if f_map[i] is None:
-                continue
-            b_mesh.polygons[f_map[i]].loop_start = ls_list[(f_map[i] - bf2_index)]
-            b_mesh.polygons[f_map[i]].loop_total = len(unique_faces[(f_map[i] - bf2_index)])
-            l = 0
-            lp_points = [v_map[loop_point] for loop_point in n_triangles[(f_map[i] - bf2_index)]]
-            while l < (len(n_triangles[(f_map[i] - bf2_index)])):
-                b_mesh.loops[(l + (bl_index))].vertex_index = lp_points[l]
-                l += 1
-            bl_index += (len(n_triangles[(f_map[i] - bf2_index)]))
-
-        # at this point, deleted polygons (degenerate or duplicate) satisfy f_map[i] = None
-
-        NifLog.debug("{0} unique polygons".format(num_new_faces))
+        bf2_index, f_map = self.add_triangles_to_bmesh(b_mesh, n_triangles, v_map)
 
         # set face smoothing and material
         for b_polysmooth_index in f_map:
@@ -503,6 +465,51 @@ class NifImport(NifCommon):
 
         b_mesh.validate()
         b_mesh.update()
+
+    def add_triangles_to_bmesh(self, b_mesh, n_triangles, v_map):
+        # Indexs for later
+        b_poly_index = len(b_mesh.polygons)  # TODO [general] Replace with add to end
+        bf2_index = len(b_mesh.polygons)
+        b_loop_index = len(b_mesh.loops)
+        # add polys to mesh
+        num_trianges = len(n_triangles)
+        poly_count = num_trianges
+        b_mesh.polygons.add(poly_count)
+        b_mesh.loops.add(poly_count * 3)
+        f_map = [None] * num_trianges
+        num_new_faces = 0  # counter for debugging
+        unique_faces = list()  # to avoid duplicate polygons
+        tri_point_list = list()
+        for i, f in enumerate(n_triangles):
+            # get face index
+            f_verts = [v_map[vert_index] for vert_index in f]
+            if tuple(f_verts) in unique_faces:
+                continue
+
+            unique_faces.append(tuple(f_verts))
+            f_map[i] = b_poly_index
+            tri_point_list.append(len(n_triangles[i]))
+            ls_list = list()
+            b_poly_index += 1
+            num_new_faces += 1
+
+        for ls1 in range(0, num_new_faces * (tri_point_list[len(ls_list)]), (tri_point_list[len(ls_list)])):
+            ls_list.append((ls1 + b_loop_index))
+        for i in range(len(unique_faces)):
+            face = f_map[i]
+            if face is None:
+                continue
+            b_mesh.polygons[face].loop_start = ls_list[(face - bf2_index)]
+            b_mesh.polygons[face].loop_total = len(unique_faces[(face - bf2_index)])
+            l = 0
+            lp_points = [v_map[loop_point] for loop_point in n_triangles[(face - bf2_index)]]
+            while l < (len(n_triangles[(face - bf2_index)])):
+                b_mesh.loops[(l + (b_loop_index))].vertex_index = lp_points[l]
+                l += 1
+            b_loop_index += (len(n_triangles[(face - bf2_index)]))
+        # at this point, deleted polygons (degenerate or duplicate) satisfy f_map[i] = None
+        NifLog.debug("{0} unique polygons".format(num_new_faces))
+        return bf2_index, f_map
 
     def set_parents(self, n_block):
         """Set the parent block recursively through the tree, to allow
