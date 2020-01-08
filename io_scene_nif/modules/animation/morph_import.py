@@ -39,17 +39,19 @@
 
 import bpy
 from pyffi.formats.nif import NifFormat
-from io_scene_nif.utility.util_global import EGMData
 
+from io_scene_nif.modules import animation
+from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.util_global import EGMData
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class MorphAnimation:
+class MorphAnimation(Animation):
 
-    def __init__(self, parent):
-        self.animationhelper = parent
-        self.fps = bpy.context.scene.render.fps
+    def __init__(self):
+        super().__init__()
+        animation.FPS = bpy.context.scene.render.fps
 
     def import_morph_controller(self, n_node, b_obj, v_map):
         """Import NiGeomMorpherController as shape keys for blender object."""
@@ -70,7 +72,7 @@ class MorphAnimation:
                 # get base vectors and import all morphs
                 baseverts = morphData.morphs[0].vectors
 
-                shape_action = self.animationhelper.create_action(b_obj.data.shape_keys, b_obj.name + "-Morphs")
+                shape_action = self.create_action(b_obj.data.shape_keys, b_obj.name + "-Morphs")
                 
                 for idxMorph in range(1, morphData.num_morphs):
                     # get name for key
