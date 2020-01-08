@@ -40,24 +40,13 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.animation.transform_import import TransformAnimation
-from io_scene_nif.modules.animation.object_import import ObjectAnimation
-from io_scene_nif.modules.animation.material_import import MaterialAnimation
-from io_scene_nif.modules.animation.morph_import import MorphAnimation
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.modules import animation
 from io_scene_nif.utility.util_logging import NifLog
 
 
 class Animation:
 
     def __init__(self):
-        self.object = ObjectAnimation(self)
-        self.material = MaterialAnimation(self)
-        self.transform = TransformAnimation(self)
-        self.morph = MorphAnimation(self)
-        # set a dummy here, update via set_frames_per_second
-        self.fps = 30
         self.show_pose_markers()
 
     @staticmethod
@@ -82,7 +71,7 @@ class Animation:
         return "BEZIER"
 
     @staticmethod
-    def create_action(b_obj, action_name, retrieve = True):
+    def create_action(b_obj, action_name, retrieve=True):
         """ Create or retrieve action and set it as active on the object. """
         # could probably skip this test and create always
         if not b_obj.animation_data:
@@ -104,7 +93,7 @@ class Animation:
                 for i in drange]
         # shapekey pose bone animation
         elif keyname:
-            fcurves = [ action.fcurves.new(data_path='key_blocks["' + keyname + '"].' + dtype, index=0), ]
+            fcurves = [action.fcurves.new(data_path='key_blocks["' + keyname + '"].' + dtype, index=0), ]
         else:
             # Object animation (non-skeletal) is lumped into the "LocRotScale" action_group
             if dtype in ("rotation_euler", "rotation_quaternion", "location", "scale"):
@@ -149,7 +138,7 @@ class Animation:
         """
         Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
         """
-        frame = round(t * self.fps)
+        frame = round(t * animation.FPS)
         for fcurve, k in zip(fcurves, key):
             fcurve.keyframe_points.insert(frame, k).interpolation = interp
 
@@ -167,7 +156,7 @@ class Animation:
         if txk and b_action:
             for key in txk.text_keys:
                 newkey = key.value.decode().replace('\r\n', '/').rstrip('/')
-                frame = round(key.time * self.fps)
+                frame = round(key.time * animation.FPS)
                 marker = b_action.pose_markers.new(newkey)
                 marker.frame = frame
 
@@ -183,34 +172,36 @@ class Animation:
                 key_times.extend(key.time for key in kfd.xyz_rotations[0].keys)
                 key_times.extend(key.time for key in kfd.xyz_rotations[1].keys)
                 key_times.extend(key.time for key in kfd.xyz_rotations[2].keys)
+
             for kfi in root.tree(block_type=NifFormat.NiBSplineInterpolator):
                 if not kfi.basis_data:
-                    # skip bsplines without basis data (eg bowidle.kf in
-                    # Oblivion)
+                    # skip bsplines without basis data (eg bowidle.kf in Oblivion)
                     continue
                 key_times.extend(
                     point * (kfi.stop_time - kfi.start_time)
                     / (kfi.basis_data.num_control_points - 2)
                     for point in range(kfi.basis_data.num_control_points - 2))
+
             for uv_data in root.tree(block_type=NifFormat.NiUVData):
                 for uv_group in uv_data.uv_groups:
                     key_times.extend(key.time for key in uv_group.keys)
-        fps = self.fps
+
         # not animated, return a reasonable default
         if not key_times:
             return
+
         # calculate FPS
         key_times = sorted(set(key_times))
-        lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
-                          for time in key_times)
+        fps = animation.FPS
+        lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps)) for time in key_times)
+
         # for test_fps in range(1,120): #disabled, used for testing
         for test_fps in [20, 24, 25, 30, 35]:
-            diff = sum(abs(int(time * test_fps + 0.5) - (time * test_fps))
-                       for time in key_times)
+            diff = sum(abs(int(time * test_fps + 0.5) - (time * test_fps)) for time in key_times)
             if diff < lowest_diff:
                 lowest_diff = diff
                 fps = test_fps
         NifLog.info("Animation estimated at %i frames per second." % fps)
-        self.fps = fps
+        animation.FPS = fps
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
