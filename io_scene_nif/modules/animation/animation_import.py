@@ -160,7 +160,8 @@ class Animation:
                 marker = b_action.pose_markers.new(newkey)
                 marker.frame = frame
 
-    def set_frames_per_second(self, roots):
+    @staticmethod
+    def set_frames_per_second(roots):
         """Scan all blocks and set a reasonable number for FPS to this class and the scene."""
         # find all key times
         key_times = []
