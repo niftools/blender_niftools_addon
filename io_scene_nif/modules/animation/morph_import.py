@@ -100,12 +100,12 @@ class MorphAnimation(Animation):
                             continue
                         
                     # get the interpolation mode
-                    interp = self.animationhelper.get_b_interp_from_n_interp( morph_data.interpolation)
-                    fcu = self.animationhelper.create_fcurves(shape_action, "value", (0,), flags=n_morphCtrl.flags, keyname=shape_key.name)
+                    interp = self.get_b_interp_from_n_interp( morph_data.interpolation)
+                    fcu = self.create_fcurves(shape_action, "value", (0,), flags=n_morphCtrl.flags, keyname=shape_key.name)
                     
                     # set keyframes
                     for key in morph_data.keys:
-                        self.animationhelper.add_key(fcu, key.time, (key.value,), interp)
+                        self.add_key(fcu, key.time, (key.value,), interp)
 
     def import_egm_morphs(self, b_obj, v_map, n_verts):
         """Import all EGM morphs as shape keys for blender object."""
