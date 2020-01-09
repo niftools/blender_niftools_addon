@@ -35,23 +35,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+import mathutils
+
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.morph_import import MorphAnimation
+from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.geometry import mesh
 from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
 from io_scene_nif.modules.property.material.material_import import Material
+from io_scene_nif.modules.property.property_import import Property
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp, EGMData
 from io_scene_nif.utility.util_logging import NifLog
-
-import mathutils
 
 
 class Mesh:
 
     def __init__(self):
         self.materialhelper = Material()
+        self.propertyhelper = Property(self.materialhelper)  # TODO [property] Implement fully generic property helper
         self.morph_anim = MorphAnimation()
 
     def import_mesh(self, n_block, b_obj, transform=None):
@@ -62,7 +66,7 @@ class Mesh:
         :param b_obj: The mesh to which to append the geometry data. If C{None}, a new mesh is created.
         :type b_obj: A Blender object that has mesh data.
         :param transform: Apply the n_block's transformation to the mesh.
-        :type applytransform: C{bool}
+        :type transform: C{Matix}
         """
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
@@ -103,7 +107,7 @@ class Mesh:
         self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, material, n_uvco)
 
         # import skinning info, for meshes affected by bones
-        self.armaturehelper.import_skin(n_block, b_obj, v_map)
+        Armature.import_skin(n_block, b_obj, v_map)
 
         # import morph controller
         if NifOp.props.animation:
