@@ -45,7 +45,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.material_import import MaterialAnimation
 from io_scene_nif.modules.property import texture
-from io_scene_nif.modules.property.material.material_import import Material
+from io_scene_nif.modules.property.material.material_import import Material, NiMaterial
 from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifData
@@ -219,7 +219,7 @@ class MeshProperty:
         NifLog.debug("NiMaterialProperty property found " + str(prop))
         b_mat = self._find_or_create_material()
         # todo [material] import
-        # Material().import_material(self.n_block, b_mat, prop)
+        NiMaterial().import_material(self.n_block, b_mat, prop)
 
     def process_nitexturing_property(self, prop):
         """Import a NiTexturingProperty based material"""
