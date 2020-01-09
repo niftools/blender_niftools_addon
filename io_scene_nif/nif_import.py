@@ -39,7 +39,6 @@
 
 
 import bpy
-import mathutils
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
@@ -47,6 +46,9 @@ from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.io.nif import NifFile
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.animation_import import Animation
+from io_scene_nif.modules.animation.morph_import import MorphAnimation
+from io_scene_nif.modules.animation.object_import import ObjectAnimation
+from io_scene_nif.modules.animation.transform_import import TransformAnimation
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import Collision
 from io_scene_nif.modules.constraint.constraint_import import Constraint
@@ -71,14 +73,15 @@ class NifImport(NifCommon):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.animationhelper = Animation()
         self.armaturehelper = Armature(parent=self)
         self.collisionhelper = Collision(parent=self)
         self.constrainthelper = Constraint(parent=self)
-
         self.materialhelper = Material()
-        self.propertyhelper = Property(self.materialhelper, self.animationhelper)  # TODO [property] Implement fully generic property helper
+        self.morph_anim = MorphAnimation()
         self.objecthelper = Object()
+        self.object_anim = ObjectAnimation()
+        self.propertyhelper = Property(self.materialhelper)  # TODO [property] Implement fully generic property helper
+        self.transform_anim = TransformAnimation()
 
     def execute(self):
         """Main import function."""
@@ -103,7 +106,7 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                self.animationhelper.set_frames_per_second(NifData.data.roots)
+                Animation.set_frames_per_second(NifData.data.roots)
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -324,8 +327,8 @@ class NifImport(NifCommon):
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:
                     # self.animationhelper.import_text_keys(n_block)
-                    self.animationhelper.transform.import_transforms(n_block, b_obj)
-                    self.animationhelper.object.import_visibility(n_block, b_obj)
+                    self.transform_anim.import_transforms(n_block, b_obj)
+                    self.object_anim.import_visibility(n_block, b_obj)
 
             return b_obj
 
@@ -358,11 +361,7 @@ class NifImport(NifCommon):
         # "sticky" UV coordinates: these are transformed in Blender UV's
         n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in n_tri_data.uv_sets)
 
-
-        '''
-        Properties
-        '''
-
+        # TODO [properties] Move out to object level
         material, material_index = self.propertyhelper.process_properties(b_obj.data, n_block)
 
         v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
@@ -389,10 +388,10 @@ class NifImport(NifCommon):
 
         # import morph controller
         if NifOp.props.animation:
-            self.animationhelper.morph.import_morph_controller(n_block, b_obj, v_map)
+            self.morph_anim.import_morph_controller(n_block, b_obj, v_map)
         # import facegen morphs
         if EGMData.data:
-            self.animationhelper.morph.import_egm_morphs(b_obj, v_map, n_tri_data)
+            self.morph_anim.import_egm_morphs(b_obj, v_map, n_tri_data)
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash
