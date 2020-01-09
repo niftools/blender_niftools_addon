@@ -37,12 +37,19 @@
 #
 # ***** END LICENSE BLOCK *****
 
+from functools import singledispatch
+
+import bpy
+
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.material_import import MaterialAnimation
 from io_scene_nif.modules.property import texture
+from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.util_global import NifData
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class Property:
@@ -158,3 +165,88 @@ class Property:
                 b_obj.draw_type = 'WIRE'
             '''
         return material, material_index
+
+
+class MeshProperty:
+
+    def __init__(self):
+        self.b_mesh = None
+        self.n_block = None
+        self.process_property = singledispatch(self.process_property)
+        self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
+        self.process_property.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
+        self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
+        self.process_property.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
+        self.process_property.register(NifFormat.NiAlphaProperty, self.process_nialphs_property)
+        self.process_property.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
+        self.process_property.register(NifFormat.NiVertexColorProperty, self.process_nivertexcolor_property)
+
+    def process_property_list(self, n_block, b_mesh):
+        self.n_block = n_block
+        self.b_mesh = b_mesh
+        for prop in n_block.properties:
+            NifLog.debug("About to process" + str(type(prop)))
+            self.process_property(prop)
+        return
+
+    def process_property(self, prop):
+        """Base method to warn user that this property is not supported"""
+        NifLog.warn("Unknown property block found : " + str(prop.name))
+        NifLog.warn("This type isn't currently supported: {}".format(type(prop)))
+
+    def process_nistencil_property(self, prop):
+        """Stencil (for double sided meshes"""
+        NifLog.debug("NiStencilProperty property found " + str(prop))
+        self.b_mesh.show_double_sided = True  # We don't check flags for now, nothing fancy
+
+    def process_nispecular_property(self, prop):
+        """SpecularProperty based specular"""
+        NifLog.debug("NiSpecularProperty property found " + str(prop))
+        b_mat = self._find_or_create_material()
+
+        # TODO [material][property]
+        if NifData.data.version == 0x14000004:
+            b_mat.specular_intensity = 0.0  # no specular prop
+
+    def process_nialphs_property(self, prop):
+        """Import a NiAlphaProperty based material"""
+        NifLog.debug("NiAlphaProperty property found " + str(prop))
+        b_mat = self._find_or_create_material()
+        Material.set_alpha(b_mat, prop)
+
+    def process_nimaterial_property(self, prop):
+        """Import a NiMaterialProperty based material"""
+        NifLog.debug("NiMaterialProperty property found " + str(prop))
+        b_mat = self._find_or_create_material()
+        # todo [material] import
+        # Material().import_material(self.n_block, b_mat, prop)
+
+    def process_nitexturing_property(self, prop):
+        """Import a NiTexturingProperty based material"""
+        NifLog.debug("NiTexturingProperty property found " + str(prop))
+        b_mat = self._find_or_create_material()
+        # NiTextureProp.get().import_nitextureprop_textures(self.n_block, b_mat, prop)
+
+    def process_niwireframe_property(self, prop):
+        """Material based specular"""
+        NifLog.debug("NiWireframeProperty found " + str(prop))
+        b_mat = self._find_or_create_material()
+        b_mat.type = 'WIRE'
+
+    def process_nivertexcolor_property(self, prop):
+        """Material based specular"""
+        NifLog.debug("NiVertexColorProperty found " + str(prop))
+        b_mat = self._find_or_create_material()
+        # TODO [property][mesh] Use the vertex color modes
+
+    def _find_or_create_material(self):
+        b_mats = self.b_mesh.materials
+        if len(b_mats) == 0:
+            # assign to 1st material slot
+            NifLog.debug("Creating placeholder material to store properties in")
+            b_mat = bpy.data.materials.new("")
+            self.b_mesh.materials.append(b_mat)
+        else:
+            NifLog.debug("Reusing existing material to store additional properties in")
+            b_mat = self.b_mesh.materials[0]
+        return b_mat
