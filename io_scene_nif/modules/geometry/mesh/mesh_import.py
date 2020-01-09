@@ -70,13 +70,14 @@ class Mesh:
         """
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
-        NifLog.info("Importing mesh data for geometry '{0}'".format(n_block.name.decode()))
+        node_name = n_block.name.decode()
+        NifLog.info("Importing mesh data for geometry '{0}'".format(node_name))
         b_mesh = b_obj.data
 
         # shortcut for mesh geometry data
         n_tri_data = n_block.data
         if not n_tri_data:
-            raise nif_utils.NifError("No shape data in {0}".format(n_block.name.decode()))
+            raise nif_utils.NifError("No shape data in {0}".format(node_name))
 
         # polygons
         n_triangles = [list(tri) for tri in n_tri_data.get_triangles()]
