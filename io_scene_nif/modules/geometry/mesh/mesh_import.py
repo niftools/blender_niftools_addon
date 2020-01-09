@@ -92,13 +92,8 @@ class Mesh:
 
         bf2_index, f_map = Mesh.add_triangles_to_bmesh(b_mesh, n_triangles, v_map)
 
-        # set face smoothing and material
-        for b_polysmooth_index in f_map:
-            if b_polysmooth_index is None:
-                continue
-            polysmooth = b_mesh.polygons[b_polysmooth_index]
-            polysmooth.use_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
-            polysmooth.material_index = material_index
+        is_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
+        self.set_face_smooth(b_mesh, f_map, is_smooth)
 
         Vertex.map_vertex_colors(b_mesh, n_tri_data, v_map)
 
@@ -122,6 +117,18 @@ class Mesh:
 
         b_mesh.validate()
         b_mesh.update()
+
+    @staticmethod
+    def set_face_smooth(b_mesh, f_map, smooth):
+        """set face smoothing and material"""
+
+        mat_index = b_mesh.materials[-1]
+        for b_polysmooth_index in f_map:
+            if b_polysmooth_index is None:
+                continue
+            polysmooth = b_mesh.polygons[b_polysmooth_index]
+            polysmooth.use_smooth = smooth
+            polysmooth.material_index = mat_index
 
     @staticmethod
     def add_triangles_to_bmesh(b_mesh, n_triangles, v_map):
