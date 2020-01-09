@@ -35,14 +35,88 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules.animation.morph_import import MorphAnimation
 from io_scene_nif.modules.geometry import mesh
-from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
+from io_scene_nif.modules.property.material.material_import import Material
+from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.util_global import NifOp, EGMData
 from io_scene_nif.utility.util_logging import NifLog
 
 import mathutils
 
 
 class Mesh:
+
+    def __init__(self):
+        self.materialhelper = Material()
+        self.morph_anim = MorphAnimation()
+
+    def import_mesh(self, n_block, b_obj, transform=None):
+        """Creates and returns a raw mesh, or appends geometry data to group_mesh.
+
+        :param n_block: The nif block whose mesh data to import.
+        :type n_block: C{NiTriBasedGeom}
+        :param b_obj: The mesh to which to append the geometry data. If C{None}, a new mesh is created.
+        :type b_obj: A Blender object that has mesh data.
+        :param transform: Apply the n_block's transformation to the mesh.
+        :type applytransform: C{bool}
+        """
+        assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
+
+        NifLog.info("Importing mesh data for geometry '{0}'".format(n_block.name.decode()))
+        b_mesh = b_obj.data
+
+        # shortcut for mesh geometry data
+        n_tri_data = n_block.data
+        if not n_tri_data:
+            raise nif_utils.NifError("No shape data in {0}".format(n_block.name.decode()))
+
+        # polygons
+        n_triangles = [list(tri) for tri in n_tri_data.get_triangles()]
+
+        # "sticky" UV coordinates: these are transformed in Blender UV's
+        n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in n_tri_data.uv_sets)
+
+        # TODO [properties] Move out to object level
+        material, material_index = self.propertyhelper.process_properties(b_obj.data, n_block)
+
+        v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
+
+        bf2_index, f_map = Mesh.add_triangles_to_bmesh(b_mesh, n_triangles, v_map)
+
+        # set face smoothing and material
+        for b_polysmooth_index in f_map:
+            if b_polysmooth_index is None:
+                continue
+            polysmooth = b_mesh.polygons[b_polysmooth_index]
+            polysmooth.use_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
+            polysmooth.material_index = material_index
+
+        Vertex.map_vertex_colors(b_mesh, n_tri_data, v_map)
+
+        Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, n_tri_data)
+
+        # TODO [material][texture] Break out texture/material
+        self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, material, n_uvco)
+
+        # import skinning info, for meshes affected by bones
+        self.armaturehelper.import_skin(n_block, b_obj, v_map)
+
+        # import morph controller
+        if NifOp.props.animation:
+            self.morph_anim.import_morph_controller(n_block, b_obj, v_map)
+        # import facegen morphs
+        if EGMData.data:
+            self.morph_anim.import_egm_morphs(b_obj, v_map, n_tri_data)
+
+        # recalculate mesh to render correctly
+        # implementation note: update() without validate() can cause crash
+
+        b_mesh.validate()
+        b_mesh.update()
 
     @staticmethod
     def add_triangles_to_bmesh(b_mesh, n_triangles, v_map):
