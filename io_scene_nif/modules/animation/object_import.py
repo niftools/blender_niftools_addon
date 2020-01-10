@@ -37,17 +37,14 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class ObjectAnimation:
-
-    def __init__(self, parent):
-        self.animationhelper = parent
+class ObjectAnimation(Animation):
 
     def import_visibility(self, n_node, b_obj):
         """Import vis controller for blender object."""
@@ -57,8 +54,8 @@ class ObjectAnimation:
             return
         NifLog.info("Importing vis controller")
 
-        b_obj_action = self.animationhelper.create_action(b_obj, b_obj.name + "-Anim")
+        b_obj_action = self.create_action(b_obj, b_obj.name + "-Anim")
 
-        fcurves = self.animationhelper.create_fcurves(b_obj_action, "hide", (0,), n_vis_ctrl.flags)
+        fcurves = self.create_fcurves(b_obj_action, "hide", (0,), n_vis_ctrl.flags)
         for key in n_vis_ctrl.data.keys:
-            self.animationhelper.add_key(fcurves, key.time, (key.value,), "CONSTANT")
+            self.add_key(fcurves, key.time, (key.value,), "CONSTANT")

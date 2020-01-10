@@ -92,7 +92,7 @@ class Material:
         # name unique material
         name = Object.import_name(n_mat_prop)
         if not name:
-            name = (Object.ACTIVE_OBJ_NAME + "_nt_mat")
+            name = bpy.context.scene.objects.active + "_nt_mat"
         b_mat = bpy.data.materials.new(name)
 
         # texures

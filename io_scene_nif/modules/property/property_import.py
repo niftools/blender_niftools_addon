@@ -39,6 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.animation.material_import import MaterialAnimation
 from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.shader.shader_import import BSShader
 from io_scene_nif.utility import nif_utils
@@ -46,9 +47,9 @@ from io_scene_nif.utility import nif_utils
 
 class Property:
 
-    def __init__(self, materialhelper, animationhelper):
+    def __init__(self, materialhelper):
         self.materialhelper = materialhelper
-        self.animationhelper = animationhelper
+        self.material_anim = MaterialAnimation()
 
     # TODO [property] This will be moved to dispatch method later
     @staticmethod
@@ -142,7 +143,7 @@ class Property:
             #     material = self.materialhelper.import_bsshader_material(bs_shader_property, bs_effect_shader_property, n_alpha_prop)
 
             # TODO [animation][material] merge this call into import_material
-            self.animationhelper.material.import_material_controllers(material, n_block)
+            self.material_anim.import_material_controllers(material, n_block)
 
             b_mesh_materials = list(b_mesh.materials)
             try:

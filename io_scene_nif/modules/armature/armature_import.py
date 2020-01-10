@@ -45,6 +45,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.animation.transform_import import TransformAnimation
 from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
@@ -55,6 +56,8 @@ class Armature:
 
     def __init__(self, parent):
         self.nif_import = parent
+
+        self.transform_anim = TransformAnimation()
         # this is used to hold lists of bones for each armature during mark_armatures_bones
         self.dict_armatures = {}
         # to get access to the nif bone in object mode
@@ -69,10 +72,11 @@ class Armature:
         armature_name = n_armature.name.decode()
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
+
         # set axis orientation for export
         b_armature_data.niftools.axis_forward = NifOp.props.axis_forward
         b_armature_data.niftools.axis_up = NifOp.props.axis_up
-        b_armature_obj = self.nif_import.objecthelper.create_b_obj(n_armature, b_armature_data)
+        b_armature_obj = Object.create_b_obj(n_armature, b_armature_data)
         b_armature_obj.show_x_ray = True
 
         # make armature editable and create bones
@@ -85,13 +89,14 @@ class Armature:
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes and store the bones' long names.
         if NifOp.props.animation:
-            self.nif_import.animationhelper.create_action(b_armature_obj, armature_name + "-Anim")
+            self.transform_anim.create_action(b_armature_obj, armature_name + "-Anim")
+
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]
             # the property is only available from object mode!
-            self.nif_import.objecthelper.store_longname(b_bone, n_block.name.decode())
+            Object.store_longname(b_bone, n_block.name.decode())
             if NifOp.props.animation:
-                self.nif_import.animationhelper.transform.import_transforms(n_block, b_armature_obj, bone_name)
+                self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
         return b_armature_obj
 
@@ -123,7 +128,8 @@ class Armature:
         for n_child in n_block.children:
             self.import_bone(n_child, b_armature_data, n_armature, b_edit_bone)
 
-    def import_skin(self, ni_block, b_obj, v_map):
+    @staticmethod
+    def import_skin(ni_block, b_obj, v_map):
         """Import a NiSkinInstance and its contents as vertex groups"""
         skininst = ni_block.skin_instance
         if skininst:
