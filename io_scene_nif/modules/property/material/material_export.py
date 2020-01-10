@@ -59,8 +59,7 @@ class MaterialProp:
 
         # list which determines whether the material name is relevant or not  only for particular names this holds,
         # such as EnvMap2 by default, the material name does not affect rendering
-        specialnames = ("EnvMap2", "EnvMap", "skin", "Hair",
-                        "dynalpha", "HideSecret", "Lava")
+        specialnames = ("EnvMap2", "EnvMap", "skin", "Hair", "dynalpha", "HideSecret", "Lava")
 
         # hack to preserve EnvMap2, skinm, ... named blocks (even if they got renamed to EnvMap2.xxx or skin.xxx on import)
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):

@@ -41,13 +41,14 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.object import PRN_DICT
+from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
 class Object:
-    # this will have to deal with all naming issues
-    def __init__(self, parent):
-        self.nif_import = parent
+
+    ACTIVE_OBJ_NAME = ""
 
     def import_extra_datas(self, root_block, b_obj):
         """ Only to be called on nif and blender root objects! """
@@ -63,7 +64,7 @@ class Object:
             if isinstance(n_extra, NifFormat.NiStringExtraData):
                 # weapon location or attachment position
                 if n_extra.name.decode() == "Prn":
-                    for k, v in self.nif_import.prn_dict.items():
+                    for k, v in PRN_DICT.items():
                         if v.lower() == n_extra.string_data.decode().lower():
                             b_obj.niftools.prn_location = k
                 elif n_extra.name.decode() == "UPB":
@@ -78,7 +79,8 @@ class Object:
                 b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra.rotation_z
                 b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra.zoom
 
-    def create_b_obj(self, n_block, b_obj_data, name=""):
+    @staticmethod
+    def create_b_obj(n_block, b_obj_data, name=""):
         """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""
         # get the actual nif name
         n_name = n_block.name.decode() if n_block else ""
@@ -90,7 +92,7 @@ class Object:
         # make the object visible and active
         bpy.context.scene.objects.link(b_obj)
         bpy.context.scene.objects.active = b_obj
-        self.store_longname(b_obj, n_name)
+        Object.store_longname(b_obj, n_name)
         return b_obj
 
     def mesh_from_data(self, name, verts, faces):
@@ -108,42 +110,12 @@ class Object:
         faces = [[0, 1, 3, 2], [6, 7, 5, 4], [0, 2, 6, 4], [3, 1, 5, 7], [4, 5, 1, 0], [7, 6, 2, 3]]
         return self.mesh_from_data(b_name, verts, faces)
 
-    def store_longname(self, b_obj, n_name):
+    @staticmethod
+    def store_longname(b_obj, n_name):
         """Save original name as object property, for export"""
         if b_obj.name != n_name:
             b_obj.niftools.longname = n_name
             NifLog.debug("Stored long name for {0}".format(b_obj.name))
-
-    def import_range_lod_data(self, n_node, b_obj, b_children):
-        """ Import LOD ranges and mark b_obj as a LOD node """
-        if isinstance(n_node, NifFormat.NiLODNode):
-            b_obj["type"] = "NiLODNode"
-            range_data = n_node
-            # where lodlevels are stored is determined by version number need more examples - just a guess here
-            if not range_data.lod_levels:
-                range_data = n_node.lod_level_data
-            # can't just take b_obj.children because the order doesn't match
-            for lod_level, b_child in zip(range_data.lod_levels, b_children):
-                b_child["near_extent"] = lod_level.near_extent
-                b_child["far_extent"] = lod_level.far_extent
-
-    def import_billboard(self, n_node, b_obj):
-        """ Import a NiBillboardNode """
-        if isinstance(n_node, NifFormat.NiBillboardNode) and not isinstance(b_obj, bpy.types.Bone):
-            # find camera object
-            for obj in bpy.context.scene.objects:
-                if obj.type == 'CAMERA':
-                    b_obj_camera = obj
-                    break
-            # none exists, create one
-            else:
-                b_obj_camera_data = bpy.data.cameras.new("Camera")
-                b_obj_camera = self.create_b_obj(None, b_obj_camera_data)
-            # make b_obj track camera object
-            constr = b_obj.constraints.new('TRACK_TO')
-            constr.target = b_obj_camera
-            constr.track_axis = 'TRACK_Z'
-            constr.up_axis = 'UP_Y'
 
     def import_root_collision(self, n_node, b_obj):
         """ Import a RootCollisionNode """
@@ -182,72 +154,61 @@ class Object:
         else:
             raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
 
-    def get_skin_deformation_from_partition(self, n_geom):
-        """ Workaround because pyffi does not support this skinning method """
+    @staticmethod
+    def is_grouping_node(n_block):
+        """Determine whether node is grouping node.
+        Returns the children which are grouped, or empty list if it is not a
+        grouping node.
+        """
+        # combining shapes: disable grouping
+        if not NifOp.props.combine_shapes:
+            return []
+        # check that it is a ninode
+        if not isinstance(n_block, NifFormat.NiNode):
+            return []
+        # NiLODNodes are never grouping nodes (this ensures that they are imported as empties, with LODs as child meshes)
+        if isinstance(n_block, NifFormat.NiLODNode):
+            return []
+        # root collision node: join everything
+        if isinstance(n_block, NifFormat.RootCollisionNode):
+            return [child for child in n_block.children if isinstance(child, NifFormat.NiTriBasedGeom)]
+        # check that node has name
+        node_name = n_block.name
+        if not node_name:
+            return []
+        # strip "NonAccum" trailer, if present
+        if node_name[-9:].lower() == " nonaccum":
+            node_name = node_name[:-9]
+        # get all geometry children
+        return [child for child in n_block.children if (isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1)]
 
-        # todo [pyffi] integrate this into pyffi!!!
-        #              so that NiGeometry.get_skin_deformation() deals with this as intended
+    @staticmethod
+    def import_name(n_block):
+        """Get name of n_block, ready for blender but not necessarily unique.
 
-        # mostly a copy from pyffi...
-        skininst = n_geom.skin_instance
-        skindata = skininst.data
-        skinpartition = skininst.skin_partition
-        skelroot = skininst.skeleton_root
-        vertices = [NifFormat.Vector3() for i in range(n_geom.data.num_vertices)]
+        :param n_block: A named nif block.
+        :type n_block: :class:`~pyffi.formats.nif.NifFormat.NiObjectNET`
+        """
+        if n_block is None:
+            return ""
 
-        # ignore normals for now, not needed for import
-        sumweights = [0.0 for i in range(n_geom.data.num_vertices)]
-        skin_offset = skindata.get_transform()
+        NifLog.debug("Importing name for {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
 
-        # store one transform per bone
-        bone_transforms = []
-        for i, bone_block in enumerate(skininst.bones):
-            bonedata = skindata.bone_list[i]
-            bone_offset = bonedata.get_transform()
-            bone_matrix = bone_block.get_transform(skelroot)
-            transform = bone_offset * bone_matrix * skin_offset
-            bone_transforms.append(transform)
+        n_name = n_block.name.decode()
 
-        # now the actual unique bit
-        for block in skinpartition.skin_partition_blocks:
-            # create all vgroups for this block's bones
-            block_bone_transforms = [bone_transforms[i] for i in block.bones]
+        # if name is empty, create something non-empty
+        if not n_name:
+            n_name = "noname"
+        n_name = armature.get_bone_name_for_blender(n_name)
 
-            # go over each vert in this block
-            for vert_index, vertex_weights, bone_indices in zip(block.vertex_map,
-                                                                block.vertex_weights,
-                                                                block.bone_indices):
-                # skip verts that were already processed in an earlier block
-                if sumweights[vert_index] != 0:
-                    continue
-                # go over all 4 weight / bone pairs and transform this vert
-                for weight, b_i in zip(vertex_weights, bone_indices):
-                    if weight > 0:
-                        transform = block_bone_transforms[b_i]
-                        vertices[vert_index] += weight * (n_geom.data.vertices[vert_index] * transform)
-                        sumweights[vert_index] += weight
-        for i, s in enumerate(sumweights):
-            if abs(s - 1.0) > 0.01:
-                print("vertex %i has weights not summing to one: %i" % (i, sumweights[i]))
+        return n_name
 
-        return vertices
+    # TODO [object][property] Replace with object level property processing
+    @staticmethod
+    def import_object_flags(n_block, b_obj):
+        """ Various settings in b_obj's niftools panel """
+        b_obj.niftools.objectflags = n_block.flags
 
-    def apply_skin_deformation(self, n_data):
-        """ Process all geometries in NIF tree to apply their skin """
-        # get all geometries with skin
-        n_geoms = [g for g in n_data.get_global_iterator() if isinstance(g, NifFormat.NiGeometry) and g.is_skin()]
-        # make sure that each skin is applied only once to avoid distortions when a model is referred to twice
-        for n_geom in set(n_geoms):
-            NifLog.info('Applying skin deformation on geometry {0}'.format(n_geom.name))
-            skininst = n_geom.skin_instance
-            skindata = skininst.data
-            if skindata.has_vertex_weights:
-                vertices = n_geom.get_skin_deformation()[0]
-            else:
-                NifLog.info("PYFFI does not support this type of skinning, so here's a workaround...")
-                vertices = self.get_skin_deformation_from_partition(n_geom)
-            # finally we can actually set the data
-            for vold, vnew in zip(n_geom.data.vertices, vertices):
-                vold.x = vnew.x
-                vold.y = vnew.y
-                vold.z = vnew.z
+        if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
+            cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
+            b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]

@@ -52,8 +52,8 @@ from io_scene_nif.utility.util_logging import NifLog
 class Animation:
 
     def __init__(self):
-        self.object_animation = ObjectAnimation(self)
-        self.material_animation = MaterialAnimation(self)
+        self.object = ObjectAnimation(self)
+        self.material = MaterialAnimation(self)
         self.transform = TransformAnimation(self)
         self.morph = MorphAnimation(self)
         # set a dummy here, update via set_frames_per_second
@@ -68,7 +68,7 @@ class Animation:
                 for space in area.spaces:
                     if space.type == 'DOPESHEET_EDITOR':
                         space.show_pose_markers = True
-				
+
     @staticmethod
     def get_b_interp_from_n_interp(n_ipol):
         if n_ipol in (NifFormat.KeyType.LINEAR_KEY, NifFormat.KeyType.XYZ_ROTATION_KEY):
@@ -214,5 +214,3 @@ class Animation:
         self.fps = fps
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
-
-

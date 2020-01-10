@@ -43,8 +43,9 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.geometry.mesh.mesh_export import Mesh
+from io_scene_nif.modules.object import PRN_DICT
 from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.object.object_types import lod_export
+from io_scene_nif.modules.object.object_types import type_export
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
@@ -52,24 +53,26 @@ from io_scene_nif.utility.util_logging import NifLog
 
 class Object:
 
+    export_types = ('EMPTY', 'MESH', 'ARMATURE')
+
     def __init__(self, parent):
         self.nif_export = parent
         self.mesh_helper = Mesh(parent=parent)
 
-    def export_root_node(self, filebase):
+    def export_root_node(self, root_objects, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
         # TODO [collsion] detect root collision -> root collision node (can be mesh or empty)
         #     self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
         #     return None  # done; stop here
 
         # there is only one root object so that will be our final root
-        if len(self.nif_export.root_objects) == 1:
-            n_root = self.export_node(self.nif_export.root_objects[0], None)
+        if len(root_objects) == 1:
+            n_root = self.export_node(root_objects[0], None)
         # there is more than one root object so we create a meta root
         else:
             n_root = self.create_ninode()
             n_root.name = "Scene Root"
-            for b_obj in self.nif_export.root_objects:
+            for b_obj in root_objects:
                 self.export_node(b_obj, n_root)
         # making root block a fade node
         root_type = self.nif_export.root_objects[0].niftools.rootnode
@@ -166,7 +169,7 @@ class Object:
                 # add string extra data
                 prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
-                prn.string_data = self.nif_export.prn_dict[loc]
+                prn.string_data = PRN_DICT[loc]
                 n_root.add_extra_data(prn)
 
     # TODO [collision] Move to collision
@@ -204,7 +207,7 @@ class Object:
     def set_node_flags(self, b_obj, n_node):
         # default node flags
         b_obj_type = b_obj.type
-        if b_obj_type in self.nif_export.export_types:
+        if b_obj_type in self.export_types:
             if b_obj_type is 'EMPTY' and b_obj.niftools.objectflags != 0:
                 n_node.flags = b_obj.niftools.objectflags
             if b_obj_type is 'MESH' and b_obj.niftools.objectflags != 0:
@@ -243,7 +246,7 @@ class Object:
         b_action = self.nif_export.animationhelper.get_active_action(b_obj)
 
         # can we export this b_obj?
-        if b_obj_type not in self.nif_export.export_types:
+        if b_obj_type not in self.export_types:
             return None
         if b_obj_type == 'MESH' and b_obj.name.lower().startswith('bsbound'):
             # add a bounding box
@@ -300,7 +303,7 @@ class Object:
 
         # export object animation
         self.nif_export.animationhelper.transform.export_transforms(node, b_obj, b_action)
-        self.nif_export.animationhelper.obj_anim.export_visibility(node, b_obj, b_action)
+        self.nif_export.animationhelper.object.export_visibility(node, b_action)
         # if it is a mesh, export the mesh as trishape children of this ninode
         if b_obj.type == 'MESH':
             return self.mesh_helper.export_tri_shapes(b_obj, node)
@@ -347,7 +350,7 @@ class Object:
 
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
-            lod_export.export_range_lod_data(n_node, b_obj)
+            type_export.export_range_lod_data(n_node, b_obj)
 
         return n_node
 
