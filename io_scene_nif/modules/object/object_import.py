@@ -48,8 +48,7 @@ from io_scene_nif.utility.util_logging import NifLog
 
 class Object:
 
-    ACTIVE_OBJ_NAME = ""
-
+    # TODO [property] Add delegate processing
     def import_extra_datas(self, root_block, b_obj):
         """ Only to be called on nif and blender root objects! """
         # store type of root node
@@ -157,30 +156,51 @@ class Object:
     @staticmethod
     def is_grouping_node(n_block):
         """Determine whether node is grouping node.
-        Returns the children which are grouped, or empty list if it is not a
-        grouping node.
+        Returns the children which are grouped, or empty list if it is not a grouping node.
         """
         # combining shapes: disable grouping
         if not NifOp.props.combine_shapes:
             return []
+
         # check that it is a ninode
         if not isinstance(n_block, NifFormat.NiNode):
             return []
+
         # NiLODNodes are never grouping nodes (this ensures that they are imported as empties, with LODs as child meshes)
         if isinstance(n_block, NifFormat.NiLODNode):
             return []
+
         # root collision node: join everything
         if isinstance(n_block, NifFormat.RootCollisionNode):
             return [child for child in n_block.children if isinstance(child, NifFormat.NiTriBasedGeom)]
+
         # check that node has name
         node_name = n_block.name
         if not node_name:
             return []
+
         # strip "NonAccum" trailer, if present
         if node_name[-9:].lower() == " nonaccum":
             node_name = node_name[:-9]
+
         # get all geometry children
         return [child for child in n_block.children if (isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1)]
+
+    def create_mesh_object(self, n_block):
+        ni_name = n_block.name.decode()
+        # create mesh data
+        b_mesh = bpy.data.meshes.new(ni_name)
+
+        # create mesh object and link to data
+        b_obj = self.create_b_obj(n_block, b_mesh)
+
+        # Mesh hidden flag
+        if n_block.flags & 1 == 1:
+            b_obj.draw_type = 'WIRE'  # hidden: wire
+        else:
+            b_obj.draw_type = 'TEXTURED'  # not hidden: shaded
+
+        return b_obj
 
     @staticmethod
     def import_name(n_block):

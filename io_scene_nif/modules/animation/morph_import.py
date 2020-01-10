@@ -39,17 +39,19 @@
 
 import bpy
 from pyffi.formats.nif import NifFormat
-from io_scene_nif.utility.util_global import EGMData
 
+from io_scene_nif.modules import animation
+from io_scene_nif.modules.animation.animation_import import Animation
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.util_global import EGMData
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class MorphAnimation:
+class MorphAnimation(Animation):
 
-    def __init__(self, parent):
-        self.animationhelper = parent
-        self.fps = bpy.context.scene.render.fps
+    def __init__(self):
+        super().__init__()
+        animation.FPS = bpy.context.scene.render.fps
 
     def import_morph_controller(self, n_node, b_obj, v_map):
         """Import NiGeomMorpherController as shape keys for blender object."""
@@ -70,7 +72,7 @@ class MorphAnimation:
                 # get base vectors and import all morphs
                 baseverts = morphData.morphs[0].vectors
 
-                shape_action = self.animationhelper.create_action(b_obj.data.shape_keys, b_obj.name + "-Morphs")
+                shape_action = self.create_action(b_obj.data.shape_keys, b_obj.name + "-Morphs")
                 
                 for idxMorph in range(1, morphData.num_morphs):
                     # get name for key
@@ -98,12 +100,12 @@ class MorphAnimation:
                             continue
                         
                     # get the interpolation mode
-                    interp = self.animationhelper.get_b_interp_from_n_interp( morph_data.interpolation)
-                    fcu = self.animationhelper.create_fcurves(shape_action, "value", (0,), flags=n_morphCtrl.flags, keyname=shape_key.name)
+                    interp = self.get_b_interp_from_n_interp( morph_data.interpolation)
+                    fcu = self.create_fcurves(shape_action, "value", (0,), flags=n_morphCtrl.flags, keyname=shape_key.name)
                     
                     # set keyframes
                     for key in morph_data.keys:
-                        self.animationhelper.add_key(fcu, key.time, (key.value,), interp)
+                        self.add_key(fcu, key.time, (key.value,), interp)
 
     def import_egm_morphs(self, b_obj, v_map, n_verts):
         """Import all EGM morphs as shape keys for blender object."""

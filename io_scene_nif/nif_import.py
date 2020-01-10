@@ -39,7 +39,6 @@
 
 
 import bpy
-import mathutils
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
@@ -47,15 +46,16 @@ from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.io.nif import NifFile
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.animation_import import Animation
+from io_scene_nif.modules.animation.object_import import ObjectAnimation
+from io_scene_nif.modules.animation.transform_import import TransformAnimation
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import Collision
 from io_scene_nif.modules.constraint.constraint_import import Constraint
+from io_scene_nif.modules.geometry.mesh.mesh_import import Mesh
 from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
-from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
 from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.modules.object.object_types.type_import import NiTypes
 from io_scene_nif.modules.property.material.material_import import Material
-from io_scene_nif.modules.property.property_import import Property
 from io_scene_nif.modules.scene import scene_import
 
 from io_scene_nif.nif_common import NifCommon
@@ -70,14 +70,14 @@ class NifImport(NifCommon):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.animationhelper = Animation()
         self.armaturehelper = Armature(parent=self)
         self.collisionhelper = Collision(parent=self)
         self.constrainthelper = Constraint(parent=self)
-
         self.materialhelper = Material()
-        self.propertyhelper = Property(self.materialhelper, self.animationhelper)  # TODO [property] Implement fully generic property helper
+        self.mesh = Mesh()
         self.objecthelper = Object()
+        self.object_anim = ObjectAnimation()
+        self.transform_anim = TransformAnimation()
 
     def execute(self):
         """Main import function."""
@@ -102,7 +102,7 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                self.animationhelper.set_frames_per_second(NifData.data.roots)
+                Animation.set_frames_per_second(NifData.data.roots)
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -183,8 +183,6 @@ class NifImport(NifCommon):
         #     self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
-        Object.ACTIVE_OBJ_NAME = ""
-
         if isinstance(root_block, (NifFormat.NiNode, NifFormat.NiTriBasedGeom)):
             b_obj = self.import_branch(root_block)
             self.objecthelper.import_extra_datas(root_block, b_obj)
@@ -226,10 +224,13 @@ class NifImport(NifCommon):
         NifLog.info("Importing data for block '{0}'".format(n_block.name.decode()))
         if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
             # it's a shape node and we're not importing skeleton only
-            NifLog.debug("Building mesh in import_branch")
-            # note: transform matrix is set during import
-            b_obj = self.import_mesh(n_block)
-            Object.ACTIVE_OBJ_NAME = b_obj.name
+            b_obj = self.objecthelper.create_mesh_object(n_block)
+
+            transform = nif_utils.import_matrix(n_block)  # set transform matrix for the mesh
+            self.mesh.import_mesh(n_block, b_obj, transform)
+
+            bpy.context.scene.objects.active = b_obj
+
             # store flags etc
             Object.import_object_flags(n_block, b_obj)
             # skinning? add armature modifier
@@ -277,13 +278,15 @@ class NifImport(NifCommon):
                     geom_group = []
                 else:
                     # node groups geometries, so import it as a mesh
-                    NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name for child in geom_group], n_block.name))
-                    b_obj = None
+                    NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name.decode() for child in geom_group], n_block.name.decode()))
+
+                    b_obj = self.objecthelper.create_mesh_object(n_block)
+                    b_obj.matrix_local = nif_utils.import_matrix(n_block)
+                    bpy.context.scene.objects.active = b_obj
+
                     for child in geom_group:
-                        b_obj = self.import_mesh(child, group_mesh=b_obj, applytransform=True)
-                        b_obj.name = Object.import_name(n_block)
-                        # appears to be only used by material sys
-                        Object.ACTIVE_OBJ_NAME = b_obj.name
+                        self.mesh.import_mesh(child, b_obj)
+
                         # store flags etc
                         Object.import_object_flags(child, b_obj)
 
@@ -320,228 +323,13 @@ class NifImport(NifCommon):
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:
                     # self.animationhelper.import_text_keys(n_block)
-                    self.animationhelper.transform.import_transforms(n_block, b_obj)
-                    self.animationhelper.object.import_visibility(n_block, b_obj)
+                    self.transform_anim.import_transforms(n_block, b_obj)
+                    self.object_anim.import_visibility(n_block, b_obj)
 
             return b_obj
 
         # all else is currently discarded
         return None
-
-    def import_mesh(self, n_block, group_mesh=None, applytransform=False):
-        """Creates and returns a raw mesh, or appends geometry data to
-        group_mesh.
-
-        :param n_block: The nif block whose mesh data to import.
-        :type n_block: C{NiTriBasedGeom}
-        :param group_mesh: The mesh to which to append the geometry
-            data. If C{None}, a new mesh is created.
-        :type group_mesh: A Blender object that has mesh data.
-        :param applytransform: Whether to apply the n_block's
-            transformation to the mesh. If group_mesh is not C{None},
-            then applytransform must be C{True}.
-        :type applytransform: C{bool}
-        """
-        assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
-
-        NifLog.info("Importing mesh data for geometry '{0}'".format(n_block.name.decode()))
-
-        # TODO [object] Not the responsibility of this method to create object level... object.
-        if group_mesh:
-            b_obj = group_mesh
-            b_mesh = group_mesh.data
-        else:
-            # Mesh name -> must be unique, so tag it if needed
-
-            ni_name = n_block.name.decode()
-            # create mesh data
-            b_mesh = bpy.data.meshes.new(ni_name)
-
-            # create mesh object and link to data
-            b_obj = self.objecthelper.create_b_obj(n_block, b_mesh)
-
-            # Mesh hidden flag
-            if n_block.flags & 1 == 1:
-                b_obj.draw_type = 'WIRE'  # hidden: wire
-            else:
-                b_obj.draw_type = 'TEXTURED'  # not hidden: shaded
-
-        # set transform matrix for the mesh
-        if not applytransform:
-            if group_mesh:
-                raise nif_utils.NifError("BUG: cannot set matrix when importing meshes in groups; use applytransform = True")
-
-            b_obj.matrix_local = nif_utils.import_matrix(n_block)
-
-        else:
-            # used later on
-            transform = nif_utils.import_matrix(n_block)
-
-        # shortcut for mesh geometry data
-        n_tri_data = n_block.data
-        if not n_tri_data:
-            raise nif_utils.NifError("No shape data in {0}".format(n_block.name.decode()))
-
-        # vertices
-        n_verts = n_tri_data.vertices
-
-        # polygons
-        n_triangles = [list(tri) for tri in n_tri_data.get_triangles()]
-
-        # "sticky" UV coordinates: these are transformed in Blender UV's
-        n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in n_tri_data.uv_sets)
-
-        # vertex normals
-        n_norms = n_tri_data.normals
-
-        '''
-        Properties
-        '''
-
-        material, material_index = self.propertyhelper.process_properties(b_mesh, n_block)
-
-        # v_map will store the vertex index mapping
-        # nif vertex i maps to blender vertex v_map[i]
-        v_map = [(i) for i in range(len(n_verts))]  # pre-allocate memory, for faster performance
-
-        # Following code avoids introducing unwanted cracks in UV seams:
-        # Construct vertex map to get unique vertex / normal pair list.
-        # We use a Python dictionary to remove doubles and to keep track of indices.
-        # While we are at it, we also add vertices while constructing the map.
-        n_map = {}
-        b_v_index = len(b_mesh.vertices)
-        for i, v in enumerate(n_verts):
-            # The key k identifies unique vertex /normal pairs.
-            # We use a tuple of ints for key, this works MUCH faster than a tuple of floats.
-            if n_norms:
-                n = n_norms[i]
-                k = (int(v.x * self.VERTEX_RESOLUTION),
-                     int(v.y * self.VERTEX_RESOLUTION),
-                     int(v.z * self.VERTEX_RESOLUTION),
-                     int(n.x * self.NORMAL_RESOLUTION),
-                     int(n.y * self.NORMAL_RESOLUTION),
-                     int(n.z * self.NORMAL_RESOLUTION))
-            else:
-                k = (int(v.x * self.VERTEX_RESOLUTION),
-                     int(v.y * self.VERTEX_RESOLUTION),
-                     int(v.z * self.VERTEX_RESOLUTION))
-
-            # check if vertex was already added, and if so, what index
-            try:
-                # this is the bottle neck...
-                # can we speed this up?
-                if not NifOp.props.combine_vertices:
-                    n_map_k = None
-                else:
-                    n_map_k = n_map[k]
-            except KeyError:
-                n_map_k = None
-
-            if not n_map_k:
-                # not added: new vertex / normal pair
-                n_map[k] = i  # unique vertex / normal pair with key k was added, with NIF index i
-                v_map[i] = b_v_index  # NIF vertex i maps to blender vertex b_v_index
-                # add the vertex
-                if applytransform:
-                    v = mathutils.Vector([v.x, v.y, v.z])
-                    v = v * transform
-                    b_mesh.vertices.add(1)
-                    b_mesh.vertices[-1].co = [v.x, v.y, v.z]
-                else:
-                    b_mesh.vertices.add(1)
-                    b_mesh.vertices[-1].co = [v.x, v.y, v.z]
-                # adds normal info if present (Blender recalculates these when
-                # switching between edit mode and object mode, handled further)
-                # if n_norms:
-                #    mv = b_mesh.vertices[b_v_index]
-                #    n = n_norms[i]
-                #    mv.normal = mathutils.Vector(n.x, n.y, n.z)
-                b_v_index += 1
-            else:
-                # already added
-                # NIF vertex i maps to Blender vertex v_map[n_map_k]
-                v_map[i] = v_map[n_map_k]
-
-        # report
-        NifLog.debug("{0} unique vertex-normal pairs".format(str(len(n_map))))
-        # release memory
-        del n_map
-
-        # Adds the polygons to the mesh
-        f_map = [None] * len(n_triangles)
-        b_f_index = len(b_mesh.polygons)
-        bf2_index = len(b_mesh.polygons)
-        bl_index = len(b_mesh.loops)
-        poly_count = len(n_triangles)
-        b_mesh.polygons.add(poly_count)
-        b_mesh.loops.add(poly_count * 3)
-        num_new_faces = 0  # counter for debugging
-        unique_faces = list()  # to avoid duplicate polygons
-        tri_point_list = list()
-        for i, f in enumerate(n_triangles):
-            # get face index
-            f_verts = [v_map[vert_index] for vert_index in f]
-            if tuple(f_verts) in unique_faces:
-                continue
-            unique_faces.append(tuple(f_verts))
-            f_map[i] = b_f_index
-            tri_point_list.append(len(n_triangles[i]))
-            ls_list = list()
-            b_f_index += 1
-            num_new_faces += 1
-        for ls1 in range(0, num_new_faces * (tri_point_list[len(ls_list)]), (tri_point_list[len(ls_list)])):
-            ls_list.append((ls1 + bl_index))
-        for i in range(len(unique_faces)):
-            if f_map[i] is None:
-                continue
-            b_mesh.polygons[f_map[i]].loop_start = ls_list[(f_map[i] - bf2_index)]
-            b_mesh.polygons[f_map[i]].loop_total = len(unique_faces[(f_map[i] - bf2_index)])
-            l = 0
-            lp_points = [v_map[loop_point] for loop_point in n_triangles[(f_map[i] - bf2_index)]]
-            while l < (len(n_triangles[(f_map[i] - bf2_index)])):
-                b_mesh.loops[(l + (bl_index))].vertex_index = lp_points[l]
-                l += 1
-            bl_index += (len(n_triangles[(f_map[i] - bf2_index)]))
-
-        # at this point, deleted polygons (degenerate or duplicate) satisfy f_map[i] = None
-
-        NifLog.debug("{0} unique polygons".format(num_new_faces))
-
-        # set face smoothing and material
-        for b_polysmooth_index in f_map:
-            if b_polysmooth_index is None:
-                continue
-            polysmooth = b_mesh.polygons[b_polysmooth_index]
-            polysmooth.use_smooth = True if (n_norms or n_block.skin_instance) else False
-            polysmooth.material_index = material_index
-
-        Vertex.map_vertex_colors(b_mesh, n_tri_data, v_map)
-
-        Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, n_tri_data)
-
-        # TODO [material][texture] Break out texture/material
-        self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, material, n_uvco)
-
-        # import skinning info, for meshes affected by bones
-        self.armaturehelper.import_skin(n_block, b_obj, v_map)
-
-        # import morph controller
-        if NifOp.props.animation:
-            self.animationhelper.morph.import_morph_controller(n_block, b_obj, v_map)
-        # import facegen morphs
-        if EGMData.data:
-            self.animationhelper.morph.import_egm_morphs(b_obj, v_map, n_verts)
-
-        # recalculate mesh to render correctly
-        # implementation note: update() without validate() can cause crash
-
-        b_mesh.validate()
-        b_mesh.update()
-        b_obj.select = True
-        scn = bpy.context.scene
-        scn.objects.active = b_obj
-
-        return b_obj
 
     def set_parents(self, n_block):
         """Set the parent block recursively through the tree, to allow
