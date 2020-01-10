@@ -45,7 +45,7 @@ from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.geometry import mesh
 from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
 from io_scene_nif.modules.property.material.material_import import Material
-from io_scene_nif.modules.property.property_import import Property
+from io_scene_nif.modules.property.property_import import Property, MeshProperty
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp, EGMData
 from io_scene_nif.utility.util_logging import NifLog
@@ -86,7 +86,8 @@ class Mesh:
         n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in n_tri_data.uv_sets)
 
         # TODO [properties] Move out to object level
-        material, material_index = self.propertyhelper.process_properties(b_obj.data, n_block)
+        # self.propertyhelper.process_properties(b_obj.data, n_block)
+        MeshProperty().process_property_list(n_block, b_obj.data)
 
         v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
 
@@ -100,7 +101,7 @@ class Mesh:
         Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, n_tri_data)
 
         # TODO [material][texture] Break out texture/material
-        self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, material, n_uvco)
+        self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, n_uvco)
 
         # import skinning info, for meshes affected by bones
         Armature.import_skin(n_block, b_obj, v_map)
@@ -122,13 +123,12 @@ class Mesh:
     def set_face_smooth(b_mesh, f_map, smooth):
         """set face smoothing and material"""
 
-        mat_index = b_mesh.materials[-1]
-        for b_polysmooth_index in f_map:
-            if b_polysmooth_index is None:
+        for b_poly_index in f_map:
+            if b_poly_index is None:
                 continue
-            polysmooth = b_mesh.polygons[b_polysmooth_index]
-            polysmooth.use_smooth = smooth
-            polysmooth.material_index = mat_index
+            poly = b_mesh.polygons[b_poly_index]
+            poly.use_smooth = smooth
+            poly.material_index = 0  # only one material
 
     @staticmethod
     def add_triangles_to_bmesh(b_mesh, n_triangles, v_map):
