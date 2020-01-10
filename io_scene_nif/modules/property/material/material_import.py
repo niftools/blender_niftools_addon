@@ -52,23 +52,6 @@ class Material:
         self.dict_materials = {}
         self.texturehelper = Texture()
 
-    def get_material_hash(self, n_mat_prop, n_texture_prop,
-                          n_alpha_prop, n_specular_prop,
-                          texture_effect, n_wire_prop,
-                          extra_datas):
-        """Helper function for import_material. Returns a key that
-        uniquely identifies a material from its properties. The key
-        ignores the material name as that does not affect the
-        rendering.
-        """
-        return (n_mat_prop.get_hash()[1:] if n_mat_prop else None,  # skip first element, which is name
-                n_texture_prop.get_hash() if n_texture_prop else None,
-                n_alpha_prop.get_hash() if n_alpha_prop else None,
-                n_specular_prop.get_hash() if n_specular_prop else None,
-                texture_effect.get_hash() if texture_effect else None,
-                n_wire_prop.get_hash() if n_wire_prop else None,
-                tuple(extra.get_hash() for extra in extra_datas))
-
     @staticmethod
     def set_alpha(b_mat, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
@@ -80,21 +63,8 @@ class Material:
 
         return b_mat
 
+    """
     def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas):
-
-        """Creates and returns a material."""
-        # First check if material has been created before.
-        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas)
-        try:
-            return self.dict_materials[material_hash]
-        except KeyError:
-            pass
-
-        # name unique material
-        name = Object.import_name(n_mat_prop)
-        if not name:
-            name = bpy.context.scene.objects.active + "_nt_mat"
-        b_mat = bpy.data.materials.new(name)
 
         # texures
         if n_texture_prop:
@@ -103,45 +73,7 @@ class Material:
                 self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
         if texture_effect:
             self.texturehelper.import_texture_effect(b_mat, texture_effect)
-
-        # material based properties
-        if n_mat_prop:
-            # Ambient color
-            self.import_material_ambient(b_mat, n_mat_prop)
-
-            # Diffuse color
-            self.import_material_diffuse(b_mat, n_mat_prop)
-
-            # TODO [property][material] - Detect fallout 3+, use emit multi as a degree of emission
-            #        test some values to find emission maximium. 0-1 -> 0-max_val
-            # Should we factor in blender bounds 0.0 - 2.0
-
-            # Emissive
-            self.import_material_emissive(b_mat, n_mat_prop)
-
-            # gloss
-            b_mat.specular_hardness = n_mat_prop.glossiness
-
-            # Alpha
-            if n_alpha_prop:
-                b_mat = self.set_alpha(b_mat, n_alpha_prop)
-
-            # Specular color
-            self.import_material_specular(b_mat, n_mat_prop)
-
-            # todo [property][specular] Need to see what is actually required here
-            if not n_specular_prop or NifData.data.version != 0x14000004:
-                b_mat.specular_intensity = 0.0  # no specular prop
-            else:
-                b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
-
-        # check wireframe property
-        if n_wire_prop:
-            # enable wireframe rendering
-            b_mat.type = 'WIRE'
-
-        self.dict_materials[material_hash] = b_mat
-        return b_mat
+    """
 
     def set_material_vertex_mapping(self, b_mesh, f_map, n_uvco):
         b_mat = b_mesh.materials[0]
@@ -200,7 +132,7 @@ class NiMaterial(Material):
         """Creates and returns a material."""
         # First check if material has been created before.
         # TODO [property][material] Decide whether or not to keep the material hash
-        # material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop)
+        # material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_texture_effect, n_extra_data, n_alpha_prop)
         # try:
         #     return material.DICT_MATERIALS[material_hash]
         # except KeyError:
