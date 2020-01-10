@@ -177,7 +177,7 @@ class MeshProperty:
         self.process_property.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
         self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
         self.process_property.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
-        self.process_property.register(NifFormat.NiAlphaProperty, self.process_nialphs_property)
+        self.process_property.register(NifFormat.NiAlphaProperty, self.process_nialpha_property)
         self.process_property.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
         self.process_property.register(NifFormat.NiVertexColorProperty, self.process_nivertexcolor_property)
 
@@ -208,7 +208,7 @@ class MeshProperty:
         if NifData.data.version == 0x14000004:
             b_mat.specular_intensity = 0.0  # no specular prop
 
-    def process_nialphs_property(self, prop):
+    def process_nialpha_property(self, prop):
         """Import a NiAlphaProperty based material"""
         NifLog.debug("NiAlphaProperty property found " + str(prop))
         b_mat = self._find_or_create_material()
@@ -242,7 +242,6 @@ class MeshProperty:
     def _find_or_create_material(self):
         b_mats = self.b_mesh.materials
         if len(b_mats) == 0:
-            # assign to 1st material slot
             NifLog.debug("Creating placeholder material to store properties in")
             b_mat = bpy.data.materials.new("")
             self.b_mesh.materials.append(b_mat)
