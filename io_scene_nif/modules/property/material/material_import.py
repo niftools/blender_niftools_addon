@@ -40,22 +40,21 @@
 
 import bpy
 
+from io_scene_nif.modules.object.object_import import Object
+from io_scene_nif.modules.property.texture.texture_import import Texture
 from io_scene_nif.utility.util_global import NifData
 from io_scene_nif.utility.util_logging import NifLog
 
 
 class Material:
 
-    def __init__(self, parent):
-        self.nif_import = parent
-
-    def set_texture_helper(self, texture_helper):
-        self.texturehelper = texture_helper
+    def __init__(self):
+        self.dict_materials = {}
+        self.texturehelper = Texture()
 
     def get_material_hash(self, n_mat_prop, n_texture_prop,
                           n_alpha_prop, n_specular_prop,
                           texture_effect, n_wire_prop,
-                          bs_shader_property, bs_effect_shader_property,
                           extra_datas):
         """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
@@ -68,46 +67,32 @@ class Material:
                 n_specular_prop.get_hash() if n_specular_prop else None,
                 texture_effect.get_hash() if texture_effect else None,
                 n_wire_prop.get_hash() if n_wire_prop else None,
-                bs_shader_property.get_hash() if bs_shader_property else None,
-                bs_effect_shader_property.get_hash() if bs_effect_shader_property else None,
                 tuple(extra.get_hash() for extra in extra_datas))
 
-    def set_alpha(self, b_mat, shader_property, n_alpha_prop):
+    def set_alpha(self, b_mat, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
         b_mat.use_transparency = True
-        if hasattr(shader_property, 'alpha'):
-            b_mat.alpha = (1 - shader_property.alpha)
-        else:
-            b_mat.alpha = 0
+        # TODO [property][material] map alpha material property value
         b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
         b_mat.offset_z = n_alpha_prop.threshold  # transparency threshold
         b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
 
         return b_mat
 
-    def import_material(self, n_mat_prop, n_texture_prop,
-                        n_alpha_prop, n_specular_prop,
-                        texture_effect, n_wire_prop,
-                        bs_shader_property, bs_effect_shader_property,
-                        extra_datas):
+    def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas):
 
         """Creates and returns a material."""
         # First check if material has been created before.
-        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop,
-                                               n_alpha_prop, n_specular_prop,
-                                               texture_effect, n_wire_prop,
-                                               bs_shader_property,
-                                               bs_effect_shader_property,
-                                               extra_datas)
+        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas)
         try:
-            return self.nif_import.dict_materials[material_hash]
+            return self.dict_materials[material_hash]
         except KeyError:
             pass
 
         # name unique material
-        name = self.nif_import.import_name(n_mat_prop)
+        name = Object.import_name(n_mat_prop)
         if not name:
-            name = (self.nif_import.active_obj_name + "_nt_mat")
+            name = (Object.ACTIVE_OBJ_NAME + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
 
         # texures
@@ -115,10 +100,6 @@ class Material:
             self.texturehelper.import_nitextureprop_textures(b_mat, n_texture_prop)
             if extra_datas:
                 self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
-        if bs_shader_property:
-            self.texturehelper.import_bsshaderproperty(b_mat, bs_shader_property)
-        if bs_effect_shader_property:
-            self.texturehelper.import_bseffectshaderproperty(b_mat, bs_effect_shader_property)
         if texture_effect:
             self.texturehelper.import_texture_effect(b_mat, texture_effect)
 
@@ -150,7 +131,7 @@ class Material:
 
             # Alpha
             if n_alpha_prop:
-                b_mat = self.set_alpha(b_mat, bs_shader_property, n_alpha_prop)
+                b_mat = self.set_alpha(b_mat, n_alpha_prop)
 
             # Specular color
             b_mat.specular_color.r = n_mat_prop.specular_color.r
@@ -162,62 +143,33 @@ class Material:
             else:
                 b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
 
-        # shader based properties
-        if n_mat_prop is None and bs_shader_property:
-
-            # Diffuse color
-            if bs_shader_property.skin_tint_color:
-                b_mat.diffuse_color.r = bs_shader_property.skin_tint_color.r
-                b_mat.diffuse_color.g = bs_shader_property.skin_tint_color.g
-                b_mat.diffuse_color.b = bs_shader_property.skin_tint_color.b
-                b_mat.diffuse_intensity = 1.0
-
-            if (b_mat.diffuse_color.r + b_mat.diffuse_color.g + b_mat.diffuse_color.g) == 0:
-                b_mat.diffuse_color.r = bs_shader_property.hair_tint_color.r
-                b_mat.diffuse_color.g = bs_shader_property.hair_tint_color.g
-                b_mat.diffuse_color.b = bs_shader_property.hair_tint_color.b
-                b_mat.diffuse_intensity = 1.0
-
-            # Emissive
-            b_mat.niftools.emissive_color.r = bs_shader_property.emissive_color.r
-            b_mat.niftools.emissive_color.g = bs_shader_property.emissive_color.g
-            b_mat.niftools.emissive_color.b = bs_shader_property.emissive_color.b
-            b_mat.emit = bs_shader_property.emissive_multiple
-
-            # Alpha
-            if n_alpha_prop:
-                b_mat = self.set_alpha(b_mat, bs_shader_property, n_alpha_prop)
-
-            # gloss
-            b_mat.specular_hardness = bs_shader_property.glossiness
-
-            # Specular color
-            b_mat.specular_color.r = bs_shader_property.specular_color.r
-            b_mat.specular_color.g = bs_shader_property.specular_color.g
-            b_mat.specular_color.b = bs_shader_property.specular_color.b
-            b_mat.specular_intensity = bs_shader_property.specular_strength
-
-            # lighting effect
-            b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
-            b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
-
-        if n_mat_prop is None and bs_effect_shader_property:
-            # Alpha
-            if n_alpha_prop:
-                b_mat = self.set_alpha(b_mat, bs_shader_property, n_alpha_prop)
-
-            if bs_effect_shader_property.emissive_color:
-                b_mat.niftools.emissive_color.r = bs_effect_shader_property.emissive_color.r
-                b_mat.niftools.emissive_color.g = bs_effect_shader_property.emissive_color.g
-                b_mat.niftools.emissive_color.b = bs_effect_shader_property.emissive_color.b
-                b_mat.niftools.emissive_alpha = bs_effect_shader_property.emissive_color.a
-                b_mat.emit = bs_effect_shader_property.emissive_multiple
-            b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
-
         # check wireframe property
         if n_wire_prop:
             # enable wireframe rendering
             b_mat.type = 'WIRE'
 
-        self.nif_import.dict_materials[material_hash] = b_mat
+        self.dict_materials[material_hash] = b_mat
         return b_mat
+
+    def set_material_vertex_mapping(self, b_mesh, f_map, material, n_uvco):
+        if material:
+            # fix up vertex colors depending on whether we had textures in the material
+            mbasetex = self.texturehelper.has_base_texture(material)
+            mglowtex = self.texturehelper.has_glow_texture(material)
+            if b_mesh.vertex_colors:
+                if mbasetex or mglowtex:
+                    # textured material: vertex colors influence lighting
+                    material.use_vertex_color_light = True
+                else:
+                    # non-textured material: vertex colors incluence color
+                    material.use_vertex_color_paint = True
+
+            # if there's a base texture assigned to this material display it in Blender's 3D view, but only if there are UV coordinates
+            if mbasetex and mbasetex.texture and n_uvco:
+                image = mbasetex.texture.image
+                if image:
+                    for b_polyimage_index in f_map:
+                        if b_polyimage_index is None:
+                            continue
+                        tface = b_mesh.uv_textures.active.data[b_polyimage_index]
+                        tface.image = image

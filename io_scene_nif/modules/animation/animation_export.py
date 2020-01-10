@@ -52,15 +52,13 @@ from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp
 
 
-
 class Animation:
-
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.obj_anim = ObjectAnimation(self)
-        self.mat_anim = MaterialAnimation(self)
-        self.txt_anim = TextureAnimation(parent)
+        self.object = ObjectAnimation(self)
+        self.material = MaterialAnimation(self)
+        self.texture = TextureAnimation()
         self.transform = TransformAnimation(parent)
         self.morph = MorphAnimation(self)
         # todo [scene / anim] move to scene?
@@ -231,7 +229,7 @@ class Animation:
         n_kfi = None
         n_kfc = None
         
-        if NifOp.props.animation == 'GEOM_NIF' and self.nif_export.version < 0x0A020000:
+        if NifOp.props.animation == 'GEOM_NIF' and NifOp.props.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
             # present, only the data is not present (see further on)
@@ -239,7 +237,7 @@ class Animation:
 
         # add a KeyframeController block, and refer to this block in the
         # parent's time controller
-        if self.nif_export.version < 0x0A020000:
+        if NifOp.props.version < 0x0A020000:
             n_kfc = block_store.create_block("NiKeyframeController", None)
         else:
             n_kfc = block_store.create_block("NiTransformController", None)

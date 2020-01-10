@@ -36,3 +36,124 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
+from pyffi.formats.nif import NifFormat
+
+from io_scene_nif.modules.property import texture
+from io_scene_nif.modules.property.shader.shader_import import BSShader
+from io_scene_nif.utility import nif_utils
+
+
+class Property:
+
+    def __init__(self, materialhelper, animationhelper):
+        self.materialhelper = materialhelper
+        self.animationhelper = animationhelper
+
+    # TODO [property] This will be moved to dispatch method later
+    @staticmethod
+    def import_stencil_property(b_mesh, b_obj):
+        """ Imports a NiStencilProperty attached to n_mesh """
+        # Stencil (for double sided meshes)
+        n_stencil_prop = nif_utils.find_property(b_obj, NifFormat.NiStencilProperty)
+        # we don't check flags for now, nothing fancy
+        if n_stencil_prop:
+            b_mesh.show_double_sided = True
+        else:
+            b_mesh.show_double_sided = False
+
+    def import_shader_property(self, b_obj, n_block):
+        if n_block.properties:
+            for b_prop in n_block.properties:
+                BSShader.import_shader_types(b_obj, b_prop)
+        elif n_block.bs_properties:
+            for b_prop in n_block.bs_properties:
+                BSShader.import_shader_types(b_obj, b_prop)
+
+    def process_properties(self, b_obj, n_block):
+        # Material
+        # note that NIF files only support one material for each trishape
+        # find material property
+
+        self.import_stencil_property(n_block, b_obj)
+        # self.import_shader_property(n_block, b_obj)
+        return self.process_material(n_block, b_obj)
+
+    def process_material(self, n_block, b_mesh):
+
+        material = None
+        material_index = 0
+
+        n_mat_prop = nif_utils.find_property(n_block, NifFormat.NiMaterialProperty)
+
+        n_effect_shader_prop = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
+
+        # Alpha
+        n_alpha_prop = nif_utils.find_property(n_block, NifFormat.NiAlphaProperty)
+
+        # Specularity
+        n_specular_prop = nif_utils.find_property(n_block, NifFormat.NiSpecularProperty)
+
+        # Wireframe
+        n_wire_prop = nif_utils.find_property(n_block, NifFormat.NiWireframeProperty)
+
+        # Texture
+        n_texture_prop = nif_utils.find_property(n_block, NifFormat.NiTexturingProperty)
+
+        if n_mat_prop or n_effect_shader_prop:  # TODO [shader] or bs_shader_property or bs_effect_shader_property:
+
+            # extra datas (for sid meier's railroads) that have material info
+            extra_datas = []
+            for extra in n_block.get_extra_datas():
+                if isinstance(extra, NifFormat.NiIntegerExtraData):
+                    if extra.name in texture.EXTRA_SHADER_TEXTURES:
+                        # yes, it describes the shader slot number
+                        extra_datas.append(extra)
+
+            # texturing effect for environment map in official files this is activated by a NiTextureEffect child
+            # preceeding the n_block
+            textureEffect = None
+            if isinstance(n_block._parent, NifFormat.NiNode):
+                lastchild = None
+                for child in n_block._parent.children:
+                    if child is n_block:
+                        if isinstance(lastchild, NifFormat.NiTextureEffect):
+                            textureEffect = lastchild
+                        break
+                    lastchild = child
+                else:
+                    raise RuntimeError("texture effect scanning bug")
+                # in some mods the NiTextureEffect child follows the n_block
+                # but it still works because it is listed in the effect list
+                # so handle this case separately
+                if not textureEffect:
+                    for effect in n_block._parent.effects:
+                        if isinstance(effect, NifFormat.NiTextureEffect):
+                            textureEffect = effect
+                            break
+
+            # create material and assign it to the mesh
+            # TODO [material] delegate search for properties to import_material
+            if n_mat_prop:
+                material = self.materialhelper.import_material(n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop,
+                                                               textureEffect, n_wire_prop, extra_datas)
+            # TODO [property] Extract to shader import
+            # if bs_shader_property or bs_effect_shader_property:
+            #     material = self.materialhelper.import_bsshader_material(bs_shader_property, bs_effect_shader_property, n_alpha_prop)
+
+            # TODO [animation][material] merge this call into import_material
+            self.animationhelper.material.import_material_controllers(material, n_block)
+
+            b_mesh_materials = list(b_mesh.materials)
+            try:
+                material_index = b_mesh_materials.index(material)
+            except ValueError:
+                material_index = len(b_mesh_materials)
+                b_mesh.materials.append(material)
+
+            '''
+            # if mesh has one material with n_wire_prop, then make the mesh wire in 3D view
+            if n_wire_prop:
+                b_obj.draw_type = 'WIRE'
+            '''
+        return material, material_index

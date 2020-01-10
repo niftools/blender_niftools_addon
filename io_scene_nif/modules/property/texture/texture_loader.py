@@ -51,9 +51,6 @@ from io_scene_nif.modules.property import texture
 
 class TextureLoader:
 
-    def __init__(self, parent):
-        self.nif_import = parent
-
     def get_texture_hash(self, source):
         """Helper function for import_texture. Returns a key that uniquely
         identifies a n_texture from its source (which is either a
@@ -84,7 +81,7 @@ class TextureLoader:
         try:
             # look up the n_texture in the dictionary of imported textures
             # and return it if found
-            return self.nif_import.dict_textures[texture_hash]
+            return texture.DICT_TEXTURES[texture_hash]
         except KeyError:
             pass
 
@@ -109,7 +106,7 @@ class TextureLoader:
         b_texture.use_mipmap = True
 
         # save n_texture to avoid duplicate imports, and return it
-        self.nif_import.dict_textures[texture_hash] = b_texture
+        texture.DICT_TEXTURES[texture_hash] = b_texture
         return b_texture
 
     def import_embedded_texture_source(self, source):
