@@ -69,7 +69,8 @@ class Material:
                 n_wire_prop.get_hash() if n_wire_prop else None,
                 tuple(extra.get_hash() for extra in extra_datas))
 
-    def set_alpha(self, b_mat, n_alpha_prop):
+    @staticmethod
+    def set_alpha(b_mat, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
         b_mat.use_transparency = True
         # TODO [property][material] map alpha material property value
@@ -142,18 +143,19 @@ class Material:
         self.dict_materials[material_hash] = b_mat
         return b_mat
 
-    def set_material_vertex_mapping(self, b_mesh, f_map, material, n_uvco):
-        if material:
+    def set_material_vertex_mapping(self, b_mesh, f_map, n_uvco):
+        b_mat = b_mesh.materials[0]
+        if b_mat:
             # fix up vertex colors depending on whether we had textures in the material
-            mbasetex = self.texturehelper.has_base_texture(material)
-            mglowtex = self.texturehelper.has_glow_texture(material)
+            mbasetex = self.texturehelper.has_base_texture(b_mat)
+            mglowtex = self.texturehelper.has_glow_texture(b_mat)
             if b_mesh.vertex_colors:
                 if mbasetex or mglowtex:
                     # textured material: vertex colors influence lighting
-                    material.use_vertex_color_light = True
+                    b_mat.use_vertex_color_light = True
                 else:
-                    # non-textured material: vertex colors incluence color
-                    material.use_vertex_color_paint = True
+                    # non-textured material: vertex colors influence color
+                    b_mat.use_vertex_color_paint = True
 
             # if there's a base texture assigned to this material display it in Blender's 3D view, but only if there are UV coordinates
             if mbasetex and mbasetex.texture and n_uvco:
