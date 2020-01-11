@@ -47,7 +47,7 @@ from io_scene_nif.utility.util_logging import NifLog
 
 class MaterialAnimation(Animation):
 
-    def import_material_controllers(self, b_material, n_geom):
+    def import_material_controllers(self, n_geom, b_material):
         """Import material animation data for given geometry."""
         if not NifOp.props.animation:
             return

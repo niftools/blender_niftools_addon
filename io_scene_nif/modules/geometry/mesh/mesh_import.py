@@ -45,7 +45,7 @@ from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.geometry import mesh
 from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
 from io_scene_nif.modules.property.material.material_import import Material
-from io_scene_nif.modules.property.property_import import Property
+from io_scene_nif.modules.property.property_import import MeshProperty
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp, EGMData
 from io_scene_nif.utility.util_logging import NifLog
@@ -55,7 +55,6 @@ class Mesh:
 
     def __init__(self):
         self.materialhelper = Material()
-        self.propertyhelper = Property(self.materialhelper)  # TODO [property] Implement fully generic property helper
         self.morph_anim = MorphAnimation()
 
     def import_mesh(self, n_block, b_obj, transform=None):
@@ -70,13 +69,14 @@ class Mesh:
         """
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
-        NifLog.info("Importing mesh data for geometry '{0}'".format(n_block.name.decode()))
+        node_name = n_block.name.decode()
+        NifLog.info("Importing mesh data for geometry '{0}'".format(node_name))
         b_mesh = b_obj.data
 
         # shortcut for mesh geometry data
         n_tri_data = n_block.data
         if not n_tri_data:
-            raise nif_utils.NifError("No shape data in {0}".format(n_block.name.decode()))
+            raise nif_utils.NifError("No shape data in {0}".format(node_name))
 
         # polygons
         n_triangles = [list(tri) for tri in n_tri_data.get_triangles()]
@@ -84,27 +84,23 @@ class Mesh:
         # "sticky" UV coordinates: these are transformed in Blender UV's
         n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in n_tri_data.uv_sets)
 
-        # TODO [properties] Move out to object level
-        material, material_index = self.propertyhelper.process_properties(b_obj.data, n_block)
+        # TODO [properties] Should this be object level process, secondary pass for materials / caching
+        if n_block.properties:
+            MeshProperty().process_property_list(n_block, b_obj.data)
 
         v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
 
         bf2_index, f_map = Mesh.add_triangles_to_bmesh(b_mesh, n_triangles, v_map)
 
-        # set face smoothing and material
-        for b_polysmooth_index in f_map:
-            if b_polysmooth_index is None:
-                continue
-            polysmooth = b_mesh.polygons[b_polysmooth_index]
-            polysmooth.use_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
-            polysmooth.material_index = material_index
+        is_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
+        self.set_face_smooth(b_mesh, f_map, is_smooth)
 
         Vertex.map_vertex_colors(b_mesh, n_tri_data, v_map)
 
         Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, n_tri_data)
 
         # TODO [material][texture] Break out texture/material
-        self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, material, n_uvco)
+        self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, n_uvco)
 
         # import skinning info, for meshes affected by bones
         Armature.import_skin(n_block, b_obj, v_map)
@@ -121,6 +117,17 @@ class Mesh:
 
         b_mesh.validate()
         b_mesh.update()
+
+    @staticmethod
+    def set_face_smooth(b_mesh, f_map, smooth):
+        """set face smoothing and material"""
+
+        for b_poly_index in f_map:
+            if b_poly_index is None:
+                continue
+            poly = b_mesh.polygons[b_poly_index]
+            poly.use_smooth = smooth
+            poly.material_index = 0  # only one material
 
     @staticmethod
     def add_triangles_to_bmesh(b_mesh, n_triangles, v_map):
