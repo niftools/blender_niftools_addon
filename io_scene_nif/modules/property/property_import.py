@@ -94,12 +94,12 @@ class MeshProperty:
         self.b_mesh = None
         self.n_block = None
         self.process_property = singledispatch(self.process_property)
-        self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
-        self.process_property.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
-        self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
         self.process_property.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
         self.process_property.register(NifFormat.NiAlphaProperty, self.process_nialpha_property)
         self.process_property.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
+        self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
+        self.process_property.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
+        self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
         self.process_property.register(NifFormat.NiVertexColorProperty, self.process_nivertexcolor_property)
 
     def process_property_list(self, n_block, b_mesh):
