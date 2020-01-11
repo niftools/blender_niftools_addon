@@ -79,7 +79,7 @@ class Vertex:
             for n_uv_set in range(len(n_data.uv_sets)):
                 # Set the face UV's for the mesh. The NIF format only supports vertex UV's.
                 # However Blender only allows explicit editing of face  UV's, so load vertex UV's as face UV's
-                uv_layer = str(n_uv_set)
+                uv_layer = Vertex.get_uv_layer_name(n_uv_set)
                 if uv_layer not in b_mesh.uv_textures:
                     b_mesh.uv_textures.new(uv_layer)
 
@@ -93,3 +93,7 @@ class Vertex:
                     b_uv_layer[b_poly_index.loop_start + 1].uv = n_uvco[n_uv_set][v2]
                     b_uv_layer[b_poly_index.loop_start + 2].uv = n_uvco[n_uv_set][v3]
             b_mesh.uv_textures.active_index = 0
+
+    @staticmethod
+    def get_uv_layer_name(uvset):
+        return "UVMap.{0:3d}".format(uvset)
