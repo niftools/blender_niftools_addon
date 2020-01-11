@@ -44,56 +44,47 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.material_import import MaterialAnimation
-from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.material.material_import import Material, NiMaterial
-from io_scene_nif.modules.property.shader.shader_import import BSShader
-from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifData
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class Property:
+"""
+def process_material(self, n_block, b_mesh):
 
-    def __init__(self, materialhelper):
-        self.materialhelper = materialhelper
-        self.material_anim = MaterialAnimation()
+n_effect_shader_prop = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
 
-    """
-    def process_material(self, n_block, b_mesh):
+if n_mat_prop or n_effect_shader_prop:  # TODO [shader] or bs_shader_property or bs_effect_shader_property:
 
-        n_effect_shader_prop = nif_utils.find_property(n_block, NifFormat.BSEffectShaderProperty)
+    # extra datas (for sid meier's railroads) that have material info
+    extra_datas = []
+    for extra in n_block.get_extra_datas():
+        if isinstance(extra, NifFormat.NiIntegerExtraData):
+            if extra.name in texture.EXTRA_SHADER_TEXTURES:
+                # yes, it describes the shader slot number
+                extra_datas.append(extra)
 
-        if n_mat_prop or n_effect_shader_prop:  # TODO [shader] or bs_shader_property or bs_effect_shader_property:
-
-            # extra datas (for sid meier's railroads) that have material info
-            extra_datas = []
-            for extra in n_block.get_extra_datas():
-                if isinstance(extra, NifFormat.NiIntegerExtraData):
-                    if extra.name in texture.EXTRA_SHADER_TEXTURES:
-                        # yes, it describes the shader slot number
-                        extra_datas.append(extra)
-
-            # texturing effect for environment map in official files this is activated by a NiTextureEffect child
-            # preceeding the n_block
-            textureEffect = None
-            if isinstance(n_block._parent, NifFormat.NiNode):
-                lastchild = None
-                for child in n_block._parent.children:
-                    if child is n_block:
-                        if isinstance(lastchild, NifFormat.NiTextureEffect):
-                            textureEffect = lastchild
-                        break
-                    lastchild = child
-                else:
-                    raise RuntimeError("texture effect scanning bug")
-                # in some mods the NiTextureEffect child follows the n_block
-                # but it still works because it is listed in the effect list
-                # so handle this case separately
-                if not textureEffect:
-                    for effect in n_block._parent.effects:
-                        if isinstance(effect, NifFormat.NiTextureEffect):
-                            textureEffect = effect
-                            break
+    # texturing effect for environment map in official files this is activated by a NiTextureEffect child
+    # preceeding the n_block
+    textureEffect = None
+    if isinstance(n_block._parent, NifFormat.NiNode):
+        lastchild = None
+        for child in n_block._parent.children:
+            if child is n_block:
+                if isinstance(lastchild, NifFormat.NiTextureEffect):
+                    textureEffect = lastchild
+                break
+            lastchild = child
+        else:
+            raise RuntimeError("texture effect scanning bug")
+        # in some mods the NiTextureEffect child follows the n_block
+        # but it still works because it is listed in the effect list
+        # so handle this case separately
+        if not textureEffect:
+            for effect in n_block._parent.effects:
+                if isinstance(effect, NifFormat.NiTextureEffect):
+                    textureEffect = effect
+                    break
 """
 
 
@@ -151,7 +142,7 @@ class MeshProperty:
         b_mat = self._find_or_create_material()
         b_mat = NiMaterial().import_material(self.n_block, b_mat, prop)
         # TODO [animation][material] merge this call into import_material
-        self.material_anim.import_material_controllers(self.n_block, b_mat)
+        MaterialAnimation().import_material_controllers(self.n_block, b_mat)
 
     def process_nitexturing_property(self, prop):
         """Import a NiTexturingProperty based material"""
