@@ -42,7 +42,7 @@ Set the texture to use the UV coordinates.
 
 * Under **Mapping > Coordinates**, select **UV**.
 
-The UV layer that was :ref:`create previously<geometry-uv>` needs to be selected for this texture.
+The UV layer that was :ref:`created previously<geometry-uv>` needs to be selected for this texture.
 
 * In the **Texture** tab, under **Mapping > Layer**, click on the empty field, and select ``UVTex``.
 
