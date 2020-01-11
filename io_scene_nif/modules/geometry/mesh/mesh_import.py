@@ -99,8 +99,8 @@ class Mesh:
 
         Vertex.map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, n_tri_data)
 
-        # TODO [material][texture] Break out texture/material
-        self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, n_uvco)
+        # FIXME [material][texture] This should be reimplemented
+        # self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, n_uvco)
 
         # import skinning info, for meshes affected by bones
         Armature.import_skin(n_block, b_obj, v_map)
