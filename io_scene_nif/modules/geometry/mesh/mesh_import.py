@@ -45,7 +45,7 @@ from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.geometry import mesh
 from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
 from io_scene_nif.modules.property.material.material_import import Material
-from io_scene_nif.modules.property.property_import import Property, MeshProperty
+from io_scene_nif.modules.property.property_import import MeshProperty
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp, EGMData
 from io_scene_nif.utility.util_logging import NifLog
@@ -55,7 +55,6 @@ class Mesh:
 
     def __init__(self):
         self.materialhelper = Material()
-        self.propertyhelper = Property(self.materialhelper)  # TODO [property] Implement fully generic property helper
         self.morph_anim = MorphAnimation()
 
     def import_mesh(self, n_block, b_obj, transform=None):
