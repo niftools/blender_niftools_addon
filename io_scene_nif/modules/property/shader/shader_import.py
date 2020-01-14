@@ -39,8 +39,8 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.object.object_import import Object
-from io_scene_nif.modules.property.texture.texture_import import Texture
+from io_scene_nif.modules.object.block_registry import block_store
+from io_scene_nif.modules.property.texture.texture_import import TextureSlotManager
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 
@@ -49,7 +49,7 @@ class BSShader:
 
     def __init__(self):
         self.dict_materials = {}
-        self.texturehelper = Texture()
+        self.texturehelper = TextureSlotManager()
 
     @staticmethod
     def import_shader_types(b_obj, b_prop):
@@ -93,7 +93,7 @@ class BSShader:
             pass
 
         # name unique material
-        name = Object.import_name(bs_shader_property)
+        name = block_store.import_name(bs_shader_property)
         if not name:
             name = bpy.context.scene.objects.active + "_nt_mat"
         b_mat = bpy.data.materials.new(name)
