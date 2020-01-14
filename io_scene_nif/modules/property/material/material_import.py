@@ -37,8 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-
-from io_scene_nif.modules.object.object_import import Object
+from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.utility.util_logging import NifLog
 
 
@@ -135,7 +134,7 @@ class NiMaterial(Material):
         #     pass
 
         # update material material name
-        name = Object.import_name(n_mat_prop)
+        name = block_store.import_name(n_mat_prop)
         if name is None:
             name = (n_block.name.decode() + "_nt_mat")
         b_mat.name = name
