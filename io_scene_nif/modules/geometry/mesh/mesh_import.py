@@ -41,8 +41,8 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.morph_import import MorphAnimation
-from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.geometry import mesh
+from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
 from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.property_import import MeshProperty
@@ -103,7 +103,7 @@ class Mesh:
         # self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, n_uvco)
 
         # import skinning info, for meshes affected by bones
-        Armature.import_skin(n_block, b_obj, v_map)
+        VertexGroup.import_skin(n_block, b_obj, v_map)
 
         # import morph controller
         if NifOp.props.animation:
