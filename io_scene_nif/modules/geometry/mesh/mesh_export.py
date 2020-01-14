@@ -302,7 +302,7 @@ class Mesh:
                     n_nitextureprop = self.texture_helper.export_texturing_property(
                         flags=0x0001,  # standard
                         # TODO [object][texture][material] Move out and break dependency
-                        applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
+                        applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
                         b_mat=b_mat, b_obj=b_obj)
 
                     block_store.register_block(n_nitextureprop)

@@ -77,6 +77,18 @@ class Texture:
             used_uvlayers.add(slot.uv_layer)
         return used_uvlayers
 
+    @staticmethod
+    def get_n_apply_mode_from_b_blend_type(b_blend_type):
+        if b_blend_type == "LIGHTEN":
+            return NifFormat.ApplyMode.APPLY_HILIGHT
+        elif b_blend_type == "MULTIPLY":
+            return NifFormat.ApplyMode.APPLY_HILIGHT2
+        elif b_blend_type == "MIX":
+            return NifFormat.ApplyMode.APPLY_MODULATE
+
+        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
+        return NifFormat.ApplyMode.APPLY_MODULATE
+
     def export_texturing_property(self, flags=0x0001, applymode=None, b_mat=None, b_obj=None):
         """Export texturing property."""
 
@@ -225,7 +237,7 @@ class Texture:
     def add_shader_integer_extra_datas(self, trishape):
         """Add extra data blocks for shader indices."""
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[NifOp.props.game]:
-            shader_name = self.EXTRA_SHADER_TEXTURES[shaderindex]
+            shader_name = texture.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shader_name, shaderindex)
 
     def determine_texture_types(self, b_obj, b_mat):
