@@ -75,7 +75,6 @@ class TextureSlotManager:
         #     b_mat_texslot.use_map_alpha = True
 
         b_mat_texslot.use_map_color_diffuse = True
-        b_mat_texslot.use_map_color_diffuse = False
 
     def update_bump_slot(self, b_mat_texslot):
         # Influence mapping
