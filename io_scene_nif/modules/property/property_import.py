@@ -45,6 +45,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.material_import import MaterialAnimation
 from io_scene_nif.modules.property.material.material_import import Material, NiMaterial
+from io_scene_nif.modules.property.texture.types.nitexturingsource_import import NiTextureProp
 from io_scene_nif.utility.util_global import NifData
 from io_scene_nif.utility.util_logging import NifLog
 
@@ -149,7 +150,7 @@ class MeshProperty:
         NifLog.debug("NiTexturingProperty property found " + str(prop))
         b_mat = self._find_or_create_material()
         # FIXME Texture system needs alot of work, disabling for now
-        # NiTextureProp.get().import_nitextureprop_textures(self.n_block, b_mat, prop)
+        NiTextureProp.get().import_nitextureprop_textures(b_mat, prop)
 
     def process_niwireframe_property(self, prop):
         """Material based specular"""
