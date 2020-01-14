@@ -49,8 +49,6 @@ class NifCommon:
     that are commonly used in both import and export.
     """
 
-    HAVOK_SCALE = 6.996
-
     SELECTED_OBJECTS = []
 
     def __init__(self, operator, context):
@@ -66,5 +64,3 @@ class NifCommon:
                                                                                                                 bpy.app.version_string,
                                                                                                                 pyffi.__version__))
 
-        # find and store this list now of selected objects as creating new objects adds them to the selection list
-        NifCommon.SELECTED_OBJECTS = bpy.context.selected_objects[:]
