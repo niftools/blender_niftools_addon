@@ -68,20 +68,20 @@ class NifImport(NifCommon):
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
 
+    def execute(self):
+        """Main import function."""
+        self.load_files()
+
+        # find and store this list now of selected objects as creating new objects adds them to the selection list
+        self.SELECTED_OBJECTS = bpy.context.selected_objects[:]
+
         # Helper systems
         self.armaturehelper = Armature()
-        self.collisionhelper = Collision(parent=self)
-        self.constrainthelper = Constraint(parent=self)
+        self.collisionhelper = Collision()
+        self.constrainthelper = Constraint()
         self.objecthelper = Object()
         self.object_anim = ObjectAnimation()
         self.transform_anim = TransformAnimation()
-
-    def execute(self):
-        """Main import function."""
-
-        # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
-        # we use this dictionary to set the physics constraints (ragdoll etc)
-        self.dict_havok_objects = {}
 
         # catch nif import errors
         try:
@@ -93,8 +93,6 @@ class NifImport(NifCommon):
 
             # the axes used for bone correction depend on the nif version
             armature.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
-
-            self.load_files()
 
             NifLog.info("Importing data")
             # calculate and set frames per second
