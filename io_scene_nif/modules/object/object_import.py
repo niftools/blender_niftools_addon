@@ -100,20 +100,22 @@ class Object:
         block_store.store_longname(b_obj, n_name)
         return b_obj
 
-    def mesh_from_data(self, name, verts, faces):
+    @staticmethod
+    def mesh_from_data(name, verts, faces):
         me = bpy.data.meshes.new(name)
         me.from_pydata(verts, [], faces)
         me.update()
-        return self.create_b_obj(None, me, name)
+        return Object.create_b_obj(None, me, name)
 
-    def box_from_extents(self, b_name, minx, maxx, miny, maxy, minz, maxz):
+    @staticmethod
+    def box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz):
         verts = []
         for x in [minx, maxx]:
             for y in [miny, maxy]:
                 for z in [minz, maxz]:
                     verts.append((x, y, z))
         faces = [[0, 1, 3, 2], [6, 7, 5, 4], [0, 2, 6, 4], [3, 1, 5, 7], [4, 5, 1, 0], [7, 6, 2, 3]]
-        return self.mesh_from_data(b_name, verts, faces)
+        return Object.mesh_from_data(b_name, verts, faces)
 
     def import_root_collision(self, n_node, b_obj):
         """ Import a RootCollisionNode """
