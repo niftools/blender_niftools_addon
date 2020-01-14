@@ -96,4 +96,4 @@ class Vertex:
 
     @staticmethod
     def get_uv_layer_name(uvset):
-        return "UVMap.{0:3d}".format(uvset)
+        return "UVMap-{:d}".format(uvset)
