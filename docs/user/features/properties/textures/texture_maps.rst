@@ -32,7 +32,7 @@ A texture that receives no lighting, but the pixels are shown at full intensity.
 
 #. Under **Type**, set the type to **Image or Movie**.
 #. Under **Influence**,  in the **Shading Section**, enable **Emit**.
-#. Under **Influence**,  in the **Diffuse Section**, enable **Color**.
+#. Under **Influence**,  in the **Diffuse Section**, disable **Color**.
 
 Normal Map
 ----------
@@ -46,7 +46,7 @@ Normal Map
 
 #. Under **Type**, set the type to **Image or Movie**.
 #. Under **Influence**,  in the **Geometry Section**, enable **Normal**.
-#. Under **Influence**,  in the **Diffuse Section**, enable **Color**.
+#. Under **Influence**,  in the **Diffuse Section**, disable **Color**.
 #. Under **Image Sampling**, enable **Normal** 
 
 Gloss Map
@@ -56,4 +56,4 @@ A texture which determines areas of the whole surface are more glossy and which 
 
 #. Under **Type**, set the type to **Image or Movie**.
 #. Under **Influence**,  in the **Shading Section**, enable **Emit**.
-#. Under **Influence**,  in the **Diffuse Section**, enable **Color**.
+#. Under **Influence**,  in the **Diffuse Section**, disable **Color**.
