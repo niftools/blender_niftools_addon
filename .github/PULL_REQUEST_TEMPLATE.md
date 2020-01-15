@@ -3,6 +3,9 @@
 # Overview
 [Overview of the content of the pull request]
 
+##  Detailed Description
+[List of functional updates]
+
 ## Fixes Known Issues
 [Ordered list of issues fixed by this PR]
 

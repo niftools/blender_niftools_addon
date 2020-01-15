@@ -46,8 +46,7 @@ Objects
 -------
 
 * Vertex groups are accessible via
-  :attr:`bpy.types.Object.vertex_groups`, instead of via
-  :class:`bpy.types.Mesh`.
+  :attr:`bpy.types.Object.vertex_groups`, instead of via  :class:`bpy.types.Mesh`.
 
 Meshes: Index Mapping
 ----------------------
