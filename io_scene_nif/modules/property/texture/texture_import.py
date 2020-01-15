@@ -40,7 +40,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.geometry.vertex.vertex_import import Vertex
+from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.property.texture.loader.texture_loader import TextureLoader
 from io_scene_nif.utility.util_logging import NifLog
 
