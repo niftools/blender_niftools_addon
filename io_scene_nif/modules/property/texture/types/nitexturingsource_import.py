@@ -1,4 +1,4 @@
-from io_scene_nif.modules.property.texture.texture_import import TextureSlotManager
+from io_scene_nif.modules.nif_import.property.texture.__init__ import TextureSlotManager
 from io_scene_nif.utility.util_logging import NifLog
 
 
