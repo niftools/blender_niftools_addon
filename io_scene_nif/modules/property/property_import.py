@@ -43,7 +43,7 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.animation.material_import import MaterialAnimation
+from io_scene_nif.modules.nif_import.animation.material import MaterialAnimation
 from io_scene_nif.modules.property.material.material_import import Material, NiMaterial
 from io_scene_nif.modules.property.texture.types.nitexturingsource_import import NiTextureProp
 from io_scene_nif.utility.util_global import NifData
