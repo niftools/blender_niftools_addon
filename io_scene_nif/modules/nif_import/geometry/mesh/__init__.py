@@ -41,7 +41,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.morph_import import MorphAnimation
-from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
+from io_scene_nif.modules.nif_import.geometry.vertex.groups import VertexGroup
 from io_scene_nif.modules.nif_import.geometry import mesh
 from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.property.material.material_import import Material

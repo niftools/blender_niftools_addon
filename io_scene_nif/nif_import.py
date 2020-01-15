@@ -51,7 +51,7 @@ from io_scene_nif.modules.animation.transform_import import TransformAnimation
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import Collision
 from io_scene_nif.modules.constraint.constraint_import import Constraint
-from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
+from io_scene_nif.modules.nif_import.geometry.vertex.groups import VertexGroup
 from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.obj import Object
 from io_scene_nif.modules.nif_import.obj.object_types import NiTypes
