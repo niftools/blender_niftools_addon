@@ -110,14 +110,7 @@ class TextureLoader:
 
     def import_embedded_texture_source(self, source):
 
-        # find a file name (but avoid overwriting)
-        n = 0
-        while n < 1000:
-            fn = "image%03i.dds" % n
-            tex = os.path.join(os.path.dirname(NifOp.props.filepath), fn)
-            if not os.path.exists(tex):
-                break
-            n += 1
+        fn, tex = self.generate_image_name()
 
         # save embedded texture as dds file
         stream = open(tex, "wb")
@@ -140,6 +133,18 @@ class TextureLoader:
             stream.close()
 
         return [fn, b_image]
+
+    @staticmethod
+    def generate_image_name():
+        """Find a file name (but avoid overwriting)"""
+        n = 0
+        while n < 1000:
+            fn = "image{:0>3d}.dds".format(n)
+            tex = os.path.join(os.path.dirname(NifOp.props.filepath), fn)
+            if not os.path.exists(tex):
+                break
+            n += 1
+        return fn, tex
 
     def import_external_source(self, source):
         b_image = None
