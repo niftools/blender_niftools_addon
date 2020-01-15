@@ -38,11 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 
-import bpy
-
 from io_scene_nif.modules.object.object_import import Object
-from io_scene_nif.modules.property.texture.texture_import import Texture
-from io_scene_nif.utility.util_global import NifData
 from io_scene_nif.utility.util_logging import NifLog
 
 
@@ -50,7 +46,6 @@ class Material:
 
     def __init__(self):
         self.dict_materials = {}
-        self.texturehelper = Texture()
 
     @staticmethod
     def set_alpha(b_mat, n_alpha_prop):
@@ -63,6 +58,7 @@ class Material:
 
         return b_mat
 
+    # TODO [texture][vertex][color] Reimplement in newer system
     """
     def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas):
 
@@ -73,7 +69,6 @@ class Material:
                 self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
         if texture_effect:
             self.texturehelper.import_texture_effect(b_mat, texture_effect)
-    """
 
     def set_material_vertex_mapping(self, b_mesh, f_map, n_uvco):
         b_mat = b_mesh.materials[0]
@@ -98,6 +93,7 @@ class Material:
                             continue
                         tface = b_mesh.uv_textures.active.data[b_polyimage_index]
                         tface.image = image
+    """
 
     @staticmethod
     def import_material_specular(b_mat, n_mat_prop):
