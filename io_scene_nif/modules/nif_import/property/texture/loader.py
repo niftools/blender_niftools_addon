@@ -44,7 +44,7 @@ import os.path
 import bpy
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.property import texture
+from io_scene_nif.modules.nif_import.property import texture
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
