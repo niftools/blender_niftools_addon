@@ -43,7 +43,7 @@ from functools import singledispatch
 from bisect import bisect_left
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
+from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_import.animation import Animation
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog

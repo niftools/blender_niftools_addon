@@ -44,7 +44,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.io.nif import NifFile
-from io_scene_nif.modules import armature
+from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_import.animation import Animation
 from io_scene_nif.modules.nif_import.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_import.animation.transform import TransformAnimation
