@@ -55,7 +55,7 @@ from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
 from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.modules.object.object_types.type_import import NiTypes
-from io_scene_nif.modules.scene import scene_import
+from io_scene_nif.modules.nif_import import scene
 
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
@@ -144,7 +144,7 @@ class NifImport(NifCommon):
     def load_files(self):
         NifData.init(NifFile.load_nif(NifOp.props.filepath))
         if NifOp.props.override_scene_info:
-            scene_import.import_version_info(NifData.data)
+            scene.import_version_info(NifData.data)
         egm_path = NifOp.props.egm_file
 
         if egm_path:
