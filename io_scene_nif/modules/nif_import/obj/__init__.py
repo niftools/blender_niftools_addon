@@ -41,7 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
-from io_scene_nif.modules.geometry.mesh.mesh_import import Mesh
+from io_scene_nif.modules.nif_import.geometry.mesh import Mesh
 from io_scene_nif.modules.object import PRN_DICT
 from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
