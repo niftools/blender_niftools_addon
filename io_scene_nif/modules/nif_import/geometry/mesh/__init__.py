@@ -41,14 +41,18 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.animation.morph_import import MorphAnimation
-from io_scene_nif.modules.geometry import mesh
 from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
+from io_scene_nif.modules.nif_import.geometry import mesh
 from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.property.property_import import MeshProperty
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp, EGMData
 from io_scene_nif.utility.util_logging import NifLog
+
+# TODO [scene][property][ui] Expose these either through the scene or as ui properties
+VERTEX_RESOLUTION = 1000
+NORMAL_RESOLUTION = 100
 
 
 class Mesh:
