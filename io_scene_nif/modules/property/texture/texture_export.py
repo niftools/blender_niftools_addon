@@ -39,7 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.animation.animation_export import Animation
+from io_scene_nif.modules.nif_export.animation.animation_export import Animation
 from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.property import texture
 from io_scene_nif.modules.property.texture.texture_writer import TextureWriter
