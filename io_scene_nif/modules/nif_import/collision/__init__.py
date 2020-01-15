@@ -46,10 +46,17 @@ import operator
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 
-from io_scene_nif.modules import collision
+from io_scene_nif.modules.nif_import import collision
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifData
+
+
+HAVOK_SCALE = 6.996
+
+# dictionary mapping bhkRigidBody objects to objects imported in Blender;
+# we use this dictionary to set the physics constraints (ragdoll etc)
+DICT_HAVOK_OBJECTS = {}
 
 
 def get_material(mat_name):
