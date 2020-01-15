@@ -40,7 +40,7 @@
 from pyffi.formats.nif import NifFormat
 import bpy
 
-from io_scene_nif.modules.object.object_import import Object
+from io_scene_nif.modules.nif_import.obj import Object
 
 
 class NiTypes:
