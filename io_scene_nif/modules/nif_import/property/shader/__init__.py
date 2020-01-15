@@ -39,7 +39,7 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
