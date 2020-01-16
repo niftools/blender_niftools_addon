@@ -1,8 +1,8 @@
-"""This module contains helper methods to import/export animation data."""
+"""This modules contains all modules related to exporting Netimmerse/Gamebryo nif files from Blender."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2013, NIF File Format Library and Tools contributors.
+# Copyright © 2020, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,3 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-
-FPS = 30
