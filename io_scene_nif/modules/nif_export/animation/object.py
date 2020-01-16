@@ -40,13 +40,14 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 
 
-class ObjectAnimation:
+class ObjectAnimation(Animation):
 
-    def __init__(self, parent):
-        self.animationhelper = parent
+    def __init__(self):
+        super().__init__()
 
     def export_visibility(self, n_node, b_action):
         """Export the visibility controller data."""
@@ -86,7 +87,7 @@ class ObjectAnimation:
         if fcurves[0].keyframe_points:
             n_vis_ctrl = block_store.create_block("NiVisController", fcurves)
             n_vis_ipol = block_store.create_block("NiBoolInterpolator", fcurves)
-            self.animationhelper.set_flags_and_timing(n_vis_ctrl, fcurves)
+            self.set_flags_and_timing(n_vis_ctrl, fcurves)
             n_vis_ctrl.interpolator = n_vis_ipol
             n_vis_ctrl.data = n_vis_data
             n_vis_ipol.data = n_bool_data

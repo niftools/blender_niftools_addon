@@ -37,9 +37,10 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
+
+from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.utility.util_global import EGMData
 
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
@@ -47,11 +48,10 @@ from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class MorphAnimation:
+class MorphAnimation(Animation):
 
-    def __init__(self, parent):
-        self.animationhelper = parent
-        self.fps = bpy.context.scene.render.fps
+    def __init__(self):
+        super().__init__()
         EGMData.data = None
 
     def export_morph(self, b_mesh, n_trishape, vertmap):
@@ -93,13 +93,13 @@ class MorphAnimation:
     def export_morph_animation(self, b_mesh, b_key, n_trishape, vertmap):
         
         # regular morph_data export
-        b_shape_action = self.animationhelper.get_active_action(b_key)
+        b_shape_action = self.get_active_action(b_key)
         
         # create geometry morph controller
         morph_ctrl = block_store.create_block("NiGeomMorpherController", b_shape_action)
         morph_ctrl.target = n_trishape
         n_trishape.add_controller(morph_ctrl)
-        self.animationhelper.set_flags_and_timing(morph_ctrl, b_shape_action.fcurves, *b_shape_action.frame_range)
+        self.set_flags_and_timing(morph_ctrl, b_shape_action.fcurves, *b_shape_action.frame_range)
 
         # create geometry n_morph data
         morph_data = block_store.create_block("NiMorphData", b_shape_action)

@@ -39,15 +39,19 @@
 
 import bpy
 
+from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_export.property.texture.writer import TextureWriter
 from io_scene_nif.utility import nif_utils
 
 
-class TextureAnimation:
+class TextureAnimation(Animation):
+
+    def __init__(self):
+        super().__init__()
 
     @staticmethod
-    def export_flip_controller(fliptxt, texture, target, target_tex):
+    def export_flip_controller(self, fliptxt, texture, target, target_tex):
         # TODO [animation] port code to use native Blender image strip system
         #                  despite its name a NiFlipController does not flip / mirror a texture
         #                  instead it swaps through a list of textures for a sprite animation
@@ -69,10 +73,9 @@ class TextureAnimation:
         n_flip.flags = 8  # active
         n_flip.frequency = 1.0
         start = bpy.context.scene.frame_start
-        fps = bpy.context.scene.render.fps
 
-        n_flip.start_time = (start - 1) * fps
-        n_flip.stop_time = (bpy.context.scene.frame_end - start) * fps
+        n_flip.start_time = (start - 1) * self.fps
+        n_flip.stop_time = (bpy.context.scene.frame_end - start) * self.fps
         n_flip.texture_slot = target_tex
 
         count = 0
