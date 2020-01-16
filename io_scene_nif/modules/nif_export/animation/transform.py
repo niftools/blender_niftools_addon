@@ -43,7 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import armature
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 
 

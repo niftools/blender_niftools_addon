@@ -45,14 +45,14 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import armature
-from io_scene_nif.modules.nif_export.animation.__init__ import Animation
+from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.modules.nif_export.armature import Armature
 from io_scene_nif.modules.nif_export.collision import Collision
-from io_scene_nif.modules.nif_export.constraint.__init__ import Constraint
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
-from io_scene_nif.modules.nif_export.object.__init__ import Object
+from io_scene_nif.modules.nif_export.constraint import Constraint
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.object import Object
 from io_scene_nif.modules.nif_export.property import Property
-from io_scene_nif.modules.nif_export.scene import __init__
+from io_scene_nif.modules.nif_export import scene
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp, EGMData
@@ -170,7 +170,7 @@ class NifExport(NifCommon):
                 NifLog.info("Exporting geometry and animation in xnif-style")
 
             # find nif version to write
-            self.version, data = __init__.get_version_data()
+            self.version, data = scene.get_version_data()
 
             # write external animation to a KF tree
             if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):

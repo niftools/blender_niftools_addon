@@ -45,7 +45,7 @@ from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.animation.texture import TextureAnimation
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog

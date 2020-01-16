@@ -52,7 +52,7 @@ from io_scene_nif.modules.nif_import.armature import Armature
 from io_scene_nif.modules.nif_import.collision import Collision
 from io_scene_nif.modules.nif_import.constraint import Constraint
 from io_scene_nif.modules.nif_import.geometry.vertex.groups import VertexGroup
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.modules.nif_import.object.types import NiTypes
 from io_scene_nif.modules.nif_import import scene

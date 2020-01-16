@@ -1,4 +1,4 @@
-"""This script contains helper methods to export objects."""
+"""This script contains helper methods to import objects."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

@@ -41,7 +41,7 @@ import bpy
 
 from io_scene_nif.modules.nif_export.property.texture.writer import TextureWriter
 from io_scene_nif.utility import nif_utils
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
 
 
 class TextureAnimation:

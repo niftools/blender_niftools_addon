@@ -45,7 +45,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import armature
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.nif_common import NifCommon
