@@ -39,7 +39,6 @@
 
 import bpy
 import pyffi
-from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
@@ -50,21 +49,7 @@ class NifCommon:
     that are commonly used in both import and export.
     """
 
-    VERTEX_RESOLUTION = 1000
-    NORMAL_RESOLUTION = 100
-
-    EXTRA_SHADER_TEXTURES = [
-        "EnvironmentMapIndex",
-        "NormalMapIndex",
-        "SpecularIntensityIndex",
-        "EnvironmentIntensityIndex",
-        "LightCubeMapIndex",
-        "ShadowTextureIndex"]
-    """Names (ordered by default index) of shader texture slots for
-    Sid Meier's Railroads and similar games.
-    """
-
-    HAVOK_SCALE = 6.996
+    SELECTED_OBJECTS = []
 
     def __init__(self, operator, context):
         """Common initialization functions for executing the import/export operators: """
@@ -79,16 +64,3 @@ class NifCommon:
                                                                                                                 bpy.app.version_string,
                                                                                                                 pyffi.__version__))
 
-        # find and store this list now of selected objects as creating new objects adds them to the selection list
-        self.selected_objects = bpy.context.selected_objects[:]
-
-    def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
-        if b_blend_type == "LIGHTEN":
-            return NifFormat.ApplyMode.APPLY_HILIGHT
-        elif b_blend_type == "MULTIPLY":
-            return NifFormat.ApplyMode.APPLY_HILIGHT2
-        elif b_blend_type == "MIX":
-            return NifFormat.ApplyMode.APPLY_MODULATE
-
-        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
-        return NifFormat.ApplyMode.APPLY_MODULATE

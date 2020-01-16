@@ -46,7 +46,9 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
 from io_scene_nif.modules.animation.transform_import import TransformAnimation
+from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.object.object_import import Object
+from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp, NifData
@@ -54,9 +56,7 @@ from io_scene_nif.utility.util_global import NifOp, NifData
 
 class Armature:
 
-    def __init__(self, parent):
-        self.nif_import = parent
-
+    def __init__(self):
         self.transform_anim = TransformAnimation()
         # this is used to hold lists of bones for each armature during mark_armatures_bones
         self.dict_armatures = {}
@@ -68,8 +68,7 @@ class Armature:
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
 
-        # armature_name = Object.import_name(n_armature)
-        armature_name = n_armature.name.decode()
+        armature_name = block_store.import_name(n_armature)
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
 
@@ -94,7 +93,7 @@ class Armature:
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]
             # the property is only available from object mode!
-            Object.store_longname(b_bone, n_block.name.decode())
+            block_store.store_longname(b_bone, n_block.name.decode())
             if NifOp.props.animation:
                 self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
@@ -106,7 +105,7 @@ class Armature:
         if not self.is_bone(n_block):
             return None
         # bone name
-        bone_name = Object.import_name(n_block)
+        bone_name = block_store.import_name(n_block)
         # create a new bone
         b_edit_bone = b_armature_data.edit_bones.new(bone_name)
         # store nif block for access from object mode
@@ -129,78 +128,6 @@ class Armature:
             self.import_bone(n_child, b_armature_data, n_armature, b_edit_bone)
 
     @staticmethod
-    def import_skin(ni_block, b_obj, v_map):
-        """Import a NiSkinInstance and its contents as vertex groups"""
-        skininst = ni_block.skin_instance
-        if skininst:
-            skindata = skininst.data
-            bones = skininst.bones
-            # the usual case
-            if skindata.has_vertex_weights:
-                bone_weights = skindata.bone_list
-                for idx, n_bone in enumerate(bones):
-                    # skip empty bones (see pyffi issue #3114079)
-                    if not n_bone:
-                        continue
-                    vertex_weights = bone_weights[idx].vertex_weights
-                    group_name = Object.import_name(n_bone)
-                    if group_name not in b_obj.vertex_groups:
-                        v_group = b_obj.vertex_groups.new(group_name)
-                    for skinWeight in vertex_weights:
-                        vert = skinWeight.index
-                        weight = skinWeight.weight
-                        v_group.add([v_map[vert]], weight, 'REPLACE')
-
-            # WLP2 - hides the weights in the partition
-            else:
-                skin_partition = skininst.skin_partition
-                for block in skin_partition.skin_partition_blocks:
-                    # create all vgroups for this block's bones
-                    block_bone_names = [Object.import_name(bones[i]) for i in block.bones]
-                    for group_name in block_bone_names:
-                        b_obj.vertex_groups.new(group_name)
-
-                    # go over each vert in this block
-                    for vert, vertex_weights, bone_indices in zip(block.vertex_map, block.vertex_weights, block.bone_indices):
-
-                        # assign this vert's 4 weights to its 4 vgroups (at max)
-                        for w, b_i in zip(vertex_weights, bone_indices):
-                            if w > 0:
-                                group_name = block_bone_names[b_i]
-                                v_group = b_obj.vertex_groups[group_name]
-                                v_group.add([v_map[vert]], w, 'REPLACE')
-
-        # import body parts as vertex groups
-        if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-            skinpart_list = []
-            bodypart_flag = []
-            skinpart = ni_block.get_skin_partition()
-            for bodypart, skinpartblock in zip(skininst.partitions, skinpart.skin_partition_blocks):
-                bodypart_wrap = NifFormat.BSDismemberBodyPartType()
-                bodypart_wrap.set_value(bodypart.body_part)
-                group_name = bodypart_wrap.get_detail_display()
-
-                # create vertex group if it did not exist yet
-                if group_name not in b_obj.vertex_groups:
-                    v_group = b_obj.vertex_groups.new(group_name)
-                    skinpart_index = len(skinpart_list)
-                    skinpart_list.append((skinpart_index, group_name))
-                    bodypart_flag.append(bodypart.part_flag)
-
-                # find vertex indices of this group
-                groupverts = [v_map[v_index] for v_index in skinpartblock.vertex_map]
-
-                # create the group
-                v_group.add(groupverts, 1, 'ADD')
-            b_obj.niftools_part_flags_panel.pf_partcount = len(skinpart_list)
-            for i, pl_name in skinpart_list:
-                b_obj_partflag = b_obj.niftools_part_flags.add()
-                # b_obj.niftools_part_flags.pf_partint = (i)
-                b_obj_partflag.name = pl_name
-                b_obj_partflag.pf_editorflag = bodypart_flag[i].pf_editor_visible
-                b_obj_partflag.pf_startflag = bodypart_flag[i].pf_start_net_boneset
-
-    @staticmethod
     def fix_bone_lengths(b_armature_data):
         """Sets all edit_bones to a suitable length."""
         for b_edit_bone in b_armature_data.edit_bones:
@@ -218,16 +145,6 @@ class Armature:
                 else:
                     bone_length = b_edit_bone.parent.length
                 b_edit_bone.length = bone_length
-
-    @staticmethod
-    def append_armature_modifier(b_obj, b_armature):
-        """Append an armature modifier for the object."""
-        if b_obj and b_armature:
-            armature_name = b_armature.name
-            b_mod = b_obj.modifiers.new(armature_name, 'ARMATURE')
-            b_mod.object = b_armature
-            b_mod.use_bone_envelopes = False
-            b_mod.use_vertex_groups = True
 
     def mark_armatures_bones(self, ni_block):
         """Mark armatures and bones by peeking into NiSkinInstance blocks."""
@@ -256,7 +173,7 @@ class Armature:
 
         # attaching to selected armature -> first identify armature and bones
         elif NifOp.props.skeleton == "GEOMETRY_ONLY" and not self.dict_armatures:
-            b_armature_obj = self.nif_import.selected_objects[0]
+            b_armature_obj = NifCommon.SELECTED_OBJECTS[0]
             skelroot = ni_block.find(block_name=b_armature_obj.name)
             if not skelroot:
                 skelroot = ni_block

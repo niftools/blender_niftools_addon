@@ -41,12 +41,18 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import armature
+from io_scene_nif.modules.geometry.mesh.mesh_import import Mesh
 from io_scene_nif.modules.object import PRN_DICT
+from io_scene_nif.modules.object.block_registry import block_store
+from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
 
 class Object:
+
+    def __init__(self):
+        self.mesh = Mesh()
 
     # TODO [property] Add delegate processing
     def import_extra_datas(self, root_block, b_obj):
@@ -91,30 +97,25 @@ class Object:
         # make the object visible and active
         bpy.context.scene.objects.link(b_obj)
         bpy.context.scene.objects.active = b_obj
-        Object.store_longname(b_obj, n_name)
+        block_store.store_longname(b_obj, n_name)
         return b_obj
 
-    def mesh_from_data(self, name, verts, faces):
+    @staticmethod
+    def mesh_from_data(name, verts, faces):
         me = bpy.data.meshes.new(name)
         me.from_pydata(verts, [], faces)
         me.update()
-        return self.create_b_obj(None, me, name)
+        return Object.create_b_obj(None, me, name)
 
-    def box_from_extents(self, b_name, minx, maxx, miny, maxy, minz, maxz):
+    @staticmethod
+    def box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz):
         verts = []
         for x in [minx, maxx]:
             for y in [miny, maxy]:
                 for z in [minz, maxz]:
                     verts.append((x, y, z))
         faces = [[0, 1, 3, 2], [6, 7, 5, 4], [0, 2, 6, 4], [3, 1, 5, 7], [4, 5, 1, 0], [7, 6, 2, 3]]
-        return self.mesh_from_data(b_name, verts, faces)
-
-    @staticmethod
-    def store_longname(b_obj, n_name):
-        """Save original name as object property, for export"""
-        if b_obj.name != n_name:
-            b_obj.niftools.longname = n_name
-            NifLog.debug("Stored long name for {0}".format(b_obj.name))
+        return Object.mesh_from_data(b_name, verts, faces)
 
     def import_root_collision(self, n_node, b_obj):
         """ Import a RootCollisionNode """
@@ -202,26 +203,34 @@ class Object:
 
         return b_obj
 
-    @staticmethod
-    def import_name(n_block):
-        """Get name of n_block, ready for blender but not necessarily unique.
+    def import_group_geometry(self, b_armature, n_geoms, n_block):
+        # node groups geometries, so import it as a mesh
+        NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name.decode() for child in n_geoms], n_block.name.decode()))
+        b_obj = self.create_mesh_object(n_block)
+        b_obj.matrix_local = nif_utils.import_matrix(n_block)
+        bpy.context.scene.objects.active = b_obj
+        for child in n_geoms:
+            self.mesh.import_mesh(child, b_obj)
 
-        :param n_block: A named nif block.
-        :type n_block: :class:`~pyffi.formats.nif.NifFormat.NiObjectNET`
-        """
-        if n_block is None:
-            return ""
+            # store flags etc
+            self.import_object_flags(child, b_obj)
+        # is there skinning on any of the grouped geometries?
+        if any(child.skin_instance for child in n_geoms):
+            self.append_armature_modifier(b_obj, b_armature)
+        return b_obj
 
-        NifLog.debug("Importing name for {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
-
-        n_name = n_block.name.decode()
-
-        # if name is empty, create something non-empty
-        if not n_name:
-            n_name = "noname"
-        n_name = armature.get_bone_name_for_blender(n_name)
-
-        return n_name
+    def import_geometry_object(self, b_armature, n_block):
+        # it's a shape node and we're not importing skeleton only
+        b_obj = self.create_mesh_object(n_block)
+        transform = nif_utils.import_matrix(n_block)  # set transform matrix for the mesh
+        self.mesh.import_mesh(n_block, b_obj, transform)
+        bpy.context.scene.objects.active = b_obj
+        # store flags etc
+        self.import_object_flags(n_block, b_obj)
+        # skinning? add armature modifier
+        if n_block.skin_instance:
+            self.append_armature_modifier(b_obj, b_armature)
+        return b_obj
 
     # TODO [object][property] Replace with object level property processing
     @staticmethod
@@ -232,3 +241,13 @@ class Object:
         if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
             cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
             b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+
+    @staticmethod
+    def append_armature_modifier(b_obj, b_armature):
+        """Append an armature modifier for the object."""
+        if b_obj and b_armature:
+            armature_name = b_armature.name
+            b_mod = b_obj.modifiers.new(armature_name, 'ARMATURE')
+            b_mod.object = b_armature
+            b_mod.use_bone_envelopes = False
+            b_mod.use_vertex_groups = True

@@ -51,11 +51,10 @@ from io_scene_nif.modules.animation.transform_import import TransformAnimation
 from io_scene_nif.modules.armature.armature_import import Armature
 from io_scene_nif.modules.collision.collision_import import Collision
 from io_scene_nif.modules.constraint.constraint_import import Constraint
-from io_scene_nif.modules.geometry.mesh.mesh_import import Mesh
 from io_scene_nif.modules.geometry.vertex.skin_import import VertexGroup
+from io_scene_nif.modules.object.block_registry import block_store
 from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.modules.object.object_types.type_import import NiTypes
-from io_scene_nif.modules.property.material.material_import import Material
 from io_scene_nif.modules.scene import scene_import
 
 from io_scene_nif.nif_common import NifCommon
@@ -69,35 +68,31 @@ class NifImport(NifCommon):
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
 
+    def execute(self):
+        """Main import function."""
+        self.load_files()
+
+        # find and store this list now of selected objects as creating new objects adds them to the selection list
+        self.SELECTED_OBJECTS = bpy.context.selected_objects[:]
+
         # Helper systems
-        self.armaturehelper = Armature(parent=self)
-        self.collisionhelper = Collision(parent=self)
-        self.constrainthelper = Constraint(parent=self)
-        self.materialhelper = Material()
-        self.mesh = Mesh()
+        self.armaturehelper = Armature()
+        self.collisionhelper = Collision()
+        self.constrainthelper = Constraint()
         self.objecthelper = Object()
         self.object_anim = ObjectAnimation()
         self.transform_anim = TransformAnimation()
-
-    def execute(self):
-        """Main import function."""
-
-        # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
-        # we use this dictionary to set the physics constraints (ragdoll etc)
-        self.dict_havok_objects = {}
 
         # catch nif import errors
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
             if NifOp.props.skeleton == "GEOMETRY_ONLY":
-                if len(self.selected_objects) != 1 or self.selected_objects[0].type != 'ARMATURE':
+                if len(NifCommon.SELECTED_OBJECTS) != 1 or NifCommon.SELECTED_OBJECTS[0].type != 'ARMATURE':
                     raise nif_utils.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
 
             # the axes used for bone correction depend on the nif version
             armature.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
-
-            self.load_files()
 
             NifLog.info("Importing data")
             # calculate and set frames per second
@@ -223,20 +218,7 @@ class NifImport(NifCommon):
         geom_group = []
         NifLog.info("Importing data for block '{0}'".format(n_block.name.decode()))
         if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
-            # it's a shape node and we're not importing skeleton only
-            b_obj = self.objecthelper.create_mesh_object(n_block)
-
-            transform = nif_utils.import_matrix(n_block)  # set transform matrix for the mesh
-            self.mesh.import_mesh(n_block, b_obj, transform)
-
-            bpy.context.scene.objects.active = b_obj
-
-            # store flags etc
-            Object.import_object_flags(n_block, b_obj)
-            # skinning? add armature modifier
-            if n_block.skin_instance:
-                self.armaturehelper.append_armature_modifier(b_obj, b_armature)
-            return b_obj
+            return self.objecthelper.import_geometry_object(b_armature, n_block)
 
         elif isinstance(n_block, NifFormat.NiNode):
             # import object
@@ -245,7 +227,7 @@ class NifImport(NifCommon):
                 if NifOp.props.skeleton != "GEOMETRY_ONLY":
                     b_obj = self.armaturehelper.import_armature(n_block)
                 else:
-                    n_name = Object.import_name(n_block)
+                    n_name = block_store.import_name(n_block)
                     b_obj = armature.get_armature()
                     NifLog.info("Merging nif tree '{0}' with armature '{1}'".format(n_name, b_obj.name))
                     if n_name != b_obj.name:
@@ -255,7 +237,7 @@ class NifImport(NifCommon):
 
             elif self.armaturehelper.is_bone(n_block):
                 # bones have already been imported during import_armature
-                b_obj = b_armature.data.bones[Object.import_name(n_block)]
+                b_obj = b_armature.data.bones[block_store.import_name(n_block)]
                 # TODO [object] flags, shouldn't be treated any different than object flags.
                 b_obj.niftools.boneflags = n_block.flags
 
@@ -277,22 +259,7 @@ class NifImport(NifCommon):
 
                     geom_group = []
                 else:
-                    # node groups geometries, so import it as a mesh
-                    NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name.decode() for child in geom_group], n_block.name.decode()))
-
-                    b_obj = self.objecthelper.create_mesh_object(n_block)
-                    b_obj.matrix_local = nif_utils.import_matrix(n_block)
-                    bpy.context.scene.objects.active = b_obj
-
-                    for child in geom_group:
-                        self.mesh.import_mesh(child, b_obj)
-
-                        # store flags etc
-                        Object.import_object_flags(child, b_obj)
-
-                    # is there skinning on any of the grouped geometries?
-                    if any(child.skin_instance for child in geom_group):
-                        self.armaturehelper.append_armature_modifier(b_obj, b_armature)
+                    b_obj = self.objecthelper.import_group_geometry(b_armature, geom_group, n_block)
 
             # find children that aren't part of the geometry group
             b_children = []

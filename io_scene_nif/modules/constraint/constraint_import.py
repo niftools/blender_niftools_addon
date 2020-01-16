@@ -41,17 +41,21 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules import collision
+from io_scene_nif.utility.util_global import NifData
 from io_scene_nif.utility.util_logging import NifLog
 
 
 class Constraint:
 
-    def __init__(self, parent):
-        self.nif_import = parent
-        self.HAVOK_SCALE = collision.HAVOK_SCALE
+    def __init__(self):
+        # TODO [collision][havok][property] Need better way to set this, maybe user property
+        if NifData.data._user_version_value_._value == 12 and NifData.data._user_version_2_value_._value == 83:
+            self.HAVOK_SCALE = collision.HAVOK_SCALE * 10
+        else:
+            self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def import_bhk_constraints(self):
-        for hkbody in self.nif_import.dict_havok_objects:
+        for hkbody in collision.DICT_HAVOK_OBJECTS:
             self.import_constraint(hkbody)
 
     def import_constraint(self, hkbody):
@@ -63,11 +67,11 @@ class Constraint:
             return
 
         # find objects
-        if len(self.nif_import.dict_havok_objects[hkbody]) != 1:
+        if len(collision.DICT_HAVOK_OBJECTS[hkbody]) != 1:
             NifLog.warn("Rigid body with no or multiple shapes, constraints skipped")
             return
 
-        b_hkobj = self.nif_import.dict_havok_objects[hkbody][0]
+        b_hkobj = collision.DICT_HAVOK_OBJECTS[hkbody][0]
 
         NifLog.info("Importing constraints for %s" % b_hkobj.name)
 
@@ -81,7 +85,7 @@ class Constraint:
             if not hkconstraint.entities[0] is hkbody:
                 NifLog.warn("First constraint entity not self, skipped")
                 continue
-            if not hkconstraint.entities[1] in self.nif_import.dict_havok_objects:
+            if not hkconstraint.entities[1] in collision.DICT_HAVOK_OBJECTS:
                 NifLog.warn("Second constraint entity not imported, skipped")
                 continue
 
@@ -146,7 +150,7 @@ class Constraint:
             # pivx/y/z is the pivot point
 
             # set constraint target
-            b_constr.target = self.nif_import.dict_havok_objects[hkconstraint.entities[1]][0]
+            b_constr.target = collision.DICT_HAVOK_OBJECTS[hkconstraint.entities[1]][0]
             # set rigid body type (generic)
             b_constr.pivot_type = 'GENERIC_6_DOF'
             # limiting parameters (limit everything)
@@ -155,10 +159,9 @@ class Constraint:
             b_constr.use_angular_limit_z = True
 
             # get pivot point
-            pivot = mathutils.Vector((
-                hkdescriptor.pivot_b.x,
-                hkdescriptor.pivot_b.y,
-                hkdescriptor.pivot_b.z)) * self.HAVOK_SCALE
+            pivot = mathutils.Vector((hkdescriptor.pivot_b.x,
+                                      hkdescriptor.pivot_b.y,
+                                      hkdescriptor.pivot_b.z)) * self.HAVOK_SCALE
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.export_constraints)
@@ -317,10 +320,9 @@ class Constraint:
             b_constr.pivot_z = pivot[2]
 
             # set euler angles
-            constr_matrix = mathutils.Matrix((
-                axis_x,
-                mathutils.Vector.cross(axis_z, axis_x),
-                axis_z))
+            constr_matrix = mathutils.Matrix((axis_x,
+                                              mathutils.Vector.cross(axis_z, axis_x),
+                                              axis_z))
             constr_euler = constr_matrix.to_euler()
             b_constr.axis_x = constr_euler.x
             b_constr.axis_y = constr_euler.y

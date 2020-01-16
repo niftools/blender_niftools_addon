@@ -47,6 +47,7 @@ from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 
 from io_scene_nif.modules import collision
+from io_scene_nif.modules.object.object_import import Object
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifData
 
@@ -61,9 +62,16 @@ def get_material(mat_name):
 class Collision:
     """Import basic and Havok Collision Shapes"""
 
-    def __init__(self, parent):
-        self.nif_import = parent
-        self.HAVOK_SCALE = collision.HAVOK_SCALE
+    def __init__(self):
+        # dictionary mapping bhkRigidBody objects to objects imported in Blender;
+        # we use this dictionary to set the physics constraints (ragdoll etc)
+        collision.DICT_HAVOK_OBJECTS = {}
+
+        # TODO [collision][havok][property] Need better way to set this, maybe user property
+        if NifData.data._user_version_value_._value == 12 and NifData.data._user_version_2_value_._value == 83:
+            self.HAVOK_SCALE = collision.HAVOK_SCALE * 10
+        else:
+            self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def import_collision(self, n_node):
         """ Imports a NiNode's collision_object, if present"""
@@ -136,7 +144,7 @@ class Collision:
     def import_spherebv(self, sphere):
         r = sphere.radius
         c = sphere.center
-        b_obj = self.nif_import.objecthelper.box_from_extents("sphere", -r, r, -r, r, -r, r)
+        b_obj = Object.box_from_extents("sphere", -r, r, -r, r, -r, r)
         b_obj.location = (c.x, c.y, c.z)
         self.set_b_collider(b_obj, "SPHERE", r)
         return [b_obj]
@@ -146,7 +154,7 @@ class Collision:
         # ignore for now, seems to be a unity 3x3 matrix
         axes = box.axis
         x, y, z = box.extent
-        b_obj = self.nif_import.objecthelper.box_from_extents("box", -x, x, -y, y, -z, z)
+        b_obj = Object.box_from_extents("box", -x, x, -y, y, -z, z)
         b_obj.location = (offset.x, offset.y, offset.z)
         self.set_b_collider(b_obj, "BOX", (x + y + z) / 3)
         return [b_obj]
@@ -166,7 +174,7 @@ class Collision:
         maxz = +(extent + 2 * radius) / 2
 
         # create blender object
-        b_obj = self.nif_import.objecthelper.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
+        b_obj = Object.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
         # apply transform in local space
         b_obj.matrix_local = self.center_origin_to_matrix(offset, direction)
         self.set_b_collider(b_obj, "CAPSULE", radius)
@@ -174,12 +182,6 @@ class Collision:
 
     def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
-
-        if NifData.data._user_version_value_._value == 12:
-            if NifData.data._user_version_2_value_._value == 83:
-                self.HAVOK_SCALE = collision.HAVOK_SCALE * 10
-            else:
-                self.HAVOK_SCALE = collision.HAVOK_SCALE
 
         if isinstance(bhkshape, NifFormat.bhkTransformShape):
             return self.import_bhktransform(bhkshape)
@@ -304,7 +306,7 @@ class Collision:
 
         # import constraints
         # this is done once all objects are imported for now, store all imported havok shapes with object lists
-        self.nif_import.dict_havok_objects[bhkshape] = collision_objs
+        collision.DICT_HAVOK_OBJECTS[bhkshape] = collision_objs
 
         # and return a list of transformed collision shapes
         return collision_objs
@@ -321,14 +323,14 @@ class Collision:
         maxz = +bhkshape.dimensions.z * self.HAVOK_SCALE
 
         # create blender object
-        b_obj = self.nif_import.objecthelper.box_from_extents("box", minx, maxx, miny, maxy, minz, maxz)
+        b_obj = Object.box_from_extents("box", minx, maxx, miny, maxy, minz, maxz)
         self.set_b_collider(b_obj, "BOX", r, bhkshape)
         return [b_obj]
 
     def import_bhksphere_shape(self, bhkshape):
         """Import a BhkSphere block as a simple sphere collision object"""
         r = bhkshape.radius * self.HAVOK_SCALE
-        b_obj = self.nif_import.objecthelper.box_from_extents("sphere", -r, r, -r, r, -r, r)
+        b_obj = Object.box_from_extents("sphere", -r, r, -r, r, -r, r)
         self.set_b_collider(b_obj, "SPHERE", r, bhkshape)
         return [b_obj]
 
@@ -344,7 +346,7 @@ class Collision:
         maxz = length / 2 + radius
 
         # create blender object
-        b_obj = self.nif_import.objecthelper.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
+        b_obj = Object.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
         # here, these are not encoded as a direction so we must first calculate the direction
         b_obj.matrix_local = self.center_origin_to_matrix(second_point, first_point - second_point)
         # we do it like this so the rigid bodies are correctly drawn in blender
@@ -362,7 +364,7 @@ class Collision:
                                  self.HAVOK_SCALE * n_vert.z)
                                 for n_vert in bhkshape.vertices])
 
-        b_obj = self.nif_import.objecthelper.mesh_from_data("convexpoly", verts, faces)
+        b_obj = Object.mesh_from_data("convexpoly", verts, faces)
         radius = bhkshape.radius * self.HAVOK_SCALE
         self.set_b_collider(b_obj, "BOX", radius, bhkshape)
         b_obj.game.collision_bounds_type = 'CONVEX_HULL'
@@ -373,7 +375,7 @@ class Collision:
         # no factor 7 correction!!!
         verts = [(v.x, v.y, v.z) for v in bhkshape.vertices]
         faces = list(bhkshape.get_triangles())
-        b_obj = self.nif_import.objecthelper.mesh_from_data("poly", verts, faces)
+        b_obj = Object.mesh_from_data("poly", verts, faces)
         # TODO [collision] self.havok_mat!
         self.set_b_collider(b_obj, "BOX", bhkshape.radius)
         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
@@ -407,7 +409,8 @@ class Collision:
                                   hktriangle.triangle.v_3 - vertex_offset))
                 else:
                     continue
-            b_obj = self.nif_import.objecthelper.mesh_from_data('poly%i' % subshape_num, verts, faces)
+
+            b_obj = Object.mesh_from_data('poly%i' % subshape_num, verts, faces)
             radius = min(vert.co.length for vert in b_obj.data.vertices)
             self.set_b_collider(b_obj, "BOX", radius, subshape)
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
@@ -453,7 +456,7 @@ class Collision:
                 return []
 
         # create blender object
-        b_obj = self.nif_import.objecthelper.box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz)
+        b_obj = Object.box_from_extents(b_name, minx, maxx, miny, maxy, minz, maxz)
         # probably only on NiNodes with BB
         if hasattr(n_block, "flags"):
             b_obj.niftools.objectflags = n_block.flags
