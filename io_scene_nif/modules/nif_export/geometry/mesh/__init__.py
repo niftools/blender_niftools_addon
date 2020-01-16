@@ -41,6 +41,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 from io_scene_nif.modules.nif_export.geometry import mesh
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_export.property import texture
@@ -60,6 +61,7 @@ class Mesh:
     def __init__(self, parent):
         self.nif_export = parent
         self.texture_helper = Texture()
+        self.material_anim = MaterialAnimation()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """
@@ -383,7 +385,7 @@ class Mesh:
                 trishape.add_property(trimatprop)
 
                 # material animation
-                self.nif_export.animationhelper.material.export_material(b_mat, trishape)
+                self.material_anim.material.export_material(b_mat, trishape)
 
             # -> now comes the real export
 

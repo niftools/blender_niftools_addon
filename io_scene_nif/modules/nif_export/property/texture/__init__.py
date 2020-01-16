@@ -39,20 +39,15 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.animation import Animation
-from io_scene_nif.modules.nif_import.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.animation.texture import TextureAnimation
 from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.texture.writer import TextureWriter
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
-# dictionary of texture files, to reuse textures
-DICT_TEXTURES = {}
-
-# TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
-IMPORT_EMBEDDED_TEXTURES = False
-
+# TODO Common for import/export
 """Names (ordered by default index) of shader texture slots for Sid Meier's Railroads and similar games."""
 EXTRA_SHADER_TEXTURES = [
     "EnvironmentMapIndex",
@@ -78,7 +73,7 @@ class Texture:
     }
 
     def __init__(self):
-        self.animation_helper = Animation(parent=self)
+        self.texture_anim = TextureAnimation()
         self.dict_mesh_uvlayers = []
         self.texture_writer = TextureWriter()
 
@@ -148,7 +143,7 @@ class Texture:
                 pass
             else:
                 # texture slot 0 = base
-                self.animation_helper.texture.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
+                self.texture_anim.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
 
         if self.glow_mtex:
             texprop.has_glow_texture = True

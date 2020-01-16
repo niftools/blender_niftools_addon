@@ -36,7 +36,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+import bpy
+from bpy_extras.io_utils import axis_conversion
 
+from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
+from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
 
@@ -187,8 +191,8 @@ def get_bind_data(b_armature):
 
 class Armature:
 
-    def __init__(self, parent):
-        self.nif_export = parent
+    def __init__(self):
+        self.transform_anim = TransformAnimation()
 
     def export_bones(self, b_obj, parent_block):
         """Export the bones of an armature."""
@@ -196,7 +200,7 @@ class Armature:
         # now we must export the armature's bones
         assert (b_obj.type == 'ARMATURE')
 
-        b_action = self.nif_export.animationhelper.get_active_action(b_obj)
+        b_action = self.transform_anim.get_active_action(b_obj)
 
         # find the root bones
         # list of all bones
@@ -248,7 +252,7 @@ class Armature:
             self.nif_export.objecthelper.set_object_matrix(b_bone, n_bone)
 
             # per-bone animation
-            self.nif_export.animationhelper.transform.export_transforms(n_bone, b_obj, b_action, b_bone)
+            self.transform_anim.export_transforms(n_bone, b_obj, b_action, b_bone)
 
         # now fix the linkage between the blocks
         for b_bone in bones:

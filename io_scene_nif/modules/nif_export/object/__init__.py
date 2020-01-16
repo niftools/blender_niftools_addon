@@ -62,6 +62,7 @@ IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
                                [0.0, 0.0, 1.0, 0.0],
                                [0.0, 0.0, 0.0, 1.0]])
 
+
 class Object:
 
     export_types = ('EMPTY', 'MESH', 'ARMATURE')
@@ -416,7 +417,8 @@ class Object:
         n_matrix.set_rows(*b_matrix.transposed())
         return n_matrix
 
-    def get_object_bind(self, b_obj):
+    @staticmethod
+    def get_object_bind(b_obj):
         """Get the bind matrix of a blender object.
 
         Returns the final NIF matrix for the given blender object.

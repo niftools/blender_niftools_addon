@@ -46,6 +46,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_export.animation import Animation
+from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.armature import Armature
 from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.modules.nif_export.constraint import Constraint
@@ -82,7 +83,7 @@ class NifExport(NifCommon):
         # Helper systems
         self.collisionhelper = Collision(parent=self)
         self.armaturehelper = Armature(parent=self)
-        self.animationhelper = Animation(parent=self)
+        self.transform_anim = TransformAnimation()
         self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint(parent=self)
         self.objecthelper = Object(parent=self)
@@ -136,15 +137,15 @@ class NifExport(NifCommon):
                         for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE':
                                 if b_mod.use_bone_envelopes:
-                                    raise nif_utils.NifError("'%s': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                    raise nif_utils.NifError("'{0}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
                                                              "If you don't have vertex groups, select the bones one by one press W to "
-                                                             "convert their envelopes to vertex weights, and turn off envelopes." % b_obj.name)
+                                                             "convert their envelopes to vertex weights, and turn off envelopes.".format(b_obj.name))
 
                 # check for non-uniform transforms
                 scale = b_obj.matrix_local.to_scale()
                 if abs(scale.x - scale.y) > NifOp.props.epsilon or abs(scale.y - scale.z) > NifOp.props.epsilon:
                     NifLog.warn("Non-uniform scaling not supported.\n"
-                                "Workaround: apply size and rotation (CTRL-A) on '%s'." % b_obj.name)
+                                "Workaround: apply size and rotation (CTRL-A) on '{0}'." .format(b_obj.name))
 
             b_armature = armature.get_armature()
             # some scenes may not have an armature, so nothing to do here
@@ -175,7 +176,7 @@ class NifExport(NifCommon):
             # write external animation to a KF tree
             if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
                 NifLog.info("Creating keyframe tree")
-                kf_root = self.animationhelper.export_kf_root(b_armature)
+                kf_root = self.transform_anim.export_kf_root(b_armature)
 
                 # write kf (and xkf if asked)
                 ext = ".kf"
@@ -210,7 +211,7 @@ class NifExport(NifCommon):
                 if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.create_controller(root_block, root_block.name)
+                    Animation.create_controller(root_block, root_block.name)
 
                 if NifOp.props.bs_animation_node:
                     for block in block_store.block_to_obj:
