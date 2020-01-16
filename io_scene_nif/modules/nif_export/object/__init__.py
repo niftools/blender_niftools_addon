@@ -41,14 +41,34 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
-from io_scene_nif.modules.geometry.mesh.mesh_export import Mesh
-from io_scene_nif.modules.object import PRN_DICT
-from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.object.object_types import type_export
+from io_scene_nif.modules.nif_export import armature
+from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
+from io_scene_nif.modules.nif_export.object import PRN_DICT
+from io_scene_nif.modules.nif_export.object import types
+from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
+
+# dictionary of names, to map NIF blocks to correct Blender names
+DICT_NAMES = {}
+
+# keeps track of names of exported blocks, to make sure they are unique
+BLOCK_NAMES_LIST = []
+
+# identity matrix, for comparisons
+IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
+                               [0.0, 1.0, 0.0, 0.0],
+                               [0.0, 0.0, 1.0, 0.0],
+                               [0.0, 0.0, 0.0, 1.0]])
+
+# used for weapon locations or attachments to a body
+PRN_DICT = {"BACK": "BackWeapon",
+            "SIDE": "SideWeapon",
+            "QUIVER": "Quiver",
+            "SHIELD": "Bip01 L ForearmTwist",
+            "HELM": "Bip01 Head",
+            "RING": "Bip01 R Finger1"}
 
 
 class Object:
@@ -350,7 +370,7 @@ class Object:
 
         # customize the node data, depending on type
         if n_node_type == "NiLODNode":
-            type_export.export_range_lod_data(n_node, b_obj)
+            types.export_range_lod_data(n_node, b_obj)
 
         return n_node
 

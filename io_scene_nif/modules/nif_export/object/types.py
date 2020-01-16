@@ -1,4 +1,4 @@
-"""This module contains helper methods to import/export object data."""
+"""This module contains helper methods to import/export object type data."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -37,25 +37,27 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import mathutils
+from io_scene_nif.modules.nif_export.object.block_registry import block_store
 
-# dictionary of names, to map NIF blocks to correct Blender names
-DICT_NAMES = {}
 
-# keeps track of names of exported blocks, to make sure they are unique
-BLOCK_NAMES_LIST = []
+def export_range_lod_data(n_node, b_obj):
+    """Export range lod data for for the children of b_obj, as a
+    NiRangeLODData block on n_node.
+    """
+    # create range lod data object
+    n_range_data = block_store.create_block("NiRangeLODData", b_obj)
+    n_node.lod_level_data = n_range_data
 
-# identity matrix, for comparisons
-IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
-                               [0.0, 1.0, 0.0, 0.0],
-                               [0.0, 0.0, 1.0, 0.0],
-                               [0.0, 0.0, 0.0, 1.0]])
+    # get the children
+    b_children = b_obj.children
 
-# used for weapon locations or attachments to a body
-PRN_DICT = {"BACK": "BackWeapon",
-            "SIDE": "SideWeapon",
-            "QUIVER": "Quiver",
-            "SHIELD": "Bip01 L ForearmTwist",
-            "HELM": "Bip01 Head",
-            "RING": "Bip01 R Finger1"}
-
+    # set the data
+    n_node.num_lod_levels = len(b_children)
+    n_range_data.num_lod_levels = len(b_children)
+    n_node.lod_levels.update_size()
+    n_range_data.lod_levels.update_size()
+    for b_child, n_lod_level, n_rd_lod_level in zip(b_children, n_node.lod_levels, n_range_data.lod_levels):
+        n_lod_level.near_extent = b_child["near_extent"]
+        n_lod_level.far_extent = b_child["far_extent"]
+        n_rd_lod_level.near_extent = n_lod_level.near_extent
+        n_rd_lod_level.far_extent = n_lod_level.far_extent
