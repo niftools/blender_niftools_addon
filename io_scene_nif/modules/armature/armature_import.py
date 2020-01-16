@@ -68,8 +68,7 @@ class Armature:
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
 
-        # armature_name = block_store.import_name(n_armature)
-        armature_name = n_armature.name.decode()
+        armature_name = block_store.import_name(n_armature)
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.draw_type = 'STICK'
 
