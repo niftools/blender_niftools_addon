@@ -39,13 +39,35 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.animation.animation_export import Animation
-from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.property import texture
-from io_scene_nif.modules.property.texture.texture_writer import TextureWriter
+from io_scene_nif.modules.nif_export.animation.__init__ import Animation
+from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.property import texture
+from io_scene_nif.modules.nif_export.property.texture.writer import TextureWriter
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
+
+# dictionary of texture files, to reuse textures
+DICT_TEXTURES = {}
+
+# TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
+IMPORT_EMBEDDED_TEXTURES = False
+
+"""Names (ordered by default index) of shader texture slots for Sid Meier's Railroads and similar games."""
+EXTRA_SHADER_TEXTURES = [
+    "EnvironmentMapIndex",
+    "NormalMapIndex",
+    "SpecularIntensityIndex",
+    "EnvironmentIntensityIndex",
+    "LightCubeMapIndex",
+    "ShadowTextureIndex"]
+
+
+def get_used_textslots(b_mat):
+    used_slots = []
+    if b_mat is not None:
+        used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
+    return used_slots
 
 
 class Texture:

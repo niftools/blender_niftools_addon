@@ -39,8 +39,8 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.property.material.material_export import MaterialProp
+from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.utility.util_global import NifOp
 
 
