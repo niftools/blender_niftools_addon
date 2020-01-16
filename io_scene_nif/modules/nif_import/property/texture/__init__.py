@@ -42,7 +42,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.nif_import.property.texture.loader import TextureLoader
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils.util_logging import NifLog
 
 # dictionary of texture files, to reuse textures
 DICT_TEXTURES = {}

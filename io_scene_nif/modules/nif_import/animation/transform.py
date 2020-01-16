@@ -45,8 +45,8 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import import armature
 from io_scene_nif.modules.nif_import.animation import Animation
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_logging import NifLog
 
 
 def interpolate(x_out, x_in, y_in):
@@ -256,12 +256,12 @@ class TransformAnimation(Animation):
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""
         # find keyframe controller
-        n_kfc = nif_utils.find_controller(n_block, NifFormat.NiKeyframeController)
+        n_kfc = util_math.find_controller(n_block, NifFormat.NiKeyframeController)
         if n_kfc:
             # skeletal animation
             if bone_name:
-                bone_bm = nif_utils.import_matrix(n_block)  # base pose
-                n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = nif_utils.decompose_srt(bone_bm)
+                bone_bm = util_math.import_matrix(n_block)  # base pose
+                n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = util_math.decompose_srt(bone_bm)
                 self.import_keyframe_controller(n_kfc, b_obj, bone_name, n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
             # object-level animation
             else:

@@ -44,7 +44,6 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.io.nif import NifFile
-from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_import.animation import Animation
 from io_scene_nif.modules.nif_import.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_import.animation.transform import TransformAnimation
@@ -55,12 +54,12 @@ from io_scene_nif.modules.nif_import.geometry.vertex.groups import VertexGroup
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.modules.nif_import.object.types import NiTypes
-from io_scene_nif.modules.nif_import import scene
+from io_scene_nif.modules.nif_import import scene, armature
 
 from io_scene_nif.nif_common import NifCommon
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp, EGMData, NifData
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp, EGMData, NifData
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class NifImport(NifCommon):
@@ -88,7 +87,7 @@ class NifImport(NifCommon):
             # to armature' mode
             if NifOp.props.skeleton == "GEOMETRY_ONLY":
                 if len(NifCommon.SELECTED_OBJECTS) != 1 or NifCommon.SELECTED_OBJECTS[0].type != 'ARMATURE':
-                    raise nif_utils.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
+                    raise util_math.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
 
             # the axes used for bone correction depend on the nif version
             armature.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
@@ -157,7 +156,7 @@ class NifImport(NifCommon):
         """Main import function."""
         # check that this is not a kf file
         if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
-            raise nif_utils.NifError("Use the KF import operator to load KF files.")
+            raise util_math.NifError("Use the KF import operator to load KF files.")
 
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
@@ -247,7 +246,7 @@ class NifImport(NifCommon):
                 # if importing animation, remove children that have morph controllers from geometry group
                 if NifOp.props.animation:
                     for child in geom_group:
-                        if nif_utils.find_controller(child, NifFormat.NiGeomMorpherController):
+                        if util_math.find_controller(child, NifFormat.NiGeomMorpherController):
                             geom_group.remove(child)
 
                 # import geometry/empty
@@ -284,7 +283,7 @@ class NifImport(NifCommon):
             # set object transform, this must be done after all children objects have been parented to b_obj
             if isinstance(b_obj, bpy.types.Object):
                 # note: bones and this object's children already have their matrix set
-                b_obj.matrix_local = nif_utils.import_matrix(n_block)
+                b_obj.matrix_local = util_math.import_matrix(n_block)
 
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:

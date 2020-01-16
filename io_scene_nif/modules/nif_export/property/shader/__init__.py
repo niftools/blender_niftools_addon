@@ -39,7 +39,7 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.property.texture import writer
-from io_scene_nif.utility import nif_utils
+from io_scene_nif.utils import util_math
 
 
 class BSShader:
@@ -138,7 +138,7 @@ class BSShader:
                 self.export_shader_flags(b_obj, bsshader)
 
         if b_obj.niftools_shader.bs_shadertype == 'None':
-            raise nif_utils.NifError("Export version expected shader. No shader applied to mesh '{0}', these cannot be exported to NIF."
+            raise util_math.NifError("Export version expected shader. No shader applied to mesh '{0}', these cannot be exported to NIF."
                                      "Set shader before exporting.".format(b_obj))
         # set textures
         texset = NifFormat.BSShaderTextureSet()

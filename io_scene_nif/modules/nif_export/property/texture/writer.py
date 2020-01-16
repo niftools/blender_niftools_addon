@@ -43,9 +43,9 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class TextureWriter:
@@ -111,7 +111,7 @@ class TextureWriter:
         if n_texture.type == 'ENVIRONMENT_MAP':
             # this works for morrowind only
             if NifOp.props.game != 'MORROWIND':
-                raise nif_utils.NifError("Cannot export environment maps for nif version '{0}'".format(NifOp.props.game))
+                raise util_math.NifError("Cannot export environment maps for nif version '{0}'".format(NifOp.props.game))
             return "enviro 01.TGA"
 
         elif n_texture.type == 'IMAGE':
@@ -120,7 +120,7 @@ class TextureWriter:
             # TODO [n_texture] still needed? can n_texture.image be None in current blender?
             # check that image is loaded
             if n_texture.image is None:
-                raise nif_utils.NifError("Image type texture has no file loaded ('{0}')".format(n_texture.name))
+                raise util_math.NifError("Image type texture has no file loaded ('{0}')".format(n_texture.name))
 
             filename = n_texture.image.filepath
 
@@ -152,4 +152,4 @@ class TextureWriter:
 
         else:
             # n_texture must be of type IMAGE or ENVMAP
-            raise nif_utils.NifError("Texture '{0}' must be of type IMAGE or ENVMAP".format(n_texture.name))
+            raise util_math.NifError("Texture '{0}' must be of type IMAGE or ENVMAP".format(n_texture.name))

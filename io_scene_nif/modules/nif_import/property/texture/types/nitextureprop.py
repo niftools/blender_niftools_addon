@@ -1,5 +1,5 @@
 from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class NiTextureProp(TextureSlotManager):

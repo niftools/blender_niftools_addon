@@ -46,8 +46,8 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.modules.nif_import.animation.material import MaterialAnimation
 from io_scene_nif.modules.nif_import.property.material import Material, NiMaterial
 from io_scene_nif.modules.nif_import.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_nif.utility.util_global import NifData
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils.util_global import NifData
+from io_scene_nif.utils.util_logging import NifLog
 
 
 """

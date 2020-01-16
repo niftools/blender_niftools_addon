@@ -40,9 +40,9 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import.animation import Animation
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class MaterialAnimation(Animation):
@@ -51,7 +51,7 @@ class MaterialAnimation(Animation):
         """Import material animation data for given geometry."""
         if not NifOp.props.animation:
             return
-        n_material = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
+        n_material = util_math.find_property(n_geom, NifFormat.NiMaterialProperty)
         if n_material:
             self.import_material_alpha_controller(b_material, n_material)
             for b_channel, n_target_color in (("niftools.ambient_color", NifFormat.TargetColor.TC_AMBIENT),
@@ -63,7 +63,7 @@ class MaterialAnimation(Animation):
 
     def import_material_alpha_controller(self, b_material, n_material):
         # find alpha controller
-        n_alphactrl = nif_utils.find_controller(n_material, NifFormat.NiAlphaController)
+        n_alphactrl = util_math.find_controller(n_material, NifFormat.NiAlphaController)
         if not (n_alphactrl and n_alphactrl.data):
             return
         NifLog.info("Importing alpha controller")
@@ -96,7 +96,7 @@ class MaterialAnimation(Animation):
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
         # search for the block
-        n_ctrl = nif_utils.find_controller(n_geom, NifFormat.NiUVController)
+        n_ctrl = util_math.find_controller(n_geom, NifFormat.NiUVController)
         if not (n_ctrl and n_ctrl.data):
             return
         NifLog.info("Importing UV controller")

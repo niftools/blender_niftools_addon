@@ -42,9 +42,9 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import import animation
 from io_scene_nif.modules.nif_import.animation import Animation
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import EGMData
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import EGMData
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class MorphAnimation(Animation):
@@ -56,7 +56,7 @@ class MorphAnimation(Animation):
     def import_morph_controller(self, n_node, b_obj, v_map):
         """Import NiGeomMorpherController as shape keys for blender object."""
 
-        n_morphCtrl = nif_utils.find_controller(n_node, NifFormat.NiGeomMorpherController)
+        n_morphCtrl = util_math.find_controller(n_node, NifFormat.NiGeomMorpherController)
         if n_morphCtrl:
             b_mesh = b_obj.data
             morphData = n_morphCtrl.data

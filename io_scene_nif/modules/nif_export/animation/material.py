@@ -41,9 +41,9 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class MaterialAnimation(Animation):
@@ -69,7 +69,7 @@ class MaterialAnimation(Animation):
         """Export material animation data for given geometry."""
 
         # find the nif material property to attach alpha & color controllers to
-        n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
+        n_matprop = util_math.find_property(n_geom, NifFormat.NiMaterialProperty)
         if not n_matprop:
             raise ValueError("Bug!! must add material property before exporting alpha controller")
         colors = (("alpha", None),

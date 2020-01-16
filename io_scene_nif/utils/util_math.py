@@ -40,12 +40,61 @@ import math
 
 import mathutils
 
-from io_scene_nif.utility.util_logging import NifLog
+from bpy_extras.io_utils import axis_conversion
+
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class NifError(Exception):
     """A simple custom exception class for export errors."""
     pass
+
+
+def set_bone_orientation(from_forward, from_up):
+    # if version in (0x14020007, ):
+    #   skyrim
+    #   from_forward = "Z"
+    #   from_up = "Y"
+    # else:
+    #   ZT2 and other old ones
+    #   from_forward = "X"
+    #   from_up = "Y"
+    global correction
+    global correction_inv
+    correction = axis_conversion(from_forward, from_up).to_4x4()
+    correction_inv = correction.inverted()
+
+
+# set these from outside using set_bone_correction_from_version once we have a version number
+correction = None
+correction_inv = None
+
+
+def import_keymat(rest_rot_inv, key_matrix):
+    """Handles space conversions for imported keys """
+    return correction * (rest_rot_inv * key_matrix) * correction_inv
+
+
+def export_keymat(rest_rot, key_matrix, bone):
+    """Handles space conversions for exported keys """
+    if bone:
+        return rest_rot * (correction_inv * key_matrix * correction)
+    else:
+        return rest_rot * key_matrix
+
+
+def get_bind_matrix(bone):
+    """Get a nif armature-space matrix from a blender bone. """
+    bind = correction * correction_inv * bone.matrix_local * correction
+    if bone.parent:
+        p_bind_restored = correction * correction_inv * bone.parent.matrix_local * correction
+        bind = p_bind_restored.inverted() * bind
+    return bind
+
+
+def nif_bind_to_blender_bind(nif_armature_space_matrix):
+    return correction_inv * correction * nif_armature_space_matrix * correction_inv
+
 
 
 def vec_roll_to_mat3(vec, roll):
@@ -171,3 +220,6 @@ def find_extra(n_block, extratype):
         if isinstance(extra, extratype):
             return extra
     return None
+
+
+

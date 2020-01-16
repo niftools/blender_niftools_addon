@@ -44,9 +44,9 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import collision
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_logging import NifLog
-from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_logging import NifLog
+from io_scene_nif.utils.util_global import NifOp
 
 HAVOK_SCALE = 6.996
 
@@ -74,7 +74,7 @@ class Collision:
         """Main function for adding collision object b_obj to a node."""
         if NifOp.props.game == 'MORROWIND':
             if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
-                raise nif_utils.NifError("Morrowind only supports Triangle Mesh collisions.")
+                raise util_math.NifError("Morrowind only supports Triangle Mesh collisions.")
             node = block_store.create_block("RootCollisionNode", b_obj)
             n_parent.add_child(node)
             node.flags = 0x0003  # default
@@ -574,7 +574,7 @@ class Collision:
             fdistlist = [fdistlist[fdict[hsh]] for hsh in fkeys]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise nif_utils.NifError(
+                raise util_math.NifError(
                     "ERROR%t|Too many polygons/vertices."
                     " Decimate/split your b_mesh and try again.")
 
@@ -602,7 +602,7 @@ class Collision:
             return colhull
 
         else:
-            raise nif_utils.NifError(
+            raise util_math.NifError(
                 'cannot export collision type %s to collision shape list'
                 % b_obj.game.collision_bounds_type)
 

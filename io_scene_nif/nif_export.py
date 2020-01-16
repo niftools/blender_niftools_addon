@@ -55,9 +55,9 @@ from io_scene_nif.modules.nif_export.object import Object
 from io_scene_nif.modules.nif_export.property import Property
 from io_scene_nif.modules.nif_export import scene
 from io_scene_nif.nif_common import NifCommon
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp, EGMData
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp, EGMData
+from io_scene_nif.utils.util_logging import NifLog
 
 
 # main export class
@@ -137,7 +137,7 @@ class NifExport(NifCommon):
                         for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE':
                                 if b_mod.use_bone_envelopes:
-                                    raise nif_utils.NifError("'{0}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                    raise util_math.NifError("'{0}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
                                                              "If you don't have vertex groups, select the bones one by one press W to "
                                                              "convert their envelopes to vertex weights, and turn off envelopes.".format(b_obj.name))
 

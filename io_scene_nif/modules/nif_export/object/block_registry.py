@@ -40,8 +40,8 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import armature
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class ExportBlockRegistry:
@@ -82,7 +82,7 @@ class ExportBlockRegistry:
         try:
             block = getattr(NifFormat, block_type)()
         except AttributeError:
-            raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
+            raise util_math.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
         return self.register_block(block, b_obj)
 
 

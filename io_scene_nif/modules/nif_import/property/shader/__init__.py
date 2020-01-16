@@ -41,8 +41,8 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class BSShader:
@@ -169,9 +169,9 @@ class BSShader:
     # TODO [shader] Move move out when nolonger required to reference
     def find_bsshaderproperty(self, n_block):
         # bethesda shader
-        bsshaderproperty = nif_utils.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
+        bsshaderproperty = util_math.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
         if not bsshaderproperty:
-            bsshaderproperty = nif_utils.find_property(n_block, NifFormat.BSLightingShaderProperty)
+            bsshaderproperty = util_math.find_property(n_block, NifFormat.BSLightingShaderProperty)
 
         if bsshaderproperty:
             for textureslot in bsshaderproperty.texture_set.textures:

@@ -37,14 +37,13 @@
 #
 # ***** END LICENSE BLOCK *****
 import bpy
-from bpy_extras.io_utils import axis_conversion
 
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_consts import BIP_01, B_L_SUFFIX, BIP01_L, B_R_SUFFIX, BIP01_R, NPC_SUFFIX, B_L_POSTFIX, \
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_consts import BIP_01, B_L_SUFFIX, BIP01_L, B_R_SUFFIX, BIP01_R, NPC_SUFFIX, B_L_POSTFIX, \
     NPC_L, B_R_POSTFIX, BRACE_L, BRACE_R, NPC_R, OPEN_BRACKET, CLOSE_BRACKET
-from io_scene_nif.utility.util_global import NifOp
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
 
 
 def get_bone_name_for_nif(name):
@@ -75,52 +74,6 @@ def replace_blender_name(name, original, replacement, open_replace, close_replac
     return name.replace(close_replace, CLOSE_BRACKET)
 
 
-def set_bone_orientation(from_forward, from_up):
-    # if version in (0x14020007, ):
-    #   skyrim
-    #   from_forward = "Z"
-    #   from_up = "Y"
-    # else:
-    #   ZT2 and other old ones
-    #   from_forward = "X"
-    #   from_up = "Y"
-    global correction
-    global correction_inv
-    correction = axis_conversion(from_forward, from_up).to_4x4()
-    correction_inv = correction.inverted()
-
-
-# set these from outside using set_bone_correction_from_version once we have a version number
-correction = None
-correction_inv = None
-
-
-def import_keymat(rest_rot_inv, key_matrix):
-    """Handles space conversions for imported keys """
-    return correction * (rest_rot_inv * key_matrix) * correction_inv
-
-
-def export_keymat(rest_rot, key_matrix, bone):
-    """Handles space conversions for exported keys """
-    if bone:
-        return rest_rot * (correction_inv * key_matrix * correction)
-    else:
-        return rest_rot * key_matrix
-
-
-def get_bind_matrix(bone):
-    """Get a nif armature-space matrix from a blender bone. """
-    bind = correction * correction_inv * bone.matrix_local * correction
-    if bone.parent:
-        p_bind_restored = correction * correction_inv * bone.parent.matrix_local * correction
-        bind = p_bind_restored.inverted() * bind
-    return bind
-
-
-def nif_bind_to_blender_bind(nif_armature_space_matrix):
-    return correction_inv * correction * nif_armature_space_matrix * correction_inv
-
-
 def get_armature():
     """Get an armature. If there is more than one armature in the scene and some armatures are selected, return the first of the selected armatures. """
     src_armatures = [ob for ob in bpy.data.objects if type(ob.data) == bpy.types.Armature]
@@ -139,7 +92,7 @@ def get_bind_data(b_armature):
     if b_armature:
         bind_data = {}
         for b_bone in b_armature.data.bones:
-            n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = nif_utils.decompose_srt(get_bind_matrix(b_bone))
+            n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = util_math.decompose_srt(util_math.get_bind_matrix(b_bone))
             bind_data[b_bone.name] = (n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
         return bind_data
 

@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class NifOp:

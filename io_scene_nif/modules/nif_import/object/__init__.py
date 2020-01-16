@@ -43,9 +43,9 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_import.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
 
 # used for weapon locations or attachments to a body
 PRN_DICT = {
@@ -216,7 +216,7 @@ class Object:
         # node groups geometries, so import it as a mesh
         NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name.decode() for child in n_geoms], n_block.name.decode()))
         b_obj = self.create_mesh_object(n_block)
-        b_obj.matrix_local = nif_utils.import_matrix(n_block)
+        b_obj.matrix_local = util_math.import_matrix(n_block)
         bpy.context.scene.objects.active = b_obj
         for child in n_geoms:
             self.mesh.import_mesh(child, b_obj)
@@ -231,7 +231,7 @@ class Object:
     def import_geometry_object(self, b_armature, n_block):
         # it's a shape node and we're not importing skeleton only
         b_obj = self.create_mesh_object(n_block)
-        transform = nif_utils.import_matrix(n_block)  # set transform matrix for the mesh
+        transform = util_math.import_matrix(n_block)  # set transform matrix for the mesh
         self.mesh.import_mesh(n_block, b_obj, transform)
         bpy.context.scene.objects.active = b_obj
         # store flags etc

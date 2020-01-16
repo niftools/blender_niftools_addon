@@ -41,7 +41,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
-from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utils.util_global import NifOp
 
 
 class Property:

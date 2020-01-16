@@ -41,7 +41,7 @@
 import nose
 from nose.tools import raises
 
-from io_scene_nif.utility.util_decorator import overload_method
+from io_scene_nif.utils.util_decorator import overload_method
 
 
 class Foo(object):

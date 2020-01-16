@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class Material:

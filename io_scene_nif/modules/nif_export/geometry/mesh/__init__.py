@@ -46,10 +46,10 @@ from io_scene_nif.modules.nif_export.geometry import mesh
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.texture import Texture
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.nif_utils import NifError
-from io_scene_nif.utility.util_global import NifOp
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_math import NifError
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
 
 # TODO [scene][property][ui] Expose these either through the scene or as ui properties
 VERTEX_RESOLUTION = 1000
@@ -509,7 +509,7 @@ class Mesh:
                             break
 
                     if f_index[i] > 65535:
-                        raise nif_utils.NifError("Too many vertices. Decimate your mesh and try again.")
+                        raise util_math.NifError("Too many vertices. Decimate your mesh and try again.")
 
                     if f_index[i] == len(vertquad_list):
                         # first: add it to the vertex map
@@ -554,7 +554,7 @@ class Mesh:
                 self.select_unweighted_vertices(b_mesh, b_obj, polygons_without_bodypart)
 
             if len(trilist) > 65535:
-                raise nif_utils.NifError("Too many polygons. Decimate your mesh and try again.")
+                raise util_math.NifError("Too many polygons. Decimate your mesh and try again.")
             if len(vertlist) == 0:
                 continue  # m_4444x: skip 'empty' material indices
 
@@ -606,7 +606,7 @@ class Mesh:
                 tridata.bs_num_uv_sets = len(mesh_uv_layers)
                 if NifOp.props.game == 'FALLOUT_3':
                     if len(mesh_uv_layers) > 1:
-                        raise nif_utils.NifError("Fallout 3 does not support multiple UV layers")
+                        raise util_math.NifError("Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
                 for j, uv_layer in enumerate(mesh_uv_layers):
@@ -651,7 +651,7 @@ class Mesh:
                                     skininst.skeleton_root = block
                                     break
                         else:
-                            raise nif_utils.NifError("Skeleton root '%s' not found." % b_obj_armature.name)
+                            raise util_math.NifError("Skeleton root '%s' not found." % b_obj_armature.name)
 
                         # create skinning data and link it
                         skindata = block_store.create_block("NiSkinData", b_obj)
@@ -706,7 +706,7 @@ class Mesh:
                             # select unweighted vertices
                             bpy.ops.mesh.select_ungrouped(extend=False)
 
-                            raise nif_utils.NifError("Cannot export mesh with unweighted vertices. "
+                            raise util_math.NifError("Cannot export mesh with unweighted vertices. "
                                                      "The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
                         # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
@@ -721,12 +721,12 @@ class Mesh:
                                         if not bone_block:
                                             bone_block = block
                                         else:
-                                            raise nif_utils.NifError("Multiple bones with name '%s': "
+                                            raise util_math.NifError("Multiple bones with name '%s': "
                                                                      "probably you have multiple armatures. "
                                                                      "Please parent all meshes to a single armature and try again"
                                                                      % bone)
                             if not bone_block:
-                                raise nif_utils.NifError("Bone '%s' not found." % bone)
+                                raise util_math.NifError("Bone '%s' not found." % bone)
 
                             # find vertex weights
                             vert_weights = {}

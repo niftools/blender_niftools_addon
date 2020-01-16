@@ -48,8 +48,8 @@ from pyffi.utils.quickhull import qhull3d
 
 from io_scene_nif.modules.nif_import import collision
 from io_scene_nif.modules.nif_import.object import Object
-from io_scene_nif.utility.util_logging import NifLog
-from io_scene_nif.utility.util_global import NifData
+from io_scene_nif.utils.util_logging import NifLog
+from io_scene_nif.utils.util_global import NifData
 
 
 HAVOK_SCALE = 6.996

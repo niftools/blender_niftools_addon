@@ -46,9 +46,9 @@ from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_import.object import PRN_DICT
 from io_scene_nif.modules.nif_export.object import types
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
 
 # dictionary of names, to map NIF blocks to correct Blender names
 DICT_NAMES = {}
@@ -107,7 +107,7 @@ class Object:
                 if root_object.niftools_bs_invmarker:
                     for extra_item in n_root.extra_data_list:
                         if isinstance(extra_item, NifFormat.BSInvMarker):
-                            raise nif_utils.NifError("Multiple Items have Inventory marker data only one item may contain this data")
+                            raise util_math.NifError("Multiple Items have Inventory marker data only one item may contain this data")
                     else:
                         n_extra_list = NifFormat.BSInvMarker()
                         n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
@@ -125,7 +125,7 @@ class Object:
             try:
                 furniturenumber = int(filebase[15:])
             except ValueError:
-                raise nif_utils.NifError("Furniture marker has invalid number ({0}).\n"
+                raise util_math.NifError("Furniture marker has invalid number ({0}).\n"
                                          "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.".format(filebase[
                                                                                                                             15:]))
 

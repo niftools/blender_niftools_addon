@@ -44,16 +44,16 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export import armature
+from io_scene_nif.modules.nif_import import armature
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.nif_common import NifCommon
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_consts import BIP_01, BIP01_L, B_L_SUFFIX, BIP01_R, B_R_SUFFIX, NPC_L, NPC_R, NPC_SUFFIX, \
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_consts import BIP_01, BIP01_L, B_L_SUFFIX, BIP01_R, B_R_SUFFIX, NPC_L, NPC_R, NPC_SUFFIX, \
     BRACE_R, B_R_POSTFIX, B_L_POSTFIX, CLOSE_BRACKET, BRACE_L, OPEN_BRACKET
-from io_scene_nif.utility.util_logging import NifLog
-from io_scene_nif.utility.util_global import NifOp, NifData
+from io_scene_nif.utils.util_logging import NifLog
+from io_scene_nif.utils.util_global import NifOp, NifData
 
 
 def get_bone_name_for_blender(name):
@@ -140,12 +140,12 @@ class Armature:
         # store nif block for access from object mode
         self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = nif_utils.import_matrix(n_block, relative_to=n_armature)
+        n_bind = util_math.import_matrix(n_block, relative_to=n_armature)
         # get transformation in blender's coordinate space
         b_bind = armature.nif_bind_to_blender_bind(n_bind)
 
         # the following is a workaround because blender can no longer set matrices to bones directly
-        tail, roll = nif_utils.mat3_to_vec_roll(b_bind.to_3x3())
+        tail, roll = util_math.mat3_to_vec_roll(b_bind.to_3x3())
         b_edit_bone.head = b_bind.to_translation()
         b_edit_bone.tail = tail + b_edit_bone.head
         b_edit_bone.roll = roll
@@ -184,7 +184,7 @@ class Armature:
                 (NifData.data.version in (0x14000005, 0x14020007) and os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif')):
 
             if not isinstance(ni_block, NifFormat.NiNode):
-                raise nif_utils.NifError("Cannot import skeleton: root is not a NiNode")
+                raise util_math.NifError("Cannot import skeleton: root is not a NiNode")
 
             # for morrowind, take the Bip01 node to be the skeleton root
             if NifData.data.version == 0x04000002:
@@ -236,7 +236,7 @@ class Armature:
                         NifLog.debug("'{0}' is an armature".format(skelroot.name))
                 elif NifOp.props.skeleton == "GEOMETRY_ONLY":
                     if skelroot not in self.dict_armatures:
-                        raise nif_utils.NifError("Nif structure incompatible with '{0}' as armature: node '{1}' has '{2}' as armature".format(b_armature_obj.name, ni_block.name, skelroot.name))
+                        raise util_math.NifError("Nif structure incompatible with '{0}' as armature: node '{1}' has '{2}' as armature".format(b_armature_obj.name, ni_block.name, skelroot.name))
 
                 for boneBlock in skininst.bones:
                     # boneBlock can be None; see pyffi issue #3114079

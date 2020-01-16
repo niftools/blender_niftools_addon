@@ -40,8 +40,8 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import.animation import Animation
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class ObjectAnimation(Animation):
@@ -49,7 +49,7 @@ class ObjectAnimation(Animation):
     def import_visibility(self, n_node, b_obj):
         """Import vis controller for blender object."""
 
-        n_vis_ctrl = nif_utils.find_controller(n_node, NifFormat.NiVisController)
+        n_vis_ctrl = util_math.find_controller(n_node, NifFormat.NiVisController)
         if not (n_vis_ctrl and n_vis_ctrl.data):
             return
         NifLog.info("Importing vis controller")
