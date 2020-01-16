@@ -41,14 +41,18 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.geometry import mesh
-from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.property import texture
-from io_scene_nif.modules.property.texture.texture_export import Texture
+from io_scene_nif.modules.nif_export.geometry import mesh
+from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.property import texture
+from io_scene_nif.modules.nif_export.property.texture import Texture
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.nif_utils import NifError
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
+
+# TODO [scene][property][ui] Expose these either through the scene or as ui properties
+VERTEX_RESOLUTION = 1000
+NORMAL_RESOLUTION = 100
 
 
 class Mesh:
