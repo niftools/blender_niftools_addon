@@ -44,6 +44,21 @@ from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.nif_import.property.texture.loader import TextureLoader
 from io_scene_nif.utility.util_logging import NifLog
 
+# dictionary of texture files, to reuse textures
+DICT_TEXTURES = {}
+
+# TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
+IMPORT_EMBEDDED_TEXTURES = False
+
+"""Names (ordered by default index) of shader texture slots for Sid Meier's Railroads and similar games."""
+EXTRA_SHADER_TEXTURES = [
+    "EnvironmentMapIndex",
+    "NormalMapIndex",
+    "SpecularIntensityIndex",
+    "EnvironmentIntensityIndex",
+    "LightCubeMapIndex",
+    "ShadowTextureIndex"]
+
 
 class TextureSlotManager:
 

@@ -70,18 +70,17 @@ class NifImport(NifCommon):
 
     def execute(self):
         """Main import function."""
-        self.load_files()
+        self.load_files()  # needs to be first to provide version info.
 
-        # find and store this list now of selected objects as creating new objects adds them to the selection list
-        self.SELECTED_OBJECTS = bpy.context.selected_objects[:]
-
-        # Helper systems
         self.armaturehelper = Armature()
         self.collisionhelper = Collision()
         self.constrainthelper = Constraint()
         self.objecthelper = Object()
         self.object_anim = ObjectAnimation()
         self.transform_anim = TransformAnimation()
+
+        # find and store this list now of selected objects as creating new objects adds them to the selection list
+        self.SELECTED_OBJECTS = bpy.context.selected_objects[:]
 
         # catch nif import errors
         try:
