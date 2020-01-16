@@ -50,7 +50,7 @@ from io_scene_nif.modules.nif_export.animation.transform import TransformAnimati
 from io_scene_nif.modules.nif_export.armature import Armature
 from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.modules.nif_export.constraint import Constraint
-from io_scene_nif.modules.nif_import.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.modules.nif_export.object import Object
 from io_scene_nif.modules.nif_export.property import Property
 from io_scene_nif.modules.nif_export import scene

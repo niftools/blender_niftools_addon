@@ -41,55 +41,10 @@ from bpy_extras.io_utils import axis_conversion
 
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.util_consts import BIP_01, B_L_SUFFIX, BIP01_L, B_R_SUFFIX, BIP01_R, NPC_SUFFIX, B_L_POSTFIX, \
+    NPC_L, B_R_POSTFIX, BRACE_L, BRACE_R, NPC_R, OPEN_BRACKET, CLOSE_BRACKET
 from io_scene_nif.utility.util_global import NifOp
 from io_scene_nif.utility.util_logging import NifLog
-
-B_R_POSTFIX = "].R"
-B_L_POSTFIX = "].L"
-
-B_R_SUFFIX = ".R"
-B_L_SUFFIX = ".L"
-
-BRACE_L = "[L"
-BRACE_R = "[R"
-
-OPEN_BRACKET = "["
-CLOSE_BRACKET = "]"
-
-NPC_SUFFIX = "NPC "
-NPC_L = "NPC L "
-NPC_R = "NPC R "
-
-BIP_01 = "Bip01 "
-BIP01_R = "Bip01 R "
-BIP01_L = "Bip01 L "
-
-
-def get_bone_name_for_blender(name):
-    """Convert a bone name to a name that can be used by Blender: turns 'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
-
-    :param name: The bone name as in the nif file.
-    :type name: :class:`str`
-    :return: Bone name in Blender convention.
-    :rtype: :class:`str`
-    """
-    if isinstance(name, bytes):
-        name = name.decode()
-    if name.startswith(BIP01_L):
-        name = BIP_01 + name[8:] + B_L_SUFFIX
-    elif name.startswith(BIP01_R):
-        name = BIP_01 + name[8:] + B_R_SUFFIX
-    elif name.startswith(NPC_L) and name.endswith(CLOSE_BRACKET):
-        name = replace_nif_name(name, NPC_L, NPC_SUFFIX, BRACE_L, B_L_POSTFIX)
-    elif name.startswith(NPC_R) and name.endswith(CLOSE_BRACKET):
-        name = replace_nif_name(name, NPC_R, NPC_SUFFIX, BRACE_R, B_R_POSTFIX)
-    return name
-
-
-def replace_nif_name(name, original, replacement, open_replace, close_replace):
-    name = name.replace(original, replacement)
-    name = name.replace(open_replace, OPEN_BRACKET)
-    return name.replace(CLOSE_BRACKET, close_replace)
 
 
 def get_bone_name_for_nif(name):

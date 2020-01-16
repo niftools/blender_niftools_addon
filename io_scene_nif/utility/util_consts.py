@@ -1,8 +1,7 @@
-"""This module contains helper methods to import/export object type data."""
-
+"""Nif Utilities, stores common constants that are used across the codebase"""
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2019, NIF File Format Library and Tools contributors.
+# Copyright © 2020, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,27 +36,23 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
 
+B_R_POSTFIX = "].R"
+B_L_POSTFIX = "].L"
 
-def export_range_lod_data(n_node, b_obj):
-    """Export range lod data for for the children of b_obj, as a
-    NiRangeLODData block on n_node.
-    """
-    # create range lod data object
-    n_range_data = block_store.create_block("NiRangeLODData", b_obj)
-    n_node.lod_level_data = n_range_data
+B_R_SUFFIX = ".R"
+B_L_SUFFIX = ".L"
 
-    # get the children
-    b_children = b_obj.children
+BRACE_L = "[L"
+BRACE_R = "[R"
 
-    # set the data
-    n_node.num_lod_levels = len(b_children)
-    n_range_data.num_lod_levels = len(b_children)
-    n_node.lod_levels.update_size()
-    n_range_data.lod_levels.update_size()
-    for b_child, n_lod_level, n_rd_lod_level in zip(b_children, n_node.lod_levels, n_range_data.lod_levels):
-        n_lod_level.near_extent = b_child["near_extent"]
-        n_lod_level.far_extent = b_child["far_extent"]
-        n_rd_lod_level.near_extent = n_lod_level.near_extent
-        n_rd_lod_level.far_extent = n_lod_level.far_extent
+OPEN_BRACKET = "["
+CLOSE_BRACKET = "]"
+
+NPC_SUFFIX = "NPC "
+NPC_L = "NPC L "
+NPC_R = "NPC R "
+
+BIP_01 = "Bip01 "
+BIP01_R = "Bip01 R "
+BIP01_L = "Bip01 L "

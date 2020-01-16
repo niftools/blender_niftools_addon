@@ -44,7 +44,7 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 
 
-class BlockRegistry:
+class ExportBlockRegistry:
 
     def __init__(self):
         self._block_to_obj = {}
@@ -85,33 +85,5 @@ class BlockRegistry:
             raise nif_utils.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
         return self.register_block(block, b_obj)
 
-    @staticmethod
-    def store_longname(b_obj, n_name):
-        """Save original name as object property, for export"""
-        if b_obj.name != n_name:
-            b_obj.niftools.longname = n_name
-            NifLog.debug("Stored long name for {0}".format(b_obj.name))
 
-    @staticmethod
-    def import_name(n_block):
-        """Get name of n_block, ready for blender but not necessarily unique.
-
-        :param n_block: A named nif block.
-        :type n_block: :class:`~pyffi.formats.nif.NifFormat.NiObjectNET`
-        """
-        if n_block is None:
-            return ""
-
-        NifLog.debug("Importing name for {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
-
-        n_name = n_block.name.decode()
-
-        # if name is empty, create something non-empty
-        if not n_name:
-            n_name = "noname"
-        n_name = armature.get_bone_name_for_blender(n_name)
-
-        return n_name
-
-
-block_store = BlockRegistry()
+block_store = ExportBlockRegistry()
