@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.property.texture import texture_writer
+from io_scene_nif.modules.nif_export.property.texture import writer
 from io_scene_nif.utility import nif_utils
 
 
@@ -144,25 +144,25 @@ class BSShader:
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
         if self.base_mtex:
-            texset.textures[0] = texture_writer.export_texture_filename(self.base_mtex.texture)
+            texset.textures[0] = writer.export_texture_filename(self.base_mtex.texture)
         if self.normal_mtex:
-            texset.textures[1] = texture_writer.export_texture_filename(self.normal_mtex.texture)
+            texset.textures[1] = writer.export_texture_filename(self.normal_mtex.texture)
         if self.glow_mtex:
-            texset.textures[2] = texture_writer.export_texture_filename(self.glow_mtex.texture)
+            texset.textures[2] = writer.export_texture_filename(self.glow_mtex.texture)
         if self.detail_mtex:
-            texset.textures[3] = texture_writer.export_texture_filename(self.detail_mtex.texture)
+            texset.textures[3] = writer.export_texture_filename(self.detail_mtex.texture)
 
         if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
             texset.num_textures = 9
             texset.textures.update_size()
             if self.detail_mtex:
-                texset.textures[6] = texture_writer.export_texture_filename(self.detail_mtex.texture)
+                texset.textures[6] = writer.export_texture_filename(self.detail_mtex.texture)
             if self.gloss_mtex:
-                texset.textures[7] = texture_writer.export_texture_filename(self.gloss_mtex.texture)
+                texset.textures[7] = writer.export_texture_filename(self.gloss_mtex.texture)
 
         if b_obj.niftools_shader.bs_shadertype == 'BSEffectShaderProperty':
-            bsshader.source_texture = texture_writer.export_texture_filename(self.base_mtex.texture)
-            bsshader.greyscale_texture = texture_writer.export_texture_filename(self.glow_mtex.texture)
+            bsshader.source_texture = writer.export_texture_filename(self.base_mtex.texture)
+            bsshader.greyscale_texture = writer.export_texture_filename(self.glow_mtex.texture)
 
         return bsshader
 
