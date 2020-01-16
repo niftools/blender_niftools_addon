@@ -44,43 +44,13 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_import import armature
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utils import util_math
-from io_scene_nif.utils.util_consts import BIP_01, BIP01_L, B_L_SUFFIX, BIP01_R, B_R_SUFFIX, NPC_L, NPC_R, NPC_SUFFIX, \
-    BRACE_R, B_R_POSTFIX, B_L_POSTFIX, CLOSE_BRACKET, BRACE_L, OPEN_BRACKET
 from io_scene_nif.utils.util_logging import NifLog
 from io_scene_nif.utils.util_global import NifOp, NifData
-
-
-def get_bone_name_for_blender(name):
-    """Convert a bone name to a name that can be used by Blender: turns 'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
-
-    :param name: The bone name as in the nif file.
-    :type name: :class:`str`
-    :return: Bone name in Blender convention.
-    :rtype: :class:`str`
-    """
-    if isinstance(name, bytes):
-        name = name.decode()
-    if name.startswith(BIP01_L):
-        name = BIP_01 + name[8:] + B_L_SUFFIX
-    elif name.startswith(BIP01_R):
-        name = BIP_01 + name[8:] + B_R_SUFFIX
-    elif name.startswith(NPC_L) and name.endswith(CLOSE_BRACKET):
-        name = replace_nif_name(name, NPC_L, NPC_SUFFIX, BRACE_L, B_L_POSTFIX)
-    elif name.startswith(NPC_R) and name.endswith(CLOSE_BRACKET):
-        name = replace_nif_name(name, NPC_R, NPC_SUFFIX, BRACE_R, B_R_POSTFIX)
-    return name
-
-
-def replace_nif_name(name, original, replacement, open_replace, close_replace):
-    name = name.replace(original, replacement)
-    name = name.replace(open_replace, OPEN_BRACKET)
-    return name.replace(CLOSE_BRACKET, close_replace)
 
 
 class Armature:
@@ -142,7 +112,7 @@ class Armature:
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
         n_bind = util_math.import_matrix(n_block, relative_to=n_armature)
         # get transformation in blender's coordinate space
-        b_bind = armature.nif_bind_to_blender_bind(n_bind)
+        b_bind = util_math.nif_bind_to_blender_bind(n_bind)
 
         # the following is a workaround because blender can no longer set matrices to bones directly
         tail, roll = util_math.mat3_to_vec_roll(b_bind.to_3x3())
@@ -211,7 +181,7 @@ class Armature:
             self.dict_armatures[skelroot] = []
             for bone_name in b_armature_obj.data.bones.keys():
                 # blender bone naming -> nif bone naming
-                nif_bone_name = armature.get_bone_name_for_nif(bone_name)
+                nif_bone_name = block_store.get_bone_name_for_nif(bone_name)
                 # find a block with bone name
                 bone_block = skelroot.find(block_name=nif_bone_name)
                 # add it to the name list if there is a bone with that name

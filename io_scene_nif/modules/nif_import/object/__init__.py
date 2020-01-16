@@ -40,7 +40,6 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_import.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -155,7 +154,7 @@ class Object:
 
                 # this works even for arbitrary bone orientation
                 # note that matrix_parent_inverse is a unity matrix on import, so could be simplified further with a constant
-                mpi = armature.nif_bind_to_blender_bind(b_child.matrix_parent_inverse).inverted()
+                mpi = util_math.nif_bind_to_blender_bind(b_child.matrix_parent_inverse).inverted()
                 mpi.translation.y -= b_obj.length
                 # essentially we mimic a transformed matrix_parent_inverse and delegate its transform
                 # nb. matrix local is relative to the armature object, not the bone

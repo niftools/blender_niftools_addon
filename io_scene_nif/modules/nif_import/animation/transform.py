@@ -43,8 +43,8 @@ from functools import singledispatch
 from bisect import bisect_left
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_import import armature
 from io_scene_nif.modules.nif_import.animation import Animation
+from io_scene_nif.modules.nif_import.object import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_logging import NifLog
 
@@ -122,7 +122,7 @@ class TransformAnimation(Animation):
             # fallout (node_name) & Loki (StringPalette)
             if not n_name:
                 n_name = controlledblock.get_node_name()
-            bone_name = armature.get_bone_name_for_blender(n_name)
+            bone_name = block_store.get_bone_name_for_blender(n_name)
             if bone_name not in b_armature_obj.data.bones:
                 continue
             b_bone = b_armature_obj.data.bones[bone_name]
@@ -228,7 +228,7 @@ class TransformAnimation(Animation):
             for t, val in eulers:
                 key = mathutils.Euler(val)
                 if bone_name:
-                    key = armature.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
+                    key = util_math.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
                 self.add_key(fcurves, t, key, interp_rot)
         elif rotations:
             NifLog.debug('Rotation keys...(quaternions)')
@@ -236,7 +236,7 @@ class TransformAnimation(Animation):
             for t, val in rotations:
                 key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                 if bone_name:
-                    key = armature.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
+                    key = util_math.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
                 self.add_key(fcurves, t, key, interp_rot)
         if translations:
             NifLog.debug('Translation keys...')
@@ -244,7 +244,7 @@ class TransformAnimation(Animation):
             for t, val in translations:
                 key = mathutils.Vector([val.x, val.y, val.z])
                 if bone_name:
-                    key = armature.import_keymat(n_bone_bind_rot_inv, mathutils.Matrix.Translation(key - n_bone_bind_trans)).to_translation()
+                    key = util_math.import_keymat(n_bone_bind_rot_inv, mathutils.Matrix.Translation(key - n_bone_bind_trans)).to_translation()
                 self.add_key(fcurves, t, key, interp_loc)
         if scales:
             NifLog.debug('Scale keys...')
