@@ -47,6 +47,7 @@ from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_global import NifOp
+from io_scene_nif.utility.util_logging import NifLog
 
 
 class TransformAnimation(Animation):
@@ -336,3 +337,29 @@ class TransformAnimation(Animation):
         for key, (frame, scale) in zip(n_kfd.scales.keys, scale_curve):
             key.time = frame / self.fps
             key.value = scale
+
+    def export_text_keys(self, b_action):
+        """Process b_action's pose markers and return an extra string data block."""
+        if NifOp.props.animation == 'GEOM_NIF':
+            # animation group extra data is not present in geometry only files
+            return
+        NifLog.info("Exporting animation groups")
+
+        self.add_dummy_markers(b_action)
+
+        # add a NiTextKeyExtraData block
+        n_text_extra = block_store.create_block("NiTextKeyExtraData", b_action.pose_markers)
+
+        # create a text key for each frame descriptor
+        n_text_extra.num_text_keys = len(b_action.pose_markers)
+        n_text_extra.text_keys.update_size()
+        f0, f1 = b_action.frame_range
+        for key, marker in zip(n_text_extra.text_keys, b_action.pose_markers):
+            f = marker.frame
+            if (f < f0) or (f > f1):
+                NifLog.warn("Marker out of animated range ({0} not between [{1}, {2}])".format(f, f0, f1))
+
+            key.time = f / self.fps
+            key.value = marker.name.replace('/', '\r\n')
+
+        return n_text_extra

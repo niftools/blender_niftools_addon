@@ -189,30 +189,3 @@ class Animation:
             for frame, text in zip(b_action.frame_range, ("Idle: Start/Idle: Loop Start", "Idle: Loop Stop/Idle: Stop") ):
                 marker = b_action.pose_markers.new(text)
                 marker.frame = frame
-
-    def export_text_keys(self, b_action):
-        """Process b_action's pose markers and return an extra string data block."""
-        if NifOp.props.animation == 'GEOM_NIF':
-            # animation group extra data is not present in geometry only files
-            return
-        NifLog.info("Exporting animation groups")
-
-        self.add_dummy_markers(b_action)
-
-        # add a NiTextKeyExtraData block
-        n_text_extra = block_store.create_block("NiTextKeyExtraData", b_action.pose_markers)
-
-        # create a text key for each frame descriptor
-        n_text_extra.num_text_keys = len(b_action.pose_markers)
-        n_text_extra.text_keys.update_size()
-        f0, f1 = b_action.frame_range
-        for key, marker in zip(n_text_extra.text_keys, b_action.pose_markers):
-            f = marker.frame
-            if (f < f0) or (f > f1):
-                NifLog.warn("Marker out of animated range ({0} not between [{1}, {2}])".format(
-                    f, f0, f1))
-
-            key.time = f / self.fps
-            key.value = marker.name.replace('/', '\r\n')
-
-        return n_text_extra
