@@ -1,4 +1,4 @@
-"""This modules contains any modules which provide properties on objects."""
+"""Script to export havok collisions."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

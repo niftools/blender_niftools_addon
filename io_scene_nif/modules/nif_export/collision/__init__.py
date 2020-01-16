@@ -42,11 +42,17 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import collision
-from io_scene_nif.modules.object.block_registry import block_store
+from io_scene_nif.modules.nif_export import collision
+from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.utility.util_logging import NifLog
 from io_scene_nif.utility.util_global import NifOp
+
+HAVOK_SCALE = 6.996
+
+# dictionary mapping bhkRigidBody objects to objects imported in Blender;
+# we use this dictionary to set the physics constraints (ragdoll etc)
+DICT_HAVOK_OBJECTS = {}
 
 
 class Collision:
