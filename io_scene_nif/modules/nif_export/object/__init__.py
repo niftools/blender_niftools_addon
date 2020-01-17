@@ -341,7 +341,7 @@ class Object:
                 for n_parent, obj in block_store.block_to_obj.items():
                     if obj == parent_bone:
                         break
-            self.nif_export.objecthelper.export_node(b_child, n_parent)
+            self.export_node(b_child, n_parent)
 
     def create_ninode(self, b_obj=None):
         """Essentially a wrapper around create_block() that creates nodes of the right type"""
