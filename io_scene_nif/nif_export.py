@@ -82,7 +82,6 @@ class NifExport(NifCommon):
 
         # Helper systems
         self.collisionhelper = Collision(parent=self)
-        self.armaturehelper = Armature(parent=self)
         self.transform_anim = TransformAnimation()
         self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint(parent=self)

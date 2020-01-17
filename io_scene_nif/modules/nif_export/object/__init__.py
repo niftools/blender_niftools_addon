@@ -43,6 +43,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
+from io_scene_nif.modules.nif_export.armature import Armature
 from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_import.object import PRN_DICT
 from io_scene_nif.modules.nif_export.object import types
@@ -70,6 +71,7 @@ class Object:
 
     def __init__(self, parent):
         self.nif_export = parent
+        self.armaturehelper = Armature()
         self.mesh_helper = Mesh(parent=parent)
         self.transform_anim = TransformAnimation()
         self.object_anim = ObjectAnimation()
@@ -301,7 +303,7 @@ class Object:
             return self.mesh_helper.export_tri_shapes(b_obj, node)
         # if it is an armature, export the bones as ninode children of this ninode
         elif b_obj.type == 'ARMATURE':
-            self.nif_export.armaturehelper.export_bones(b_obj, node)
+            self.armaturehelper.export_bones(b_obj, node)
 
         # export all children of this b_obj as children of this NiNode
         self.export_children(b_obj, node)
