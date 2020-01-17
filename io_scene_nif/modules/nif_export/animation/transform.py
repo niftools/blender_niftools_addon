@@ -42,7 +42,6 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -248,16 +247,16 @@ class TransformAnimation(Animation):
         trans_curve = []
         scale_curve = []
         for frame, quat in self.iter_frame_key(quaternions, mathutils.Quaternion):
-            quat = armature.export_keymat(bind_rot, quat.to_matrix().to_4x4(), bone).to_quaternion()
+            quat = util_math.export_keymat(bind_rot, quat.to_matrix().to_4x4(), bone).to_quaternion()
             quat_curve.append((frame, quat))
 
         for frame, euler in self.iter_frame_key(eulers, mathutils.Euler):
-            keymat = armature.export_keymat(bind_rot, euler.to_matrix().to_4x4(), bone)
+            keymat = util_math.export_keymat(bind_rot, euler.to_matrix().to_4x4(), bone)
             euler = keymat.to_euler("XYZ", euler)
             euler_curve.append((frame, euler))
 
         for frame, trans in self.iter_frame_key(translations, mathutils.Vector):
-            keymat = armature.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone)
+            keymat = util_math.export_keymat(bind_rot, mathutils.Matrix.Translation(trans), bone)
             trans = keymat.to_translation() + bind_trans
             trans_curve.append((frame, trans))
 
