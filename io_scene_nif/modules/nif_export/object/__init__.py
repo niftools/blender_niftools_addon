@@ -41,7 +41,8 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export import armature
+from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
+from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_import.object import PRN_DICT
 from io_scene_nif.modules.nif_export.object import types
@@ -70,6 +71,8 @@ class Object:
     def __init__(self, parent):
         self.nif_export = parent
         self.mesh_helper = Mesh(parent=parent)
+        self.transform_anim = TransformAnimation()
+        self.object_anim = ObjectAnimation()
 
     def export_root_node(self, root_objects, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
@@ -254,7 +257,7 @@ class Object:
         b_obj_anim_data = b_obj.animation_data  # get animation data
         b_obj_children = b_obj.children
         
-        b_action = self.nif_export.animationhelper.get_active_action(b_obj)
+        b_action = self.object_anim.get_active_action(b_obj)
 
         # can we export this b_obj?
         if b_obj_type not in self.export_types:
@@ -313,8 +316,8 @@ class Object:
         self.set_object_matrix(b_obj, node)
 
         # export object animation
-        self.nif_export.animationhelper.transform.export_transforms(node, b_obj, b_action)
-        self.nif_export.animationhelper.object.export_visibility(node, b_action)
+        self.transform_anim.export_transforms(node, b_obj, b_action)
+        self.object_anim.export_visibility(node, b_action)
         # if it is a mesh, export the mesh as trishape children of this ninode
         if b_obj.type == 'MESH':
             return self.mesh_helper.export_tri_shapes(b_obj, node)
