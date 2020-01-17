@@ -396,7 +396,7 @@ class Object:
         """
 
         if isinstance(b_obj, bpy.types.Bone):
-            return armature.get_bind_matrix(b_obj)
+            return util_math.get_bind_matrix(b_obj)
 
         elif isinstance(b_obj, bpy.types.Object):
 
@@ -407,7 +407,7 @@ class Object:
                 parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
 
                 # undo what was done on import
-                mpi = armature.nif_bind_to_blender_bind(b_obj.matrix_parent_inverse).inverted()
+                mpi = util_math.nif_bind_to_blender_bind(b_obj.matrix_parent_inverse).inverted()
                 mpi.translation.y -= parent_bone.length
                 return mpi.inverted() * b_obj.matrix_basis
             # just get the local matrix
@@ -423,5 +423,3 @@ class Object:
             for constr in b_obj.constraints:
                 if constr.type == 'TRACK_TO':
                     return True
-
-
