@@ -81,32 +81,39 @@ class Object:
         #     return None  # done; stop here
 
         # there is only one root object so that will be our final root
+        b_obj_root = root_objects[0]
         if len(root_objects) == 1:
-            n_root = self.export_node(root_objects[0], None)
+            n_root = self.export_node(b_obj_root, None)
+
         # there is more than one root object so we create a meta root
         else:
             n_root = self.create_ninode()
             n_root.name = "Scene Root"
             for b_obj in root_objects:
                 self.export_node(b_obj, n_root)
+
+        # TODO [object] How dow we know we are selecting the right node in the case of multi-root?
         # making root block a fade node
-        root_type = self.nif_export.root_objects[0].niftools.rootnode
+        root_type = b_obj_root.niftools.rootnode
         if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and root_type == 'BSFadeNode':
             NifLog.info("Making root block a BSFadeNode")
             fade_root_block = NifFormat.BSFadeNode().deepcopy(n_root)
             fade_root_block.replace_global_node(n_root, fade_root_block)
             n_root = fade_root_block
+
         # various extra datas
         self.export_bsxflags_upb(n_root)
-        self.export_weapon_location(n_root)
-        self.export_inventory_marker(n_root)
-        self.export_furniture_marker(n_root, filebase)
+        # TODO [object][property][extradata] doesn't account for mult-root
+        self.export_weapon_location(n_root, b_obj_root)
+        self.export_inventory_marker(n_root, root_objects)
+        types.export_furniture_marker(n_root, filebase)
         return n_root
 
     # TODO [object][property] Move to object property
-    def export_inventory_marker(self, n_root):
+    @staticmethod
+    def export_inventory_marker(n_root, root_objects):
         if NifOp.props.game in ('SKYRIM',):
-            for root_object in self.nif_export.root_objects:
+            for root_object in root_objects:
                 if root_object.niftools_bs_invmarker:
                     for extra_item in n_root.extra_data_list:
                         if isinstance(extra_item, NifFormat.BSInvMarker):
@@ -146,11 +153,10 @@ class Object:
                     root_block.add_extra_data(upb)
 
     # TODO [object][property] Move to new object type
-    def export_weapon_location(self, n_root):
+    def export_weapon_location(self, n_root, root_obj):
         # export weapon location
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            b_obj = self.nif_export.root_objects[0]
-            loc = b_obj.niftools.prn_location
+            loc = root_obj.niftools.prn_location
             if loc != "NONE":
                 # add string extra data
                 prn = block_store.create_block("NiStringExtraData")
