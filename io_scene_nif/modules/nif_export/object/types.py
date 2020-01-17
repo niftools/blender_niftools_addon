@@ -38,6 +38,8 @@
 # ***** END LICENSE BLOCK *****
 
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp
 
 
 def export_range_lod_data(n_node, b_obj):
@@ -61,3 +63,32 @@ def export_range_lod_data(n_node, b_obj):
         n_lod_level.far_extent = b_child["far_extent"]
         n_rd_lod_level.near_extent = n_lod_level.near_extent
         n_rd_lod_level.far_extent = n_lod_level.far_extent
+
+
+# TODO [object][type] Move to new object type
+def export_furniture_marker(n_root, filebase):
+    # oblivion and Fallout 3 furniture markers
+    if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase[:15].lower() == 'furnituremarker':
+        # exporting a furniture marker for Oblivion/FO3
+        try:
+            furniturenumber = int(filebase[15:])
+        except ValueError:
+            raise util_math.NifError("Furniture marker has invalid number ({0}).\n"
+                                     "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.".format(filebase[15:]))
+
+        # create furniture marker block
+        furnmark = block_store.create_block("BSFurnitureMarker")
+        furnmark.name = "FRN"
+        furnmark.num_positions = 1
+        furnmark.positions.update_size()
+        furnmark.positions[0].position_ref_1 = furniturenumber
+        furnmark.positions[0].position_ref_2 = furniturenumber
+
+        # create extra string data sgoKeep
+        sgokeep = block_store.create_block("NiStringExtraData")
+        sgokeep.name = "UPB"  # user property buffer
+        sgokeep.string_data = "sgoKeep=1 ExportSel = Yes"  # Unyielding = 0, sgoKeep=1ExportSel = Yes
+
+        # add extra blocks
+        n_root.add_extra_data(furnmark)
+        n_root.add_extra_data(sgokeep)

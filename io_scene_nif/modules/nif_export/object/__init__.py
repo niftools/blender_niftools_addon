@@ -120,34 +120,6 @@ class Object:
                         n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
                         n_root.add_extra_data(n_extra_list)
 
-    # TODO [object][type] Move to new object type
-    def export_furniture_marker(self, n_root, filebase):
-        # oblivion and Fallout 3 furniture markers
-        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase[:15].lower() == 'furnituremarker':
-            # exporting a furniture marker for Oblivion/FO3
-            try:
-                furniturenumber = int(filebase[15:])
-            except ValueError:
-                raise util_math.NifError("Furniture marker has invalid number ({0}).\n"
-                                         "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.".format(filebase[15:]))
-
-            # create furniture marker block
-            furnmark = block_store.create_block("BSFurnitureMarker")
-            furnmark.name = "FRN"
-            furnmark.num_positions = 1
-            furnmark.positions.update_size()
-            furnmark.positions[0].position_ref_1 = furniturenumber
-            furnmark.positions[0].position_ref_2 = furniturenumber
-
-            # create extra string data sgoKeep
-            sgokeep = block_store.create_block("NiStringExtraData")
-            sgokeep.name = "UPB"  # user property buffer
-            sgokeep.string_data = "sgoKeep=1 ExportSel = Yes"  # Unyielding = 0, sgoKeep=1ExportSel = Yes
-
-            # add extra blocks
-            n_root.add_extra_data(furnmark)
-            n_root.add_extra_data(sgokeep)
-
     # TODO [object][property] Move to object property
     def export_bsxflags_upb(self, root_block):
         # TODO [object][property] Fixme
