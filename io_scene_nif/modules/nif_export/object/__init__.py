@@ -126,8 +126,7 @@ class Object:
                 furniturenumber = int(filebase[15:])
             except ValueError:
                 raise util_math.NifError("Furniture marker has invalid number ({0}).\n"
-                                         "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.".format(filebase[
-                                                                                                                            15:]))
+                                         "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.".format(filebase[15:]))
 
             # create furniture marker block
             furnmark = block_store.create_block("BSFurnitureMarker")
@@ -309,7 +308,7 @@ class Object:
             n_parent.add_child(node)
 
         # and fill in this node's non-trivial values
-        node.name = self.get_full_name(b_obj)
+        node.name = block_store.get_full_name(b_obj)
         self.set_node_flags(b_obj, node)
         self.set_object_matrix(b_obj, node)
 
@@ -365,36 +364,6 @@ class Object:
             types.export_range_lod_data(n_node, b_obj)
 
         return n_node
-
-    def get_unique_name(self, b_name):
-        """Returns an unique name for use in the NIF file, from the name of a
-        Blender object.
-
-        :param b_name: Name of object as in blender.
-        :type b_name: :class:`str`
-
-        .. todo:: Refactor and simplify this code.
-        """
-        unique_name = "unnamed"
-        if b_name:
-            unique_name = b_name
-        # blender bone naming -> nif bone naming
-        unique_name = armature.get_bone_name_for_nif(unique_name)
-        return unique_name
-
-    def get_full_name(self, b_obj):
-        """Returns the original imported name if present, or the name by which
-        the object was exported already.
-        """
-        longname = ""
-        if b_obj:
-            try:
-                longname = b_obj.niftools.longname
-            except:
-                pass
-            if not longname:
-                longname = self.get_unique_name(b_obj.name)
-        return longname
 
     def set_object_matrix(self, b_obj, block):
         """Set a blender object's transform matrix to a NIF object's transformation matrix in rest pose."""

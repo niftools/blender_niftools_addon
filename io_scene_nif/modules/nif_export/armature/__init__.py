@@ -40,38 +40,8 @@ import bpy
 
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.utils import util_math
-from io_scene_nif.utils.util_consts import BIP_01, B_L_SUFFIX, BIP01_L, B_R_SUFFIX, BIP01_R, NPC_SUFFIX, B_L_POSTFIX, \
-    NPC_L, B_R_POSTFIX, BRACE_L, BRACE_R, NPC_R, OPEN_BRACKET, CLOSE_BRACKET
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
-
-
-def get_bone_name_for_nif(name):
-    """Convert a bone name to a name that can be used by the nif file: turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
-
-    :param name: The bone name as in Blender.
-    :type name: :class:`str`
-    :return: Bone name in nif convention.
-    :rtype: :class:`str`
-    """
-    if isinstance(name, bytes):
-        name = name.decode()
-    if name.startswith(BIP_01):
-        if name.endswith(B_L_SUFFIX):
-            name = BIP01_L + name[6:-2]
-        elif name.endswith(B_R_SUFFIX):
-            name = BIP01_R + name[6:-2]
-    elif name.startswith(NPC_SUFFIX) and name.endswith(B_L_POSTFIX):
-        name = replace_blender_name(name, NPC_SUFFIX, NPC_L, BRACE_L, B_L_POSTFIX)
-    elif name.startswith(NPC_SUFFIX) and name.endswith(B_R_POSTFIX):
-        name = replace_blender_name(name, NPC_SUFFIX, NPC_R, BRACE_R, B_R_POSTFIX)
-    return name
-
-
-def replace_blender_name(name, original, replacement, open_replace, close_replace):
-    name = name.replace(original, replacement)
-    name = name.replace(OPEN_BRACKET, open_replace)
-    return name.replace(close_replace, CLOSE_BRACKET)
 
 
 def get_armature():

@@ -40,7 +40,15 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_consts import BIP_01, B_L_SUFFIX, BIP01_L, B_R_SUFFIX, BIP01_R, NPC_SUFFIX, B_L_POSTFIX, \
+    NPC_L, B_R_POSTFIX, BRACE_L, BRACE_R, NPC_R, OPEN_BRACKET, CLOSE_BRACKET
 from io_scene_nif.utils.util_logging import NifLog
+
+
+def replace_blender_name(name, original, replacement, open_replace, close_replace):
+    name = name.replace(original, replacement)
+    name = name.replace(OPEN_BRACKET, open_replace)
+    return name.replace(close_replace, CLOSE_BRACKET)
 
 
 class ExportBlockRegistry:
@@ -83,6 +91,60 @@ class ExportBlockRegistry:
         except AttributeError:
             raise util_math.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
         return self.register_block(block, b_obj)
+
+    @staticmethod
+    def get_bone_name_for_nif(name):
+        """Convert a bone name to a name that can be used by the nif file: turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
+
+        :param name: The bone name as in Blender.
+        :type name: :class:`str`
+        :return: Bone name in nif convention.
+        :rtype: :class:`str`
+        """
+        if isinstance(name, bytes):
+            name = name.decode()
+        if name.startswith(BIP_01):
+            if name.endswith(B_L_SUFFIX):
+                name = BIP01_L + name[6:-2]
+            elif name.endswith(B_R_SUFFIX):
+                name = BIP01_R + name[6:-2]
+        elif name.startswith(NPC_SUFFIX) and name.endswith(B_L_POSTFIX):
+            name = replace_blender_name(name, NPC_SUFFIX, NPC_L, BRACE_L, B_L_POSTFIX)
+        elif name.startswith(NPC_SUFFIX) and name.endswith(B_R_POSTFIX):
+            name = replace_blender_name(name, NPC_SUFFIX, NPC_R, BRACE_R, B_R_POSTFIX)
+        return name
+
+    @staticmethod
+    def _get_unique_name(b_name):
+        """Returns an unique name for use in the NIF file, from the name of a
+        Blender object.
+
+        :param b_name: Name of object as in blender.
+        :type b_name: :class:`str`
+
+        .. todo:: Refactor and simplify this code.
+        """
+        unique_name = "unnamed"
+        if b_name:
+            unique_name = b_name
+        # blender bone naming -> nif bone naming
+        unique_name = block_store.get_bone_name_for_nif(unique_name)
+        return unique_name
+
+    @staticmethod
+    def get_full_name(b_obj):
+        """Returns the original imported name if present, or the name by which
+        the object was exported already.
+        """
+        longname = ""
+        if b_obj:
+            try:
+                longname = b_obj.niftools.longname
+            except:
+                pass
+            if not longname:
+                longname = block_store._get_unique_name(b_obj.name)
+        return longname
 
 
 block_store = ExportBlockRegistry()
