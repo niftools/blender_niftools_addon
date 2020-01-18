@@ -43,6 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.animation import Animation
+from io_scene_nif.modules.nif_export.object import Object
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp
@@ -194,12 +195,13 @@ class TransformAnimation(Animation):
         # skeletal animation - with bone correction & coordinate corrections
         if bone and bone.name in b_action.groups:
             # get bind matrix for bone or object
-            bind_matrix = self.nif_export.objecthelper.get_object_bind(bone)
+            bind_matrix = Object.get_object_bind(bone)
             exp_fcurves = b_action.groups[bone.name].channels
             # just for more detailed error reporting later on
             bonestr = " in bone " + bone.name
-            target_name = self.nif_export.objecthelper.get_full_name(bone)
+            target_name = block_store.get_full_name(bone)
             priority = bone.niftools.bonepriority
+
         # object level animation - no coordinate corrections
         elif not bone:
 
@@ -207,7 +209,7 @@ class TransformAnimation(Animation):
             if b_obj.parent and b_obj.parent_type == "BONE":
                 raise util_math.NifError("{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
 
-            target_name = self.nif_export.objecthelper.get_full_name(b_obj)
+            target_name = block_store.get_full_name(b_obj)
             priority = 0
 
             # we have either a root object (Scene Root), in which case we take the coordinates without modification
