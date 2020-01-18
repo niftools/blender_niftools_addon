@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.property.texture import writer
+from io_scene_nif.modules.nif_export.property.texture import TextureWriter
 from io_scene_nif.utils import util_math
 
 
@@ -67,11 +67,11 @@ class BSShader:
 
             # UV Offset
             if hasattr(bsshader, 'uv_offset'):
-                BSShader.export_uv_offset(bsshader)
+                self.export_uv_offset(bsshader)
 
             # UV Scale
             if hasattr(bsshader, 'uv_scale'):
-                BSShader.export_uv_scale(bsshader)
+                self.export_uv_scale(bsshader)
 
             # Texture Clamping mode
             if not self.base_mtex.texture.image.use_clamp_x:
@@ -144,25 +144,25 @@ class BSShader:
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
         if self.base_mtex:
-            texset.textures[0] = writer.export_texture_filename(self.base_mtex.texture)
+            texset.textures[0] = TextureWriter.export_texture_filename(self.base_mtex.texture)
         if self.normal_mtex:
-            texset.textures[1] = writer.export_texture_filename(self.normal_mtex.texture)
+            texset.textures[1] = TextureWriter.export_texture_filename(self.normal_mtex.texture)
         if self.glow_mtex:
-            texset.textures[2] = writer.export_texture_filename(self.glow_mtex.texture)
+            texset.textures[2] = TextureWriter.export_texture_filename(self.glow_mtex.texture)
         if self.detail_mtex:
-            texset.textures[3] = writer.export_texture_filename(self.detail_mtex.texture)
+            texset.textures[3] = TextureWriter.export_texture_filename(self.detail_mtex.texture)
 
         if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
             texset.num_textures = 9
             texset.textures.update_size()
             if self.detail_mtex:
-                texset.textures[6] = writer.export_texture_filename(self.detail_mtex.texture)
+                texset.textures[6] = TextureWriter.export_texture_filename(self.detail_mtex.texture)
             if self.gloss_mtex:
-                texset.textures[7] = writer.export_texture_filename(self.gloss_mtex.texture)
+                texset.textures[7] = TextureWriter.export_texture_filename(self.gloss_mtex.texture)
 
         if b_obj.niftools_shader.bs_shadertype == 'BSEffectShaderProperty':
-            bsshader.source_texture = writer.export_texture_filename(self.base_mtex.texture)
-            bsshader.greyscale_texture = writer.export_texture_filename(self.glow_mtex.texture)
+            bsshader.source_texture = TextureWriter.export_texture_filename(self.base_mtex.texture)
+            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.glow_mtex.texture)
 
         return bsshader
 
