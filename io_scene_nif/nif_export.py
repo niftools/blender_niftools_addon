@@ -47,7 +47,6 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
-from io_scene_nif.modules.nif_export.armature import Armature
 from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.modules.nif_export.constraint import Constraint
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
