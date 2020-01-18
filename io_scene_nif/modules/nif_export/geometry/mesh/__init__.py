@@ -234,7 +234,7 @@ class Mesh:
                 if len(mesh_materials) > 1:
                     trishape.name = trishape.name.decode() + ":%i" % materialIndex
                 else:
-                    trishape.name = self.nif_export.objecthelper.get_full_name(trishape)
+                    trishape.name = block_store.get_full_name(trishape)
 
             # TODO [object][flags] Move up to object
             # Trishape Flags...
@@ -368,7 +368,7 @@ class Mesh:
 
                 # add NiTriShape's material property
                 trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
-                    name=self.nif_export.objecthelper.get_full_name(b_mat),
+                    name=block_store.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
@@ -647,7 +647,7 @@ class Mesh:
                         trishape.skin_instance = skininst
                         for block in block_store.block_to_obj:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature):
+                                if block.name.decode() == block_store.get_full_name(b_obj_armature):
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -717,7 +717,7 @@ class Mesh:
                             bone_block = None
                             for block in block_store.block_to_obj:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(b_obj_armature.data.bones[bone]):
+                                    if block.name.decode() == block_store.get_full_name(b_obj_armature.data.bones[bone]):
                                         if not bone_block:
                                             bone_block = block
                                         else:
