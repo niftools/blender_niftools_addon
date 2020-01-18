@@ -41,6 +41,7 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.nif_export import collision
 from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.armature import Armature
@@ -129,13 +130,20 @@ class Object:
                         n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
                         n_root.add_extra_data(n_extra_list)
 
+    @staticmethod
+    def has_collision():
+        """Helper function that determines if a blend file contains a collider."""
+        for b_obj in bpy.data.objects:
+            if b_obj.game.use_collision_bounds:
+                return b_obj
+
     # TODO [object][property] Move to object property
     def export_bsxflags_upb(self, root_block):
         # TODO [object][property] Fixme
         NifLog.info("Checking collision")
         # activate oblivion/Fallout 3 collision and physics
         if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            b_obj = self.nif_export.collisionhelper.has_collision()
+            b_obj = self.has_collision()
             if b_obj:
                 # enable collision
                 bsx = block_store.create_block("BSXFlags")
@@ -165,38 +173,6 @@ class Object:
                 prn.name = 'Prn'
                 prn.string_data = PRN_DICT[loc]
                 n_root.add_extra_data(prn)
-
-    # TODO [collision] Move to collision
-    def update_rigid_bodies(self):
-        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
-            # update rigid body center of gravity and mass
-            if self.nif_export.IGNORE_BLENDER_PHYSICS:
-                # we are not using blender properties to set the mass
-                # so calculate mass automatically first calculate distribution of mass
-                total_mass = 0
-                for n_block in n_rigid_bodies:
-                    n_block.update_mass_center_inertia(solid=self.nif_export.EXPORT_OB_SOLID)
-                    total_mass += n_block.mass
-
-                # to avoid zero division error later (if mass is zero then this does not matter anyway)
-                if total_mass == 0:
-                    total_mass = 1
-
-                # now update the mass ensuring that total mass is EXPORT_OB_MASS
-                for n_block in n_rigid_bodies:
-                    mass = self.nif_export.EXPORT_OB_MASS * n_block.mass / total_mass
-                    # lower bound on mass
-                    if mass < 0.0001:
-                        mass = 0.05
-                    n_block.update_mass_center_inertia(mass=mass, solid=self.nif_export.EXPORT_OB_SOLID)
-            else:
-                # using blender properties, so n_block.mass *should* have been set properly
-                for n_block in n_rigid_bodies:
-                    # lower bound on mass
-                    if n_block.mass < 0.0001:
-                        n_block.mass = 0.05
-                    n_block.update_mass_center_inertia(mass=n_block.mass, solid=self.nif_export.EXPORT_OB_SOLID)
 
     def set_node_flags(self, b_obj, n_node):
         # default node flags

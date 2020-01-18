@@ -69,13 +69,6 @@ class NifExport(NifCommon):
 
     # TODO: - Expose via properties
 
-    EXPORT_OPTIMIZE_MATERIALS = True
-    IGNORE_BLENDER_PHYSICS = False
-
-    EXPORT_BHKLISTSHAPE = False
-    EXPORT_OB_MASS = 10.0
-    EXPORT_OB_SOLID = True
-
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
 
