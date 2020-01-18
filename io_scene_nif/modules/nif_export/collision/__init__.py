@@ -43,6 +43,8 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import collision
+from io_scene_nif.modules.nif_export.geometry import mesh
+from io_scene_nif.modules.nif_export.object import Object
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_logging import NifLog
@@ -54,21 +56,19 @@ HAVOK_SCALE = 6.996
 # we use this dictionary to set the physics constraints (ragdoll etc)
 DICT_HAVOK_OBJECTS = {}
 
+IGNORE_BLENDER_PHYSICS = False
+EXPORT_BHKLISTSHAPE = False
+EXPORT_OB_MASS = 10.0
+EXPORT_OB_SOLID = True
+
 
 class Collision:
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
-    def __init__(self, parent):
-        self.nif_export = parent
+    def __init__(self):
+        self.objecthelper = Object()
         self.HAVOK_SCALE = collision.HAVOK_SCALE
-
-    @staticmethod
-    def has_collision():
-        """Helper function that determines if a blend file contains a collider."""
-        for b_obj in bpy.data.objects:
-            if b_obj.game.use_collision_bounds:
-                return b_obj
 
     def export_collision(self, b_obj, n_parent):
         """Main function for adding collision object b_obj to a node."""
@@ -78,9 +78,9 @@ class Collision:
             node = block_store.create_block("RootCollisionNode", b_obj)
             n_parent.add_child(node)
             node.flags = 0x0003  # default
-            self.nif_export.objecthelper.set_object_matrix(b_obj, node)
+            self.objecthelper.set_object_matrix(b_obj, node)
             for child in b_obj.children:
-                self.nif_export.objecthelper.export_node(child, node, None)
+                self.objecthelper.export_node(child, node, None)
 
         elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
@@ -92,10 +92,11 @@ class Collision:
                     break
                 except ValueError:  # adding collision failed
                     continue
-            else:  # all nodes failed so add new one
-                node = self.nif_export.objecthelper.create_ninode(b_obj)
+            else:
+                # all nodes failed so add new one
+                node = self.objecthelper.create_ninode(b_obj)
                 # node.set_transform(self.IDENTITY44)
-                node.name = 'collisiondummy%i' % n_parent.num_children
+                node.name = 'collisiondummy{:d}'.format(n_parent.num_children)
                 if b_obj.niftools.objectflags != 0:
                     node_flag_hex = hex(b_obj.niftools.objectflags)
                 else:
@@ -108,6 +109,39 @@ class Collision:
             self.export_nicollisiondata(b_obj, n_parent)
         else:
             NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(NifOp.props.game, b_obj.name))
+
+    # TODO [collision] Move to collision
+    def update_rigid_bodies(self):
+        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
+
+            # update rigid body center of gravity and mass
+            if collision.IGNORE_BLENDER_PHYSICS:
+                # we are not using blender properties to set the mass
+                # so calculate mass automatically first calculate distribution of mass
+                total_mass = 0
+                for n_block in n_rigid_bodies:
+                    n_block.update_mass_center_inertia(solid=EXPORT_OB_SOLID)
+                    total_mass += n_block.mass
+
+                # to avoid zero division error later (if mass is zero then this does not matter anyway)
+                if total_mass == 0:
+                    total_mass = 1
+
+                # now update the mass ensuring that total mass is EXPORT_OB_MASS
+                for n_block in n_rigid_bodies:
+                    mass = EXPORT_OB_MASS * n_block.mass / total_mass
+                    # lower bound on mass
+                    if mass < 0.0001:
+                        mass = 0.05
+                    n_block.update_mass_center_inertia(mass=mass, solid=EXPORT_OB_SOLID)
+            else:
+                # using blender properties, so n_block.mass *should* have been set properly
+                for n_block in n_rigid_bodies:
+                    # lower bound on mass
+                    if n_block.mass < 0.0001:
+                        n_block.mass = 0.05
+                    n_block.update_mass_center_inertia(mass=n_block.mass, solid=EXPORT_OB_SOLID)
 
     def export_nicollisiondata(self, b_obj, n_parent):
         """ Export b_obj as a NiCollisionData """
@@ -128,7 +162,7 @@ class Collision:
         """ Export b_obj as a NiCollisionData's bounding_volume sphere """
 
         n_bv.collision_type = 0
-        matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
+        matrix = Object.get_object_bind(b_obj)
         center = matrix.translation
         n_bv.sphere.radius = b_obj.dimensions.x / 2
         n_bv.sphere.center.x = center.x
@@ -139,16 +173,19 @@ class Collision:
         """ Export b_obj as a NiCollisionData's bounding_volume box """
 
         n_bv.collision_type = 1
-        matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
+        matrix = Object.get_object_bind(b_obj)
+
         # set center
         center = matrix.translation
         n_bv.box.center.x = center.x
         n_bv.box.center.y = center.y
         n_bv.box.center.z = center.z
+
         # set axes to unity 3x3 matrix
         n_bv.box.axis[0].x = 1
         n_bv.box.axis[1].y = 1
         n_bv.box.axis[2].z = 1
+
         # set extent
         extent = b_obj.dimensions / 2
         n_bv.box.extent[0] = extent.x
@@ -159,7 +196,7 @@ class Collision:
         """ Export b_obj as a NiCollisionData's bounding_volume capsule """
 
         n_bv.collision_type = 2
-        matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
+        matrix = Object.get_object_bind(b_obj)
         offset = matrix.translation
         # calculate the direction unit vector
         v_dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
@@ -372,7 +409,7 @@ class Collision:
                 raise ValueError('Not a packed list of collisions')
 
         mesh = b_obj.data
-        transform = mathutils.Matrix(self.nif_export.objecthelper.get_object_matrix(b_obj).as_list())
+        transform = mathutils.Matrix(self.objecthelper.get_object_matrix(b_obj).as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
@@ -443,6 +480,7 @@ class Collision:
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
             n_coltf = block_store.create_block("bhkConvexTransformShape", b_obj)
+
             # n_coltf.material = n_havok_mat[0]
             n_coltf.unknown_float_1 = 0.1
             n_coltf.unknown_8_bytes[0] = 96
@@ -454,18 +492,21 @@ class Collision:
             n_coltf.unknown_8_bytes[6] = 253
             n_coltf.unknown_8_bytes[7] = 4
             hktf = mathutils.Matrix(
-                self.nif_export.objecthelper.get_object_matrix(b_obj).as_list())
+                self.objecthelper.get_object_matrix(b_obj).as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
+
             # and transform it to global coordinates
             center = center * hktf
             hktf[0][3] = center[0]
             hktf[1][3] = center[1]
             hktf[2][3] = center[2]
+
             # we need to store the transpose of the matrix
             hktf.transpose()
             n_coltf.transform.set_rows(*hktf)
+
             # fix matrix for havok coordinate system
             n_coltf.transform.m_41 /= self.HAVOK_SCALE
             n_coltf.transform.m_42 /= self.HAVOK_SCALE
@@ -484,6 +525,7 @@ class Collision:
                 n_colbox.unknown_8_bytes[5] = 0xef
                 n_colbox.unknown_8_bytes[6] = 0x8e
                 n_colbox.unknown_8_bytes[7] = 0x3e
+
                 # fix dimensions for havok coordinate system
                 n_colbox.dimensions.x = (maxx - minx) / (2.0 * self.HAVOK_SCALE)
                 n_colbox.dimensions.y = (maxy - miny) / (2.0 * self.HAVOK_SCALE)
@@ -504,14 +546,16 @@ class Collision:
 
             length = b_obj.dimensions.z - b_obj.dimensions.x
             radius = b_obj.dimensions.x / 2
-            matrix = self.nif_export.objecthelper.get_object_bind(b_obj)
+            matrix = Object.get_object_bind(b_obj)
+
             # undo centering on matrix
             matrix.translation.z -= length / 2
 
             second_point = matrix.translation
+
             # calculate the direction unit vector
-            dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
-            first_point = second_point + dir * length
+            v_dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
+            first_point = second_point + v_dir * length
 
             radius /= self.HAVOK_SCALE
             first_point /= self.HAVOK_SCALE
@@ -534,7 +578,7 @@ class Collision:
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
             b_mesh = b_obj.data
-            b_transform_mat = mathutils.Matrix(self.nif_export.objecthelper.get_object_matrix(b_obj).as_list())
+            b_transform_mat = mathutils.Matrix(self.objecthelper.get_object_matrix(b_obj).as_list())
 
             b_rot_quat = b_transform_mat.decompose()[1]
             b_scale_vec = b_transform_mat.decompose()[0]
@@ -557,15 +601,16 @@ class Collision:
             # remove duplicates through dictionary
             vertdict = {}
             for i, vert in enumerate(vertlist):
-                vertdict[(int(vert[0] * self.nif_export.VERTEX_RESOLUTION),
-                          int(vert[1] * self.nif_export.VERTEX_RESOLUTION),
-                          int(vert[2] * self.nif_export.VERTEX_RESOLUTION))] = i
+                vertdict[(int(vert[0] * mesh.VERTEX_RESOLUTION),
+                          int(vert[1] * mesh.VERTEX_RESOLUTION),
+                          int(vert[2] * mesh.VERTEX_RESOLUTION))] = i
             fdict = {}
             for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
-                fdict[(int(norm[0] * self.nif_export.NORMAL_RESOLUTION),
-                       int(norm[1] * self.nif_export.NORMAL_RESOLUTION),
-                       int(norm[2] * self.nif_export.NORMAL_RESOLUTION),
-                       int(dist * self.nif_export.VERTEX_RESOLUTION))] = i
+                fdict[(int(norm[0] * mesh.NORMAL_RESOLUTION),
+                       int(norm[1] * mesh.NORMAL_RESOLUTION),
+                       int(norm[2] * mesh.NORMAL_RESOLUTION),
+                       int(dist * mesh.VERTEX_RESOLUTION))] = i
+
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
             fkeys = sorted(fdict.keys())
@@ -574,9 +619,7 @@ class Collision:
             fdistlist = [fdistlist[fdict[hsh]] for hsh in fkeys]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise util_math.NifError(
-                    "ERROR%t|Too many polygons/vertices."
-                    " Decimate/split your b_mesh and try again.")
+                raise util_math.NifError("Mesh has too many polygons/vertices. Simply/split your mesh and try again.")
 
             colhull = block_store.create_block("bhkConvexVerticesShape", b_obj)
             # colhull.material = n_havok_mat[0]
@@ -602,9 +645,7 @@ class Collision:
             return colhull
 
         else:
-            raise util_math.NifError(
-                'cannot export collision type %s to collision shape list'
-                % b_obj.game.collision_bounds_type)
+            raise util_math.NifError('Cannot export collision type %s to collision shape list'.format(b_obj.game.collision_bounds_type))
 
     def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
@@ -638,7 +679,7 @@ class Collision:
             n_bbox.dimensions.z = (maxz - minz) * b_obj.scale[2] * 0.5
 
         else:
-            n_bbox = self.nif_export.objecthelper.create_ninode()
+            n_bbox = self.objecthelper.create_ninode()
             block_parent.add_child(n_bbox)
             # set name, flags, translation, and radius
             n_bbox.name = "Bounding Box"
