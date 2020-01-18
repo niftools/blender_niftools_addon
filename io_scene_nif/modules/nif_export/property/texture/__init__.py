@@ -73,9 +73,9 @@ class Texture:
     }
 
     def __init__(self):
-        self.texture_anim = TextureAnimation()
         self.dict_mesh_uvlayers = []
         self.texture_writer = TextureWriter()
+        self.texture_anim = TextureAnimation()
 
         self.base_mtex = None
         self.glow_mtex = None
