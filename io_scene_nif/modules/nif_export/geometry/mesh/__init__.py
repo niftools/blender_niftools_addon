@@ -41,10 +41,13 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
+
 from io_scene_nif.modules.nif_export.geometry import mesh
+from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
+from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
-from io_scene_nif.modules.nif_export.property import texture
+from io_scene_nif.modules.nif_export.property import texture, ObjectProp
+from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_export.property.texture import Texture
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_math import NifError
@@ -61,7 +64,10 @@ class Mesh:
     def __init__(self, parent):
         self.nif_export = parent
         self.texture_helper = Texture()
+        self.object_property = ObjectProp()
+        self.material_property = MaterialProp()
         self.material_anim = MaterialAnimation()
+        self.morph_anim = MorphAnimation()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """
@@ -348,15 +354,15 @@ class Mesh:
                 else:
                     alphaflags = 0x12ED
                     alphathreshold = 0
-                trishape.add_property(self.nif_export.propertyhelper.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
+                trishape.add_property(self.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.add_property(self.nif_export.propertyhelper.object_property.export_wireframe_property(flags=1))
+                trishape.add_property(self.object_property.export_wireframe_property(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
-                trishape.add_property(self.nif_export.propertyhelper.object_property.export_stencil_property())
+                trishape.add_property(self.object_property.export_stencil_property())
 
             if b_mat and not (NifOp.props.game == 'SKYRIM'):
                 # add NiTriShape's specular property
@@ -364,10 +370,10 @@ class Mesh:
                 # games (they use specularity even without this property)
                 if mesh_hasspec and (NifOp.props.game not in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     # refer to the specular property in the trishape block
-                    trishape.add_property(self.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
+                    trishape.add_property(self.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
+                trimatprop = self.material_prop.export_material_property(
                     name=block_store.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
@@ -385,7 +391,7 @@ class Mesh:
                 trishape.add_property(trimatprop)
 
                 # material animation
-                self.material_anim.material.export_material(b_mat, trishape)
+                self.material_anim.export_material(b_mat, trishape)
 
             # -> now comes the real export
 
@@ -721,12 +727,10 @@ class Mesh:
                                         if not bone_block:
                                             bone_block = block
                                         else:
-                                            raise util_math.NifError("Multiple bones with name '%s': "
-                                                                     "probably you have multiple armatures. "
-                                                                     "Please parent all meshes to a single armature and try again"
-                                                                     % bone)
+                                            raise util_math.NifError("Multiple bones with name '{0}': probably you have multiple armatures. "
+                                                                     "Please parent all meshes to a single armature and try again".format(bone))
                             if not bone_block:
-                                raise util_math.NifError("Bone '%s' not found." % bone)
+                                raise util_math.NifError("Bone '{0}' not found.".format(bone))
 
                             # find vertex weights
                             vert_weights = {}
@@ -753,7 +757,7 @@ class Mesh:
                         # calculate center and radius for each skin bone data block
                         trishape.update_skin_center_radius()
                         
-                        if self.nif_export.version >= 0x04020100 and NifOp.props.skin_partition:
+                        if NifOp.props.version >= 0x04020100 and NifOp.props.skin_partition:
                             NifLog.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
                                 maxbonesperpartition=NifOp.props.max_bones_per_partition,
@@ -799,7 +803,7 @@ class Mesh:
             # fix data consistency type
             tridata.consistency_flags = b_obj.niftools.consistency_flags
             # export EGM or NiGeomMorpherController animation
-            self.nif_export.animationhelper.morph.export_morph(b_mesh, trishape, vertmap)
+            self.morph_anim.export_morph(b_mesh, trishape, vertmap)
         return trishape
 
     def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
