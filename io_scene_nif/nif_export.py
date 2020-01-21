@@ -51,7 +51,7 @@ from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.modules.nif_export.constraint import Constraint
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.modules.nif_export.object import Object
-from io_scene_nif.modules.nif_export.property import Property
+from io_scene_nif.modules.nif_export.property import ObjectProp
 from io_scene_nif.modules.nif_export import scene
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utils import util_math
@@ -75,7 +75,7 @@ class NifExport(NifCommon):
         # Helper systems
         self.collisionhelper = Collision(parent=self)
         self.transform_anim = TransformAnimation()
-        self.propertyhelper = Property(parent=self)
+        # self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint(parent=self)
         self.objecthelper = Object(parent=self)
         self.exportable_objects = []
@@ -115,6 +115,7 @@ class NifExport(NifCommon):
                 NifLog.warn("No objects can be exported!")
                 return {'FINISHED'}
             NifLog.info("Exporting objects")
+
             # find all objects that do not have a parent
             self.root_objects = [b_obj for b_obj in self.exportable_objects if not b_obj.parent]
 
@@ -126,11 +127,10 @@ class NifExport(NifCommon):
                 elif b_obj.type == 'MESH':
                     if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                         for b_mod in b_obj.modifiers:
-                            if b_mod.type == 'ARMATURE':
-                                if b_mod.use_bone_envelopes:
-                                    raise util_math.NifError("'{0}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
-                                                             "If you don't have vertex groups, select the bones one by one press W to "
-                                                             "convert their envelopes to vertex weights, and turn off envelopes.".format(b_obj.name))
+                            if b_mod.type == 'ARMATURE' and b_mod.use_bone_envelopes:
+                                raise util_math.NifError("'{0}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                                         "If you don't have vertex groups, select the bones one by one press W to "
+                                                         "convert their envelopes to vertex weights, and turn off envelopes.".format(b_obj.name))
 
                 # check for non-uniform transforms
                 scale = b_obj.matrix_local.to_scale()
@@ -141,7 +141,7 @@ class NifExport(NifCommon):
             b_armature = armature.get_armature()
             # some scenes may not have an armature, so nothing to do here
             if b_armature:
-               armature.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
+                util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
             # smooth seams of objects
             if NifOp.props.smooth_object_seams:
@@ -265,14 +265,15 @@ class NifExport(NifCommon):
                 if b_obj.constraints:
                     self.constrainthelper.export_constraints(b_obj, root_block)
 
+            object_prop = ObjectProp()
             # add vertex color and zbuffer properties for civ4 and railroads
             if NifOp.props.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
-                self.propertyhelper.object_property.export_vertex_color_property(root_block)
-                self.propertyhelper.object_property.export_z_buffer_property(root_block)
+                object_prop.export_vertex_color_property(root_block)
+                object_prop.export_z_buffer_property(root_block)
 
             elif NifOp.props.game in ('EMPIRE_EARTH_II',):
-                self.propertyhelper.object_property.export_vertex_color_property(root_block)
-                self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, function=1)
+                object_prop.export_vertex_color_property(root_block)
+                object_prop.export_z_buffer_property(root_block, flags=15, function=1)
 
             # FIXME:
             """

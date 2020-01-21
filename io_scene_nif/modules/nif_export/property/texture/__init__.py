@@ -39,7 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.animation.texture import TextureAnimation
+# from io_scene_nif.modules.nif_export.animation.texture import TextureAnimation
 from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.texture.writer import TextureWriter
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
@@ -75,7 +75,7 @@ class Texture:
     def __init__(self):
         self.dict_mesh_uvlayers = []
         self.texture_writer = TextureWriter()
-        self.texture_anim = TextureAnimation()
+        # self.texture_anim = TextureAnimation()
 
         self.base_mtex = None
         self.glow_mtex = None
@@ -143,7 +143,9 @@ class Texture:
                 pass
             else:
                 # texture slot 0 = base
-                self.texture_anim.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
+                # TODO [animation] FIXME Heirarchy
+                # self.texture_anim.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
+                pass
 
         if self.glow_mtex:
             texprop.has_glow_texture = True

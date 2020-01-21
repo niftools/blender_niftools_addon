@@ -67,16 +67,18 @@ class KfImport(NifCommon):
             raise util_math.NifError("No armature was found in scene, can not import KF animation!")
 
         # the axes used for bone correction depend on the armature in our scene
-        armature.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
+        util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
         # get nif space bind pose of armature here for all anims
         bind_data = armature.get_bind_data(b_armature)
         for kf_file in kf_files:
             kfdata = KFFile.load_kf(kf_file)
+
             # use pyffi toaster to scale the tree
             toaster = pyffi.spells.nif.NifToaster()
             toaster.scale = NifOp.props.scale_correction_import
             pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
+
             # calculate and set frames per second
             self.tranform_anim.set_frames_per_second(kfdata.roots)
             for kf_root in kfdata.roots:
