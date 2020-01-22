@@ -76,7 +76,7 @@ class NifExport(NifCommon):
         self.collisionhelper = Collision(parent=self)
         self.transform_anim = TransformAnimation()
         # self.propertyhelper = Property(parent=self)
-        self.constrainthelper = Constraint(parent=self)
+        self.constrainthelper = Constraint()
         self.objecthelper = Object(parent=self)
         self.exportable_objects = []
 
@@ -226,7 +226,7 @@ class NifExport(NifCommon):
                 for n_block in list(block_store.block_to_obj.keys()):
                     if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
                         for n_bone in n_block.tree(block_type=NifFormat.NiNode):
-                            n_kfc, n_kfi = self.animationhelper.create_controller(n_bone, n_bone.name.decode())
+                            n_kfc, n_kfi = self.transform_anim.create_controller(n_bone, n_bone.name.decode())
                             # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
                             n_kfc.flags = 12
                             n_kfc.frequency = 1.0

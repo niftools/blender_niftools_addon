@@ -46,8 +46,8 @@ from io_scene_nif.modules.nif_export.geometry import mesh
 # from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 # from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
-from io_scene_nif.modules.nif_export.property import texture, ObjectProp
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
+from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.modules.nif_export.property.texture import Texture
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_math import NifError
@@ -64,7 +64,7 @@ class Mesh:
     def __init__(self, parent):
         self.nif_export = parent
         self.texture_helper = Texture()
-        self.object_property = ObjectProp()
+        self.object_property = ObjectProperty()
         self.material_property = MaterialProp()
         # self.material_anim = MaterialAnimation()
         # self.morph_anim = MorphAnimation()
@@ -428,9 +428,9 @@ class Mesh:
             for poly in b_mesh.polygons:
 
                 # does the face belong to this trishape?
-                if b_mat is not None:  # we have a material
-                    if poly.material_index != materialIndex:  # but this face has another material
-                        continue  # so skip this face
+                if b_mat is not None and poly.material_index != materialIndex:
+                    # we have a material but this face has another material, so skip
+                    continue
 
                 f_numverts = len(poly.vertices)
                 if f_numverts < 3:
@@ -881,4 +881,5 @@ class Mesh:
                 vertex.normal = norm
                 # vertex.sel = True
             nv += 1
+
         NifLog.info("Fixed normals on {0} vertices.".format(str(nv)))

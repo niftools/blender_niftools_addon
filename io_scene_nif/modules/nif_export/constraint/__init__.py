@@ -51,8 +51,7 @@ from io_scene_nif.utils.util_global import NifOp
 
 class Constraint:
 
-    def __init__(self, parent):
-        self.nif_export = parent
+    def __init__(self):
         self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def export_constraints(self, b_obj, root_block):
