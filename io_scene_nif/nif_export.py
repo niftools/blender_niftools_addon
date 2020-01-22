@@ -51,8 +51,8 @@ from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.modules.nif_export.constraint import Constraint
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.modules.nif_export.object import Object
-from io_scene_nif.modules.nif_export.property import ObjectProp
 from io_scene_nif.modules.nif_export import scene
+from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp, EGMData
@@ -265,7 +265,7 @@ class NifExport(NifCommon):
                 if b_obj.constraints:
                     self.constrainthelper.export_constraints(b_obj, root_block)
 
-            object_prop = ObjectProp()
+            object_prop = ObjectProperty()
             # add vertex color and zbuffer properties for civ4 and railroads
             if NifOp.props.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
                 object_prop.export_vertex_color_property(root_block)

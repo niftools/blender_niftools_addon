@@ -46,7 +46,7 @@ from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.armature import Armature
 from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
-from io_scene_nif.modules.nif_export.property.object import ObjectProperty
+from io_scene_nif.modules.nif_export.property.object import ObjectDataProperty
 from io_scene_nif.modules.nif_export.object import types
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -105,7 +105,7 @@ class Object:
             n_root = fade_root_block
 
         # various extra datas
-        object_property = ObjectProperty()
+        object_property = ObjectDataProperty()
         object_property.export_bsxflags_upb(n_root)
         object_property.export_inventory_marker(n_root, root_objects)
         object_property.export_weapon_location(n_root, b_obj_root)
