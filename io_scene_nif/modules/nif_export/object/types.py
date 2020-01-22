@@ -65,7 +65,6 @@ def export_range_lod_data(n_node, b_obj):
         n_rd_lod_level.far_extent = n_lod_level.far_extent
 
 
-# TODO [object][type] Move to new object type
 def export_furniture_marker(n_root, filebase):
     # oblivion and Fallout 3 furniture markers
     if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase[:15].lower() == 'furnituremarker':
