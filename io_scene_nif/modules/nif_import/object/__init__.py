@@ -62,36 +62,6 @@ class Object:
     def __init__(self):
         self.mesh = Mesh()
 
-    # TODO [property] Add delegate processing
-    def import_extra_datas(self, root_block, b_obj):
-        """ Only to be called on nif and blender root objects! """
-        # store type of root node
-        if isinstance(root_block, NifFormat.BSFadeNode):
-            b_obj.niftools.rootnode = 'BSFadeNode'
-        else:
-            b_obj.niftools.rootnode = 'NiNode'
-        # store its flags
-        b_obj.niftools.objectflags = root_block.flags
-        # store extra datas
-        for n_extra in root_block.get_extra_datas():
-            if isinstance(n_extra, NifFormat.NiStringExtraData):
-                # weapon location or attachment position
-                if n_extra.name.decode() == "Prn":
-                    for k, v in PRN_DICT.items():
-                        if v.lower() == n_extra.string_data.decode().lower():
-                            b_obj.niftools.prn_location = k
-                elif n_extra.name.decode() == "UPB":
-                    b_obj.niftools.upb = n_extra.string_data.decode()
-            elif isinstance(n_extra, NifFormat.BSXFlags):
-                b_obj.niftools.bsxflags = n_extra.integer_data
-            elif isinstance(n_extra, NifFormat.BSInvMarker):
-                b_obj.niftools_bs_invmarker.add()
-                b_obj.niftools_bs_invmarker[0].name = n_extra.name.decode()
-                b_obj.niftools_bs_invmarker[0].bs_inv_x = n_extra.rotation_x
-                b_obj.niftools_bs_invmarker[0].bs_inv_y = n_extra.rotation_y
-                b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra.rotation_z
-                b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra.zoom
-
     @staticmethod
     def create_b_obj(n_block, b_obj_data, name=""):
         """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""

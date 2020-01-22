@@ -46,7 +46,7 @@ from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.armature import Armature
 from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
-from io_scene_nif.modules.nif_import.object import PRN_DICT
+from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.modules.nif_export.object import types
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -105,74 +105,12 @@ class Object:
             n_root = fade_root_block
 
         # various extra datas
-        self.export_bsxflags_upb(n_root)
-        # TODO [object][property][extradata] doesn't account for mult-root
-        self.export_weapon_location(n_root, b_obj_root)
-        self.export_inventory_marker(n_root, root_objects)
+        object_property = ObjectProperty()
+        object_property.export_bsxflags_upb(n_root)
+        object_property.export_inventory_marker(n_root, root_objects)
+        object_property.export_weapon_location(n_root, b_obj_root)
         types.export_furniture_marker(n_root, filebase)
         return n_root
-
-    # TODO [object][property] Move to object property
-    @staticmethod
-    def export_inventory_marker(n_root, root_objects):
-        if NifOp.props.game in ('SKYRIM',):
-            for root_object in root_objects:
-                if root_object.niftools_bs_invmarker:
-                    for extra_item in n_root.extra_data_list:
-                        if isinstance(extra_item, NifFormat.BSInvMarker):
-                            raise util_math.NifError("Multiple Items have Inventory marker data only one item may contain this data")
-                    else:
-                        n_extra_list = NifFormat.BSInvMarker()
-                        n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
-                        n_extra_list.rotation_x = root_object.niftools_bs_invmarker[0].bs_inv_x
-                        n_extra_list.rotation_y = root_object.niftools_bs_invmarker[0].bs_inv_y
-                        n_extra_list.rotation_z = root_object.niftools_bs_invmarker[0].bs_inv_z
-                        n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
-                        n_root.add_extra_data(n_extra_list)
-
-    @staticmethod
-    def has_collision():
-        """Helper function that determines if a blend file contains a collider."""
-        for b_obj in bpy.data.objects:
-            if b_obj.game.use_collision_bounds:
-                return b_obj
-
-    # TODO [object][property] Move to object property
-    def export_bsxflags_upb(self, root_block):
-        # TODO [object][property] Fixme
-        NifLog.info("Checking collision")
-        # activate oblivion/Fallout 3 collision and physics
-        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            b_obj = self.has_collision()
-            if b_obj:
-                # enable collision
-                bsx = block_store.create_block("BSXFlags")
-                bsx.name = 'BSX'
-                bsx.integer_data = b_obj.niftools.bsxflags
-                root_block.add_extra_data(bsx)
-
-                # many Oblivion nifs have a UPB, but export is disabled as
-                # they do not seem to affect anything in the game
-                if b_obj.niftools.upb:
-                    upb = block_store.create_block("NiStringExtraData")
-                    upb.name = 'UPB'
-                    if b_obj.niftools.upb == '':
-                        upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-                    else:
-                        upb.string_data = b_obj.niftools.upb.encode()
-                    root_block.add_extra_data(upb)
-
-    # TODO [object][property] Move to new object type
-    def export_weapon_location(self, n_root, root_obj):
-        # export weapon location
-        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            loc = root_obj.niftools.prn_location
-            if loc != "NONE":
-                # add string extra data
-                prn = block_store.create_block("NiStringExtraData")
-                prn.name = 'Prn'
-                prn.string_data = PRN_DICT[loc]
-                n_root.add_extra_data(prn)
 
     def set_node_flags(self, b_obj, n_node):
         # default node flags

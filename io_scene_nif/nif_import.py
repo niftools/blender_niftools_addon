@@ -55,6 +55,7 @@ from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.modules.nif_import.object.types import NiTypes
 from io_scene_nif.modules.nif_import import scene, armature
+from io_scene_nif.modules.nif_import.property.object import ObjectProperty
 
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utils import util_math
@@ -178,7 +179,7 @@ class NifImport(NifCommon):
         # read the NIF tree
         if isinstance(root_block, (NifFormat.NiNode, NifFormat.NiTriBasedGeom)):
             b_obj = self.import_branch(root_block)
-            self.objecthelper.import_extra_datas(root_block, b_obj)
+            ObjectProperty().import_extra_datas(root_block, b_obj)
 
             # now all havok objects are imported, so we are ready to import the havok constraints
             self.constrainthelper.import_bhk_constraints()
