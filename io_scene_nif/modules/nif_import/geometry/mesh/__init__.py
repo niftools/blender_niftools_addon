@@ -45,7 +45,7 @@ from io_scene_nif.modules.nif_import.geometry.vertex.groups import VertexGroup
 from io_scene_nif.modules.nif_import.geometry import mesh
 from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.nif_import.property.material import Material
-from io_scene_nif.modules.nif_import.property import MeshProperty
+from io_scene_nif.modules.nif_import.property.geometry.mesh import MeshProperty
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp, EGMData
 from io_scene_nif.utils.util_logging import NifLog
