@@ -91,7 +91,7 @@ class NifImport(NifCommon):
                     raise util_math.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
 
             # the axes used for bone correction depend on the nif version
-            armature.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
+            util_math.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
 
             NifLog.info("Importing data")
             # calculate and set frames per second
