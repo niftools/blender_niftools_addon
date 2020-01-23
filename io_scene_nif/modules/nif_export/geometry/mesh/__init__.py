@@ -46,8 +46,10 @@ from io_scene_nif.modules.nif_export.geometry import mesh
 # from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 # from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
+from io_scene_nif.modules.nif_export.property.shader import BSShader
 from io_scene_nif.modules.nif_export.property.texture import Texture
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_math import NifError
@@ -64,6 +66,7 @@ class Mesh:
     def __init__(self, parent):
         self.nif_export = parent
         self.texture_helper = Texture()
+        self.bss_helper = BSShader()
         self.object_property = ObjectProperty()
         self.material_property = MaterialProp()
         # self.material_anim = MaterialAnimation()
@@ -282,13 +285,13 @@ class Mesh:
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
-                    bsshader = self.texture_helper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.bss_helper.export_bs_shader_property(b_obj, b_mat)
 
                     block_store.register_block(bsshader)
                     trishape.add_property(bsshader)
             elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
-                    bsshader = self.texture_helper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.bss_helper.export_bs_shader_property(b_obj, b_mat)
 
                     block_store.register_block(bsshader)
                     num_props = trishape.num_properties
@@ -373,7 +376,7 @@ class Mesh:
                     trishape.add_property(self.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.material_prop.export_material_property(
+                trimatprop = self.material_property.export_material_property(
                     name=block_store.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
