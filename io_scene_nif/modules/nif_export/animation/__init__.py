@@ -36,6 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from abc import ABC
 
 import bpy
 from pyffi.formats.nif import NifFormat
@@ -48,7 +49,7 @@ from io_scene_nif.utils.util_logging import NifLog
 # FPS = 30
 
 
-class Animation:
+class Animation(ABC):
 
     def __init__(self):
         self.fps = bpy.context.scene.render.fps

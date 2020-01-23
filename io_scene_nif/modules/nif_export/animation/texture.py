@@ -50,8 +50,7 @@ class TextureAnimation(Animation):
     def __init__(self):
         super().__init__()
 
-    @staticmethod
-    def export_flip_controller(fliptxt, texture, target, target_tex):
+    def export_flip_controller(self, fliptxt, texture, target, target_tex):
         # TODO [animation] port code to use native Blender image strip system
         #                  despite its name a NiFlipController does not flip / mirror a texture
         #                  instead it swaps through a list of textures for a sprite animation
