@@ -228,11 +228,8 @@ class Collision:
 
         # Set Havok Scale ratio
         b_scene = bpy.context.scene.niftools_scene
-        if b_scene.user_version == 12:
-            if b_scene.user_version_2 == 83:
-                self.HAVOK_SCALE = self.HAVOK_SCALE * 10
-            else:
-                self.HAVOK_SCALE = self.HAVOK_SCALE
+        if b_scene.user_version == 12 and b_scene.user_version_2 == 83:
+            self.HAVOK_SCALE = self.HAVOK_SCALE * 10
 
         # find physics properties/defaults
         # get havok material name from material name
@@ -462,6 +459,8 @@ class Collision:
         if not b_obj.data.vertices:
             NifLog.warn("Skipping collision object {0} without vertices.".format(b_obj))
             return None
+
+        # TODO [collision] Duplicate code
         b_vertlist = [vert.co for vert in b_obj.data.vertices]
 
         minx = min([b_vert[0] for b_vert in b_vertlist])
@@ -647,53 +646,3 @@ class Collision:
         else:
             raise util_math.NifError('Cannot export collision type %s to collision shape list'.format(b_obj.game.collision_bounds_type))
 
-    def export_bounding_box(self, b_obj, block_parent, bsbound=False):
-        """Export a Morrowind or Oblivion bounding box."""
-        # calculate bounding box extents
-        b_vertlist = [vert.co for vert in b_obj.data.vertices]
-
-        minx = min([b_vert[0] for b_vert in b_vertlist])
-        miny = min([b_vert[1] for b_vert in b_vertlist])
-        minz = min([b_vert[2] for b_vert in b_vertlist])
-        maxx = max([b_vert[0] for b_vert in b_vertlist])
-        maxy = max([b_vert[1] for b_vert in b_vertlist])
-        maxz = max([b_vert[2] for b_vert in b_vertlist])
-
-        if bsbound:
-            n_bbox = block_store.create_block("BSBound")
-            # ... the following incurs double scaling because it will be added in
-            # both the extra data list and in the old extra data sequence!!!
-            # block_parent.add_extra_data(n_bbox)
-            # quick hack (better solution would be to make apply_scale non-recursive)
-            block_parent.num_extra_data_list += 1
-            block_parent.extra_data_list.update_size()
-            block_parent.extra_data_list[-1] = n_bbox
-
-            # set name, center, and dimensions
-            n_bbox.name = "BBX"
-            n_bbox.center.x = b_obj.location[0]
-            n_bbox.center.y = b_obj.location[1]
-            n_bbox.center.z = b_obj.location[2]
-            n_bbox.dimensions.x = (maxx - minx) * b_obj.scale[0] * 0.5
-            n_bbox.dimensions.y = (maxy - miny) * b_obj.scale[1] * 0.5
-            n_bbox.dimensions.z = (maxz - minz) * b_obj.scale[2] * 0.5
-
-        else:
-            n_bbox = self.objecthelper.create_ninode()
-            block_parent.add_child(n_bbox)
-            # set name, flags, translation, and radius
-            n_bbox.name = "Bounding Box"
-            n_bbox.flags = 4
-            n_bbox.translation.x = (minx + maxx) * 0.5 + b_obj.location[0]
-            n_bbox.translation.y = (minx + maxx) * 0.5 + b_obj.location[1]
-            n_bbox.translation.z = (minx + maxx) * 0.5 + b_obj.location[2]
-            n_bbox.rotation.set_identity()
-            n_bbox.has_bounding_box = True
-
-            # Ninode's(n_bbox) behaves like a seperate mesh.
-            # bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
-            n_bbox.bounding_box.translation.deepcopy(n_bbox.translation)
-            n_bbox.bounding_box.rotation.set_identity()
-            n_bbox.bounding_box.radius.x = (maxx - minx) * 0.5
-            n_bbox.bounding_box.radius.y = (maxy - miny) * 0.5
-            n_bbox.bounding_box.radius.z = (maxz - minz) * 0.5
