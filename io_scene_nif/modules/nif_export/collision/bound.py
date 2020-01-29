@@ -39,39 +39,10 @@
 from io_scene_nif.modules.nif_export.object import block_store
 
 
-class BSBound:
-
-    def export_bounding_box(self, b_obj, block_parent, bsbound=False):
-        """Export a Morrowind or Oblivion bounding box."""
-        if bsbound:
-            self.exportBSBound(b_obj, block_parent)
-        else:
-            self.exportBoundingBox(b_obj, block_parent)
-
-    def exportBoundingBox(self, b_obj, block_parent):
-        box_extends = self.calculate_box_extents(b_obj)
-        n_bbox = self.objecthelper.create_ninode()
-        block_parent.add_child(n_bbox)
-        # set name, flags, translation, and radius
-        n_bbox.name = "Bounding Box"
-        n_bbox.flags = 4
-        n_bbox.translation.x = (box_extends[0][0] + box_extends[0][1]) * 0.5 + b_obj.location[0]
-        n_bbox.translation.y = (box_extends[1][0] + box_extends[1][1]) * 0.5 + b_obj.location[1]
-        n_bbox.translation.z = (box_extends[2][0] + box_extends[2][1]) * 0.5 + b_obj.location[2]
-        n_bbox.rotation.set_identity()
-        n_bbox.has_bounding_box = True
-        # Ninode's(n_bbox) behaves like a seperate mesh.
-        # bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
-        n_bbox.bounding_box.translation.deepcopy(n_bbox.translation)
-        n_bbox.bounding_box.rotation.set_identity()
-
-        largest = self._calculate_largest_value(box_extends)
-        n_bbox.bounding_box.radius.x = largest[0]
-        n_bbox.bounding_box.radius.y = largest[1]
-        n_bbox.bounding_box.radius.z = largest[2]
+class Bound:
 
     @staticmethod
-    def _calculate_largest_value(box_extends):
+    def calculate_largest_value(box_extends):
         return ((box_extends[0][1] - box_extends[0][0]) * 0.5,
                 (box_extends[1][1] - box_extends[1][0]) * 0.5,
                 (box_extends[2][1] - box_extends[2][0]) * 0.5)
@@ -87,6 +58,16 @@ class BSBound:
         minz = min([b_vert[2] for b_vert in b_vertlist])
         maxz = max([b_vert[2] for b_vert in b_vertlist])
         return [[minx, maxx], [miny, maxy], [minz, maxz]]
+
+
+class BSBound(Bound):
+
+    def export_bounding_box(self, b_obj, block_parent, bsbound=False):
+        """Export a Morrowind or Oblivion bounding box."""
+        if bsbound:
+            self.exportBSBound(b_obj, block_parent)
+        else:
+            CollisionProperty().exportBoundingBox(b_obj, block_parent)
 
     # TODO [object][data] Stored as object property
     def exportBSBound(self, b_obj, block_parent):
@@ -105,7 +86,32 @@ class BSBound:
         n_bbox.center.y = b_obj.location[1]
         n_bbox.center.z = b_obj.location[2]
 
-        largest = self._calculate_largest_value(box_extends)
+        largest = self.calculate_largest_value(box_extends)
         n_bbox.dimensions.x = largest[0]
         n_bbox.dimensions.y = largest[1]
         n_bbox.dimensions.z = largest[2]
+
+
+class CollisionProperty(Bound):
+
+    def exportBoundingBox(self, b_obj, block_parent):
+        box_extends = self.calculate_box_extents(b_obj)
+        n_bbox = self.objecthelper.create_ninode()
+        block_parent.add_child(n_bbox)
+        # set name, flags, translation, and radius
+        n_bbox.name = "Bounding Box"
+        n_bbox.flags = 4
+        n_bbox.translation.x = (box_extends[0][0] + box_extends[0][1]) * 0.5 + b_obj.location[0]
+        n_bbox.translation.y = (box_extends[1][0] + box_extends[1][1]) * 0.5 + b_obj.location[1]
+        n_bbox.translation.z = (box_extends[2][0] + box_extends[2][1]) * 0.5 + b_obj.location[2]
+        n_bbox.rotation.set_identity()
+        n_bbox.has_bounding_box = True
+        # Ninode's(n_bbox) behaves like a seperate mesh.
+        # bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
+        n_bbox.bounding_box.translation.deepcopy(n_bbox.translation)
+        n_bbox.bounding_box.rotation.set_identity()
+
+        largest = self.calculate_largest_value(box_extends)
+        n_bbox.bounding_box.radius.x = largest[0]
+        n_bbox.bounding_box.radius.y = largest[1]
+        n_bbox.bounding_box.radius.z = largest[2]
