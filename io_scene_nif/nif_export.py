@@ -44,8 +44,6 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export import armature
-from io_scene_nif.modules.nif_export.animation import Animation
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.modules.nif_export.constraint import Constraint
@@ -73,11 +71,11 @@ class NifExport(NifCommon):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.collisionhelper = Collision(parent=self)
         self.transform_anim = TransformAnimation()
         # self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint()
         self.objecthelper = Object(parent=self)
+        self.collisionhelper = Collision(parent=self)
         self.exportable_objects = []
 
     def execute(self):
@@ -138,7 +136,7 @@ class NifExport(NifCommon):
                     NifLog.warn("Non-uniform scaling not supported.\n"
                                 "Workaround: apply size and rotation (CTRL-A) on '{0}'." .format(b_obj.name))
 
-            b_armature = armature.get_armature()
+            b_armature = util_math.get_armature()
             # some scenes may not have an armature, so nothing to do here
             if b_armature:
                 util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
@@ -202,7 +200,7 @@ class NifExport(NifCommon):
                 if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    Animation.create_controller(root_block, root_block.name)
+                    self.transform_anim.create_controller(root_block, root_block.name)
 
                 if NifOp.props.bs_animation_node:
                     for block in block_store.block_to_obj:
