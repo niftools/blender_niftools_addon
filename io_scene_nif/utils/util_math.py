@@ -38,9 +38,9 @@
 
 import math
 
-import mathutils
-
+import bpy
 from bpy_extras.io_utils import axis_conversion
+import mathutils
 
 from io_scene_nif.utils.util_logging import NifLog
 
@@ -96,7 +96,6 @@ def nif_bind_to_blender_bind(nif_armature_space_matrix):
     return correction_inv * correction * nif_armature_space_matrix * correction_inv
 
 
-
 def vec_roll_to_mat3(vec, roll):
     # port of the updated C function from armature.c
     # https://developer.blender.org/T39470
@@ -107,50 +106,50 @@ def vec_roll_to_mat3(vec, roll):
     THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5
 
     # create a 3x3 matrix
-    bMatrix = mathutils.Matrix().to_3x3()
+    b_matrix = mathutils.Matrix().to_3x3()
 
     theta = 1.0 + nor[1]
 
     if (theta > THETA_THRESHOLD_NEGY_CLOSE) or ((nor[0] or nor[2]) and theta > THETA_THRESHOLD_NEGY):
 
-        bMatrix[1][0] = -nor[0]
-        bMatrix[0][1] = nor[0]
-        bMatrix[1][1] = nor[1]
-        bMatrix[2][1] = nor[2]
-        bMatrix[1][2] = -nor[2]
+        b_matrix[1][0] = -nor[0]
+        b_matrix[0][1] = nor[0]
+        b_matrix[1][1] = nor[1]
+        b_matrix[2][1] = nor[2]
+        b_matrix[1][2] = -nor[2]
         if theta > THETA_THRESHOLD_NEGY_CLOSE:
             # If nor is far enough from -Y, apply the general case.
-            bMatrix[0][0] = 1 - nor[0] * nor[0] / theta
-            bMatrix[2][2] = 1 - nor[2] * nor[2] / theta
-            bMatrix[0][2] = bMatrix[2][0] = -nor[0] * nor[2] / theta
+            b_matrix[0][0] = 1 - nor[0] * nor[0] / theta
+            b_matrix[2][2] = 1 - nor[2] * nor[2] / theta
+            b_matrix[0][2] = b_matrix[2][0] = -nor[0] * nor[2] / theta
 
         else:
             # If nor is too close to -Y, apply the special case.
             theta = nor[0] * nor[0] + nor[2] * nor[2]
-            bMatrix[0][0] = (nor[0] + nor[2]) * (nor[0] - nor[2]) / -theta
-            bMatrix[2][2] = -bMatrix[0][0]
-            bMatrix[0][2] = bMatrix[2][0] = 2.0 * nor[0] * nor[2] / theta
+            b_matrix[0][0] = (nor[0] + nor[2]) * (nor[0] - nor[2]) / -theta
+            b_matrix[2][2] = -b_matrix[0][0]
+            b_matrix[0][2] = b_matrix[2][0] = 2.0 * nor[0] * nor[2] / theta
 
     else:
         # If nor is -Y, simple symmetry by Z axis.
-        bMatrix = mathutils.Matrix().to_3x3()
-        bMatrix[0][0] = bMatrix[1][1] = -1.0
+        b_matrix = mathutils.Matrix().to_3x3()
+        b_matrix[0][0] = b_matrix[1][1] = -1.0
 
     # Make Roll matrix
-    rMatrix = mathutils.Matrix.Rotation(roll, 3, nor)
+    r_matrix = mathutils.Matrix.Rotation(roll, 3, nor)
 
     # Combine and output result
-    mat = rMatrix * bMatrix
+    mat = r_matrix * b_matrix
     return mat
 
 
 def mat3_to_vec_roll(mat):
     # this hasn't changed
     vec = mat.col[1]
-    vecmat = vec_roll_to_mat3(mat.col[1], 0)
-    vecmatinv = vecmat.inverted()
-    rollmat = vecmatinv * mat
-    roll = math.atan2(rollmat[0][2], rollmat[2][2])
+    vec_mat = vec_roll_to_mat3(mat.col[1], 0)
+    vec_mat_inv = vec_mat.inverted()
+    roll_mat = vec_mat_inv * mat
+    roll = math.atan2(roll_mat[0][2], roll_mat[2][2])
     return vec, roll
 
 
@@ -176,6 +175,49 @@ def decompose_srt(b_matrix):
     if abs(scale_vec[0] - scale_vec[1]) + abs(scale_vec[1] - scale_vec[2]) > 0.02:
         NifLog.warn("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
     return scale_vec[0], rotmat.to_4x4(), trans_vec
+
+
+def get_armature():
+    """Get an armature. If there is more than one armature in the scene and some armatures are selected, return the first of the selected armatures. """
+    src_armatures = [ob for ob in bpy.data.objects if type(ob.data) == bpy.types.Armature]
+    # do we have armatures?
+    if src_armatures:
+        # see if one of these is selected -> get only that one
+        if len(src_armatures) > 1:
+            sel_armatures = [ob for ob in src_armatures if ob.select]
+            if sel_armatures:
+                return sel_armatures[0]
+        return src_armatures[0]
+
+
+def get_object_bind(b_obj):
+    """Get the bind matrix of a blender object.
+
+    Returns the final NIF matrix for the given blender object.
+    Blender space and axes order are corrected for the NIF.
+    Returns a 4x4 mathutils.Matrix()
+    """
+
+    if isinstance(b_obj, bpy.types.Bone):
+        return get_bind_matrix(b_obj)
+
+    elif isinstance(b_obj, bpy.types.Object):
+
+        # TODO [armature] Move to armaturehelper
+        # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
+        if b_obj.parent_bone:
+            # get parent bone
+            parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
+
+            # undo what was done on import
+            mpi = nif_bind_to_blender_bind(b_obj.matrix_parent_inverse).inverted()
+            mpi.translation.y -= parent_bone.length
+            return mpi.inverted() * b_obj.matrix_basis
+        # just get the local matrix
+        else:
+            return b_obj.matrix_local
+    # Nonetype, maybe other weird stuff
+    return mathutils.Matrix()
 
 
 def find_property(n_block, property_type):
@@ -220,6 +262,3 @@ def find_extra(n_block, extratype):
         if isinstance(extra, extratype):
             return extra
     return None
-
-
-
