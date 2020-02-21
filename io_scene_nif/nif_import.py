@@ -54,7 +54,7 @@ from io_scene_nif.modules.nif_import.geometry.vertex.groups import VertexGroup
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.modules.nif_import.object.types import NiTypes
-from io_scene_nif.modules.nif_import import scene, armature
+from io_scene_nif.modules.nif_import import scene
 from io_scene_nif.modules.nif_import.property.object import ObjectProperty
 
 from io_scene_nif.nif_common import NifCommon
@@ -227,7 +227,7 @@ class NifImport(NifCommon):
                     b_obj = self.armaturehelper.import_armature(n_block)
                 else:
                     n_name = block_store.import_name(n_block)
-                    b_obj = armature.get_armature()
+                    b_obj = util_math.get_armature()
                     NifLog.info("Merging nif tree '{0}' with armature '{1}'".format(n_name, b_obj.name))
                     if n_name != b_obj.name:
                         NifLog.warn("Using Nif block '{0}' as armature '{1}' but names do not match".format(n_name, b_obj.name))
