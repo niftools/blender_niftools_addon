@@ -62,7 +62,7 @@ class KfImport(NifCommon):
 
         dirname = os.path.dirname(NifOp.props.filepath)
         kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
-        b_armature = armature.get_armature()
+        b_armature = util_math.get_armature()
         if not b_armature:
             raise util_math.NifError("No armature was found in scene, can not import KF animation!")
 
