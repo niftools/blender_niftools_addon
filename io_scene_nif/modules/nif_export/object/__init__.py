@@ -41,9 +41,9 @@ import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export import collision
-from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
+# from io_scene_nif.modules.nif_export import collision
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
+from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.armature import Armature
 from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_export.property.object import ObjectDataProperty
@@ -268,7 +268,7 @@ class Object:
 
     def get_object_matrix(self, b_obj):
         """Get a blender object's matrix as NifFormat.Matrix44"""
-        return self.mathutils_to_nifformat_matrix(self.get_object_bind(b_obj))
+        return self.mathutils_to_nifformat_matrix(util_math.get_object_bind(b_obj))
 
     def set_b_matrix_to_n_block(self, b_matrix, block):
         """Set a blender matrix to a NIF object's transformation matrix in rest pose."""
@@ -282,36 +282,6 @@ class Object:
         n_matrix = NifFormat.Matrix44()
         n_matrix.set_rows(*b_matrix.transposed())
         return n_matrix
-
-    @staticmethod
-    def get_object_bind(b_obj):
-        """Get the bind matrix of a blender object.
-
-        Returns the final NIF matrix for the given blender object.
-        Blender space and axes order are corrected for the NIF.
-        Returns a 4x4 mathutils.Matrix()
-        """
-
-        if isinstance(b_obj, bpy.types.Bone):
-            return util_math.get_bind_matrix(b_obj)
-
-        elif isinstance(b_obj, bpy.types.Object):
-
-            # TODO [armature] Move to armaturehelper
-            # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
-            if b_obj.parent_bone:
-                # get parent bone
-                parent_bone = b_obj.parent.data.bones[b_obj.parent_bone]
-
-                # undo what was done on import
-                mpi = util_math.nif_bind_to_blender_bind(b_obj.matrix_parent_inverse).inverted()
-                mpi.translation.y -= parent_bone.length
-                return mpi.inverted() * b_obj.matrix_basis
-            # just get the local matrix
-            else:
-                return b_obj.matrix_local
-        # Nonetype, maybe other weird stuff
-        return mathutils.Matrix()
 
     def has_track(self, b_obj):
         """ Determine if this b_obj has a track_to constraint """
