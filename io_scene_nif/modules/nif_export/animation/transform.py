@@ -43,7 +43,6 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.animation import Animation
-from io_scene_nif.modules.nif_export.object import Object
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp
@@ -195,7 +194,7 @@ class TransformAnimation(Animation):
         # skeletal animation - with bone correction & coordinate corrections
         if bone and bone.name in b_action.groups:
             # get bind matrix for bone or object
-            bind_matrix = Object.get_object_bind(bone)
+            bind_matrix = util_math.get_object_bind(bone)
             exp_fcurves = b_action.groups[bone.name].channels
             # just for more detailed error reporting later on
             bonestr = " in bone " + bone.name
