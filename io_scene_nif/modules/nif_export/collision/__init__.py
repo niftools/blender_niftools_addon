@@ -44,7 +44,6 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import collision
 from io_scene_nif.modules.nif_export.geometry import mesh
-from io_scene_nif.modules.nif_export.object import Object
 from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_logging import NifLog
@@ -66,8 +65,8 @@ class Collision:
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
-    def __init__(self):
-        self.objecthelper = Object()
+    def __init__(self, parent):
+        self.objecthelper = parent.objecthelper
         self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def export_collision(self, b_obj, n_parent):
@@ -162,7 +161,7 @@ class Collision:
         """ Export b_obj as a NiCollisionData's bounding_volume sphere """
 
         n_bv.collision_type = 0
-        matrix = Object.get_object_bind(b_obj)
+        matrix = util_math.get_object_bind(b_obj)
         center = matrix.translation
         n_bv.sphere.radius = b_obj.dimensions.x / 2
         n_bv.sphere.center.x = center.x
@@ -173,7 +172,7 @@ class Collision:
         """ Export b_obj as a NiCollisionData's bounding_volume box """
 
         n_bv.collision_type = 1
-        matrix = Object.get_object_bind(b_obj)
+        matrix = util_math.get_object_bind(b_obj)
 
         # set center
         center = matrix.translation
@@ -196,7 +195,7 @@ class Collision:
         """ Export b_obj as a NiCollisionData's bounding_volume capsule """
 
         n_bv.collision_type = 2
-        matrix = Object.get_object_bind(b_obj)
+        matrix = util_math.get_object_bind(b_obj)
         offset = matrix.translation
         # calculate the direction unit vector
         v_dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
@@ -545,7 +544,7 @@ class Collision:
 
             length = b_obj.dimensions.z - b_obj.dimensions.x
             radius = b_obj.dimensions.x / 2
-            matrix = Object.get_object_bind(b_obj)
+            matrix = util_math.get_object_bind(b_obj)
 
             # undo centering on matrix
             matrix.translation.z -= length / 2
