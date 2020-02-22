@@ -43,7 +43,7 @@ import bpy
 import mathutils
 
 from io_scene_nif.modules.nif_export import collision
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_logging import NifLog
 from io_scene_nif.utils.util_global import NifOp

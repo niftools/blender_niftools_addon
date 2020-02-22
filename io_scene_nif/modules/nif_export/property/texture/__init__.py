@@ -39,10 +39,10 @@
 
 from pyffi.formats.nif import NifFormat
 
-# from io_scene_nif.modules.nif_export.animation.texture import TextureAnimation
+from io_scene_nif.modules.nif_export.animation.texture import TextureAnimation
+from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.texture.writer import TextureWriter
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
@@ -75,7 +75,7 @@ class Texture:
     def __init__(self):
         self.dict_mesh_uvlayers = []
         self.texture_writer = TextureWriter()
-        # self.texture_anim = TextureAnimation()
+        self.texture_anim = TextureAnimation()
 
         self.base_mtex = None
         self.glow_mtex = None

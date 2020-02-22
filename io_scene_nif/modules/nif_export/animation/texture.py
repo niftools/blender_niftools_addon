@@ -40,7 +40,7 @@
 import bpy
 
 from io_scene_nif.modules.nif_export.animation import Animation
-from io_scene_nif.modules.nif_export.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.property.texture.writer import TextureWriter
 from io_scene_nif.utils import util_math
 
