@@ -39,4 +39,4 @@
 
 
 def register():
-    from . import object, geometry, nif_import_op, nif_export_op  # , kf_import_op, kf_export_op, nif_export_op,
+    from . import object, geometry, nif_import_op, nif_export_op, kf_import_op  # kf_export_op
