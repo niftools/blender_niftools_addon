@@ -54,7 +54,7 @@ class NifOperatorCommon:
         default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
 
     # Level of verbosity on the console.
-    log_level = bpy.props.EnumProperty(
+    plugin_log_level = bpy.props.EnumProperty(
         items=(
             ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
             ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
@@ -63,8 +63,21 @@ class NifOperatorCommon:
             ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
         ),
         name="Log Level",
-        description="Level of verbosity on the console.",
+        description="Blender Nif Plugin log level of verbosity on the console.",
         default="DEBUG")  # TODO [general] Dev config, revert for release
+
+    # Level of verbosity on the console.
+    pyffi_log_level = bpy.props.EnumProperty(
+        items=(
+            ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
+            ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
+            ("WARNING", "Warning", "Only show warnings and errors.", 30),
+            ("ERROR", "Error", "Only show errors.", 40),
+            ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
+        ),
+        name="Log Level",
+        description="Pyffi log level of verbosity on the console.",
+        default="INFO")
 
     # Name of file where Python profiler dumps the profile.
     profile_path = bpy.props.StringProperty(

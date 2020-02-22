@@ -85,6 +85,9 @@ class NifLog:
     @staticmethod
     def init(operator):
         NifLog.op = operator
-        log_level_num = getattr(logging, operator.properties.log_level)
-        logging.getLogger("niftools").setLevel(log_level_num)
-        logging.getLogger("pyffi").setLevel(log_level_num)
+
+        niftools_level_num = getattr(logging, operator.properties.plugin_log_level)
+        logging.getLogger("niftools").setLevel(niftools_level_num)
+
+        pyffi_level_num = getattr(logging, operator.properties.pyffi_log_level)
+        logging.getLogger("pyffi").setLevel(pyffi_level_num)
