@@ -54,17 +54,17 @@ class NifLog:
     @staticmethod
     def debug(message):
         """Report a debug message."""
-        NifLog.op.report({'DEBUG'}, message)
+        NifLog.op.report({'DEBUG'}, str(message))
 
     @staticmethod
     def info(message):
         """Report an informative message."""
-        NifLog.op.report({'INFO'}, message)
+        NifLog.op.report({'INFO'}, str(message))
 
     @staticmethod
     def warn(message):
         """Report a warning message."""
-        NifLog.op.report({'WARNING'}, message)
+        NifLog.op.report({'WARNING'}, str(message))
 
     @staticmethod
     def error(message):
