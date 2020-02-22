@@ -67,68 +67,69 @@ class MeshProperty:
         self.n_block = n_block
         self.b_mesh = b_mesh
         for prop in n_block.properties:
-            NifLog.debug("About to process" + str(type(prop)))
+            NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
             self.process_property(prop)
 
     def process_property(self, prop):
         """Base method to warn user that this property is not supported"""
-        NifLog.warn("Unknown property block found : " + str(prop.name))
-        NifLog.warn("This type isn't currently supported: {}".format(type(prop)))
+        NifLog.warn("Unknown property block found : {0}".format(str(prop.name)))
+        NifLog.warn("This type isn't currently supported: {0}".format(type(prop)))
 
     def process_nistencil_property(self, prop):
         """Stencil (for double sided meshes"""
-        NifLog.debug("NiStencilProperty property found " + str(prop))
         self.b_mesh.show_double_sided = True  # We don't check flags for now, nothing fancy
+        NifLog.debug("NiStencilProperty property processed")
 
     def process_nispecular_property(self, prop):
         """SpecularProperty based specular"""
-        NifLog.debug("NiSpecularProperty property found " + str(prop))
         b_mat = self._find_or_create_material()
 
         # TODO [material][property]
         if NifData.data.version == 0x14000004:
             b_mat.specular_intensity = 0.0  # no specular prop
+        NifLog.debug("NiSpecularProperty property processed")
 
     def process_nialpha_property(self, prop):
         """Import a NiAlphaProperty based material"""
-        NifLog.debug("NiAlphaProperty property found " + str(prop))
         b_mat = self._find_or_create_material()
         Material.set_alpha(b_mat, prop)
+        NifLog.debug("NiAlphaProperty property processed")
 
     def process_nimaterial_property(self, prop):
         """Import a NiMaterialProperty based material"""
-        NifLog.debug("NiMaterialProperty property found " + str(prop))
         b_mat = self._find_or_create_material()
         b_mat = NiMaterial().import_material(self.n_block, b_mat, prop)
         # TODO [animation][material] merge this call into import_material
         MaterialAnimation().import_material_controllers(self.n_block, b_mat)
+        NifLog.debug("NiMaterialProperty property processed")
 
     def process_nitexturing_property(self, prop):
         """Import a NiTexturingProperty based material"""
-        NifLog.debug("NiTexturingProperty property found " + str(prop))
         b_mat = self._find_or_create_material()
         # FIXME Texture system needs alot of work, disabling for now
         NiTextureProp.get().import_nitextureprop_textures(b_mat, prop)
+        NifLog.debug("NiTexturingProperty property processed")
 
     def process_niwireframe_property(self, prop):
         """Material based specular"""
-        NifLog.debug("NiWireframeProperty found " + str(prop))
         b_mat = self._find_or_create_material()
         b_mat.type = 'WIRE'
+        NifLog.debug("NiWireframeProperty property processed")
 
     def process_nivertexcolor_property(self, prop):
         """Material based specular"""
         NifLog.debug("NiVertexColorProperty found " + str(prop))
         b_mat = self._find_or_create_material()
         # TODO [property][mesh] Use the vertex color modes
+        NifLog.debug("NiVertexColorProperty property processed")
 
     def _find_or_create_material(self):
         b_mats = self.b_mesh.materials
         if len(b_mats) == 0:
-            NifLog.debug("Creating placeholder material to store properties in")
             b_mat = bpy.data.materials.new("")
             self.b_mesh.materials.append(b_mat)
+            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
         else:
-            NifLog.debug("Reusing existing material to store additional properties in")
             b_mat = self.b_mesh.materials[0]
+            NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
         return b_mat
