@@ -106,7 +106,6 @@ class MeshProperty:
     def process_nitexturing_property(self, prop):
         """Import a NiTexturingProperty based material"""
         b_mat = self._find_or_create_material()
-        # FIXME Texture system needs alot of work, disabling for now
         NiTextureProp.get().import_nitextureprop_textures(b_mat, prop)
         NifLog.debug("NiTexturingProperty property processed")
 
@@ -118,7 +117,6 @@ class MeshProperty:
 
     def process_nivertexcolor_property(self, prop):
         """Material based specular"""
-        NifLog.debug("NiVertexColorProperty found " + str(prop))
         b_mat = self._find_or_create_material()
         # TODO [property][mesh] Use the vertex color modes
         NifLog.debug("NiVertexColorProperty property processed")
