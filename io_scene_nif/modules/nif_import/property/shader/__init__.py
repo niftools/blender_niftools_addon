@@ -40,6 +40,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
+from io_scene_nif.modules.nif_import.property.material import Material
 from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_logging import NifLog
@@ -105,13 +106,9 @@ class BSShader:
 
         # shader based properties
         if bs_shader_property:
-
             # Diffuse color
             if bs_shader_property.skin_tint_color:
-                b_mat.diffuse_color.r = bs_shader_property.skin_tint_color.r
-                b_mat.diffuse_color.g = bs_shader_property.skin_tint_color.g
-                b_mat.diffuse_color.b = bs_shader_property.skin_tint_color.b
-                b_mat.diffuse_intensity = 1.0
+                Material.import_material_diffuse(bs_shader_property.skin_tint_color)
 
             if (b_mat.diffuse_color.r + b_mat.diffuse_color.g + b_mat.diffuse_color.g) == 0:
                 b_mat.diffuse_color.r = bs_shader_property.hair_tint_color.r

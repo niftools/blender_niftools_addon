@@ -108,10 +108,10 @@ class Material:
         b_mat.emit = n_mat_prop.emit_multi
 
     @staticmethod
-    def import_material_diffuse(b_mat, n_mat_prop):
-        b_mat.diffuse_color.r = n_mat_prop.diffuse_color.r
-        b_mat.diffuse_color.g = n_mat_prop.diffuse_color.g
-        b_mat.diffuse_color.b = n_mat_prop.diffuse_color.b
+    def import_material_diffuse(b_mat, n_color):
+        b_mat.diffuse_color.r = n_color.r
+        b_mat.diffuse_color.g = n_color.g
+        b_mat.diffuse_color.b = n_color.b
         b_mat.diffuse_intensity = 1.0
 
     @staticmethod
@@ -143,7 +143,7 @@ class NiMaterial(Material):
         self.import_material_ambient(b_mat, n_mat_prop)
 
         # Diffuse color
-        self.import_material_diffuse(b_mat, n_mat_prop)
+        self.import_material_diffuse(b_mat, n_mat_prop.diffuse_color)
 
         # TODO [property][material] Detect fallout 3+, use emit multi as a degree of emission
         # TODO [property][material] Test some values to find emission maximium. 0-1 -> 0-max_val
