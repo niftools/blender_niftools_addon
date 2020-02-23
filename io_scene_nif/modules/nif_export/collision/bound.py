@@ -96,7 +96,7 @@ class CollisionProperty(Bound):
 
     def exportBoundingBox(self, b_obj, block_parent):
         box_extends = self.calculate_box_extents(b_obj)
-        n_bbox = self.objecthelper.create_ninode()
+        n_bbox = block_store.create_ninode()
         block_parent.add_child(n_bbox)
         # set name, flags, translation, and radius
         n_bbox.name = "Bounding Box"

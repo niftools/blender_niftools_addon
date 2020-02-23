@@ -36,8 +36,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
+from io_scene_nif.modules.nif_export import types
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
+from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
@@ -80,12 +81,12 @@ class Armature:
         # ok, let's create the b_bone NiNode blocks
         for b_bone in bones:
             # create a new nif block for this b_bone
-            n_bone = self.nif_export.objecthelper.create_ninode(b_bone)
+            n_bone = types.create_ninode(b_bone)
             # doing b_bone map now makes linkage very easy in second run
             bones_node[b_bone.name] = n_bone
 
             # add the n_bone and the keyframe for this b_bone
-            n_bone.name = self.nif_export.objecthelper.get_full_name(b_bone)
+            n_bone.name = block_store.get_full_name(b_bone)
 
             if b_bone.niftools.boneflags != 0:
                 n_bone.flags = b_bone.niftools.boneflags
@@ -113,7 +114,7 @@ class Armature:
                 else:
                     n_bone.flags = 0x0002  # default for Morrowind bones
             # rest pose
-            self.nif_export.objecthelper.set_object_matrix(b_bone, n_bone)
+            util_math.set_object_matrix(b_bone, n_bone)
 
             # per-bone animation
             self.transform_anim.export_transforms(n_bone, b_obj, b_action, b_bone)

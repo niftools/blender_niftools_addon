@@ -42,7 +42,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export import collision
+from io_scene_nif.modules.nif_export import collision, types
 from io_scene_nif.modules.nif_export.geometry import mesh
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -66,7 +66,7 @@ class Collision:
     FLOAT_MAX = +3.4028234663852886e+38
 
     def __init__(self, parent):
-        self.objecthelper = parent.objecthelper
+        self.objecthelper = parent
         self.HAVOK_SCALE = collision.HAVOK_SCALE
 
     def export_collision(self, b_obj, n_parent):
@@ -77,7 +77,7 @@ class Collision:
             node = block_store.create_block("RootCollisionNode", b_obj)
             n_parent.add_child(node)
             node.flags = 0x0003  # default
-            self.objecthelper.set_object_matrix(b_obj, node)
+            util_math.set_object_matrix(b_obj, node)
             for child in b_obj.children:
                 self.objecthelper.export_node(child, node, None)
 
@@ -93,7 +93,7 @@ class Collision:
                     continue
             else:
                 # all nodes failed so add new one
-                node = self.objecthelper.create_ninode(b_obj)
+                node = types.create_ninode(b_obj)
                 # node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy{:d}'.format(n_parent.num_children)
                 if b_obj.niftools.objectflags != 0:
@@ -405,7 +405,7 @@ class Collision:
                 raise ValueError('Not a packed list of collisions')
 
         mesh = b_obj.data
-        transform = mathutils.Matrix(self.objecthelper.get_object_matrix(b_obj).as_list())
+        transform = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
@@ -489,8 +489,7 @@ class Collision:
             n_coltf.unknown_8_bytes[5] = 9
             n_coltf.unknown_8_bytes[6] = 253
             n_coltf.unknown_8_bytes[7] = 4
-            hktf = mathutils.Matrix(
-                self.objecthelper.get_object_matrix(b_obj).as_list())
+            hktf = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
@@ -576,7 +575,7 @@ class Collision:
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
             b_mesh = b_obj.data
-            b_transform_mat = mathutils.Matrix(self.objecthelper.get_object_matrix(b_obj).as_list())
+            b_transform_mat = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
 
             b_rot_quat = b_transform_mat.decompose()[1]
             b_scale_vec = b_transform_mat.decompose()[0]
