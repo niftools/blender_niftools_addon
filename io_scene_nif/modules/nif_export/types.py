@@ -37,9 +37,46 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
+
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp
+
+
+def create_ninode(b_obj=None):
+    """Essentially a wrapper around create_block() that creates nodes of the right type"""
+    # when no b_obj is passed, it means we create a root node
+    if not b_obj:
+        return block_store.create_block("NiNode")
+
+    # get node type - some are stored as custom property of the b_obj
+    try:
+        n_node_type = b_obj["type"]
+    except KeyError:
+        n_node_type = "NiNode"
+
+    # ...others by presence of constraints
+    if has_track(b_obj):
+        n_node_type = "NiBillboardNode"
+
+    # now create the node
+    n_node = block_store.create_block(n_node_type, b_obj)
+
+    # customize the node data, depending on type
+    if n_node_type == "NiLODNode":
+        export_range_lod_data(n_node, b_obj)
+
+    return n_node
+
+
+def has_track(b_obj):
+    """ Determine if this b_obj has a track_to constraint """
+    # bones do not have constraints
+    if not isinstance(b_obj, bpy.types.Bone):
+        for constr in b_obj.constraints:
+            if constr.type == 'TRACK_TO':
+                return True
 
 
 def export_range_lod_data(n_node, b_obj):
