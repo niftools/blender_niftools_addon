@@ -63,8 +63,7 @@ NORMAL_RESOLUTION = 100
 
 class Mesh:
 
-    def __init__(self, parent):
-        self.nif_export = parent
+    def __init__(self):
         self.texture_helper = Texture()
         self.bss_helper = BSShader()
         self.object_property = ObjectProperty()
@@ -280,7 +279,7 @@ class Mesh:
             # the trishape itself then needs identity transform (default)
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
-                self.nif_export.objecthelper.set_object_matrix(b_obj, trishape)
+                util_math.set_object_matrix(b_obj, trishape)
 
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
@@ -299,7 +298,7 @@ class Mesh:
                     trishape.bs_properties.update_size()
                     trishape.bs_properties[num_props] = bsshader
 
-                    # TODO [shader] Pull out to shader module
+                    # TODO [shader][animation] Pull out to shader module
                     # trishape.add_property(bsshader)
                     if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
                         effect_control = block_store.create_block("BSEffectShaderPropertyFloatController", bsshader)
@@ -669,7 +668,7 @@ class Mesh:
 
                         skindata.has_vertex_weights = True
                         # fix geometry rest pose: transform relative to skeleton root
-                        skindata.set_transform(self.nif_export.objecthelper.get_object_matrix(b_obj).get_inverse())
+                        skindata.set_transform(util_math.get_object_matrix(b_obj).get_inverse())
 
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}
@@ -760,7 +759,9 @@ class Mesh:
 
                         # calculate center and radius for each skin bone data block
                         trishape.update_skin_center_radius()
-                        
+
+                        NifLog.info("HERE")
+                        NifLog.info(dir(NifOp.props))
                         if NifOp.props.version >= 0x04020100 and NifOp.props.skin_partition:
                             NifLog.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
