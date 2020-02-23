@@ -111,15 +111,10 @@ class BSShader:
                 Material.import_material_diffuse(bs_shader_property.skin_tint_color)
 
             if (b_mat.diffuse_color.r + b_mat.diffuse_color.g + b_mat.diffuse_color.g) == 0:
-                b_mat.diffuse_color.r = bs_shader_property.hair_tint_color.r
-                b_mat.diffuse_color.g = bs_shader_property.hair_tint_color.g
-                b_mat.diffuse_color.b = bs_shader_property.hair_tint_color.b
-                b_mat.diffuse_intensity = 1.0
+                Material.import_material_diffuse(bs_shader_property.hair_tint_color)
 
             # Emissive
-            b_mat.niftools.emissive_color.r = bs_shader_property.emissive_color.r
-            b_mat.niftools.emissive_color.g = bs_shader_property.emissive_color.g
-            b_mat.niftools.emissive_color.b = bs_shader_property.emissive_color.b
+            Material.import_material_emissive(bs_effect_shader_property.emissive_color)
             b_mat.emit = bs_shader_property.emissive_multiple
 
             # Alpha
@@ -127,12 +122,10 @@ class BSShader:
                 b_mat = self.set_alpha_bsshader(b_mat, bs_shader_property, n_alpha_prop)
 
             # gloss
-            b_mat.specular_hardness = bs_shader_property.glossiness
+            Material.import_material_gloss(b_mat, bs_shader_property.glossiness)
 
             # Specular color
-            b_mat.specular_color.r = bs_shader_property.specular_color.r
-            b_mat.specular_color.g = bs_shader_property.specular_color.g
-            b_mat.specular_color.b = bs_shader_property.specular_color.b
+            Material.import_material_specular(b_mat, bs_shader_property.specular_color)
             b_mat.specular_intensity = bs_shader_property.specular_strength
 
             # lighting effect
@@ -145,11 +138,10 @@ class BSShader:
                 b_mat = self.set_alpha_bsshader(b_mat, bs_shader_property, n_alpha_prop)
 
             if bs_effect_shader_property.emissive_color:
-                b_mat.niftools.emissive_color.r = bs_effect_shader_property.emissive_color.r
-                b_mat.niftools.emissive_color.g = bs_effect_shader_property.emissive_color.g
-                b_mat.niftools.emissive_color.b = bs_effect_shader_property.emissive_color.b
+                Material.import_material_emissive(bs_effect_shader_property.emissive_color)
                 b_mat.niftools.emissive_alpha = bs_effect_shader_property.emissive_color.a
                 b_mat.emit = bs_effect_shader_property.emissive_multiple
+
             b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
 
     def set_alpha_bsshader(self, b_mat, shader_property):

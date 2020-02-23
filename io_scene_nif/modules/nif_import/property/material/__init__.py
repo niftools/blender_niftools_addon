@@ -95,23 +95,22 @@ class Material:
     """
 
     @staticmethod
-    def import_material_specular(b_mat, n_mat_prop):
-        b_mat.specular_color.r = n_mat_prop.specular_color.r
-        b_mat.specular_color.g = n_mat_prop.specular_color.g
-        b_mat.specular_color.b = n_mat_prop.specular_color.b
+    def import_material_specular(b_mat, n_specular_color):
+        b_mat.specular_color.r = n_specular_color.r
+        b_mat.specular_color.g = n_specular_color.g
+        b_mat.specular_color.b = n_specular_color.b
 
     @staticmethod
-    def import_material_emissive(b_mat, n_mat_prop):
-        b_mat.niftools.emissive_color.r = n_mat_prop.emissive_color.r
-        b_mat.niftools.emissive_color.g = n_mat_prop.emissive_color.g
-        b_mat.niftools.emissive_color.b = n_mat_prop.emissive_color.b
-        b_mat.emit = n_mat_prop.emit_multi
+    def import_material_emissive(b_mat, n_emissive_color):
+        b_mat.niftools.emissive_color.r = n_emissive_color.r
+        b_mat.niftools.emissive_color.g = n_emissive_color.g
+        b_mat.niftools.emissive_color.b = n_emissive_color.b
 
     @staticmethod
-    def import_material_diffuse(b_mat, n_color):
-        b_mat.diffuse_color.r = n_color.r
-        b_mat.diffuse_color.g = n_color.g
-        b_mat.diffuse_color.b = n_color.b
+    def import_material_diffuse(b_mat, n_diffuse_color):
+        b_mat.diffuse_color.r = n_diffuse_color.r
+        b_mat.diffuse_color.g = n_diffuse_color.g
+        b_mat.diffuse_color.b = n_diffuse_color.b
         b_mat.diffuse_intensity = 1.0
 
     @staticmethod
@@ -119,6 +118,10 @@ class Material:
         b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
         b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
         b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b
+
+    @staticmethod
+    def import_material_gloss(b_mat, glossiness):
+        b_mat.specular_hardness = glossiness
 
 
 class NiMaterial(Material):
@@ -146,17 +149,18 @@ class NiMaterial(Material):
         self.import_material_diffuse(b_mat, n_mat_prop.diffuse_color)
 
         # TODO [property][material] Detect fallout 3+, use emit multi as a degree of emission
-        # TODO [property][material] Test some values to find emission maximium. 0-1 -> 0-max_val
-        # TODO [property][material] Should we factor in blender bounds 0.0 - 2.0
+        # Test some values to find emission maximium. 0-1 -> 0-max_val
+        # Should we factor in blender bounds 0.0 - 2.0
 
         # Emissive
-        self.import_material_emissive(b_mat, n_mat_prop)
+        self.import_material_emissive(b_mat, n_mat_prop.emissive_color)
+        b_mat.emit = n_mat_prop.emit_multi
 
         # gloss
-        b_mat.specular_hardness = n_mat_prop.glossiness
+        self.import_material_gloss(b_mat, n_mat_prop.glossiness)
 
         # Specular color
-        self.import_material_specular(b_mat, n_mat_prop)
+        self.import_material_specular(b_mat, n_mat_prop.specular_color)
         b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
 
         return b_mat
