@@ -41,9 +41,12 @@ import math
 import bpy
 from bpy_extras.io_utils import axis_conversion
 import mathutils
+from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utils.util_logging import NifLog
 
+THETA_THRESHOLD_NEGY = 1.0e-9
+THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5
 
 class NifError(Exception):
     """A simple custom exception class for export errors."""
@@ -102,8 +105,6 @@ def vec_roll_to_mat3(vec, roll):
     # note that C accesses columns first, so all matrix indices are swapped compared to the C version
 
     nor = vec.normalized()
-    THETA_THRESHOLD_NEGY = 1.0e-9
-    THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5
 
     # create a 3x3 matrix
     b_matrix = mathutils.Matrix().to_3x3()
@@ -262,3 +263,28 @@ def find_extra(n_block, extratype):
         if isinstance(extra, extratype):
             return extra
     return None
+
+
+def set_object_matrix(b_obj, block):
+    """Set a blender object's transform matrix to a NIF object's transformation matrix in rest pose."""
+    block.set_transform(get_object_matrix(b_obj))
+
+
+def get_object_matrix(b_obj):
+    """Get a blender object's matrix as NifFormat.Matrix44"""
+    return mathutils_to_nifformat_matrix(get_object_bind(b_obj))
+
+
+def set_b_matrix_to_n_block(b_matrix, block):
+    """Set a blender matrix to a NIF object's transformation matrix in rest pose."""
+    # TODO [object] maybe favor this over the above two methods for more flexibility and transparency?
+    block.set_transform(mathutils_to_nifformat_matrix(b_matrix))
+
+
+def mathutils_to_nifformat_matrix(b_matrix):
+    """Convert a blender matrix to a NifFormat.Matrix44"""
+    # transpose to swap columns for rows so we can use pyffi's set_rows() directly
+    # instead of setting every single value manually
+    n_matrix = NifFormat.Matrix44()
+    n_matrix.set_rows(*b_matrix.transposed())
+    return n_matrix
