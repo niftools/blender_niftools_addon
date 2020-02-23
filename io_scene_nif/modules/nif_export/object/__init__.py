@@ -37,17 +37,16 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
-# from io_scene_nif.modules.nif_export import collision
+from io_scene_nif.modules.nif_export import types
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.armature import Armature
+from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_export.property.object import ObjectDataProperty
-from io_scene_nif.modules.nif_export.object import types
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp
@@ -71,11 +70,12 @@ class Object:
     export_types = ('EMPTY', 'MESH', 'ARMATURE')
 
     def __init__(self, parent):
-        self.nif_export = parent
+        # self.nif_export = parent
         self.armaturehelper = Armature()
-        self.mesh_helper = Mesh(parent=parent)
+        self.mesh_helper = Mesh()
         self.transform_anim = TransformAnimation()
         self.object_anim = ObjectAnimation()
+        self.collisionhelper = Collision(parent=self)
 
     def export_root_node(self, root_objects, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
@@ -90,7 +90,7 @@ class Object:
 
         # there is more than one root object so we create a meta root
         else:
-            n_root = self.create_ninode()
+            n_root = block_store.create_ninode()
             n_root.name = "Scene Root"
             for b_obj in root_objects:
                 self.export_node(b_obj, n_root)
@@ -158,12 +158,12 @@ class Object:
             return None
         if b_obj_type == 'MESH' and b_obj.name.lower().startswith('bsbound'):
             # add a bounding box
-            self.nif_export.collisionhelper.export_bounding_box(b_obj, n_parent, bsbound=True)
+            self.collisionhelper.export_bounding_box(b_obj, n_parent, bsbound=True)
             return None  # done; stop here
 
         elif b_obj_type == 'MESH' and b_obj.name.lower().startswith("bounding box"):
             # Morrowind bounding box
-            self.nif_export.collisionhelper.export_bounding_box(b_obj, n_parent, bsbound=False)
+            self.collisionhelper.export_bounding_box(b_obj, n_parent, bsbound=False)
             return None  # done; stop here
 
         elif b_obj_type == 'MESH':
@@ -176,14 +176,14 @@ class Object:
             # determine if object tracks camera
             # nb normally, imported models will have tracking constraints on their parent empty
             # but users may create track_to constraints directly on objects, so keep it for now
-            has_track = self.has_track(b_obj)
+            has_track = types.has_track(b_obj)
 
             if is_collision:
-                self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
+                self.collisionhelper.export_collision(b_obj, n_parent)
                 return None  # done; stop here
             elif b_action or has_children or is_multimaterial or has_track:
                 # create a ninode as parent of this mesh for the hierarchy to work out
-                node = self.create_ninode(b_obj)
+                node = types.create_ninode(b_obj)
             else:
                 # don't create intermediate ninode for this guy
                 return self.mesh_helper.export_tri_shapes(b_obj, n_parent, b_obj.name)
@@ -198,7 +198,7 @@ class Object:
 
         else:
             # -> everything else (empty/armature) is a (more or less regular) node
-            node = self.create_ninode(b_obj)
+            node = types.create_ninode(b_obj)
 
         # make it child of its parent in the nif, if it has one
         if n_parent:
@@ -207,7 +207,7 @@ class Object:
         # and fill in this node's non-trivial values
         node.name = block_store.get_full_name(b_obj)
         self.set_node_flags(b_obj, node)
-        self.set_object_matrix(b_obj, node)
+        util_math.set_object_matrix(b_obj, node)
 
         # export object animation
         self.transform_anim.export_transforms(node, b_obj, b_action)
@@ -236,57 +236,3 @@ class Object:
                     if obj == parent_bone:
                         break
             self.export_node(b_child, n_parent)
-
-    def create_ninode(self, b_obj=None):
-        """Essentially a wrapper around create_block() that creates nodes of the right type"""
-        # when no b_obj is passed, it means we create a root node
-        if not b_obj:
-            return block_store.create_block("NiNode")
-
-        # get node type - some are stored as custom property of the b_obj
-        try:
-            n_node_type = b_obj["type"]
-        except KeyError:
-            n_node_type = "NiNode"
-
-        # ...others by presence of constraints
-        if self.has_track(b_obj):
-            n_node_type = "NiBillboardNode"
-
-        # now create the node
-        n_node = block_store.create_block(n_node_type, b_obj)
-
-        # customize the node data, depending on type
-        if n_node_type == "NiLODNode":
-            types.export_range_lod_data(n_node, b_obj)
-
-        return n_node
-
-    def set_object_matrix(self, b_obj, block):
-        """Set a blender object's transform matrix to a NIF object's transformation matrix in rest pose."""
-        block.set_transform(self.get_object_matrix(b_obj))
-
-    def get_object_matrix(self, b_obj):
-        """Get a blender object's matrix as NifFormat.Matrix44"""
-        return self.mathutils_to_nifformat_matrix(util_math.get_object_bind(b_obj))
-
-    def set_b_matrix_to_n_block(self, b_matrix, block):
-        """Set a blender matrix to a NIF object's transformation matrix in rest pose."""
-        # TODO [object] maybe favor this over the above two methods for more flexibility and transparency?
-        block.set_transform(self.mathutils_to_nifformat_matrix(b_matrix))
-
-    def mathutils_to_nifformat_matrix(self, b_matrix):
-        """Convert a blender matrix to a NifFormat.Matrix44"""
-        # transpose to swap columns for rows so we can use pyffi's set_rows() directly
-        # instead of setting every single value manually
-        n_matrix = NifFormat.Matrix44()
-        n_matrix.set_rows(*b_matrix.transposed())
-        return n_matrix
-
-    def has_track(self, b_obj):
-        """ Determine if this b_obj has a track_to constraint """
-        # bones do not have constraints
-        if not isinstance(b_obj, bpy.types.Bone):
-            for constr in b_obj.constraints:
-                if constr.type == 'TRACK_TO':
-                    return True

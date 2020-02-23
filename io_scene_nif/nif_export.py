@@ -75,7 +75,6 @@ class NifExport(NifCommon):
         # self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint()
         self.objecthelper = Object(parent=self)
-        self.collisionhelper = Collision(parent=self)
         self.exportable_objects = []
 
     def execute(self):
@@ -346,6 +345,7 @@ class NifExport(NifCommon):
                 data.modification = "ndoors"
             elif NifOp.props.game == 'HOWLING_SWORD':
                 data.modification = "jmihs1"
+
             with open(niffile, "wb") as stream:
                 data.write(stream)
 
