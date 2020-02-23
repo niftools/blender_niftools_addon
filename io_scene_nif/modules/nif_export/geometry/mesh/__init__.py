@@ -53,7 +53,7 @@ from io_scene_nif.modules.nif_export.property.shader import BSShader
 from io_scene_nif.modules.nif_export.property.texture import Texture
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_math import NifError
-from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_global import NifOp, NifData
 from io_scene_nif.utils.util_logging import NifLog
 
 # TODO [scene][property][ui] Expose these either through the scene or as ui properties
@@ -760,9 +760,7 @@ class Mesh:
                         # calculate center and radius for each skin bone data block
                         trishape.update_skin_center_radius()
 
-                        NifLog.info("HERE")
-                        NifLog.info(dir(NifOp.props))
-                        if NifOp.props.version >= 0x04020100 and NifOp.props.skin_partition:
+                        if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
                             NifLog.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
                                 maxbonesperpartition=NifOp.props.max_bones_per_partition,

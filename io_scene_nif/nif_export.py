@@ -53,7 +53,7 @@ from io_scene_nif.modules.nif_export import scene
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utils import util_math
-from io_scene_nif.utils.util_global import NifOp, EGMData
+from io_scene_nif.utils.util_global import NifOp, EGMData, NifData
 from io_scene_nif.utils.util_logging import NifLog
 
 
@@ -159,7 +159,9 @@ class NifExport(NifCommon):
                 NifLog.info("Exporting geometry and animation in xnif-style")
 
             # find nif version to write
+
             self.version, data = scene.get_version_data()
+            NifData.init(data)
 
             # write external animation to a KF tree
             if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):

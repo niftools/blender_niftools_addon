@@ -44,7 +44,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.modules.nif_export import animation
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
-from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_global import NifOp, NifData
 from io_scene_nif.utils.util_logging import NifLog
 
 # FPS = 30
@@ -116,7 +116,7 @@ class Animation(ABC):
         n_kfi = None
         n_kfc = None
         
-        if NifOp.props.animation == 'GEOM_NIF' and NifOp.props.version < 0x0A020000:
+        if NifOp.props.animation == 'GEOM_NIF' and NifData.data.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
             # present, only the data is not present (see further on)
@@ -124,7 +124,7 @@ class Animation(ABC):
 
         # add a KeyframeController block, and refer to this block in the
         # parent's time controller
-        if NifOp.props.version < 0x0A020000:
+        if NifData.data.version < 0x0A020000:
             n_kfc = block_store.create_block("NiKeyframeController", None)
         else:
             n_kfc = block_store.create_block("NiTransformController", None)
@@ -142,7 +142,7 @@ class Animation(ABC):
         elif isinstance(parent_block, NifFormat.NiControllerSequence):
             controlled_block = parent_block.add_controlled_block()
             controlled_block.priority = priority
-            if NifOp.props.version < 0x0A020000:
+            if NifData.data.version < 0x0A020000:
                 # older versions need the actual controller blocks
                 controlled_block.target_name = target_name
                 controlled_block.controller = n_kfc
