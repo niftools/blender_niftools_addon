@@ -43,7 +43,7 @@ from pyffi.formats.nif import NifFormat
 
 
 from io_scene_nif.modules.nif_export.geometry import mesh
-# from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
+from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 # from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.property import texture
@@ -68,7 +68,7 @@ class Mesh:
         self.bss_helper = BSShader()
         self.object_property = ObjectProperty()
         self.material_property = MaterialProp()
-        # self.material_anim = MaterialAnimation()
+        self.material_anim = MaterialAnimation()
         # self.morph_anim = MorphAnimation()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
@@ -393,8 +393,7 @@ class Mesh:
                 trishape.add_property(trimatprop)
 
                 # material animation
-                # TODO FIX heirarchy
-                # self.material_anim.export_material(b_mat, trishape)
+                self.material_anim.export_material(b_mat, trishape)
 
             # -> now comes the real export
 

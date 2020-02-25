@@ -43,9 +43,6 @@ from io_scene_nif.utils.util_logging import NifLog
 
 class Material:
 
-    def __init__(self):
-        self.dict_materials = {}
-
     @staticmethod
     def set_alpha(b_mat, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
