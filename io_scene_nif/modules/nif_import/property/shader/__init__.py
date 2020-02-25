@@ -36,153 +36,33 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-import bpy
-from pyffi.formats.nif import NifFormat
+from abc import ABC
 
-from io_scene_nif.modules.nif_import.object.block_registry import block_store
-from io_scene_nif.modules.nif_import.property.material import Material
-from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
-from io_scene_nif.utils import util_math
+import bpy
+
 from io_scene_nif.utils.util_logging import NifLog
 
 
-class BSShader:
+class BSShader(ABC):
 
     def __init__(self):
-        self.dict_materials = {}
-        self.texturehelper = TextureSlotManager()
+        self.b_mesh = None
 
     @staticmethod
-    def import_shader_types(b_obj, b_prop):
-        if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
-            b_obj.niftools_shader.bs_shadertype = 'BSShaderPPLightingProperty'
-            sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
-            b_obj.niftools_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
-            for b_flag_name in b_prop.shader_flags._names:
-                sf_index = b_prop.shader_flags._names.index(b_flag_name)
-                if b_prop.shader_flags._items[sf_index]._value == 1:
-                    b_obj.niftools_shader[b_flag_name] = True
-
-        if isinstance(b_prop, NifFormat.BSLightingShaderProperty):
-            b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
-            sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
-            b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
-            BSShader.import_shader_flags(b_obj, b_prop)
-
-        elif isinstance(b_prop, NifFormat.BSEffectShaderProperty):
-            b_obj.niftools_shader.bs_shadertype = 'BSEffectShaderProperty'
-            b_obj.niftools_shader.bslsp_shaderobjtype = 'Default'
-            BSShader.import_shader_flags(b_obj, b_prop)
-
-    @staticmethod
-    def import_shader_flags(b_obj, b_prop):
-        for b_flag_name_1 in b_prop.shader_flags_1._names:
-            sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
-            if b_prop.shader_flags_1._items[sf_index]._value == 1:
-                b_obj.niftools_shader[b_flag_name_1] = True
-
-        for b_flag_name_2 in b_prop.shader_flags_2._names:
-            sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
-            if b_prop.shader_flags_2._items[sf_index]._value == 1:
-                b_obj.niftools_shader[b_flag_name_2] = True
-
-    def import_bsshader_material(self, bs_shader_property, bs_effect_shader_property, n_alpha_prop):
-        material_hash = self.get_bsshader_hash(bs_shader_property, bs_effect_shader_property)
-        try:
-            return self.dict_materials[material_hash]
-        except KeyError:
-            pass
-
-        # name unique material
-        name = block_store.import_name(bs_shader_property)
-        if not name:
-            name = bpy.context.scene.objects.active + "_nt_mat"
-        b_mat = bpy.data.materials.new(name)
-
-        if bs_shader_property:
-            self.texturehelper.import_bsshaderproperty_textures(b_mat, bs_shader_property)
-        if bs_effect_shader_property:
-            self.texturehelper.import_bseffectshaderproperty_textures(b_mat, bs_effect_shader_property)
-
-        # shader based properties
-        if bs_shader_property:
-            # Diffuse color
-            if bs_shader_property.skin_tint_color:
-                Material.import_material_diffuse(bs_shader_property.skin_tint_color)
-
-            if (b_mat.diffuse_color.r + b_mat.diffuse_color.g + b_mat.diffuse_color.g) == 0:
-                Material.import_material_diffuse(bs_shader_property.hair_tint_color)
-
-            # Emissive
-            Material.import_material_emissive(bs_effect_shader_property.emissive_color)
-            b_mat.emit = bs_shader_property.emissive_multiple
-
-            # Alpha
-            if n_alpha_prop:
-                b_mat = self.set_alpha_bsshader(b_mat, bs_shader_property, n_alpha_prop)
-
-            # gloss
-            Material.import_material_gloss(b_mat, bs_shader_property.glossiness)
-
-            # Specular color
-            Material.import_material_specular(b_mat, bs_shader_property.specular_color)
-            b_mat.specular_intensity = bs_shader_property.specular_strength
-
-            # lighting effect
-            b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
-            b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
-
-        if bs_effect_shader_property:
-            # Alpha
-            if n_alpha_prop:
-                b_mat = self.set_alpha_bsshader(b_mat, bs_shader_property, n_alpha_prop)
-
-            if bs_effect_shader_property.emissive_color:
-                Material.import_material_emissive(bs_effect_shader_property.emissive_color)
-                b_mat.niftools.emissive_alpha = bs_effect_shader_property.emissive_color.a
-                b_mat.emit = bs_effect_shader_property.emissive_multiple
-
-            b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
-
-    def set_alpha_bsshader(self, b_mat, shader_property):
-        NifLog.debug("Alpha prop detected")
-        b_mat.use_transparency = True
-        b_mat.alpha = (1 - shader_property.alpha)
-        b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-        return b_mat
-
-    def get_bsshader_hash(self, bs_shader_property, bs_effect_shader_property):
-        return (bs_shader_property.get_hash()[1:] if bs_shader_property else None,  # skip first element, which is name
-                bs_effect_shader_property.get_hash() if bs_effect_shader_property else None)
-
-    # TODO [shader] Move move out when nolonger required to reference
-    def find_bsshaderproperty(self, n_block):
-        # bethesda shader
-        bsshaderproperty = util_math.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
-        if not bsshaderproperty:
-            bsshaderproperty = util_math.find_property(n_block, NifFormat.BSLightingShaderProperty)
-
-        if bsshaderproperty:
-            for textureslot in bsshaderproperty.texture_set.textures:
-                if textureslot:
-                    self.bsShaderProperty1st = bsshaderproperty
-                    break
-            else:
-                bsshaderproperty = self.bsShaderProperty1st
-        return bsshaderproperty
-
     def import_uv_offset(b_mat, shader_prop):
         for texture_slot in b_mat.texture_slots:
             if texture_slot:
                 texture_slot.offset.x = shader_prop.uv_offset.u
                 texture_slot.offset.y = shader_prop.uv_offset.v
 
+    @staticmethod
     def import_uv_scale(b_mat, shader_prop):
         for texture_slot in b_mat.texture_slots:
             if texture_slot:
                 texture_slot.scale.x = shader_prop.uv_scale.u
                 texture_slot.scale.y = shader_prop.uv_scale.v
 
+    @staticmethod
     def import_clamp(b_mat, shader_prop):
         clamp = shader_prop.texture_clamp_mode
         for texture_slot in b_mat.texture_slots:
@@ -199,3 +79,42 @@ class BSShader:
                 if clamp == 0:
                     texture_slot.texture.image.use_clamp_x = True
                     texture_slot.texture.image.use_clamp_y = True
+
+    @staticmethod
+    def set_alpha_bsshader(b_mat, shader_property):
+        NifLog.debug("Alpha prop detected")
+        b_mat.use_transparency = True
+        b_mat.alpha = (1 - shader_property.alpha)
+        b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
+        return b_mat
+
+    def _find_or_create_material(self):
+        b_mats = self.b_mesh.materials
+        if len(b_mats) == 0:
+            b_mat = bpy.data.materials.new("")
+            self.b_mesh.materials.append(b_mat)
+            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
+        else:
+            b_mat = self.b_mesh.materials[0]
+            NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
+        return b_mat
+
+    # def get_bsshader_hash(self, bs_shader_property, bs_effect_shader_property):
+    #     return (bs_shader_property.get_hash()[1:] if bs_shader_property else None,  # skip first element, which is name
+    #             bs_effect_shader_property.get_hash() if bs_effect_shader_property else None)
+
+    # TODO [shader] Move move out when nolonger required to reference
+    # def find_bsshaderproperty(self, n_block):
+    #     # bethesda shader
+    #     bsshaderproperty = util_math.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
+    #     if not bsshaderproperty:
+    #         bsshaderproperty = util_math.find_property(n_block, NifFormat.BSLightingShaderProperty)
+    #
+    #     if bsshaderproperty:
+    #         for textureslot in bsshaderproperty.texture_set.textures:
+    #             if textureslot:
+    #                 self.bsShaderProperty1st = bsshaderproperty
+    #                 break
+    #         else:
+    #             bsshaderproperty = self.bsShaderProperty1st
+    #     return bsshaderproperty
