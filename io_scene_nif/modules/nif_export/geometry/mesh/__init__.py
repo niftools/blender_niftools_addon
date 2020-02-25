@@ -44,7 +44,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.geometry import mesh
 from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
-# from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
+from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
@@ -69,7 +69,7 @@ class Mesh:
         self.object_property = ObjectProperty()
         self.material_property = MaterialProp()
         self.material_anim = MaterialAnimation()
-        # self.morph_anim = MorphAnimation()
+        self.morph_anim = MorphAnimation()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """
@@ -805,9 +805,8 @@ class Mesh:
             # fix data consistency type
             tridata.consistency_flags = b_obj.niftools.consistency_flags
 
-            # TODO [animation] FIX Heirarchy issue
             # export EGM or NiGeomMorpherController animation
-            # self.morph_anim.export_morph(b_mesh, trishape, vertmap)
+            self.morph_anim.export_morph(b_mesh, trishape, vertmap)
         return trishape
 
     def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
