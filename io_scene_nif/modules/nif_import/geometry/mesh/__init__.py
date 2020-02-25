@@ -45,7 +45,7 @@ from io_scene_nif.modules.nif_import.geometry.vertex.groups import VertexGroup
 from io_scene_nif.modules.nif_import.geometry import mesh
 from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.nif_import.property.material import Material
-from io_scene_nif.modules.nif_import.property.geometry.mesh import MeshProperty
+from io_scene_nif.modules.nif_import.property.geometry.mesh import MeshPropertyProcessor
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp, EGMData
 from io_scene_nif.utils.util_logging import NifLog
@@ -90,7 +90,7 @@ class Mesh:
 
         # TODO [properties] Should this be object level process, secondary pass for materials / caching
         if n_block.properties:
-            MeshProperty().process_property_list(n_block, b_obj.data)
+            MeshPropertyProcessor().process_property_list(n_block, b_obj.data)
 
         v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
 

@@ -36,36 +36,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
 import bpy
 
 from functools import singledispatch
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_import.animation.material import MaterialAnimation
-from io_scene_nif.modules.nif_import.property.material import Material, NiMaterial
-from io_scene_nif.modules.nif_import.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_nif.utils.util_global import NifData
+from io_scene_nif.modules.nif_import.property.geometry.niproperty import NiPropertyProcessor
 from io_scene_nif.utils.util_logging import NifLog
 
 
-class MeshProperty:
+class MeshPropertyProcessor:
 
     def __init__(self):
-        self.b_mesh = None
-        self.n_block = None
+        self.niproperty = NiPropertyProcessor.get()
+        # self.bsshader = BSShaderProperties(self.b_mesh)
+
         self.process_property = singledispatch(self.process_property)
-        self.process_property.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
-        self.process_property.register(NifFormat.NiAlphaProperty, self.process_nialpha_property)
-        self.process_property.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
-        self.process_property.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
-        self.process_property.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
-        self.process_property.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
-        self.process_property.register(NifFormat.NiVertexColorProperty, self.process_nivertexcolor_property)
+        self.niproperty.register_niproperty(self.process_property)
+        # self.bsshader.register_bsproperty(self.process_property)
 
     def process_property_list(self, n_block, b_mesh):
-        self.n_block = n_block
-        self.b_mesh = b_mesh
+        self.niproperty.b_mesh = b_mesh
+        self.niproperty.n_block = n_block
+
         for prop in n_block.properties:
             NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
             self.process_property(prop)
@@ -74,60 +69,3 @@ class MeshProperty:
         """Base method to warn user that this property is not supported"""
         NifLog.warn("Unknown property block found : {0}".format(str(prop.name)))
         NifLog.warn("This type isn't currently supported: {0}".format(type(prop)))
-
-    def process_nistencil_property(self, prop):
-        """Stencil (for double sided meshes"""
-        self.b_mesh.show_double_sided = True  # We don't check flags for now, nothing fancy
-        NifLog.debug("NiStencilProperty property processed")
-
-    def process_nispecular_property(self, prop):
-        """SpecularProperty based specular"""
-        b_mat = self._find_or_create_material()
-
-        # TODO [material][property]
-        if NifData.data.version == 0x14000004:
-            b_mat.specular_intensity = 0.0  # no specular prop
-        NifLog.debug("NiSpecularProperty property processed")
-
-    def process_nialpha_property(self, prop):
-        """Import a NiAlphaProperty based material"""
-        b_mat = self._find_or_create_material()
-        Material.set_alpha(b_mat, prop)
-        NifLog.debug("NiAlphaProperty property processed")
-
-    def process_nimaterial_property(self, prop):
-        """Import a NiMaterialProperty based material"""
-        b_mat = self._find_or_create_material()
-        b_mat = NiMaterial().import_material(self.n_block, b_mat, prop)
-        # TODO [animation][material] merge this call into import_material
-        MaterialAnimation().import_material_controllers(self.n_block, b_mat)
-        NifLog.debug("NiMaterialProperty property processed")
-
-    def process_nitexturing_property(self, prop):
-        """Import a NiTexturingProperty based material"""
-        b_mat = self._find_or_create_material()
-        NiTextureProp.get().import_nitextureprop_textures(b_mat, prop)
-        NifLog.debug("NiTexturingProperty property processed")
-
-    def process_niwireframe_property(self, prop):
-        """Material based specular"""
-        b_mat = self._find_or_create_material()
-        b_mat.type = 'WIRE'
-        NifLog.debug("NiWireframeProperty property processed")
-
-    def process_nivertexcolor_property(self, prop):
-        """Material based specular"""
-        b_mat = self._find_or_create_material()
-        # TODO [property][mesh] Use the vertex color modes
-        NifLog.debug("NiVertexColorProperty property processed")
-
-    def _find_or_create_material(self):
-        b_mats = self.b_mesh.materials
-        if len(b_mats) == 0:
-            b_mat = bpy.data.materials.new("")
-            self.b_mesh.materials.append(b_mat)
-            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
-        else:
-            b_mat = self.b_mesh.materials[0]
-            NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
-        return b_mat
