@@ -63,7 +63,7 @@ class BSShaderTexture(TextureSlotManager):
         texture_set = bs_shader_property.texture_set
         textures = texture_set.textures
 
-        self.load_diffuse(b_mat, textures[0].decode())
+        self.load_diffuse(b_mat, textures[0])
 
         normal_map = textures[1].decode()
         if normal_map:
