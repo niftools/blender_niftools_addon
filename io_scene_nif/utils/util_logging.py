@@ -55,16 +55,19 @@ class NifLog:
     def debug(message):
         """Report a debug message."""
         NifLog.op.report({'DEBUG'}, str(message))
+        logging.getLogger("niftools").debug(str(message))
 
     @staticmethod
     def info(message):
         """Report an informative message."""
         NifLog.op.report({'INFO'}, str(message))
+        logging.getLogger("niftools").info(str(message))
 
     @staticmethod
     def warn(message):
         """Report a warning message."""
         NifLog.op.report({'WARNING'}, str(message))
+        logging.getLogger("niftools").warning(str(message))
 
     @staticmethod
     def error(message):
@@ -80,6 +83,7 @@ class NifLog:
             The :ref:`error reporting <dev-design-error-reporting>` design.
         """
         NifLog.op.report({'ERROR'}, message)
+        logging.getLogger("niftools").error(str(message))
         return {'FINISHED'}
     
     @staticmethod
