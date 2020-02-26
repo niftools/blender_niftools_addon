@@ -57,14 +57,15 @@ class MeshPropertyProcessor:
         self.bsshader.register_bsproperty(self.process_property)
 
     def process_property_list(self, n_block, b_mesh):
+        self.niproperty.b_mesh = b_mesh
+        self.niproperty.n_block = n_block
+        self.bsshader.b_mesh = b_mesh
+        self.bsshader.n_block = n_block
+
         if n_block.properties:
-            self.niproperty.b_mesh = b_mesh
-            self.niproperty.n_block = n_block
             self.process_props(n_block.properties)
 
         if n_block.bs_properties:
-            self.bsshader.b_mesh = b_mesh
-            self.bsshader.n_block = n_block
             self.process_props(n_block.bs_properties)
 
     def process_props(self, properties):
