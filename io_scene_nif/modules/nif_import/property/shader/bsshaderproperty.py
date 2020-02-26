@@ -40,7 +40,7 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.block_registry import block_store
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.property.material import Material
 from io_scene_nif.modules.nif_import.property.shader import BSShader
 from io_scene_nif.modules.nif_import.property.texture.types.bsshadertexture import BSShaderTexture
@@ -62,20 +62,53 @@ class BSShaderPropertyProcessor(BSShader):
     <niobject name="BSSkyShaderProperty" inherit="BSShaderProperty" module="BSMain" versions="#SKY_AND_LATER#">Skyrim Sky shader block.
     """
 
+    __instance = None
+    _b_mesh = None
+    _n_block = None
+
+    @property
+    def b_mesh(self):
+        return self._b_mesh
+
+    @b_mesh.setter
+    def b_mesh(self, value):
+        self._b_mesh = value
+
+    @property
+    def n_block(self):
+        return self._n_block
+
+    @n_block.setter
+    def n_block(self, value):
+        self._n_block = value
+
+    @staticmethod
+    def get():
+        """ Static access method. """
+        if BSShaderPropertyProcessor.__instance is None:
+            BSShaderPropertyProcessor()
+        return BSShaderPropertyProcessor.__instance
+
     def __init__(self):
-        super().__init__()
-        self.texturehelper = BSShaderTexture().get()
+        """ Virtually private constructor. """
+        if BSShaderPropertyProcessor.__instance is not None:
+            raise Exception("This class is a singleton!")
+        else:
+            super().__init__()
+            BSShaderPropertyProcessor.__instance = self
+            self.texturehelper = BSShaderTexture().get()
 
     def register_bsproperty(self, processor):
         processor.register(NifFormat.BSLightingShaderProperty, self.import_bs_lighting_shader_property)
         processor.register(NifFormat.BSEffectShaderProperty, self.import_bs_effect_shader_property)
 
-    def import_bs_lighting_shader_property(self, n_block, b_mat, bs_shader_property):
-        # update material material name
+    def import_bs_lighting_shader_property(self, bs_shader_property):
+
         name = block_store.import_name(bs_shader_property)
         if name is None:
-            name = (n_block.name.decode() + "_nt_mat")
-        b_mat.name = name
+            name = (self._n_block.name.decode() + "_nt_mat")
+        b_mat = bpy.data.materials.new(name)
+        self.b_mesh.materials.append(b_mat)
 
         # Textures
         self.texturehelper.import_bsshaderproperty_textureset(b_mat, bs_shader_property)
@@ -111,12 +144,14 @@ class BSShaderPropertyProcessor(BSShader):
         b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
         b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
 
-    def import_bs_effect_shader_property(self, n_block, b_mat, bs_effect_shader_property):
+    def import_bs_effect_shader_property(self, bs_effect_shader_property):
+
         # update material material name
         name = block_store.import_name(bs_effect_shader_property)
         if name is None:
-            name = (n_block.name.decode() + "_nt_mat")
-        b_mat.name = name
+            name = (self._n_block.name.decode() + "_nt_mat")
+        b_mat = bpy.data.materials.new(name)
+        self.b_mesh.materials.append(b_mat)
 
         self.texturehelper.import_bseffectshaderproperty_textures(b_mat, bs_effect_shader_property)
 
