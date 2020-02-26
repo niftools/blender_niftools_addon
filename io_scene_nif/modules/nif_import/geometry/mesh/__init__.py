@@ -89,8 +89,7 @@ class Mesh:
         n_uvco = tuple(tuple((lw.u, 1.0 - lw.v) for lw in uv_set) for uv_set in n_tri_data.uv_sets)
 
         # TODO [properties] Should this be object level process, secondary pass for materials / caching
-        if n_block.properties:
-            MeshPropertyProcessor().process_property_list(n_block, b_obj.data)
+        MeshPropertyProcessor().process_property_list(n_block, b_obj.data)
 
         v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
 

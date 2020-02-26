@@ -41,9 +41,8 @@ import bpy
 
 from functools import singledispatch
 
-from pyffi.formats.nif import NifFormat
-
 from io_scene_nif.modules.nif_import.property.geometry.niproperty import NiPropertyProcessor
+from io_scene_nif.modules.nif_import.property.shader.bsshaderproperty import BSShaderPropertyProcessor
 from io_scene_nif.utils.util_logging import NifLog
 
 
@@ -51,17 +50,25 @@ class MeshPropertyProcessor:
 
     def __init__(self):
         self.niproperty = NiPropertyProcessor.get()
-        # self.bsshader = BSShaderProperties(self.b_mesh)
+        self.bsshader = BSShaderPropertyProcessor().get()
 
         self.process_property = singledispatch(self.process_property)
         self.niproperty.register_niproperty(self.process_property)
-        # self.bsshader.register_bsproperty(self.process_property)
+        self.bsshader.register_bsproperty(self.process_property)
 
     def process_property_list(self, n_block, b_mesh):
-        self.niproperty.b_mesh = b_mesh
-        self.niproperty.n_block = n_block
+        if n_block.properties:
+            self.niproperty.b_mesh = b_mesh
+            self.niproperty.n_block = n_block
+            self.process_props(n_block.properties)
 
-        for prop in n_block.properties:
+        if n_block.bs_properties:
+            self.bsshader.b_mesh = b_mesh
+            self.bsshader.n_block = n_block
+            self.process_props(n_block.bs_properties)
+
+    def process_props(self, properties):
+        for prop in properties:
             NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
             self.process_property(prop)
 
