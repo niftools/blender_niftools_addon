@@ -36,68 +36,80 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
+from io_scene_nif.utils.util_logging import NifLog
 
 
-class BSShaderTexture:
+class BSShaderTexture(TextureSlotManager):
 
-    def import_bsshaderproperty_textures(self, b_mat, bs_shader_property):
-        image_tex_file = bs_shader_property.texture_set.textures[0].decode()
-        if image_tex_file:
-            self.has_diffusetex = True
-            self.diffuse_map = self.import_image_texture(b_mat, image_tex_file)
+    __instance = None
 
-        image_tex_file = bs_shader_property.texture_set.textures[1].decode()
-        if image_tex_file:
-            self.has_normaltex = True
-            self.normal_map = self.import_image_texture(b_mat, image_tex_file)
+    @staticmethod
+    def get():
+        """ Static access method. """
+        if BSShaderTexture.__instance is None:
+            BSShaderTexture()
+        return BSShaderTexture.__instance
 
-        image_tex_file = bs_shader_property.texture_set.textures[2].decode()
-        if image_tex_file:
-            self.has_glowtex = True
-            self.glow_map = self.import_image_texture(b_mat, image_tex_file)
+    def __init__(self):
+        """ Virtually private constructor. """
+        if BSShaderTexture.__instance is not None:
+            raise Exception("This class is a singleton!")
+        else:
+            super().__init__()
+            BSShaderTexture.__instance = self
 
-        image_tex_file = bs_shader_property.texture_set.textures[3].decode()
-        if image_tex_file:
-            self.has_detailtex = True
-            self.detail_map = self.import_image_texture(b_mat, image_tex_file)
+    def import_bsshaderproperty_textureset(self, b_mat, bs_shader_property):
+        texture_set = bs_shader_property.texture_set
+        textures = texture_set.textures
 
-        if len(bs_shader_property.texture_set.textures) > 6:
-            image_tex_file = bs_shader_property.texture_set.textures[6].decode()
-            if image_tex_file:
-                self.has_decaltex = True
-                self.decal_map = self.import_image_texture(b_mat, image_tex_file)
+        self.load_diffuse(b_mat, textures[0].decode())
 
-            image_tex_file = bs_shader_property.texture_set.textures[7].decode()
-            if image_tex_file:
-                self.has_glosstex = True
-                self.gloss_map = self.import_image_texture(b_mat, image_tex_file)
+        normal_map = textures[1].decode()
+        if normal_map:
+            NifLog.debug("Loading normal map {0}".format(normal_map))
+            b_texture = self.create_texture_slot(b_mat, normal_map)
+            self.update_normal_slot(b_texture)
 
-        if hasattr(bs_shader_property, 'texture_clamp_mode'):
-            self.import_clamp(b_mat, bs_shader_property)
+        self.load_glow(b_mat, textures[2])
 
-        if hasattr(bs_shader_property, 'uv_offset'):
-            self.import_uv_offset(b_mat, bs_shader_property)
+        detail_map = textures[3].decode()
+        if detail_map:
+            NifLog.debug("Loading detail texture {0}".format(detail_map))
+            b_texture = self.create_texture_slot(b_mat, detail_map)
+            self.update_detail_slot(b_texture)
 
-        if hasattr(bs_shader_property, 'uv_scale'):
-            self.import_uv_scale(b_mat, bs_shader_property)
+        if len(textures) > 6:
+            decal_map = textures[6].decode()
+            if decal_map:
+                NifLog.debug("Loading decal texture {0}".format(decal_map))
+                b_texture = self.create_texture_slot(b_mat, decal_map)
+                self.update_decal_slot(b_texture)
+
+            gloss_map = textures[7].decode()
+            if gloss_map:
+                NifLog.debug("Loading gloss map {0}".format(gloss_map))
+                b_texture = self.create_texture_slot(b_mat, gloss_map)
+                self.update_gloss_slot(b_texture)
 
     def import_bseffectshaderproperty_textures(self, b_mat, bs_effect_shader_property):
-        self.reset_textures()
 
-        ImageTexFile = bs_effect_shader_property.source_texture.decode()
-        if ImageTexFile:
-            self.has_diffusetex = True
-            self.diffuse_map = self.import_image_texture(b_mat, ImageTexFile)
+        self.load_diffuse(b_mat, bs_effect_shader_property.source_texture)
 
-        ImageTexFile = bs_effect_shader_property.greyscale_texture.decode()
-        if ImageTexFile:
-            self.has_glowtex = True
-            self.glow_map = self.import_image_texture(b_mat, ImageTexFile)
+        self.load_glow(b_mat, bs_effect_shader_property.source_texture)
 
-        if hasattr(bs_effect_shader_property, 'uv_offset'):
-            self.import_uv_offset(b_mat, bs_effect_shader_property)
+        # self.import_texture_game_properties(b_mat, bs_effect_shader_property)
 
-        if hasattr(bs_effect_shader_property, 'uv_scale'):
-            self.import_uv_scale(b_mat, bs_effect_shader_property)
+    def load_diffuse(self, b_mat, texture):
+        diffuse_map = texture.decode()
+        if diffuse_map:
+            NifLog.debug("Loading diffuse texture {0}".format(diffuse_map))
+            b_texture = self.create_texture_slot(b_mat, diffuse_map)
+            self.update_diffuse_slot(b_texture)
 
-        self.import_texture_game_properties(b_mat, bs_effect_shader_property)
+    def load_glow(self, b_mat, texture):
+        glow_map = texture.decode()
+        if glow_map:
+            NifLog.debug("Loading glow texture {0}".format(glow_map))
+            b_texture = self.create_texture_slot(b_mat, glow_map)
+            self.update_glow_slot(b_texture)

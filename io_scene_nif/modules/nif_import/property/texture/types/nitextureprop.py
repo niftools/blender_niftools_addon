@@ -3,6 +3,7 @@ from io_scene_nif.utils.util_logging import NifLog
 
 
 class NiTextureProp(TextureSlotManager):
+
     __instance = None
 
     @staticmethod
