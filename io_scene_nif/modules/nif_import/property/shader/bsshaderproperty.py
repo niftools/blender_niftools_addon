@@ -37,10 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
+
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.property.material import Material
 from io_scene_nif.modules.nif_import.property.shader import BSShader
 from io_scene_nif.modules.nif_import.property.texture.types.bsshadertexture import BSShaderTexture
@@ -101,16 +100,17 @@ class BSShaderPropertyProcessor(BSShader):
     def register_bsproperty(self, processor):
         processor.register(NifFormat.BSLightingShaderProperty, self.import_bs_lighting_shader_property)
         processor.register(NifFormat.BSEffectShaderProperty, self.import_bs_effect_shader_property)
-        processor.register(NifFormat.BSShaderPPLightingProperty, self.import_bs_shader_pp_lighting_proprerty)
 
     def import_bs_lighting_shader_property(self, bs_shader_property):
         b_mat = self.create_material_name(bs_shader_property)
 
+        # Shader Flags
         b_shader = b_mat.niftools_shader
         b_shader.bs_shadertype = 'BSLightingShaderProperty'
 
-        sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[bs_shader_property.sf_type]
-        b_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
+        shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(bs_shader_property.skyrim_shader_type)
+        b_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[shader_type]
+
         self.import_shader_flags(b_mat, bs_shader_property)
 
         # Textures
@@ -147,14 +147,6 @@ class BSShaderPropertyProcessor(BSShader):
         b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
         b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
 
-    def create_material_name(self, bs_shader_property):
-        name = block_store.import_name(bs_shader_property)
-        if name is None:
-            name = (self._n_block.name.decode() + "_nt_mat")
-        b_mat = bpy.data.materials.new(name)
-        self.b_mesh.materials.append(b_mat)
-        return b_mat
-
     def import_bs_effect_shader_property(self, bs_effect_shader_property):
         # update material material name
         b_mat = self.create_material_name(bs_effect_shader_property)
@@ -187,3 +179,10 @@ class BSShaderPropertyProcessor(BSShader):
             b_mat.emit = bs_effect_shader_property.emissive_multiple
 
         b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
+
+    def import_shader_flags(self, b_mat, b_prop):
+        flags_1 = b_prop.shader_flags_1
+        self.import_flags(b_mat, flags_1)
+
+        flag_2 = b_prop.shader_flags_2
+        self.import_flags(b_mat, flag_2)
