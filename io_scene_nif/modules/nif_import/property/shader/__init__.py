@@ -115,23 +115,3 @@ class BSShader(ABC):
             sf_index = flags._names.index(name)
             if flags._items[sf_index]._value == 1:
                 b_mat.niftools_shader[name] = True
-
-    # def get_bsshader_hash(self, bs_shader_property, bs_effect_shader_property):
-    #     return (bs_shader_property.get_hash()[1:] if bs_shader_property else None,  # skip first element, which is name
-    #             bs_effect_shader_property.get_hash() if bs_effect_shader_property else None)
-
-    # TODO [shader] Move move out when nolonger required to reference
-    # def find_bsshaderproperty(self, n_block):
-    #     # bethesda shader
-    #     bsshaderproperty = util_math.find_property(n_block, NifFormat.BSShaderPPLightingProperty)
-    #     if not bsshaderproperty:
-    #         bsshaderproperty = util_math.find_property(n_block, NifFormat.BSLightingShaderProperty)
-    #
-    #     if bsshaderproperty:
-    #         for textureslot in bsshaderproperty.texture_set.textures:
-    #             if textureslot:
-    #                 self.bsShaderProperty1st = bsshaderproperty
-    #                 break
-    #         else:
-    #             bsshaderproperty = self.bsShaderProperty1st
-    #     return bsshaderproperty
