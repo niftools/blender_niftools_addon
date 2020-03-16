@@ -36,10 +36,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
 from abc import ABC
 
 import bpy
 
+from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.utils.util_logging import NifLog
 
 
@@ -98,6 +100,21 @@ class BSShader(ABC):
             b_mat = self.b_mesh.materials[0]
             NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
         return b_mat
+
+    def create_material_name(self, bs_shader_property):
+        name = block_store.import_name(bs_shader_property)
+        if name is None:
+            name = (self._n_block.name.decode() + "_nt_mat")
+        b_mat = bpy.data.materials.new(name)
+        self._b_mesh.materials.append(b_mat)
+        return b_mat
+
+    @staticmethod
+    def import_flags(b_mat, flags):
+        for name in flags._names:
+            sf_index = flags._names.index(name)
+            if flags._items[sf_index]._value == 1:
+                b_mat.niftools_shader[name] = True
 
     # def get_bsshader_hash(self, bs_shader_property, bs_effect_shader_property):
     #     return (bs_shader_property.get_hash()[1:] if bs_shader_property else None,  # skip first element, which is name
