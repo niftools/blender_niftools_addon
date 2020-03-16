@@ -44,6 +44,7 @@ from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.modules.nif_import.property.material import Material
 from io_scene_nif.modules.nif_import.property.shader import BSShader
 from io_scene_nif.modules.nif_import.property.texture.types.bsshadertexture import BSShaderTexture
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class BSShaderPropertyProcessor(BSShader):
@@ -85,7 +86,7 @@ class BSShaderPropertyProcessor(BSShader):
     @staticmethod
     def get():
         """ Static access method. """
-        if BSShaderPropertyProcessor.__instance is None:
+        if not BSShaderPropertyProcessor.__instance:
             BSShaderPropertyProcessor()
         return BSShaderPropertyProcessor.__instance
 

@@ -50,7 +50,7 @@ class MeshPropertyProcessor:
 
     def __init__(self):
         self.niproperty = NiPropertyProcessor.get()
-        self.bsshader = BSShaderPropertyProcessor().get()
+        self.bsshader = BSShaderPropertyProcessor.get()
 
         self.process_property = singledispatch(self.process_property)
         self.niproperty.register_niproperty(self.process_property)
@@ -62,16 +62,19 @@ class MeshPropertyProcessor:
         self.bsshader.b_mesh = b_mesh
         self.bsshader.n_block = n_block
 
-        if n_block.properties:
+        if n_block.num_properties > 0:
+            NifLog.info(n_block.properties)
             self.process_props(n_block.properties)
 
-        if n_block.bs_properties:
+        if len(n_block.bs_properties) > 0:
+            NifLog.info(n_block.properties)
             self.process_props(n_block.bs_properties)
 
     def process_props(self, properties):
         for prop in properties:
-            NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
-            self.process_property(prop)
+            if prop is not None:
+                NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
+                self.process_property(prop)
 
     def process_property(self, prop):
         """Base method to warn user that this property is not supported"""
