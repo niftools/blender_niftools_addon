@@ -49,7 +49,7 @@ from pyffi.formats.nif import NifFormat
 class ShaderProps(PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Object.niftools_shader = PointerProperty(
+        bpy.types.Material.niftools_shader = PointerProperty(
             name='Niftools BsShader Property',
             description='Properties used by the BsShader for the Nif File Format',
             type=cls,

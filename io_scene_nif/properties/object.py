@@ -110,6 +110,7 @@ class ObjectProperty(PropertyGroup):
             items=[(item, item, "", i) for i, item in enumerate(["NONE","BACK","SIDE","QUIVER","SHIELD","HELM","RING"])],
             # default = 'NONE'
         )
+
         cls.bsnumuvset = IntProperty(
             name='BS Num UV Set',
             default=0
