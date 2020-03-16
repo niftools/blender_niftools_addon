@@ -49,7 +49,7 @@ from pyffi.formats.nif import NifFormat
 class ShaderProps(PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Object.niftools_shader = PointerProperty(
+        bpy.types.Material.niftools_shader = PointerProperty(
             name='Niftools BsShader Property',
             description='Properties used by the BsShader for the Nif File Format',
             type=cls,
@@ -225,7 +225,7 @@ class ShaderProps(PropertyGroup):
             name='Vertex Alpha'
         )
 
-        cls.slsf_1_greyscale_to_paletteColor = BoolProperty(
+        cls.slsf_1_greyscale_to_palettecolor = BoolProperty(
             name='Greyscale to Palette Color'
         )
 
@@ -467,4 +467,4 @@ class ShaderProps(PropertyGroup):
 
     @classmethod
     def unregister(cls):
-        del bpy.types.Object.niftools_shader
+        del bpy.types.Material.niftools_shader

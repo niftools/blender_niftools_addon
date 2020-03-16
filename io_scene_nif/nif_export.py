@@ -44,19 +44,17 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules import armature
-from io_scene_nif.modules.animation.animation_export import Animation
-from io_scene_nif.modules.armature.armature_export import Armature
-from io_scene_nif.modules.collision.collision_export import Collision
-from io_scene_nif.modules.constraint.constraint_export import Constraint
-from io_scene_nif.modules.object.block_registry import block_store
-from io_scene_nif.modules.object.object_export import Object
-from io_scene_nif.modules.property.property_export import Property
-from io_scene_nif.modules.scene import scene_export
+from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
+from io_scene_nif.modules.nif_export.collision import Collision
+from io_scene_nif.modules.nif_export.constraint import Constraint
+from io_scene_nif.modules.nif_export.block_registry import block_store
+from io_scene_nif.modules.nif_export.object import Object
+from io_scene_nif.modules.nif_export import scene
+from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.nif_common import NifCommon
-from io_scene_nif.utility import nif_utils
-from io_scene_nif.utility.util_global import NifOp, EGMData
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp, EGMData, NifData
+from io_scene_nif.utils.util_logging import NifLog
 
 
 # main export class
@@ -69,22 +67,13 @@ class NifExport(NifCommon):
 
     # TODO: - Expose via properties
 
-    EXPORT_OPTIMIZE_MATERIALS = True
-    IGNORE_BLENDER_PHYSICS = False
-
-    EXPORT_BHKLISTSHAPE = False
-    EXPORT_OB_MASS = 10.0
-    EXPORT_OB_SOLID = True
-
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.collisionhelper = Collision(parent=self)
-        self.armaturehelper = Armature(parent=self)
-        self.animationhelper = Animation(parent=self)
-        self.propertyhelper = Property(parent=self)
-        self.constrainthelper = Constraint(parent=self)
+        self.transform_anim = TransformAnimation()
+        # self.propertyhelper = Property(parent=self)
+        self.constrainthelper = Constraint()
         self.objecthelper = Object(parent=self)
         self.exportable_objects = []
 
@@ -123,6 +112,7 @@ class NifExport(NifCommon):
                 NifLog.warn("No objects can be exported!")
                 return {'FINISHED'}
             NifLog.info("Exporting objects")
+
             # find all objects that do not have a parent
             self.root_objects = [b_obj for b_obj in self.exportable_objects if not b_obj.parent]
 
@@ -134,22 +124,21 @@ class NifExport(NifCommon):
                 elif b_obj.type == 'MESH':
                     if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                         for b_mod in b_obj.modifiers:
-                            if b_mod.type == 'ARMATURE':
-                                if b_mod.use_bone_envelopes:
-                                    raise nif_utils.NifError("'%s': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
-                                                             "If you don't have vertex groups, select the bones one by one press W to "
-                                                             "convert their envelopes to vertex weights, and turn off envelopes." % b_obj.name)
+                            if b_mod.type == 'ARMATURE' and b_mod.use_bone_envelopes:
+                                raise util_math.NifError("'{0}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                                         "If you don't have vertex groups, select the bones one by one press W to "
+                                                         "convert their envelopes to vertex weights, and turn off envelopes.".format(b_obj.name))
 
                 # check for non-uniform transforms
                 scale = b_obj.matrix_local.to_scale()
                 if abs(scale.x - scale.y) > NifOp.props.epsilon or abs(scale.y - scale.z) > NifOp.props.epsilon:
                     NifLog.warn("Non-uniform scaling not supported.\n"
-                                "Workaround: apply size and rotation (CTRL-A) on '%s'." % b_obj.name)
+                                "Workaround: apply size and rotation (CTRL-A) on '{0}'." .format(b_obj.name))
 
-            b_armature = armature.get_armature()
+            b_armature = util_math.get_armature()
             # some scenes may not have an armature, so nothing to do here
             if b_armature:
-               armature.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
+                util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
             # smooth seams of objects
             if NifOp.props.smooth_object_seams:
@@ -170,12 +159,14 @@ class NifExport(NifCommon):
                 NifLog.info("Exporting geometry and animation in xnif-style")
 
             # find nif version to write
-            self.version, data = scene_export.get_version_data()
+
+            self.version, data = scene.get_version_data()
+            NifData.init(data)
 
             # write external animation to a KF tree
             if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
                 NifLog.info("Creating keyframe tree")
-                kf_root = self.animationhelper.export_kf_root(b_armature)
+                kf_root = self.transform_anim.export_kf_root(b_armature)
 
                 # write kf (and xkf if asked)
                 ext = ".kf"
@@ -210,7 +201,7 @@ class NifExport(NifCommon):
                 if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
                     NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.create_controller(root_block, root_block.name)
+                    self.transform_anim.create_controller(root_block, root_block.name)
 
                 if NifOp.props.bs_animation_node:
                     for block in block_store.block_to_obj:
@@ -234,7 +225,7 @@ class NifExport(NifCommon):
                 for n_block in list(block_store.block_to_obj.keys()):
                     if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
                         for n_bone in n_block.tree(block_type=NifFormat.NiNode):
-                            n_kfc, n_kfi = self.animationhelper.create_controller(n_bone, n_bone.name.decode())
+                            n_kfc, n_kfi = self.transform_anim.create_controller(n_bone, n_bone.name.decode())
                             # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
                             n_kfc.flags = 12
                             n_kfc.frequency = 1.0
@@ -273,14 +264,15 @@ class NifExport(NifCommon):
                 if b_obj.constraints:
                     self.constrainthelper.export_constraints(b_obj, root_block)
 
+            object_prop = ObjectProperty()
             # add vertex color and zbuffer properties for civ4 and railroads
             if NifOp.props.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
-                self.propertyhelper.object_property.export_vertex_color_property(root_block)
-                self.propertyhelper.object_property.export_z_buffer_property(root_block)
+                object_prop.export_vertex_color_property(root_block)
+                object_prop.export_z_buffer_property(root_block)
 
             elif NifOp.props.game in ('EMPIRE_EARTH_II',):
-                self.propertyhelper.object_property.export_vertex_color_property(root_block)
-                self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, function=1)
+                object_prop.export_vertex_color_property(root_block)
+                object_prop.export_z_buffer_property(root_block, flags=15, function=1)
 
             # FIXME:
             """
@@ -355,6 +347,7 @@ class NifExport(NifCommon):
                 data.modification = "ndoors"
             elif NifOp.props.game == 'HOWLING_SWORD':
                 data.modification = "jmihs1"
+
             with open(niffile, "wb") as stream:
                 data.write(stream)
 

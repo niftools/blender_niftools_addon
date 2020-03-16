@@ -44,7 +44,7 @@ class ObjectShader(Panel):
     bl_label = "Niftools Shader"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = "object"
+    bl_context = "material"
     bl_options = {'DEFAULT_CLOSED'}
 
     # noinspection PyUnusedLocal
@@ -53,7 +53,7 @@ class ObjectShader(Panel):
         return True
 
     def draw(self, context):
-        nif_obj_props = context.object.niftools_shader
+        nif_obj_props = context.material.niftools_shader
 
         layout = self.layout
         row = layout.column()
