@@ -46,7 +46,7 @@ class BSShaderTexture(TextureSlotManager):
 
     def __init__(self):
         """ Virtually private constructor. """
-        if not BSShaderTexture.__instance:
+        if BSShaderTexture.__instance:
             raise Exception("This class is a singleton!")
         else:
             super().__init__()
