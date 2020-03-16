@@ -225,7 +225,7 @@ class ShaderProps(PropertyGroup):
             name='Vertex Alpha'
         )
 
-        cls.slsf_1_greyscale_to_paletteColor = BoolProperty(
+        cls.slsf_1_greyscale_to_palettecolor = BoolProperty(
             name='Greyscale to Palette Color'
         )
 
