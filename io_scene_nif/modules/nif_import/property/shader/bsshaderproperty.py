@@ -89,7 +89,7 @@ class BSShaderPropertyProcessor(BSShader):
         else:
             super().__init__()
             BSShaderPropertyProcessor.__instance = self
-            self.texturehelper = BSShaderTexture().get()
+            self.texturehelper = BSShaderTexture.get()
 
     @staticmethod
     def get():

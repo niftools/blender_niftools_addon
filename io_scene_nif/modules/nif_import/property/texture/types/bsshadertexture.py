@@ -44,20 +44,20 @@ class BSShaderTexture(TextureSlotManager):
 
     __instance = None
 
-    @staticmethod
-    def get():
-        """ Static access method. """
-        if BSShaderTexture.__instance is None:
-            BSShaderTexture()
-        return BSShaderTexture.__instance
-
     def __init__(self):
         """ Virtually private constructor. """
-        if BSShaderTexture.__instance is not None:
+        if not BSShaderTexture.__instance:
             raise Exception("This class is a singleton!")
         else:
             super().__init__()
             BSShaderTexture.__instance = self
+
+    @staticmethod
+    def get():
+        """ Static access method. """
+        if not BSShaderTexture.__instance:
+            BSShaderTexture()
+        return BSShaderTexture.__instance
 
     def import_bsshaderproperty_textureset(self, b_mat, bs_shader_property):
         texture_set = bs_shader_property.texture_set
