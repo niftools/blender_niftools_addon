@@ -37,11 +37,10 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
-
 from functools import singledispatch
 
 from io_scene_nif.modules.nif_import.property.geometry.niproperty import NiPropertyProcessor
+from io_scene_nif.modules.nif_import.property.shader.bsshaderlightingproperty import BSShaderLightingPropertyProcessor
 from io_scene_nif.modules.nif_import.property.shader.bsshaderproperty import BSShaderPropertyProcessor
 from io_scene_nif.utils.util_logging import NifLog
 
@@ -51,23 +50,26 @@ class MeshPropertyProcessor:
     def __init__(self):
         self.niproperty = NiPropertyProcessor.get()
         self.bsshader = BSShaderPropertyProcessor.get()
+        self.bsshaderlighting = BSShaderLightingPropertyProcessor.get()
 
+        # Register processors
         self.process_property = singledispatch(self.process_property)
         self.niproperty.register_niproperty(self.process_property)
         self.bsshader.register_bsproperty(self.process_property)
+        self.bsshaderlighting.register_bsproperty(self.process_property)
 
     def process_property_list(self, n_block, b_mesh):
         self.niproperty.b_mesh = b_mesh
         self.niproperty.n_block = n_block
         self.bsshader.b_mesh = b_mesh
         self.bsshader.n_block = n_block
+        self.bsshaderlighting.b_mesh = b_mesh
+        self.bsshaderlighting.n_block = n_block
 
         if n_block.num_properties > 0:
-            NifLog.info(n_block.properties)
             self.process_props(n_block.properties)
 
         if len(n_block.bs_properties) > 0:
-            NifLog.info(n_block.properties)
             self.process_props(n_block.bs_properties)
 
     def process_props(self, properties):
