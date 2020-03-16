@@ -1,3 +1,5 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+/checkstyle-idea.xml
+/google-java-format.xml

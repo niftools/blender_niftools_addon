@@ -40,8 +40,8 @@
 import bpy
 import pyffi
 
-from io_scene_nif.utility.util_global import NifOp
-from io_scene_nif.utility.util_logging import NifLog
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class NifCommon:
