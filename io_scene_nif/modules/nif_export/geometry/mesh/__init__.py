@@ -166,7 +166,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (NifOp.props.game == 'SKYRIM') and (b_obj.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
+                if (NifOp.props.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
 
                 # ambient mat
@@ -284,13 +284,13 @@ class Mesh:
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
                     block_store.register_block(bsshader)
                     trishape.add_property(bsshader)
             elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
                     block_store.register_block(bsshader)
                     num_props = trishape.num_properties
