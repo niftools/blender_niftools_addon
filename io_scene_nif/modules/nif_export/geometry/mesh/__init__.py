@@ -317,7 +317,7 @@ class Mesh:
                         flags=0x0001,  # standard
                         # TODO [object][texture][material] Move out and break dependency
                         applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
-                        b_mat=b_mat, b_obj=b_obj)
+                        b_mat=b_mat)
 
                     block_store.register_block(n_nitextureprop)
                     trishape.add_property(n_nitextureprop)
