@@ -106,10 +106,10 @@ class Texture:
         NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
         return NifFormat.ApplyMode.APPLY_MODULATE
 
-    def export_texturing_property(self, flags=0x0001, applymode=None, b_mat=None, b_obj=None):
+    def export_texturing_property(self, flags=0x0001, applymode=None, b_mat=None):
         """Export texturing property."""
 
-        self.determine_texture_types(b_obj, b_mat)
+        self.determine_texture_types(b_mat)
 
         texprop = NifFormat.NiTexturingProperty()
 
@@ -259,7 +259,7 @@ class Texture:
             shader_name = texture.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shader_name, shaderindex)
 
-    def determine_texture_types(self, b_obj, b_mat):
+    def determine_texture_types(self, b_mat):
 
         used_slots = texture.get_used_textslots(b_mat)
         self.base_mtex = None
@@ -277,10 +277,10 @@ class Texture:
                 if not b_mat_texslot.use_map_color_diffuse:
                     # it should map to colour
                     raise util_math.NifError("Non-COL-mapped reflection texture in mesh '%s', material '%s', these cannot be exported to NIF.\n"
-                                             "Either delete all non-COL-mapped reflection textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'." % (b_obj.name, b_mat.name))
+                                             "Either delete all non-COL-mapped reflection textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'." % (b_mat.name, b_mat.name))
                 if b_mat_texslot.blend_type != 'ADD':
                     # it should have "ADD" blending mode
-                    NifLog.warn("Reflection texture should have blending mode 'Add' on texture in mesh '{0}', material '{1}').".format(b_obj.name, b_mat.name))
+                    NifLog.warn("Reflection texture should have blending mode 'Add' on texture in mesh '{0}', material '{1}').".format(b_mat.name, b_mat.name))
                 # an envmap image should have an empty... don't care
                 self.ref_mtex = b_mat_texslot
 
@@ -296,7 +296,7 @@ class Texture:
                     # multi-check
                     if self.glow_mtex:
                         raise util_math.NifError("Multiple emissive textures in mesh '{0}', material '{1}''.\n"
-                                                 "Make sure there is only one texture set as Influence > emit".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > emit".format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -309,7 +309,7 @@ class Texture:
                     # multi-check
                     if self.gloss_mtex:
                         raise util_math.NifError("Multiple specular gloss textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture set as Influence > specular".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > specular".format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -323,7 +323,7 @@ class Texture:
                     # multi-check
                     if self.bump_mtex:
                         raise util_math.NifError("Multiple bump/normal texture in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture set as Influence > normal".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > normal".format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -336,7 +336,7 @@ class Texture:
                     # multi-check
                     if self.normal_mtex:
                         raise util_math.NifError("Multiple bump/normal textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture set as Influence > normal".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > normal".format(b_mat.name, b_mat.name))
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
@@ -347,7 +347,7 @@ class Texture:
 
                     if self.dark_mtex:
                         raise util_math.NifError("Multiple Darken textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture with Influence > Blend Type > Dark".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture with Influence > Blend Type > Dark".format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -359,7 +359,7 @@ class Texture:
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.base_mtex:
                         raise util_math.NifError("Multiple Diffuse textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture with Influence > Diffuse > color".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture with Influence > Diffuse > color".format(b_mat.name, b_mat.name))
 
                     self.base_mtex = b_mat_texslot
 
@@ -400,7 +400,7 @@ class Texture:
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.detail_mtex:
                         raise util_math.NifError("Multiple detail textures in mesh '{0}', material '{1}'.\n" 
-                                                 "Make sure there is only one texture with Influence Diffuse > color".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture with Influence Diffuse > color".format(b_mat.name, b_mat.name))
                     # extra diffuse consider as detail texture
 
                     # check if alpha channel is enabled for this texture
@@ -413,7 +413,7 @@ class Texture:
                     # multi-check
                     if self.glow_mtex:
                         raise util_math.NifError("Multiple reflection textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture set as Influence > Mirror/Ray Mirror".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > Mirror/Ray Mirror".format(b_mat.name, b_mat.name))
                     # got the reflection map
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -424,12 +424,12 @@ class Texture:
                 else:
                     raise util_math.NifError("Do not know how to export texture '{0}', in mesh '{1}', material '{2}'.\n"
                                              "Either delete it, or if this texture is to be your base texture.\n"
-                                             "Go to the Shading Panel Material Buttons, and set texture 'Map To' to 'COL'.".format(b_mat_texslot.texture.name, b_obj.name, b_mat.name))
+                                             "Go to the Shading Panel Material Buttons, and set texture 'Map To' to 'COL'.".format(b_mat_texslot.texture.name, b_mat.name, b_mat.name))
 
             # nif only support UV-mapped textures
             else:
                 NifLog.warn("Non-UV texture in mesh '{0}', material '{1}'.\nEither delete all non-UV textures or "
-                            "create a UV map for every texture associated with selected object and run the script again.".format(b_obj.name, b_mat.name))
+                            "create a UV map for every texture associated with selected object and run the script again.".format(b_mat.name, b_mat.name))
 
 
 def has_diffuse_textures(self, b_mat):
