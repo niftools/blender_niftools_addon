@@ -38,15 +38,18 @@
 # ***** END LICENSE BLOCK *****
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.property.texture import TextureWriter
+from io_scene_nif.modules.nif_export.property.texture import TextureWriter, Texture
 from io_scene_nif.utils import util_math
 
 
 class BSShader:
 
+    def __init__(self):
+        self.texturehelper = Texture()
+
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
-        self.determine_texture_types(b_obj, b_mat)
+        self.texturehelper.determine_texture_types(b_obj, b_mat)
 
         # create new block
         if b_obj.niftools_shader.bs_shadertype == 'BSShaderPPLightingProperty':
@@ -74,11 +77,11 @@ class BSShader:
                 self.export_uv_scale(bsshader)
 
             # Texture Clamping mode
-            if not self.base_mtex.texture.image.use_clamp_x:
+            if not self.texturehelper.base_mtex.texture.image.use_clamp_x:
                 wrap_s = 2
             else:
                 wrap_s = 0
-            if not self.base_mtex.texture.image.use_clamp_y:
+            if not self.texturehelper.base_mtex.texture.image.use_clamp_y:
                 wrap_t = 1
             else:
                 wrap_t = 0
@@ -143,26 +146,26 @@ class BSShader:
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
-        if self.base_mtex:
-            texset.textures[0] = TextureWriter.export_texture_filename(self.base_mtex.texture)
-        if self.normal_mtex:
-            texset.textures[1] = TextureWriter.export_texture_filename(self.normal_mtex.texture)
-        if self.glow_mtex:
-            texset.textures[2] = TextureWriter.export_texture_filename(self.glow_mtex.texture)
-        if self.detail_mtex:
-            texset.textures[3] = TextureWriter.export_texture_filename(self.detail_mtex.texture)
+        if self.texturehelper.base_mtex:
+            texset.textures[0] = TextureWriter.export_texture_filename(self.texturehelper.base_mtex.texture)
+        if self.texturehelper.normal_mtex:
+            texset.textures[1] = TextureWriter.export_texture_filename(self.texturehelper.normal_mtex.texture)
+        if self.texturehelper.glow_mtex:
+            texset.textures[2] = TextureWriter.export_texture_filename(self.texturehelper.glow_mtex.texture)
+        if self.texturehelper.detail_mtex:
+            texset.textures[3] = TextureWriter.export_texture_filename(self.texturehelper.detail_mtex.texture)
 
         if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
             texset.num_textures = 9
             texset.textures.update_size()
-            if self.detail_mtex:
-                texset.textures[6] = TextureWriter.export_texture_filename(self.detail_mtex.texture)
-            if self.gloss_mtex:
-                texset.textures[7] = TextureWriter.export_texture_filename(self.gloss_mtex.texture)
+            if self.texturehelper.detail_mtex:
+                texset.textures[6] = TextureWriter.export_texture_filename(self.texturehelper.detail_mtex.texture)
+            if self.texturehelper.gloss_mtex:
+                texset.textures[7] = TextureWriter.export_texture_filename(self.texturehelper.gloss_mtex.texture)
 
         if b_obj.niftools_shader.bs_shadertype == 'BSEffectShaderProperty':
-            bsshader.source_texture = TextureWriter.export_texture_filename(self.base_mtex.texture)
-            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.glow_mtex.texture)
+            bsshader.source_texture = TextureWriter.export_texture_filename(self.texturehelper.base_mtex.texture)
+            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.texturehelper.glow_mtex.texture)
 
         return bsshader
 
@@ -196,13 +199,13 @@ class BSShader:
         return shader
 
     def export_uv_offset(self, shader):
-        shader.uv_offset.u = self.base_mtex.offset.x
-        shader.uv_offset.v = self.base_mtex.offset.y
+        shader.uv_offset.u = self.texturehelper.base_mtex.offset.x
+        shader.uv_offset.v = self.texturehelper.base_mtex.offset.y
 
         return shader
 
     def export_uv_scale(self, shader):
-        shader.uv_scale.u = self.base_mtex.scale.x
-        shader.uv_scale.v = self.base_mtex.scale.y
+        shader.uv_scale.u = self.texturehelper.base_mtex.scale.x
+        shader.uv_scale.v = self.texturehelper.base_mtex.scale.y
 
         return shader
