@@ -84,9 +84,7 @@ class BSShader:
     def export_bs_effect_shader_property(self, b_mat):
         bsshader = NifFormat.BSEffectShaderProperty()
 
-        texset = self.create_textureset(bsshader)
-
-        bsshader.texture_set = texset
+        bsshader.texture_set = self.create_textureset()
         bsshader.source_texture = TextureWriter.export_texture_filename(self.texturehelper.base_mtex.texture)
         bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.texturehelper.glow_mtex.texture)
 
@@ -105,8 +103,7 @@ class BSShader:
         bsshader.emissive_multiple = b_mat.emit
 
         # Shader Flags
-        if hasattr(bsshader, 'shader_flags_1'):
-            self.export_shader_flags(b_mat, bsshader)
+        BSShader.export_shader_flags(b_mat, bsshader)
         return bsshader
 
     def export_bs_lighting_shader_property(self, b_mat):
@@ -173,8 +170,7 @@ class BSShader:
             bsshader.alpha = (1 - b_mat.alpha)
 
         # Shader Flags
-        if hasattr(bsshader, 'shader_flags_1'):
-            self.export_shader_flags(b_mat, bsshader)
+        BSShader.export_shader_flags(b_mat, bsshader)
         return bsshader
 
     def export_bs_shader_pp_lighting_property(self, b_mat):
@@ -184,35 +180,31 @@ class BSShader:
         b_s_type = NifFormat.BSShaderType._enumkeys.index(b_mat.niftools_shader.bsspplp_shaderobjtype)
         bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
 
-        texset = NifFormat.BSShaderTextureSet()
-        bsshader.texture_set = texset
-
-        self.create_textureset(texset)
+        bsshader.texture_set = self.create_textureset()
 
         # Shader Flags
-        if hasattr(bsshader, 'shader_flags'):
-            BSShader.export_shader_flags(b_mat, bsshader)
+        BSShader.export_shader_flags(b_mat, bsshader)
         return bsshader
 
     @staticmethod
     def export_shader_flags(b_mat, shader):
-        b_flag_list = b_mat.niftools_shader.bl_rna.properties.keys()
         if hasattr(shader, 'shader_flags'):
             flags = shader.shader_flags
-            BSShader.process_flags(b_flag_list, b_mat, flags)
+            BSShader.process_flags(b_mat, flags)
 
         if hasattr(shader, 'shader_flags_1'):
             flags_1 = shader.shader_flags_1
-            BSShader.process_flags(b_flag_list, b_mat, flags_1)
+            BSShader.process_flags(b_mat, flags_1)
 
         if hasattr(shader, 'shader_flags_2'):
             flags_2 = shader.shader_flags_2
-            BSShader.process_flags(b_flag_list, b_mat, flags_2)
+            BSShader.process_flags(b_mat, flags_2)
 
         return shader
 
     @staticmethod
-    def process_flags(b_flag_list, b_mat, flags):
+    def process_flags(b_mat, flags):
+        b_flag_list = b_mat.niftools_shader.bl_rna.properties.keys()
         for sf_flag in flags._names:
             if sf_flag in b_flag_list:
                 b_flag = b_mat.niftools_shader.get(sf_flag)
