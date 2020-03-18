@@ -134,7 +134,7 @@ class BSShader:
             bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
             bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
             bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
-            bsshader.emissive_color.a = b_mat.niftools.emissive_alpha
+            bsshader.emissive_color.a = b_mat.niftools.emissive_alpha.v
             bsshader.emissive_multiple = b_mat.emit
 
             # Shader Flags
