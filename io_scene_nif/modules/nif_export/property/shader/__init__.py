@@ -49,104 +49,27 @@ class BSShader:
 
     def export_bs_shader_property(self, b_mat=None):
         """Export a Bethesda shader property block."""
+        if b_mat.niftools_shader.bs_shadertype == 'None':
+            raise util_math.NifError("Export version expected shader. No shader applied to mesh '{0}', these cannot be exported to NIF."
+                                     "Set shader before exporting.".format(b_mat))
+
         self.texturehelper.determine_texture_types(b_mat)
 
         # create new block
         if b_mat.niftools_shader.bs_shadertype == 'BSShaderPPLightingProperty':
-            bsshader = NifFormat.BSShaderPPLightingProperty()
-
-            # set shader options
-            # TODO: FIXME:
-            b_s_type = NifFormat.BSShaderType._enumkeys.index(b_mat.niftools_shader.bsspplp_shaderobjtype)
-            bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
-
-            # Shader Flags
-            if hasattr(bsshader, 'shader_flags'):
-                BSShader.export_shader_flags(b_mat, bsshader)
+            bsshader = self.export_bs_shader_pp_lighting_property(b_mat)
 
         if b_mat.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
-            bsshader = NifFormat.BSLightingShaderProperty()
-            b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_mat.niftools_shader.bslsp_shaderobjtype)
-            bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
-
-            # UV Offset
-            if hasattr(bsshader, 'uv_offset'):
-                self.export_uv_offset(bsshader)
-
-            # UV Scale
-            if hasattr(bsshader, 'uv_scale'):
-                self.export_uv_scale(bsshader)
-
-            # Texture Clamping mode
-            if not self.texturehelper.base_mtex.texture.image.use_clamp_x:
-                wrap_s = 2
-            else:
-                wrap_s = 0
-            if not self.texturehelper.base_mtex.texture.image.use_clamp_y:
-                wrap_t = 1
-            else:
-                wrap_t = 0
-            bsshader.texture_clamp_mode = (wrap_s + wrap_t)
-
-            # Diffuse color
-            bsshader.skin_tint_color.r = b_mat.diffuse_color.r
-            bsshader.skin_tint_color.g = b_mat.diffuse_color.g
-            bsshader.skin_tint_color.b = b_mat.diffuse_color.b
-            # b_mat.diffuse_intensity = 1.0
-
-            bsshader.lighting_effect_1 = b_mat.niftools.lightingeffect1
-            bsshader.lighting_effect_2 = b_mat.niftools.lightingeffect2
-
-            # Emissive
-            bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
-            bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
-            bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
-            bsshader.emissive_multiple = b_mat.emit
-
-            # gloss
-            bsshader.glossiness = b_mat.specular_hardness
-
-            # Specular color
-            bsshader.specular_color.r = b_mat.specular_color.r
-            bsshader.specular_color.g = b_mat.specular_color.g
-            bsshader.specular_color.b = b_mat.specular_color.b
-            bsshader.specular_strength = b_mat.specular_intensity
-
-            # Alpha
-            if b_mat.use_transparency:
-                bsshader.alpha = (1 - b_mat.alpha)
-
-            # Shader Flags
-            if hasattr(bsshader, 'shader_flags_1'):
-                self.export_shader_flags(b_mat, bsshader)
+            bsshader = self.export_bs_lighting_shader_property(b_mat)
 
         if b_mat.niftools_shader.bs_shadertype == 'BSEffectShaderProperty':
-            bsshader = NifFormat.BSEffectShaderProperty()
+            bsshader = self.export_bs_effect_shader_property(b_mat)
 
-            # Alpha
-            if b_mat.use_transparency:
-                bsshader.alpha = (1 - b_mat.alpha)
+        return bsshader
 
-            # clamp Mode
-            bsshader.texture_clamp_mode = 65283
-
-            # Emissive
-            bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
-            bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
-            bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
-            bsshader.emissive_color.a = b_mat.niftools.emissive_alpha.v
-            bsshader.emissive_multiple = b_mat.emit
-
-            # Shader Flags
-            if hasattr(bsshader, 'shader_flags_1'):
-                self.export_shader_flags(b_mat, bsshader)
-
-        if b_mat.niftools_shader.bs_shadertype == 'None':
-            raise util_math.NifError("Export version expected shader. No shader applied to mesh '{0}', these cannot be exported to NIF."
-                                     "Set shader before exporting.".format(b_mat))
-        # set textures
+    def create_textureset(self):
         texset = NifFormat.BSShaderTextureSet()
-        bsshader.texture_set = texset
+
         if self.texturehelper.base_mtex:
             texset.textures[0] = TextureWriter.export_texture_filename(self.texturehelper.base_mtex.texture)
         if self.texturehelper.normal_mtex:
@@ -156,48 +79,146 @@ class BSShader:
         if self.texturehelper.detail_mtex:
             texset.textures[3] = TextureWriter.export_texture_filename(self.texturehelper.detail_mtex.texture)
 
-        if b_mat.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
-            texset.num_textures = 9
-            texset.textures.update_size()
-            if self.texturehelper.detail_mtex:
-                texset.textures[6] = TextureWriter.export_texture_filename(self.texturehelper.detail_mtex.texture)
-            if self.texturehelper.gloss_mtex:
-                texset.textures[7] = TextureWriter.export_texture_filename(self.texturehelper.gloss_mtex.texture)
+        return texset
 
-        if b_mat.niftools_shader.bs_shadertype == 'BSEffectShaderProperty':
-            bsshader.source_texture = TextureWriter.export_texture_filename(self.texturehelper.base_mtex.texture)
-            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.texturehelper.glow_mtex.texture)
+    def export_bs_effect_shader_property(self, b_mat):
+        bsshader = NifFormat.BSEffectShaderProperty()
 
+        texset = self.create_textureset(bsshader)
+
+        bsshader.texture_set = texset
+        bsshader.source_texture = TextureWriter.export_texture_filename(self.texturehelper.base_mtex.texture)
+        bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.texturehelper.glow_mtex.texture)
+
+        # Alpha
+        if b_mat.use_transparency:
+            bsshader.alpha = (1 - b_mat.alpha)
+
+        # clamp Mode
+        bsshader.texture_clamp_mode = 65283
+
+        # Emissive
+        bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
+        bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
+        bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
+        bsshader.emissive_color.a = b_mat.niftools.emissive_alpha.v
+        bsshader.emissive_multiple = b_mat.emit
+
+        # Shader Flags
+        if hasattr(bsshader, 'shader_flags_1'):
+            self.export_shader_flags(b_mat, bsshader)
+        return bsshader
+
+    def export_bs_lighting_shader_property(self, b_mat):
+        bsshader = NifFormat.BSLightingShaderProperty()
+        b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_mat.niftools_shader.bslsp_shaderobjtype)
+        bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
+
+        texset = self.create_textureset()
+        bsshader.texture_set = texset
+
+        # Add in extra texture slots
+        texset.num_textures = 9
+        texset.textures.update_size()
+        if self.texturehelper.detail_mtex:
+            texset.textures[6] = TextureWriter.export_texture_filename(self.texturehelper.detail_mtex.texture)
+        if self.texturehelper.gloss_mtex:
+            texset.textures[7] = TextureWriter.export_texture_filename(self.texturehelper.gloss_mtex.texture)
+
+        # UV Offset
+        if hasattr(bsshader, 'uv_offset'):
+            self.export_uv_offset(bsshader)
+
+        # UV Scale
+        if hasattr(bsshader, 'uv_scale'):
+            self.export_uv_scale(bsshader)
+
+        # Texture Clamping mode
+        if not self.texturehelper.base_mtex.texture.image.use_clamp_x:
+            wrap_s = 2
+        else:
+            wrap_s = 0
+        if not self.texturehelper.base_mtex.texture.image.use_clamp_y:
+            wrap_t = 1
+        else:
+            wrap_t = 0
+        bsshader.texture_clamp_mode = (wrap_s + wrap_t)
+
+        # Diffuse color
+        bsshader.skin_tint_color.r = b_mat.diffuse_color.r
+        bsshader.skin_tint_color.g = b_mat.diffuse_color.g
+        bsshader.skin_tint_color.b = b_mat.diffuse_color.b
+        # b_mat.diffuse_intensity = 1.0
+
+        bsshader.lighting_effect_1 = b_mat.niftools.lightingeffect1
+        bsshader.lighting_effect_2 = b_mat.niftools.lightingeffect2
+
+        # Emissive
+        bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
+        bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
+        bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
+        bsshader.emissive_multiple = b_mat.emit
+
+        # gloss
+        bsshader.glossiness = b_mat.specular_hardness
+
+        # Specular color
+        bsshader.specular_color.r = b_mat.specular_color.r
+        bsshader.specular_color.g = b_mat.specular_color.g
+        bsshader.specular_color.b = b_mat.specular_color.b
+        bsshader.specular_strength = b_mat.specular_intensity
+
+        # Alpha
+        if b_mat.use_transparency:
+            bsshader.alpha = (1 - b_mat.alpha)
+
+        # Shader Flags
+        if hasattr(bsshader, 'shader_flags_1'):
+            self.export_shader_flags(b_mat, bsshader)
+        return bsshader
+
+    def export_bs_shader_pp_lighting_property(self, b_mat):
+        bsshader = NifFormat.BSShaderPPLightingProperty()
+        # set shader options
+        # TODO: FIXME:
+        b_s_type = NifFormat.BSShaderType._enumkeys.index(b_mat.niftools_shader.bsspplp_shaderobjtype)
+        bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
+
+        texset = NifFormat.BSShaderTextureSet()
+        bsshader.texture_set = texset
+
+        self.create_textureset(texset)
+
+        # Shader Flags
+        if hasattr(bsshader, 'shader_flags'):
+            BSShader.export_shader_flags(b_mat, bsshader)
         return bsshader
 
     @staticmethod
     def export_shader_flags(b_mat, shader):
         b_flag_list = b_mat.niftools_shader.bl_rna.properties.keys()
         if hasattr(shader, 'shader_flags'):
-            for sf_flag in shader.shader_flags._names:
-                if sf_flag in b_flag_list:
-                    b_flag = b_mat.niftools_shader.get(sf_flag)
-                    if b_flag:
-                        sf_flag_index = shader.shader_flags._names.index(sf_flag)
-                        shader.shader_flags._items[sf_flag_index]._value = 1
+            flags = shader.shader_flags
+            BSShader.process_flags(b_flag_list, b_mat, flags)
 
         if hasattr(shader, 'shader_flags_1'):
-            for sf_flag in shader.shader_flags_1._names:
-                if sf_flag in b_flag_list:
-                    b_flag = b_mat.niftools_shader.get(sf_flag)
-                    if b_flag:
-                        sf_flag_index = shader.shader_flags_1._names.index(sf_flag)
-                        shader.shader_flags_1._items[sf_flag_index]._value = 1
+            flags_1 = shader.shader_flags_1
+            BSShader.process_flags(b_flag_list, b_mat, flags_1)
 
         if hasattr(shader, 'shader_flags_2'):
-            for sf_flag in shader.shader_flags_2._names:
-                if sf_flag in b_flag_list:
-                    b_flag = b_mat.niftools_shader.get(sf_flag)
-                    if b_flag:
-                        sf_flag_index = shader.shader_flags_2._names.index(sf_flag)
-                        shader.shader_flags_2._items[sf_flag_index]._value = 1
+            flags_2 = shader.shader_flags_2
+            BSShader.process_flags(b_flag_list, b_mat, flags_2)
 
         return shader
+
+    @staticmethod
+    def process_flags(b_flag_list, b_mat, flags):
+        for sf_flag in flags._names:
+            if sf_flag in b_flag_list:
+                b_flag = b_mat.niftools_shader.get(sf_flag)
+                if b_flag:
+                    sf_flag_index = flags._names.index(sf_flag)
+                    flags._items[sf_flag_index]._value = 1
 
     def export_uv_offset(self, shader):
         shader.uv_offset.u = self.texturehelper.base_mtex.offset.x
