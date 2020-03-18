@@ -298,15 +298,6 @@ class Mesh:
                     trishape.bs_properties.update_size()
                     trishape.bs_properties[num_props] = bsshader
 
-                    # TODO [shader][animation] Pull out to shader module
-                    # trishape.add_property(bsshader)
-                    if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
-                        effect_control = block_store.create_block("BSEffectShaderPropertyFloatController", bsshader)
-                        effect_control.flags = b_mat.niftools_alpha.textureflag
-                        effect_control.frequency = b_slot.texture.image.fps
-                        effect_control.start_time = b_slot.texture.image.frame_start
-                        effect_control.stop_time = b_slot.texture.image.frame_end
-                        bsshader.add_controller(effect_control)
             else:
                 if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4: set shader slots in extra data

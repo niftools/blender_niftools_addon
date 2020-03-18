@@ -104,6 +104,16 @@ class BSShader:
 
         # Shader Flags
         BSShader.export_shader_flags(b_mat, bsshader)
+
+        # TODO [shader][animation] Pull out to shader module
+        # if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
+        #     effect_control = block_store.create_block("BSEffectShaderPropertyFloatController", bsshader)
+        #     effect_control.flags = b_mat.niftools_alpha.textureflag
+        #     effect_control.frequency = b_slot.texture.image.fps
+        #     effect_control.start_time = b_slot.texture.image.frame_start
+        #     effect_control.stop_time = b_slot.texture.image.frame_end
+        #     bsshader.add_controller(effect_control)
+
         return bsshader
 
     def export_bs_lighting_shader_property(self, b_mat):
