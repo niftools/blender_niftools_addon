@@ -49,8 +49,9 @@ from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
-from io_scene_nif.modules.nif_export.property.shader import BSShader
-from io_scene_nif.modules.nif_export.property.texture import Texture
+from io_scene_nif.modules.nif_export.property.shader import BSShaderProperty
+from io_scene_nif.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
+from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_math import NifError
 from io_scene_nif.utils.util_global import NifOp, NifData
@@ -64,8 +65,8 @@ NORMAL_RESOLUTION = 100
 class Mesh:
 
     def __init__(self):
-        self.texture_helper = Texture()
-        self.bss_helper = BSShader()
+        self.texture_helper = NiTextureProp.get()
+        self.bss_helper = BSShaderProperty()
         self.object_property = ObjectProperty()
         self.material_property = MaterialProp()
         self.material_anim = MaterialAnimation()

@@ -38,14 +38,15 @@
 # ***** END LICENSE BLOCK *****
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.property.texture import TextureWriter, Texture
+from io_scene_nif.modules.nif_export.property.texture import TextureWriter, TextureSlotManager
+from io_scene_nif.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
 from io_scene_nif.utils import util_math
 
 
-class BSShader:
+class BSShaderProperty:
 
     def __init__(self):
-        self.texturehelper = Texture()
+        self.texturehelper = BSShaderTexture.get()
 
     def export_bs_shader_property(self, b_mat=None):
         """Export a Bethesda shader property block."""
@@ -67,26 +68,10 @@ class BSShader:
 
         return bsshader
 
-    def create_textureset(self):
-        texset = NifFormat.BSShaderTextureSet()
-
-        if self.texturehelper.base_mtex:
-            texset.textures[0] = TextureWriter.export_texture_filename(self.texturehelper.base_mtex.texture)
-        if self.texturehelper.normal_mtex:
-            texset.textures[1] = TextureWriter.export_texture_filename(self.texturehelper.normal_mtex.texture)
-        if self.texturehelper.glow_mtex:
-            texset.textures[2] = TextureWriter.export_texture_filename(self.texturehelper.glow_mtex.texture)
-        if self.texturehelper.detail_mtex:
-            texset.textures[3] = TextureWriter.export_texture_filename(self.texturehelper.detail_mtex.texture)
-
-        return texset
-
     def export_bs_effect_shader_property(self, b_mat):
         bsshader = NifFormat.BSEffectShaderProperty()
 
-        bsshader.texture_set = self.create_textureset()
-        bsshader.source_texture = TextureWriter.export_texture_filename(self.texturehelper.base_mtex.texture)
-        bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.texturehelper.glow_mtex.texture)
+        self.texturehelper.export_bs_effect_shader_property(bsshader)
 
         # Alpha
         if b_mat.use_transparency:
@@ -103,16 +88,7 @@ class BSShader:
         bsshader.emissive_multiple = b_mat.emit
 
         # Shader Flags
-        BSShader.export_shader_flags(b_mat, bsshader)
-
-        # TODO [shader][animation] Pull out to shader module
-        # if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
-        #     effect_control = block_store.create_block("BSEffectShaderPropertyFloatController", bsshader)
-        #     effect_control.flags = b_mat.niftools_alpha.textureflag
-        #     effect_control.frequency = b_slot.texture.image.fps
-        #     effect_control.start_time = b_slot.texture.image.frame_start
-        #     effect_control.stop_time = b_slot.texture.image.frame_end
-        #     bsshader.add_controller(effect_control)
+        BSShaderProperty.export_shader_flags(b_mat, bsshader)
 
         return bsshader
 
@@ -121,35 +97,7 @@ class BSShader:
         b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_mat.niftools_shader.bslsp_shaderobjtype)
         bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
 
-        texset = self.create_textureset()
-        bsshader.texture_set = texset
-
-        # Add in extra texture slots
-        texset.num_textures = 9
-        texset.textures.update_size()
-        if self.texturehelper.detail_mtex:
-            texset.textures[6] = TextureWriter.export_texture_filename(self.texturehelper.detail_mtex.texture)
-        if self.texturehelper.gloss_mtex:
-            texset.textures[7] = TextureWriter.export_texture_filename(self.texturehelper.gloss_mtex.texture)
-
-        # UV Offset
-        if hasattr(bsshader, 'uv_offset'):
-            self.export_uv_offset(bsshader)
-
-        # UV Scale
-        if hasattr(bsshader, 'uv_scale'):
-            self.export_uv_scale(bsshader)
-
-        # Texture Clamping mode
-        if not self.texturehelper.base_mtex.texture.image.use_clamp_x:
-            wrap_s = 2
-        else:
-            wrap_s = 0
-        if not self.texturehelper.base_mtex.texture.image.use_clamp_y:
-            wrap_t = 1
-        else:
-            wrap_t = 0
-        bsshader.texture_clamp_mode = (wrap_s + wrap_t)
+        self.texturehelper.export_bs_lighting_shader_property(bsshader)
 
         # Diffuse color
         bsshader.skin_tint_color.r = b_mat.diffuse_color.r
@@ -180,7 +128,7 @@ class BSShader:
             bsshader.alpha = (1 - b_mat.alpha)
 
         # Shader Flags
-        BSShader.export_shader_flags(b_mat, bsshader)
+        BSShaderProperty.export_shader_flags(b_mat, bsshader)
         return bsshader
 
     def export_bs_shader_pp_lighting_property(self, b_mat):
@@ -190,25 +138,25 @@ class BSShader:
         b_s_type = NifFormat.BSShaderType._enumkeys.index(b_mat.niftools_shader.bsspplp_shaderobjtype)
         bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
 
-        bsshader.texture_set = self.create_textureset()
+        self.texturehelper.export_bs_shader_pp_lighting_property()
 
         # Shader Flags
-        BSShader.export_shader_flags(b_mat, bsshader)
+        BSShaderProperty.export_shader_flags(b_mat, bsshader)
         return bsshader
 
     @staticmethod
     def export_shader_flags(b_mat, shader):
         if hasattr(shader, 'shader_flags'):
             flags = shader.shader_flags
-            BSShader.process_flags(b_mat, flags)
+            BSShaderProperty.process_flags(b_mat, flags)
 
         if hasattr(shader, 'shader_flags_1'):
             flags_1 = shader.shader_flags_1
-            BSShader.process_flags(b_mat, flags_1)
+            BSShaderProperty.process_flags(b_mat, flags_1)
 
         if hasattr(shader, 'shader_flags_2'):
             flags_2 = shader.shader_flags_2
-            BSShader.process_flags(b_mat, flags_2)
+            BSShaderProperty.process_flags(b_mat, flags_2)
 
         return shader
 
@@ -221,15 +169,3 @@ class BSShader:
                 if b_flag:
                     sf_flag_index = flags._names.index(sf_flag)
                     flags._items[sf_flag_index]._value = 1
-
-    def export_uv_offset(self, shader):
-        shader.uv_offset.u = self.texturehelper.base_mtex.offset.x
-        shader.uv_offset.v = self.texturehelper.base_mtex.offset.y
-
-        return shader
-
-    def export_uv_scale(self, shader):
-        shader.uv_scale.u = self.texturehelper.base_mtex.scale.x
-        shader.uv_scale.v = self.texturehelper.base_mtex.scale.y
-
-        return shader
