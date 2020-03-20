@@ -39,12 +39,29 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.block_registry import block_store
+from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.texture import TextureSlotManager, TextureWriter
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 
 
 class NiTextureProp(TextureSlotManager):
+
+    # TODO Common for import/export
+    """Names (ordered by default index) of shader texture slots for Sid Meier's Railroads and similar games."""
+    EXTRA_SHADER_TEXTURES = [
+        "EnvironmentMapIndex",
+        "NormalMapIndex",
+        "SpecularIntensityIndex",
+        "EnvironmentIntensityIndex",
+        "LightCubeMapIndex",
+        "ShadowTextureIndex"]
+
+    # Default ordering of Extra data blocks for different games
+    USED_EXTRA_SHADER_TEXTURES = {
+        'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
+        'CIVILIZATION_IV': (3, 0, 1, 2)
+    }
 
     __instance = None
 
@@ -209,3 +226,21 @@ class NiTextureProp(TextureSlotManager):
                 # set default values
                 shadertexdesc.is_used = False
                 shadertexdesc.map_index = mapindex
+
+    def add_shader_integer_extra_datas(self, trishape):
+        """Add extra data blocks for shader indices."""
+        for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[NifOp.props.game]:
+            shader_name = self.EXTRA_SHADER_TEXTURES[shaderindex]
+            trishape.add_integer_extra_data(shader_name, shaderindex)
+
+    @staticmethod
+    def get_n_apply_mode_from_b_blend_type(b_blend_type):
+        if b_blend_type == "LIGHTEN":
+            return NifFormat.ApplyMode.APPLY_HILIGHT
+        elif b_blend_type == "MULTIPLY":
+            return NifFormat.ApplyMode.APPLY_HILIGHT2
+        elif b_blend_type == "MIX":
+            return NifFormat.ApplyMode.APPLY_MODULATE
+
+        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
+        return NifFormat.ApplyMode.APPLY_MODULATE

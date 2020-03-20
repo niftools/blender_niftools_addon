@@ -145,7 +145,7 @@ class Mesh:
             b_emit_prop = False
 
             # use the texture properties as preference
-            for b_slot in texture.get_used_textslots(b_mat):
+            for b_slot in self.texture_helper.get_used_textslots(b_mat):
                 # replace with texture helper queries
                 b_ambient_prop |= b_slot.use_map_ambient
                 b_diffuse_prop |= b_slot.use_map_color_diffuse
