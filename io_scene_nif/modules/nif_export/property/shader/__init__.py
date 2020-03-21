@@ -71,7 +71,7 @@ class BSShaderProperty:
     def export_bs_effect_shader_property(self, b_mat):
         bsshader = NifFormat.BSEffectShaderProperty()
 
-        self.texturehelper.export_bs_effect_shader_property(bsshader)
+        self.texturehelper.export_bs_effect_shader_prop_textures(bsshader)
 
         # Alpha
         if b_mat.use_transparency:
@@ -97,7 +97,7 @@ class BSShaderProperty:
         b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_mat.niftools_shader.bslsp_shaderobjtype)
         bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
 
-        self.texturehelper.export_bs_lighting_shader_property(bsshader)
+        self.texturehelper.export_bs_lighting_shader_prop_textures(bsshader)
 
         # Diffuse color
         bsshader.skin_tint_color.r = b_mat.diffuse_color.r
@@ -138,7 +138,7 @@ class BSShaderProperty:
         b_s_type = NifFormat.BSShaderType._enumkeys.index(b_mat.niftools_shader.bsspplp_shaderobjtype)
         bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
 
-        self.texturehelper.export_bs_shader_pp_lighting_property()
+        self.texturehelper.export_bs_shader_pp_lighting_prop_textures()
 
         # Shader Flags
         BSShaderProperty.export_shader_flags(b_mat, bsshader)

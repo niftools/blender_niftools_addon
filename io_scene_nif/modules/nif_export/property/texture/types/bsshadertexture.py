@@ -60,25 +60,25 @@ class BSShaderTexture(TextureSlotManager):
             super().__init__()
             BSShaderTexture.__instance = self
 
-    def export_bs_effect_shader_property(self, bsshader):
+    def export_bs_effect_shader_prop_textures(self, bsshader):
         bsshader.texture_set = self._create_textureset()
-        bsshader.source_texture = TextureWriter.export_texture_filename(self.base_mtex.texture)
-        bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.glow_mtex.texture)
+        bsshader.source_texture = TextureWriter.export_texture_filename(self.b_diffuse_slot.texture)
+        bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.b_glow_slot.texture)
 
         # clamp Mode
         bsshader.texture_clamp_mode = 65283
 
-    def export_bs_lighting_shader_property(self, bsshader):
+    def export_bs_lighting_shader_prop_textures(self, bsshader):
         texset = self._create_textureset()
         bsshader.texture_set = texset
 
         # Add in extra texture slots
         texset.num_textures = 9
         texset.textures.update_size()
-        if self.detail_mtex:
-            texset.textures[6] = TextureWriter.export_texture_filename(self.detail_mtex.texture)
-        if self.gloss_mtex:
-            texset.textures[7] = TextureWriter.export_texture_filename(self.gloss_mtex.texture)
+        if self.b_detail_slot:
+            texset.textures[6] = TextureWriter.export_texture_filename(self.b_detail_slot.texture)
+        if self.b_gloss_slot:
+            texset.textures[7] = TextureWriter.export_texture_filename(self.b_gloss_slot.texture)
 
         # UV Offset
         if hasattr(bsshader, 'uv_offset'):
@@ -89,42 +89,42 @@ class BSShaderTexture(TextureSlotManager):
             self.export_uv_scale(bsshader)
 
         # Texture Clamping mode
-        if not self.base_mtex.texture.image.use_clamp_x:
+        if not self.b_diffuse_slot.texture.image.use_clamp_x:
             wrap_s = 2
         else:
             wrap_s = 0
-        if not self.base_mtex.texture.image.use_clamp_y:
+        if not self.b_diffuse_slot.texture.image.use_clamp_y:
             wrap_t = 1
         else:
             wrap_t = 0
             
         bsshader.texture_clamp_mode = (wrap_s + wrap_t)
 
-    def export_bs_shader_pp_lighting_property(self, bsshader):
+    def export_bs_shader_pp_lighting_prop_textures(self, bsshader):
         bsshader.texture_set = self._create_textureset()
 
     def _create_textureset(self):
         texset = NifFormat.BSShaderTextureSet()
 
-        if self.base_mtex:
-            texset.textures[0] = TextureWriter.export_texture_filename(self.base_mtex.texture)
-        if self.normal_mtex:
-            texset.textures[1] = TextureWriter.export_texture_filename(self.normal_mtex.texture)
-        if self.glow_mtex:
-            texset.textures[2] = TextureWriter.export_texture_filename(self.glow_mtex.texture)
-        if self.detail_mtex:
-            texset.textures[3] = TextureWriter.export_texture_filename(self.detail_mtex.texture)
+        if self.b_diffuse_slot:
+            texset.textures[0] = TextureWriter.export_texture_filename(self.b_diffuse_slot.texture)
+        if self.b_normal_slot:
+            texset.textures[1] = TextureWriter.export_texture_filename(self.b_normal_slot.texture)
+        if self.b_glow_slot:
+            texset.textures[2] = TextureWriter.export_texture_filename(self.b_glow_slot.texture)
+        if self.b_detail_slot:
+            texset.textures[3] = TextureWriter.export_texture_filename(self.b_detail_slot.texture)
 
         return texset
 
     def export_uv_offset(self, shader):
-        shader.uv_offset.u = self.base_mtex.offset.x
-        shader.uv_offset.v = self.base_mtex.offset.y
+        shader.uv_offset.u = self.b_diffuse_slot.offset.x
+        shader.uv_offset.v = self.b_diffuse_slot.offset.y
 
         return shader
 
     def export_uv_scale(self, shader):
-        shader.uv_scale.u = self.base_mtex.scale.x
-        shader.uv_scale.v = self.base_mtex.scale.y
+        shader.uv_scale.u = self.b_diffuse_slot.scale.x
+        shader.uv_scale.v = self.b_diffuse_slot.scale.y
 
         return shader

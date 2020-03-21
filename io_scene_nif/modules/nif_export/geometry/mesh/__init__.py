@@ -316,7 +316,7 @@ class Mesh:
 
             # add texture effect block (must be added as preceding child of the trishape)
             if n_parent:
-                ref_mtex = self.texture_helper.ref_mtex
+                ref_mtex = self.texture_helper.b_ref_slot
                 if NifOp.props.game == 'MORROWIND' and ref_mtex:
                     # create a new parent block for this shape
                     extra_node = block_store.create_block("NiNode", ref_mtex)
