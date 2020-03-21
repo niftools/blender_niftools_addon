@@ -39,7 +39,6 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.block_registry import block_store
-from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.texture import TextureSlotManager, TextureWriter
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
@@ -105,11 +104,11 @@ class NiTextureProp(TextureSlotManager):
 
     def export_nitextureprop_tex_descs(self, texprop):
 
-        if self.base_mtex:
+        if self.b_diffuse_slot:
             texprop.has_base_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.base_texture,
                                                 uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.base_mtex)
+                                                b_mat_texslot=self.b_diffuse_slot)
             # check for texture flip definition
             try:
                 fliptxt = Blender.Text.Get(basemtex.texture.name)
@@ -121,18 +120,18 @@ class NiTextureProp(TextureSlotManager):
                 # self.texture_anim.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
                 pass
 
-        if self.glow_mtex:
+        if self.b_glow_slot:
             texprop.has_glow_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.glow_texture,
                                                 uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.glow_mtex)
+                                                b_mat_texslot=self.b_glow_slot)
 
-        if self.bump_mtex:
+        if self.b_bump_slot:
             if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_bump_map_texture = True
                 self.texture_writer.export_tex_desc(texdesc=texprop.bump_map_texture,
                                                     uvlayers=self.dict_mesh_uvlayers,
-                                                    b_mat_texslot=self.bump_mtex)
+                                                    b_mat_texslot=self.b_bump_slot)
                 texprop.bump_map_luma_scale = 1.0
                 texprop.bump_map_luma_offset = 0.0
                 texprop.bump_map_matrix.m_11 = 1.0
@@ -140,35 +139,35 @@ class NiTextureProp(TextureSlotManager):
                 texprop.bump_map_matrix.m_21 = 0.0
                 texprop.bump_map_matrix.m_22 = 1.0
 
-        if self.normal_mtex:
+        if self.b_normal_slot:
             shadertexdesc = texprop.shader_textures[1]
             shadertexdesc.is_used = True
-            shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.normal_mtex.texture)
+            shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.b_normal_slot.texture)
 
-        if self.gloss_mtex:
+        if self.b_gloss_slot:
             if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_gloss_texture = True
                 self.texture_writer.export_tex_desc(texdesc=texprop.gloss_texture,
                                                     uvlayers=self.dict_mesh_uvlayers,
-                                                    b_mat_texslot=self.gloss_mtex)
+                                                    b_mat_texslot=self.b_gloss_slot)
             else:
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.gloss_mtex.texture)
+                shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.b_gloss_slot.texture)
 
-        if self.dark_mtex:
+        if self.b_dark_slot:
             texprop.has_dark_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.dark_texture,
                                                 uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.dark_mtex)
+                                                b_mat_texslot=self.b_dark_slot)
 
-        if self.detail_mtex:
+        if self.b_detail_slot:
             texprop.has_detail_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.detail_texture,
                                                 uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.detail_mtex)
+                                                b_mat_texslot=self.b_detail_slot)
 
-        if self.ref_mtex:
+        if self.b_ref_slot:
             if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 NifLog.warn("Cannot export reflection texture for this game.")
                 # tex_prop.hasRefTexture = True
@@ -176,7 +175,7 @@ class NiTextureProp(TextureSlotManager):
             else:
                 shadertexdesc = texprop.shader_textures[3]
                 shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.ref_mtex.texture)
+                shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.b_ref_slot.texture)
 
     def export_texture_effect(self, b_mat_texslot=None):
         """Export a texture effect block from material texture mtex (MTex, not Texture)."""
