@@ -43,7 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import collision, types
-# from io_scene_nif.modules.nif_export.collision.bound import Bound
+from io_scene_nif.modules.nif_export.collision.bound import CollisionProperty
 from io_scene_nif.modules.nif_export.geometry import mesh
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -69,6 +69,7 @@ class Collision:
     def __init__(self, parent):
         self.objecthelper = parent
         self.HAVOK_SCALE = collision.HAVOK_SCALE
+        self.bound_helper = CollisionProperty()
 
     def export_collision(self, b_obj, n_parent):
         """Main function for adding collision object b_obj to a node."""
@@ -106,7 +107,7 @@ class Collision:
                 self.export_collision_helper(b_obj, node)
 
         elif NifOp.props.game in ('ZOO_TYCOON_2',):
-            self.export_nicollisiondata(b_obj, n_parent)
+            self.bound_helper.export_nicollisiondata(b_obj, n_parent)
         else:
             NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(NifOp.props.game, b_obj.name))
 
@@ -142,83 +143,6 @@ class Collision:
                     if n_block.mass < 0.0001:
                         n_block.mass = 0.05
                     n_block.update_mass_center_inertia(mass=n_block.mass, solid=EXPORT_OB_SOLID)
-
-    def export_nicollisiondata(self, b_obj, n_parent):
-        """ Export b_obj as a NiCollisionData """
-        n_coll_data = block_store.create_block("NiCollisionData", b_obj)
-        n_coll_data.use_abv = 1
-        n_coll_data.target = n_parent
-        n_parent.collision_object = n_coll_data
-
-        n_bv = n_coll_data.bounding_volume
-        if b_obj.draw_bounds_type == 'SPHERE':
-            self.export_spherebv(b_obj, n_bv)
-        elif b_obj.draw_bounds_type == 'BOX':
-            self.export_boxbv(b_obj, n_bv)
-        elif b_obj.draw_bounds_type == 'CAPSULE':
-            self.export_capsulebv(b_obj, n_bv)
-
-    def export_spherebv(self, b_obj, n_bv):
-        """ Export b_obj as a NiCollisionData's bounding_volume sphere """
-
-        n_bv.collision_type = 0
-        matrix = util_math.get_object_bind(b_obj)
-        center = matrix.translation
-        n_bv.sphere.radius = b_obj.dimensions.x / 2
-        n_bv.sphere.center.x = center.x
-        n_bv.sphere.center.y = center.y
-        n_bv.sphere.center.z = center.z
-
-    def export_boxbv(self, b_obj, n_bv):
-        """ Export b_obj as a NiCollisionData's bounding_volume box """
-
-        n_bv.collision_type = 1
-        matrix = util_math.get_object_bind(b_obj)
-
-        # set center
-        center = matrix.translation
-        n_bv.box.center.x = center.x
-        n_bv.box.center.y = center.y
-        n_bv.box.center.z = center.z
-
-        # set axes to unity 3x3 matrix
-        n_bv.box.axis[0].x = 1
-        n_bv.box.axis[1].y = 1
-        n_bv.box.axis[2].z = 1
-
-        # set extent
-        extent = b_obj.dimensions / 2
-        n_bv.box.extent[0] = extent.x
-        n_bv.box.extent[1] = extent.y
-        n_bv.box.extent[2] = extent.z
-
-    def export_capsulebv(self, b_obj, n_bv):
-        """ Export b_obj as a NiCollisionData's bounding_volume capsule """
-
-        n_bv.collision_type = 2
-        matrix = util_math.get_object_bind(b_obj)
-        offset = matrix.translation
-        # calculate the direction unit vector
-        v_dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
-        extent = b_obj.dimensions.z - b_obj.dimensions.x
-        radius = b_obj.dimensions.x / 2
-
-        # store data
-        capsule = n_bv.capsule
-
-        center = capsule.center
-        center.x = offset.x
-        center.y = offset.y
-        center.z = offset.z
-
-        origin = capsule.origin
-        origin.x = v_dir.x
-        origin.y = v_dir.y
-        origin.z = v_dir.z
-
-        # TODO [collision] nb properly named in newer nif.xmls
-        capsule.unknown_float_1 = extent
-        capsule.unknown_float_2 = radius
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
