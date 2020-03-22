@@ -170,12 +170,10 @@ class BSShaderPropertyProcessor(BSShader):
         #     b_mat = self.set_alpha_bsshader(b_mat, bs_effect_shader_property)
 
         # Emissive
-        Material.import_material_emissive(bs_effect_shader_property.emissive_color)
-        b_mat.emit = bs_effect_shader_property.emissive_multiple
-
         if bs_effect_shader_property.emissive_color:
-            Material.import_material_emissive(bs_effect_shader_property.emissive_color)
-            b_mat.niftools.emissive_alpha = bs_effect_shader_property.emissive_color.a
+            Material.import_material_emissive(b_mat, bs_effect_shader_property.emissive_color)
+            # TODO [property][shader][alpha] Map this to actual alpha when component is available
+            b_mat.niftools.emissive_alpha.v = bs_effect_shader_property.emissive_color.a
             b_mat.emit = bs_effect_shader_property.emissive_multiple
 
         b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags

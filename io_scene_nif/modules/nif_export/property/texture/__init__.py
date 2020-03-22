@@ -37,252 +37,77 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.formats.nif import NifFormat
-
 from io_scene_nif.modules.nif_export.animation.texture import TextureAnimation
-from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.texture.writer import TextureWriter
 from io_scene_nif.utils import util_math
-from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 
-# TODO Common for import/export
-"""Names (ordered by default index) of shader texture slots for Sid Meier's Railroads and similar games."""
-EXTRA_SHADER_TEXTURES = [
-    "EnvironmentMapIndex",
-    "NormalMapIndex",
-    "SpecularIntensityIndex",
-    "EnvironmentIntensityIndex",
-    "LightCubeMapIndex",
-    "ShadowTextureIndex"]
 
-
-def get_used_textslots(b_mat):
-    used_slots = []
-    if b_mat is not None:
-        used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
-    return used_slots
-
-
-class Texture:
-    # Default ordering of Extra data blocks for different games
-    USED_EXTRA_SHADER_TEXTURES = {
-        'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
-        'CIVILIZATION_IV': (3, 0, 1, 2)
-    }
+class TextureSlotManager:
 
     def __init__(self):
         self.dict_mesh_uvlayers = []
         self.texture_writer = TextureWriter()
         self.texture_anim = TextureAnimation()
+        self.b_mat = None
 
-        self.base_mtex = None
-        self.glow_mtex = None
-        self.bump_mtex = None
-        self.normal_mtex = None
-        self.gloss_mtex = None
-        self.dark_mtex = None
-        self.detail_mtex = None
-        self.ref_mtex = None
+        self.b_diffuse_slot = None
+        self.b_glow_slot = None
+        self.b_bump_slot = None
+        self.b_normal_slot = None
+        self.b_gloss_slot = None
+        self.b_dark_slot = None
+        self.b_detail_slot = None
+        self.b_ref_slot = None
+        self.has_alpha_texture = False
+
+    def _reset_fields(self):
+        self.b_diffuse_slot = None
+        self.b_glow_slot = None
+        self.b_bump_slot = None
+        self.b_normal_slot = None
+        self.b_gloss_slot = None
+        self.b_dark_slot = None
+        self.b_detail_slot = None
+        self.b_ref_slot = None
+        self.has_alpha_texture = False
+
+    @staticmethod
+    def get_used_textslots(b_mat):
+        used_slots = []
+        if b_mat is not None:
+            used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
+        return used_slots
 
     @staticmethod
     def get_uv_layers(b_mat):
         used_uvlayers = set()
-        texture_slots = texture.get_used_textslots(b_mat)
+        texture_slots = TextureSlotManager.get_used_textslots(b_mat)
         for slot in texture_slots:
             used_uvlayers.add(slot.uv_layer)
         return used_uvlayers
 
-    @staticmethod
-    def get_n_apply_mode_from_b_blend_type(b_blend_type):
-        if b_blend_type == "LIGHTEN":
-            return NifFormat.ApplyMode.APPLY_HILIGHT
-        elif b_blend_type == "MULTIPLY":
-            return NifFormat.ApplyMode.APPLY_HILIGHT2
-        elif b_blend_type == "MIX":
-            return NifFormat.ApplyMode.APPLY_MODULATE
-
-        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
-        return NifFormat.ApplyMode.APPLY_MODULATE
-
-    def export_texturing_property(self, flags=0x0001, applymode=None, b_mat=None, b_obj=None):
-        """Export texturing property."""
-
-        self.determine_texture_types(b_obj, b_mat)
-
-        texprop = NifFormat.NiTexturingProperty()
-
-        texprop.flags = flags
-        texprop.apply_mode = applymode
-        texprop.texture_count = 7
-
-        self.export_texture_shader_effect(texprop)
-        self.export_nitextureprop_tex_descs(texprop)
-
-        # search for duplicate
-        for n_block in block_store.block_to_obj:
-            if isinstance(n_block, NifFormat.NiTexturingProperty) and n_block.get_hash() == texprop.get_hash():
-                return n_block
-
-        # no texturing property with given settings found, so use and register
-        # the new one
-        return texprop
-
-    def export_nitextureprop_tex_descs(self, texprop):
-
-        if self.base_mtex:
-            texprop.has_base_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.base_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.base_mtex)
-            # check for texture flip definition
-            try:
-                fliptxt = Blender.Text.Get(basemtex.texture.name)
-            except NameError:
-                pass
-            else:
-                # texture slot 0 = base
-                # TODO [animation] FIXME Heirarchy
-                # self.texture_anim.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
-                pass
-
-        if self.glow_mtex:
-            texprop.has_glow_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.glow_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.glow_mtex)
-
-        if self.bump_mtex:
-            if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.has_bump_map_texture = True
-                self.texture_writer.export_tex_desc(texdesc=texprop.bump_map_texture,
-                                                    uvlayers=self.dict_mesh_uvlayers,
-                                                    b_mat_texslot=self.bump_mtex)
-                texprop.bump_map_luma_scale = 1.0
-                texprop.bump_map_luma_offset = 0.0
-                texprop.bump_map_matrix.m_11 = 1.0
-                texprop.bump_map_matrix.m_12 = 0.0
-                texprop.bump_map_matrix.m_21 = 0.0
-                texprop.bump_map_matrix.m_22 = 1.0
-
-        if self.normal_mtex:
-            shadertexdesc = texprop.shader_textures[1]
-            shadertexdesc.is_used = True
-            shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.normal_mtex.texture)
-
-        if self.gloss_mtex:
-            if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.has_gloss_texture = True
-                self.texture_writer.export_tex_desc(texdesc=texprop.gloss_texture,
-                                                    uvlayers=self.dict_mesh_uvlayers,
-                                                    b_mat_texslot=self.gloss_mtex)
-            else:
-                shadertexdesc = texprop.shader_textures[2]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.gloss_mtex.texture)
-
-        if self.dark_mtex:
-            texprop.has_dark_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.dark_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.dark_mtex)
-
-        if self.detail_mtex:
-            texprop.has_detail_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.detail_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.detail_mtex)
-
-        if self.ref_mtex:
-            if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                NifLog.warn("Cannot export reflection texture for this game.")
-                # tex_prop.hasRefTexture = True
-                # self.export_tex_desc(texdesc=tex_prop.refTexture, uvlayers=uvlayers, mtex=refmtex)
-            else:
-                shadertexdesc = texprop.shader_textures[3]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.ref_mtex.texture)
-
-    def export_texture_shader_effect(self, tex_prop):
-        # export extra shader textures
-        if NifOp.props.game == 'SID_MEIER_S_RAILROADS':
-            # sid meier's railroads:
-            # some textures end up in the shader texture list there are 5 slots available, so set them up
-            tex_prop.num_shader_textures = 5
-            tex_prop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(tex_prop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
-
-            # some texture slots required by the engine
-            shadertexdesc_envmap = tex_prop.shader_textures[0]
-            shadertexdesc_envmap.is_used = True
-            shadertexdesc_envmap.texture_data.source = TextureWriter.export_source_texture(filename="RRT_Engine_Env_map.dds")
-
-            shadertexdesc_cubelightmap = tex_prop.shader_textures[4]
-            shadertexdesc_cubelightmap.is_used = True
-            shadertexdesc_cubelightmap.texture_data.source = TextureWriter.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
-
-        elif NifOp.props.game == 'CIVILIZATION_IV':
-            # some textures end up in the shader texture list there are 4 slots available, so set them up
-            tex_prop.num_shader_textures = 4
-            tex_prop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(tex_prop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
-
-    def export_texture_effect(self, b_mat_texslot=None):
-        """Export a texture effect block from material texture mtex (MTex, not Texture)."""
-        texeff = NifFormat.NiTextureEffect()
-        texeff.flags = 4
-        texeff.rotation.set_identity()
-        texeff.scale = 1.0
-        texeff.model_projection_matrix.set_identity()
-        texeff.texture_filtering = NifFormat.TexFilterMode.FILTER_TRILERP
-        texeff.texture_clamping = NifFormat.TexClampMode.WRAP_S_WRAP_T
-        texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
-        texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
-        if b_mat_texslot:
-            texeff.source_texture = TextureWriter.export_source_texture(b_mat_texslot.texture)
-            if NifOp.props.game == 'MORROWIND':
-                texeff.num_affected_node_list_pointers += 1
-                texeff.affected_node_list_pointers.update_size()
-        texeff.unknown_vector.x = 1.0
-        return block_store.register_block(texeff)
-
-    def add_shader_integer_extra_datas(self, trishape):
-        """Add extra data blocks for shader indices."""
-        for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[NifOp.props.game]:
-            shader_name = texture.EXTRA_SHADER_TEXTURES[shaderindex]
-            trishape.add_integer_extra_data(shader_name, shaderindex)
-
-    def determine_texture_types(self, b_obj, b_mat):
-
-        used_slots = texture.get_used_textslots(b_mat)
-        self.base_mtex = None
-        self.bump_mtex = None
-        self.dark_mtex = None
-        self.detail_mtex = None
-        self.gloss_mtex = None
-        self.glow_mtex = None
-        self.normal_mtex = None
-        self.ref_mtex = None
+    def determine_texture_types(self, b_mat):
+        self.b_mat = b_mat
+        used_slots = self.get_used_textslots(b_mat)
+        self._reset_fields()
 
         for b_mat_texslot in used_slots:
             # check REFL-mapped textures (used for "NiTextureEffect" materials)
             if b_mat_texslot.texture_coords == 'REFLECTION':
                 if not b_mat_texslot.use_map_color_diffuse:
                     # it should map to colour
-                    raise util_math.NifError("Non-COL-mapped reflection texture in mesh '%s', material '%s', these cannot be exported to NIF.\n"
-                                             "Either delete all non-COL-mapped reflection textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'." % (b_obj.name, b_mat.name))
+                    raise util_math.NifError(
+                        "Non-COL-mapped reflection texture in mesh '%s', material '%s', these cannot be exported to NIF.\n"
+                        "Either delete all non-COL-mapped reflection textures, or in the Shading Panel, \n"
+                        "under Material Buttons, set texture 'Map To' to 'COL'." % (b_mat.name, b_mat.name))
                 if b_mat_texslot.blend_type != 'ADD':
                     # it should have "ADD" blending mode
-                    NifLog.warn("Reflection texture should have blending mode 'Add' on texture in mesh '{0}', material '{1}').".format(b_obj.name, b_mat.name))
+                    NifLog.warn("Reflection texture should have blending mode 'Add'"
+                                " on texture in mesh '{0}', material '{1}').".format(b_mat.name, b_mat.name))
                 # an envmap image should have an empty... don't care
-                self.ref_mtex = b_mat_texslot
+                self.b_ref_slot = b_mat_texslot
 
             # check UV-mapped textures
             elif b_mat_texslot.texture_coords == 'UV':
@@ -294,78 +119,84 @@ class Texture:
                 # glow tex
                 if b_mat_texslot.use_map_emit:
                     # multi-check
-                    if self.glow_mtex:
+                    if self.b_glow_slot:
                         raise util_math.NifError("Multiple emissive textures in mesh '{0}', material '{1}''.\n"
-                                                 "Make sure there is only one texture set as Influence > emit".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > emit".
+                                                 format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
+                        self.has_alpha_texture = True
 
-                    self.glow_mtex = b_mat_texslot
+                    self.b_glow_slot = b_mat_texslot
 
                 # specular
                 elif b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec:
                     # multi-check
-                    if self.gloss_mtex:
+                    if self.b_gloss_slot:
                         raise util_math.NifError("Multiple specular gloss textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture set as Influence > specular".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > specular".
+                                                 format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
+                        self.has_alpha_texture = True
 
                     # got the gloss map
-                    self.gloss_mtex = b_mat_texslot
+                    self.b_gloss_slot = b_mat_texslot
 
                 # bump map
                 elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map is False:
                     # multi-check
-                    if self.bump_mtex:
+                    if self.b_bump_slot:
                         raise util_math.NifError("Multiple bump/normal texture in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture set as Influence > normal".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > normal".
+                                                 format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
+                        self.has_alpha_texture = True
 
-                    self.bump_mtex = b_mat_texslot
+                    self.b_bump_slot = b_mat_texslot
 
                 # normal map
                 elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
                     # multi-check
-                    if self.normal_mtex:
+                    if self.b_normal_slot:
                         raise util_math.NifError("Multiple bump/normal textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture set as Influence > normal".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > normal".
+                                                 format(b_mat.name, b_mat.name))
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
-                    self.normal_mtex = b_mat_texslot
+                        self.has_alpha_texture = True
+                    self.b_normal_slot = b_mat_texslot
 
                 # darken
                 elif b_mat_texslot.use_map_color_diffuse and b_mat_texslot.blend_type == 'DARKEN':
 
-                    if self.dark_mtex:
+                    if self.b_dark_slot:
                         raise util_math.NifError("Multiple Darken textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture with Influence > Blend Type > Dark".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture with Influence > Blend Type > Dark".
+                                                 format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
+                        self.has_alpha_texture = True
                     # got the dark map
-                    self.dark_mtex = b_mat_texslot
+                    self.b_dark_slot = b_mat_texslot
 
                 # diffuse
                 elif b_mat_texslot.use_map_color_diffuse:
-                    if self.base_mtex:
+                    if self.b_diffuse_slot:
                         raise util_math.NifError("Multiple Diffuse textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture with Influence > Diffuse > color".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture with Influence > Diffuse > color".
+                                                 format(b_mat.name, b_mat.name))
 
-                    self.base_mtex = b_mat_texslot
+                    self.b_diffuse_slot = b_mat_texslot
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
+                        self.has_alpha_texture = True
 
                         '''
                         # in this case, Blender replaces the texture transparant parts with the underlying material color...
@@ -398,87 +229,88 @@ class Texture:
 
                 # detail
                 elif b_mat_texslot.use_map_color_diffuse:
-                    if self.detail_mtex:
-                        raise util_math.NifError("Multiple detail textures in mesh '{0}', material '{1}'.\n" 
-                                                 "Make sure there is only one texture with Influence Diffuse > color".format(b_obj.name, b_mat.name))
+                    if self.b_detail_slot:
+                        raise util_math.NifError("Multiple detail textures in mesh '{0}', material '{1}'.\n"
+                                                 "Make sure there is only one texture with Influence Diffuse > color".
+                                                 format(b_mat.name, b_mat.name))
                     # extra diffuse consider as detail texture
 
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
-                    self.detail_mtex = b_mat_texslot
+                        self.has_alpha_texture = True
+                    self.b_detail_slot = b_mat_texslot
 
                 # reflection
                 elif b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir:
                     # multi-check
-                    if self.glow_mtex:
+                    if self.b_ref_slot:
                         raise util_math.NifError("Multiple reflection textures in mesh '{0}', material '{1}'.\n"
-                                                 "Make sure there is only one texture set as Influence > Mirror/Ray Mirror".format(b_obj.name, b_mat.name))
+                                                 "Make sure there is only one texture set as Influence > Mirror/Ray Mirror".
+                                                 format(b_mat.name, b_mat.name))
                     # got the reflection map
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
-                        mesh_hasalpha = True
-                    self.ref_mtex = b_mat_texslot
+                        self.has_alpha_texture = True
+                    self.b_ref_slot = b_mat_texslot
 
                 # unsupported map
                 else:
                     raise util_math.NifError("Do not know how to export texture '{0}', in mesh '{1}', material '{2}'.\n"
                                              "Either delete it, or if this texture is to be your base texture.\n"
-                                             "Go to the Shading Panel Material Buttons, and set texture 'Map To' to 'COL'.".format(b_mat_texslot.texture.name, b_obj.name, b_mat.name))
+                                             "Go to the Shading Panel Material Buttons, and set texture 'Map To' to 'COL'.".
+                                             format(b_mat_texslot.texture.name, b_mat.name, b_mat.name))
 
             # nif only support UV-mapped textures
             else:
-                NifLog.warn("Non-UV texture in mesh '{0}', material '{1}'.\nEither delete all non-UV textures or "
-                            "create a UV map for every texture associated with selected object and run the script again.".format(b_obj.name, b_mat.name))
+                NifLog.warn("Non-UV texture in mesh '{0}', material '{1}'.\n"
+                            "Either delete all non-UV textures or create a UV map for every texture associated "
+                            "with selected object and run the script again.".
+                            format(b_mat.name, b_mat.name))
 
+    def has_diffuse_textures(self, b_mat):
+        if self.b_mat == b_mat:
+            return self.b_diffuse_slot is not None
 
-def has_diffuse_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.diffusetextures
+        for b_mat_texslot in self.get_used_textslots(b_mat):
+            if b_mat_texslot.use_map_color_diffuse:
+                self.b_diffuse_slot = b_mat_texslot
 
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use and b_mat_texslot.use_map_color_diffuse:
-            self.diffusetextures.append(b_mat_texslot)
-    return self.diffusetextures
+        return self.b_diffuse_slot
 
+    def has_glow_textures(self, b_mat):
+        if self.b_mat == b_mat:
+            return self.b_glow_slot is not None
 
-def has_glow_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.glowtextures
+        for b_mat_texslot in self.get_used_textslots(b_mat):
+            if b_mat_texslot.use_map_emit:
+                self.b_glow_slot = b_mat_texslot
+        return self.b_glow_slot
 
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use and b_mat_texslot.use_map_emit:
-            self.glowtextures.append(b_mat_texslot)
-    return self.glowtextures
+    def has_bumpmap_textures(self, b_mat):
+        if self.b_mat == b_mat:
+            return self.b_bump_slot is not None
 
-
-def has_bumpmap_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.bumpmaptextures
-
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use:
+        for b_mat_texslot in self.get_used_textslots(b_mat):
             if b_mat_texslot.texture.use_normal_map is False and b_mat_texslot.use_map_color_diffuse is False:
-                self.bumpmaptextures.append(b_mat_texslot)
-    return self.bumpmaptextures
+                self.b_bump_slot = b_mat_texslot
+        return self.b_bump_slot
 
+    def has_gloss_textures(self, b_mat):
+        if self.b_mat == b_mat:
+            return self.b_gloss_slot is not None
 
-def has_gloss_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.glosstextures
+        for b_mat_texslot in self.get_used_textslots(b_mat):
+            if b_mat_texslot.use_map_color_spec:
+                self.b_gloss_slot = b_mat_texslot
+                return True
+        return True
 
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use and b_mat_texslot.use_map_color_spec:
-            self.glosstextures.append(b_mat_texslot)
-    return self.glosstextures
+    def has_normalmap_textures(self, b_mat):
+        if self.b_mat == b_mat:
+            return self.b_normal_slot is not None
 
-
-def has_normalmap_textures(self, b_mat):
-    if self.b_mat == b_mat:
-        return self.normalmaptextures
-
-    for b_mat_texslot in texture.get_used_textslots(b_mat):
-        if b_mat_texslot.use:
+        for b_mat_texslot in self.get_used_textslots(b_mat):
             if b_mat_texslot.use_map_color_diffuse is False and b_mat_texslot.texture.use_normal_map and b_mat_texslot.use_map_normal:
-                self.normalmaptextures.append(b_mat_texslot)
-    return self.normalmaptextures
+                self.b_normal_slot = b_mat_texslot
+                return True
+        return False

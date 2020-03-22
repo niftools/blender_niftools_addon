@@ -63,7 +63,7 @@ class BSShaderTexture(TextureSlotManager):
         texture_set = bs_shader_property.texture_set
         textures = texture_set.textures
 
-        self.load_diffuse(b_mat, textures[0])
+        self._load_diffuse(b_mat, textures[0])
 
         normal_map = textures[1].decode()
         if normal_map:
@@ -71,7 +71,7 @@ class BSShaderTexture(TextureSlotManager):
             b_texture = self.create_texture_slot(b_mat, normal_map)
             self.update_normal_slot(b_texture)
 
-        self.load_glow(b_mat, textures[2])
+        self._load_glow(b_mat, textures[2])
 
         detail_map = textures[3].decode()
         if detail_map:
@@ -94,20 +94,20 @@ class BSShaderTexture(TextureSlotManager):
 
     def import_bseffectshaderproperty_textures(self, b_mat, bs_effect_shader_property):
 
-        self.load_diffuse(b_mat, bs_effect_shader_property.source_texture)
+        self._load_diffuse(b_mat, bs_effect_shader_property.source_texture)
 
-        self.load_glow(b_mat, bs_effect_shader_property.source_texture)
+        self._load_glow(b_mat, bs_effect_shader_property.source_texture)
 
         # self.import_texture_game_properties(b_mat, bs_effect_shader_property)
 
-    def load_diffuse(self, b_mat, texture):
+    def _load_diffuse(self, b_mat, texture):
         diffuse_map = texture.decode()
         if diffuse_map:
             NifLog.debug("Loading diffuse texture {0}".format(diffuse_map))
             b_texture = self.create_texture_slot(b_mat, diffuse_map)
             self.update_diffuse_slot(b_texture)
 
-    def load_glow(self, b_mat, texture):
+    def _load_glow(self, b_mat, texture):
         glow_map = texture.decode()
         if glow_map:
             NifLog.debug("Loading glow texture {0}".format(glow_map))
