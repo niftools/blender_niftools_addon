@@ -52,7 +52,7 @@ from io_scene_nif.modules.nif_export.object import Object
 from io_scene_nif.modules.nif_export import scene
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.nif_common import NifCommon
-from io_scene_nif.utils import util_math
+from io_scene_nif.utils import util_math, util_consts
 from io_scene_nif.utils.util_global import NifOp, EGMData, NifData
 from io_scene_nif.utils.util_logging import NifLog
 
@@ -62,8 +62,6 @@ class NifExport(NifCommon):
 
     IDENTITY44 = NifFormat.Matrix44()
     IDENTITY44.set_identity()
-    FLOAT_MIN = -3.4028234663852886e+38
-    FLOAT_MAX = +3.4028234663852886e+38
 
     # TODO: - Expose via properties
 
@@ -230,8 +228,8 @@ class NifExport(NifCommon):
                             n_kfc.flags = 12
                             n_kfc.frequency = 1.0
                             n_kfc.phase = 0.0
-                            n_kfc.start_time = self.FLOAT_MAX
-                            n_kfc.stop_time = self.FLOAT_MIN
+                            n_kfc.start_time = util_consts.FLOAT_MAX
+                            n_kfc.stop_time = util_consts.FLOAT_MIN
             else:
                 # here comes everything that should be exported EXCEPT for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
