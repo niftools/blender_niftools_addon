@@ -43,6 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import collision, types
+# from io_scene_nif.modules.nif_export.collision.bound import Bound
 from io_scene_nif.modules.nif_export.geometry import mesh
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -203,15 +204,21 @@ class Collision:
         radius = b_obj.dimensions.x / 2
 
         # store data
-        n_bv.capsule.center.x = offset.x
-        n_bv.capsule.center.y = offset.y
-        n_bv.capsule.center.z = offset.z
-        n_bv.capsule.origin.x = v_dir.x
-        n_bv.capsule.origin.y = v_dir.y
-        n_bv.capsule.origin.z = v_dir.z
+        capsule = n_bv.capsule
+
+        center = capsule.center
+        center.x = offset.x
+        center.y = offset.y
+        center.z = offset.z
+
+        origin = capsule.origin
+        origin.x = v_dir.x
+        origin.y = v_dir.y
+        origin.z = v_dir.z
+
         # TODO [collision] nb properly named in newer nif.xmls
-        n_bv.capsule.unknown_float_1 = extent
-        n_bv.capsule.unknown_float_2 = radius
+        capsule.unknown_float_1 = extent
+        capsule.unknown_float_2 = radius
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -300,23 +307,30 @@ class Collision:
             n_bhkrigidbody.unknown_short = 0
             n_bhkrigidbody.unknown_int_1 = 0
             n_bhkrigidbody.unknown_int_2 = 2084020722
-            n_bhkrigidbody.unknown_3_ints[0] = 0
-            n_bhkrigidbody.unknown_3_ints[1] = 0
-            n_bhkrigidbody.unknown_3_ints[2] = 0
+
+            unk_3 = n_bhkrigidbody.unknown_3_ints
+            unk_3[0] = 0
+            unk_3[1] = 0
+            unk_3[2] = 0
+
             n_bhkrigidbody.collision_response = 1
             n_bhkrigidbody.unknown_byte = 0
             n_bhkrigidbody.process_contact_callback_delay = 65535
-            n_bhkrigidbody.unknown_2_shorts[0] = 35899
-            n_bhkrigidbody.unknown_2_shorts[1] = 16336
+
+            unk_2 = n_bhkrigidbody.unknown_2_shorts
+            unk_2[0] = 35899
+            unk_2[1] = 16336
+
             n_bhkrigidbody.layer_copy = n_bhkrigidbody.layer
             n_bhkrigidbody.col_filter_copy = n_bhkrigidbody.col_filter
 
-            n_bhkrigidbody.unknown_6_shorts[0] = 21280
-            n_bhkrigidbody.unknown_6_shorts[1] = 4581
-            n_bhkrigidbody.unknown_6_shorts[2] = 62977
-            n_bhkrigidbody.unknown_6_shorts[3] = 65535
-            n_bhkrigidbody.unknown_6_shorts[4] = 44
-            n_bhkrigidbody.unknown_6_shorts[5] = 0
+            ukn_7 = n_bhkrigidbody.unknown_7_shorts
+            ukn_7[0] = 21280
+            ukn_7[1] = 4581
+            ukn_7[2] = 62977
+            ukn_7[3] = 65535
+            ukn_7[4] = 44
+            ukn_7[5] = 0
 
             # mass is 1.0 at the moment (unless property was set on import or by the user)
             # will be fixed in update_rigid_bodies()
@@ -365,53 +379,27 @@ class Collision:
 
         if not n_col_body.shape:
 
-            n_col_mopp = block_store.create_block("bhkMoppBvTreeShape", b_obj)
-            n_col_body.shape = n_col_mopp
-            # n_col_mopp.material = n_havok_mat[0]
-            n_col_mopp.unknown_8_bytes[0] = 160
-            n_col_mopp.unknown_8_bytes[1] = 13
-            n_col_mopp.unknown_8_bytes[2] = 75
-            n_col_mopp.unknown_8_bytes[3] = 1
-            n_col_mopp.unknown_8_bytes[4] = 192
-            n_col_mopp.unknown_8_bytes[5] = 207
-            n_col_mopp.unknown_8_bytes[6] = 144
-            n_col_mopp.unknown_8_bytes[7] = 11
-            n_col_mopp.unknown_float = 1.0
-
-            # the mopp origin, scale, and data are written later
-            n_col_shape = block_store.create_block("bhkPackedNiTriStripsShape", b_obj)
-            n_col_mopp.shape = n_col_shape
-
-            n_col_shape.unknown_int_1 = 0
-            n_col_shape.unknown_int_2 = 21929432
-            n_col_shape.unknown_float_1 = 0.1
-            n_col_shape.unknown_int_3 = 0
-            n_col_shape.scale.x = 0
-            n_col_shape.scale.y = 0
-            n_col_shape.scale.z = 0
-            n_col_shape.unknown_float_2 = 0
-            n_col_shape.unknown_float_3 = 0.1
-            n_col_shape.scale_copy = n_col_shape.scale
-            n_col_shape.scale.unknown_float_4 = 0
+            n_col_mopp = self.export_bhk_mopp_bv_tree_shape(b_obj, n_col_body)
+            n_col_shape = self.export_bhk_packed_nitristrip_shape(b_obj, n_col_mopp)
 
         else:
             raise ValueError('Multi-material mopps not supported for now')
             # TODO [object][collision] this code will do the trick once multi-material mopps work
-            n_col_mopp = n_col_body.shape
-            if not isinstance(n_col_mopp, NifFormat.bhkMoppBvTreeShape):
-                raise ValueError('Not a packed list of collisions')
-            n_col_shape = n_col_mopp.shape
-            if not isinstance(n_col_shape, NifFormat.bhkPackedNiTriStripsShape):
-                raise ValueError('Not a packed list of collisions')
+            # n_col_mopp = n_col_body.shape
+            # if not isinstance(n_col_mopp, NifFormat.bhkMoppBvTreeShape):
+            #     raise ValueError('Not a packed list of collisions')
+            # n_col_shape = n_col_mopp.shape
+            # if not isinstance(n_col_shape, NifFormat.bhkPackedNiTriStripsShape):
+            #     raise ValueError('Not a packed list of collisions')
 
-        mesh = b_obj.data
+        b_mesh = b_obj.data
         transform = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
         rotation = transform.decompose()[1]
 
-        vertices = [vert.co * transform for vert in mesh.vertices]
+        vertices = [vert.co * transform for vert in b_mesh.vertices]
         triangles = []
         normals = []
-        for face in mesh.polygons:
+        for face in b_mesh.polygons:
             if len(face.vertices) < 3:
                 continue  # ignore degenerate polygons
             triangles.append([face.vertices[i] for i in (0, 1, 2)])
@@ -421,6 +409,40 @@ class Collision:
                 normals.append(rotation * face.normal)
 
         n_col_shape.add_shape(triangles, normals, vertices, layer, n_havok_mat)
+
+    def export_bhk_mopp_bv_tree_shape(self, b_obj, n_col_body):
+        n_col_mopp = block_store.create_block("bhkMoppBvTreeShape", b_obj)
+        n_col_body.shape = n_col_mopp
+        # n_col_mopp.material = n_havok_mat[0]
+        unk_8 = n_col_mopp.unknown_8_bytes
+        unk_8[0] = 160
+        unk_8[1] = 13
+        unk_8[2] = 75
+        unk_8[3] = 1
+        unk_8[4] = 192
+        unk_8[5] = 207
+        unk_8[6] = 144
+        unk_8[7] = 11
+        n_col_mopp.unknown_float = 1.0
+        return n_col_mopp
+
+    def export_bhk_packed_nitristrip_shape(self, b_obj, n_col_mopp):
+        # the mopp origin, scale, and data are written later
+        n_col_shape = block_store.create_block("bhkPackedNiTriStripsShape", b_obj)
+        n_col_shape.unknown_int_1 = 0
+        n_col_shape.unknown_int_2 = 21929432
+        n_col_shape.unknown_float_1 = 0.1
+        n_col_shape.unknown_int_3 = 0
+        n_col_shape.unknown_float_2 = 0
+        n_col_shape.unknown_float_3 = 0.1
+        scale = n_col_shape.scale
+        scale.x = 0
+        scale.y = 0
+        scale.z = 0
+        scale.unknown_float_4 = 0
+        n_col_shape.scale_copy = scale
+        n_col_mopp.shape = n_col_shape
+        return n_col_shape
 
     def export_collision_single(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add collision object to n_col_body.
@@ -459,6 +481,12 @@ class Collision:
             NifLog.warn("Skipping collision object {0} without vertices.".format(b_obj))
             return None
 
+        # TODO [collsion] Replace when method moves to bound class, causes circular dependency
+        # box_extends = Bound.calculate_box_extents(b_obj)
+        # calc_bhkshape_radius = (box_extends[0][1] - box_extends[0][0] +
+        #                         box_extends[1][1] - box_extends[1][0] +
+        #                         box_extends[2][1] - box_extends[2][0]) / (6.0 * self.HAVOK_SCALE)
+
         # TODO [collision] Duplicate code
         b_vertlist = [vert.co for vert in b_obj.data.vertices]
 
@@ -481,17 +509,26 @@ class Collision:
 
             # n_coltf.material = n_havok_mat[0]
             n_coltf.unknown_float_1 = 0.1
-            n_coltf.unknown_8_bytes[0] = 96
-            n_coltf.unknown_8_bytes[1] = 120
-            n_coltf.unknown_8_bytes[2] = 53
-            n_coltf.unknown_8_bytes[3] = 19
-            n_coltf.unknown_8_bytes[4] = 24
-            n_coltf.unknown_8_bytes[5] = 9
-            n_coltf.unknown_8_bytes[6] = 253
-            n_coltf.unknown_8_bytes[7] = 4
+
+            unk_8 = n_coltf.unknown_8_bytes
+            unk_8[0] = 96
+            unk_8[1] = 120
+            unk_8[2] = 53
+            unk_8[3] = 19
+            unk_8[4] = 24
+            unk_8[5] = 9
+            unk_8[6] = 253
+            unk_8[7] = 4
+
             hktf = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
+
+            # TODO [collsion] Replace when method moves to bound class, causes circular dependency
+            # center = mathutils.Vector((box_extends[0][0] + box_extends[0][1]) / 2.0,
+            #                           (box_extends[1][0] + box_extends[1][1]) / 2.0,
+            #                           (box_extends[2][0] + box_extends[2][1]) / 2.0)
+
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
 
             # and transform it to global coordinates
@@ -514,14 +551,24 @@ class Collision:
                 n_coltf.shape = n_colbox
                 # n_colbox.material = n_havok_mat[0]
                 n_colbox.radius = radius
-                n_colbox.unknown_8_bytes[0] = 0x6b
-                n_colbox.unknown_8_bytes[1] = 0xee
-                n_colbox.unknown_8_bytes[2] = 0x43
-                n_colbox.unknown_8_bytes[3] = 0x40
-                n_colbox.unknown_8_bytes[4] = 0x3a
-                n_colbox.unknown_8_bytes[5] = 0xef
-                n_colbox.unknown_8_bytes[6] = 0x8e
-                n_colbox.unknown_8_bytes[7] = 0x3e
+
+                unk_8 = n_colbox.unknown_8_bytes
+                unk_8[0] = 0x6b
+                unk_8[1] = 0xee
+                unk_8[2] = 0x43
+                unk_8[3] = 0x40
+                unk_8[4] = 0x3a
+                unk_8[5] = 0xef
+                unk_8[6] = 0x8e
+                unk_8[7] = 0x3e
+
+                # TODO [collsion] Replace when method moves to bound class, causes circular dependency
+                # box_extends = Bound.calculate_box_extents(b_obj)
+                # dims = n_colbox.dimensions
+                # dims.x = (box_extends[0][1] - box_extends[0][0]) / (2.0 * self.HAVOK_SCALE)
+                # dims.y = (box_extends[1][1] - box_extends[1][0]) / (2.0 * self.HAVOK_SCALE)
+                # dims.z = (box_extends[2][1] - box_extends[2][0]) / (2.0 * self.HAVOK_SCALE)
+                # n_colbox.minimum_size = min(dims.x, dims.y, dims.z)
 
                 # fix dimensions for havok coordinate system
                 n_colbox.dimensions.x = (maxx - minx) / (2.0 * self.HAVOK_SCALE)
@@ -561,12 +608,16 @@ class Collision:
             n_col_caps = block_store.create_block("bhkCapsuleShape", b_obj)
             # n_col_caps.material = n_havok_mat[0]
             # n_col_caps.skyrim_material = n_havok_mat[1]
-            n_col_caps.first_point.x = first_point.x
-            n_col_caps.first_point.y = first_point.y
-            n_col_caps.first_point.z = first_point.z
-            n_col_caps.second_point.x = second_point.x
-            n_col_caps.second_point.y = second_point.y
-            n_col_caps.second_point.z = second_point.z
+
+            cap_1 = n_col_caps.first_point
+            cap_1.x = first_point.x
+            cap_1.y = first_point.y
+            cap_1.z = first_point.z
+
+            cap_2 = n_col_caps.second_point
+            cap_2.x = second_point.x
+            cap_2.y = second_point.y
+            cap_2.z = second_point.z
 
             n_col_caps.radius = radius
             n_col_caps.radius_1 = radius
@@ -591,9 +642,7 @@ class Collision:
             # calculate vertices, normals, and distances
             vertlist = [b_transform_mat * vert.co for vert in b_mesh.vertices]
             fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.polygons]
-            fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.polygons[b_face.index].vertices[0]].co)).dot(
-                b_rot_quat.to_matrix() * b_face.normal)
-                for b_face in b_mesh.polygons]
+            fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.polygons[b_face.index].vertices[0]].co)).dot(b_rot_quat.to_matrix() * b_face.normal) for b_face in b_mesh.polygons]
 
             # remove duplicates through dictionary
             vertdict = {}
@@ -601,6 +650,7 @@ class Collision:
                 vertdict[(int(vert[0] * mesh.VERTEX_RESOLUTION),
                           int(vert[1] * mesh.VERTEX_RESOLUTION),
                           int(vert[2] * mesh.VERTEX_RESOLUTION))] = i
+
             fdict = {}
             for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
                 fdict[(int(norm[0] * mesh.NORMAL_RESOLUTION),
@@ -618,29 +668,37 @@ class Collision:
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise util_math.NifError("Mesh has too many polygons/vertices. Simply/split your mesh and try again.")
 
-            colhull = block_store.create_block("bhkConvexVerticesShape", b_obj)
-            # colhull.material = n_havok_mat[0]
-            colhull.radius = radius
-            colhull.unknown_6_floats[2] = -0.0  # enables arrow detection
-            colhull.unknown_6_floats[5] = -0.0  # enables arrow detection
-            # note: unknown 6 floats are usually all 0
-            colhull.num_vertices = len(vertlist)
-            colhull.vertices.update_size()
-            for vhull, vert in zip(colhull.vertices, vertlist):
-                vhull.x = vert[0] / self.HAVOK_SCALE
-                vhull.y = vert[1] / self.HAVOK_SCALE
-                vhull.z = vert[2] / self.HAVOK_SCALE
-                # w component is 0
-            colhull.num_normals = len(fnormlist)
-            colhull.normals.update_size()
-            for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
-                nhull.x = norm[0]
-                nhull.y = norm[1]
-                nhull.z = norm[2]
-                nhull.w = dist / self.HAVOK_SCALE
-
-            return colhull
+            return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist)
 
         else:
             raise util_math.NifError('Cannot export collision type %s to collision shape list'.format(b_obj.game.collision_bounds_type))
 
+    def export_bhk_convex_vertices_shape(self, b_obj, fdistlist, fnormlist, radius, vertlist):
+        colhull = block_store.create_block("bhkConvexVerticesShape", b_obj)
+        # colhull.material = n_havok_mat[0]
+        colhull.radius = radius
+
+        unk_6 = colhull.unknown_6_floats
+        unk_6[2] = -0.0  # enables arrow detection
+        unk_6[5] = -0.0  # enables arrow detection
+        # note: unknown 6 floats are usually all 0
+
+        # Vertices
+        colhull.num_vertices = len(vertlist)
+        colhull.vertices.update_size()
+        for vhull, vert in zip(colhull.vertices, vertlist):
+            vhull.x = vert[0] / self.HAVOK_SCALE
+            vhull.y = vert[1] / self.HAVOK_SCALE
+            vhull.z = vert[2] / self.HAVOK_SCALE
+            # w component is 0
+
+        # Normals
+        colhull.num_normals = len(fnormlist)
+        colhull.normals.update_size()
+        for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
+            nhull.x = norm[0]
+            nhull.y = norm[1]
+            nhull.z = norm[2]
+            nhull.w = dist / self.HAVOK_SCALE
+
+        return colhull
