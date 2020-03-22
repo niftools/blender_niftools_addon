@@ -36,6 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+
 import mathutils
 
 from io_scene_nif.modules.nif_export.block_registry import block_store
@@ -45,7 +46,7 @@ from io_scene_nif.utils import util_math
 
 class BSBound(Collision):
 
-    def export_bounding_box(self, b_obj, block_parent, bsbound=False):
+    def export_bounds(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
         if bsbound:
             self.export_bsbound(b_obj, block_parent)
@@ -101,7 +102,7 @@ class BSBound(Collision):
         radius.z = largest[2]
 
 
-class CollisionProperty(Collision):
+class NiCollision(Collision):
 
     def export_nicollisiondata(self, b_obj, n_parent):
         """ Export b_obj as a NiCollisionData """
