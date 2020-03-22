@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.nif_export.object import block_store
+from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
 
 
