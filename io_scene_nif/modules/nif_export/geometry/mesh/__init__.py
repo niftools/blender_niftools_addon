@@ -49,8 +49,9 @@ from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
-from io_scene_nif.modules.nif_export.property.shader import BSShader
-from io_scene_nif.modules.nif_export.property.texture import Texture
+from io_scene_nif.modules.nif_export.property.shader import BSShaderProperty
+from io_scene_nif.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
+from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_math import NifError
 from io_scene_nif.utils.util_global import NifOp, NifData
@@ -64,8 +65,8 @@ NORMAL_RESOLUTION = 100
 class Mesh:
 
     def __init__(self):
-        self.texture_helper = Texture()
-        self.bss_helper = BSShader()
+        self.texture_helper = NiTextureProp.get()
+        self.bss_helper = BSShaderProperty()
         self.object_property = ObjectProperty()
         self.material_property = MaterialProp()
         self.material_anim = MaterialAnimation()
@@ -144,7 +145,7 @@ class Mesh:
             b_emit_prop = False
 
             # use the texture properties as preference
-            for b_slot in texture.get_used_textslots(b_mat):
+            for b_slot in self.texture_helper.get_used_textslots(b_mat):
                 # replace with texture helper queries
                 b_ambient_prop |= b_slot.use_map_ambient
                 b_diffuse_prop |= b_slot.use_map_color_diffuse
@@ -166,7 +167,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (NifOp.props.game == 'SKYRIM') and (b_obj.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
+                if (NifOp.props.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
 
                 # ambient mat
@@ -284,13 +285,13 @@ class Mesh:
             # add textures
             if NifOp.props.game == 'FALLOUT_3':
                 if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
                     block_store.register_block(bsshader)
                     trishape.add_property(bsshader)
             elif NifOp.props.game == 'SKYRIM':
                 if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
                     block_store.register_block(bsshader)
                     num_props = trishape.num_properties
@@ -298,15 +299,6 @@ class Mesh:
                     trishape.bs_properties.update_size()
                     trishape.bs_properties[num_props] = bsshader
 
-                    # TODO [shader][animation] Pull out to shader module
-                    # trishape.add_property(bsshader)
-                    if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
-                        effect_control = block_store.create_block("BSEffectShaderPropertyFloatController", bsshader)
-                        effect_control.flags = b_mat.niftools_alpha.textureflag
-                        effect_control.frequency = b_slot.texture.image.fps
-                        effect_control.start_time = b_slot.texture.image.frame_start
-                        effect_control.stop_time = b_slot.texture.image.frame_end
-                        bsshader.add_controller(effect_control)
             else:
                 if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4: set shader slots in extra data
@@ -317,14 +309,14 @@ class Mesh:
                         flags=0x0001,  # standard
                         # TODO [object][texture][material] Move out and break dependency
                         applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
-                        b_mat=b_mat, b_obj=b_obj)
+                        b_mat=b_mat)
 
                     block_store.register_block(n_nitextureprop)
                     trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceding child of the trishape)
             if n_parent:
-                ref_mtex = self.texture_helper.ref_mtex
+                ref_mtex = self.texture_helper.b_ref_slot
                 if NifOp.props.game == 'MORROWIND' and ref_mtex:
                     # create a new parent block for this shape
                     extra_node = block_store.create_block("NiNode", ref_mtex)
