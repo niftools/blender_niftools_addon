@@ -72,7 +72,7 @@ class NifExport(NifCommon):
         self.transform_anim = TransformAnimation()
         # self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint()
-        self.objecthelper = Object(parent=self)
+        self.objecthelper = Object()
         self.exportable_objects = []
 
     def execute(self):
@@ -245,14 +245,15 @@ class NifExport(NifCommon):
                             coltf = block_store.create_block("bhkConvexTransformShape")
                             coltf.material = sub_shape.material
                             coltf.unknown_float_1 = 0.1
-                            coltf.unknown_8_bytes[0] = 96
-                            coltf.unknown_8_bytes[1] = 120
-                            coltf.unknown_8_bytes[2] = 53
-                            coltf.unknown_8_bytes[3] = 19
-                            coltf.unknown_8_bytes[4] = 24
-                            coltf.unknown_8_bytes[5] = 9
-                            coltf.unknown_8_bytes[6] = 253
-                            coltf.unknown_8_bytes[7] = 4
+                            unk_8 = coltf.unknown_8_bytes
+                            unk_8[0] = 96
+                            unk_8[1] = 120
+                            unk_8[2] = 53
+                            unk_8[3] = 19
+                            unk_8[4] = 24
+                            unk_8[5] = 9
+                            unk_8[6] = 253
+                            unk_8[7] = 4
                             coltf.transform.set_identity()
                             coltf.shape = sub_shape
                             block.sub_shapes[i] = coltf

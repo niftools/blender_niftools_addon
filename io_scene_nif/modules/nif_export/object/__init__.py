@@ -44,7 +44,8 @@ from io_scene_nif.modules.nif_export import types
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.armature import Armature
-from io_scene_nif.modules.nif_export.collision import Collision
+from io_scene_nif.modules.nif_export.collision.bound import CollisionProperty, BSBound
+from io_scene_nif.modules.nif_export.collision.havok import BhkCollision
 from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_export.property.object import ObjectDataProperty
 from io_scene_nif.modules.nif_export.block_registry import block_store
@@ -69,13 +70,14 @@ class Object:
 
     export_types = ('EMPTY', 'MESH', 'ARMATURE')
 
-    def __init__(self, parent):
-        # self.nif_export = parent
+    def __init__(self):
         self.armaturehelper = Armature()
         self.mesh_helper = Mesh()
         self.transform_anim = TransformAnimation()
         self.object_anim = ObjectAnimation()
-        self.collisionhelper = Collision(parent=self)
+        self.bhk_helper = BhkCollision()
+        self.bound_helper = CollisionProperty()
+        self.bs_helper = BSBound()
 
     def export_root_node(self, root_objects, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
@@ -158,12 +160,12 @@ class Object:
             return None
         if b_obj_type == 'MESH' and b_obj.name.lower().startswith('bsbound'):
             # add a bounding box
-            self.collisionhelper.export_bounding_box(b_obj, n_parent, bsbound=True)
+            self.bs_helper.export_bounding_box(b_obj, n_parent, bsbound=True)
             return None  # done; stop here
 
         elif b_obj_type == 'MESH' and b_obj.name.lower().startswith("bounding box"):
             # Morrowind bounding box
-            self.collisionhelper.export_bounding_box(b_obj, n_parent, bsbound=False)
+            self.bs_helper.export_bounding_box(b_obj, n_parent, bsbound=False)
             return None  # done; stop here
 
         elif b_obj_type == 'MESH':
@@ -179,7 +181,7 @@ class Object:
             has_track = types.has_track(b_obj)
 
             if is_collision:
-                self.collisionhelper.export_collision(b_obj, n_parent)
+                self.export_collision(b_obj, n_parent)
                 return None  # done; stop here
             elif b_action or has_children or is_multimaterial or has_track:
                 # create a ninode as parent of this mesh for the hierarchy to work out
@@ -236,3 +238,43 @@ class Object:
                     if obj == parent_bone:
                         break
             self.export_node(b_child, n_parent)
+
+    def export_collision(self, b_obj, n_parent):
+        """Main function for adding collision object b_obj to a node."""
+        if NifOp.props.game == 'MORROWIND':
+            if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
+                raise util_math.NifError("Morrowind only supports Triangle Mesh collisions.")
+            node = block_store.create_block("RootCollisionNode", b_obj)
+            n_parent.add_child(node)
+            node.flags = 0x0003  # default
+            util_math.set_object_matrix(b_obj, node)
+            for child in b_obj.children:
+                self.export_node(child, node, None)
+
+        elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+
+            nodes = [n_parent]
+            nodes.extend([block for block in n_parent.children if block.name[:14] == 'collisiondummy'])
+            for node in nodes:
+                try:
+                    self.bhk_helper.export_collision_helper(b_obj, node)
+                    break
+                except ValueError:  # adding collision failed
+                    continue
+            else:
+                # all nodes failed so add new one
+                node = types.create_ninode(b_obj)
+                # node.set_transform(self.IDENTITY44)
+                node.name = 'collisiondummy{:d}'.format(n_parent.num_children)
+                if b_obj.niftools.objectflags != 0:
+                    node_flag_hex = hex(b_obj.niftools.objectflags)
+                else:
+                    node_flag_hex = 0x000E  # default
+                node.flags = node_flag_hex
+                n_parent.add_child(node)
+                self.bhk_helper.export_collision_helper(b_obj, node)
+
+        elif NifOp.props.game in ('ZOO_TYCOON_2',):
+            self.bound_helper.export_nicollisiondata(b_obj, n_parent)
+        else:
+            NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(NifOp.props.game, b_obj.name))
