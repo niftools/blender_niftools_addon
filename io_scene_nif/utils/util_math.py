@@ -48,6 +48,7 @@ from io_scene_nif.utils.util_logging import NifLog
 THETA_THRESHOLD_NEGY = 1.0e-9
 THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5
 
+
 class NifError(Exception):
     """A simple custom exception class for export errors."""
     pass
