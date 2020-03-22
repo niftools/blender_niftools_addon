@@ -44,5 +44,20 @@ DICT_HAVOK_OBJECTS = {}
 
 class Collision:
 
-    def __init__(self, parent):
-        self.objecthelper = parent
+    @staticmethod
+    def calculate_largest_value(box_extends):
+        return ((box_extends[0][1] - box_extends[0][0]) * 0.5,
+                (box_extends[1][1] - box_extends[1][0]) * 0.5,
+                (box_extends[2][1] - box_extends[2][0]) * 0.5)
+
+    @staticmethod
+    def calculate_box_extents(b_obj):
+        # calculate bounding box extents
+        b_vertlist = [vert.co for vert in b_obj.data.vertices]
+        minx = min([b_vert[0] for b_vert in b_vertlist])
+        maxx = max([b_vert[0] for b_vert in b_vertlist])
+        maxy = max([b_vert[1] for b_vert in b_vertlist])
+        miny = min([b_vert[1] for b_vert in b_vertlist])
+        minz = min([b_vert[2] for b_vert in b_vertlist])
+        maxz = max([b_vert[2] for b_vert in b_vertlist])
+        return [[minx, maxx], [miny, maxy], [minz, maxz]]
