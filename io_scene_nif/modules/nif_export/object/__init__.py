@@ -44,7 +44,7 @@ from io_scene_nif.modules.nif_export import types
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_export.armature import Armature
-from io_scene_nif.modules.nif_export.collision.bound import CollisionProperty, BSBound
+from io_scene_nif.modules.nif_export.collision.bound import NiCollision, BSBound
 from io_scene_nif.modules.nif_export.collision.havok import BhkCollision
 from io_scene_nif.modules.nif_export.geometry.mesh import Mesh
 from io_scene_nif.modules.nif_export.property.object import ObjectDataProperty
@@ -76,7 +76,7 @@ class Object:
         self.transform_anim = TransformAnimation()
         self.object_anim = ObjectAnimation()
         self.bhk_helper = BhkCollision()
-        self.bound_helper = CollisionProperty()
+        self.bound_helper = NiCollision()
         self.bs_helper = BSBound()
 
     def export_root_node(self, root_objects, filebase):
@@ -160,12 +160,12 @@ class Object:
             return None
         if b_obj_type == 'MESH' and b_obj.name.lower().startswith('bsbound'):
             # add a bounding box
-            self.bs_helper.export_bounding_box(b_obj, n_parent, bsbound=True)
+            self.bs_helper.export_bounds(b_obj, n_parent, bsbound=True)
             return None  # done; stop here
 
         elif b_obj_type == 'MESH' and b_obj.name.lower().startswith("bounding box"):
             # Morrowind bounding box
-            self.bs_helper.export_bounding_box(b_obj, n_parent, bsbound=False)
+            self.bs_helper.export_bounds(b_obj, n_parent, bsbound=False)
             return None  # done; stop here
 
         elif b_obj_type == 'MESH':
