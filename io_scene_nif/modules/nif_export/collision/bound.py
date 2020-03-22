@@ -39,41 +39,21 @@
 import mathutils
 
 from io_scene_nif.modules.nif_export.block_registry import block_store
+from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.utils import util_math
 
 
-class Bound:
-
-    @staticmethod
-    def calculate_largest_value(box_extends):
-        return ((box_extends[0][1] - box_extends[0][0]) * 0.5,
-                (box_extends[1][1] - box_extends[1][0]) * 0.5,
-                (box_extends[2][1] - box_extends[2][0]) * 0.5)
-
-    @staticmethod
-    def calculate_box_extents(b_obj):
-        # calculate bounding box extents
-        b_vertlist = [vert.co for vert in b_obj.data.vertices]
-        minx = min([b_vert[0] for b_vert in b_vertlist])
-        maxx = max([b_vert[0] for b_vert in b_vertlist])
-        maxy = max([b_vert[1] for b_vert in b_vertlist])
-        miny = min([b_vert[1] for b_vert in b_vertlist])
-        minz = min([b_vert[2] for b_vert in b_vertlist])
-        maxz = max([b_vert[2] for b_vert in b_vertlist])
-        return [[minx, maxx], [miny, maxy], [minz, maxz]]
-
-
-class BSBound(Bound):
+class BSBound(Collision):
 
     def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
         if bsbound:
-            self.exportBSBound(b_obj, block_parent)
+            self.export_bsbound(b_obj, block_parent)
         else:
-            CollisionProperty().exportBoundingBox(b_obj, block_parent)
+            self.export_bounding_box(b_obj, block_parent)
 
     # TODO [object][data] Stored as object property
-    def exportBSBound(self, b_obj, block_parent):
+    def export_bsbound(self, b_obj, block_parent):
         box_extends = self.calculate_box_extents(b_obj)
         n_bbox = block_store.create_block("BSBound")
         # ... the following incurs double scaling because it will be added in
@@ -96,10 +76,7 @@ class BSBound(Bound):
         dims.y = largest[1]
         dims.z = largest[2]
 
-
-class CollisionProperty(Bound):
-
-    def exportBoundingBox(self, b_obj, block_parent):
+    def export_bounding_box(self, b_obj, block_parent):
         box_extends = self.calculate_box_extents(b_obj)
         n_bbox = block_store.create_ninode()
         block_parent.add_child(n_bbox)
@@ -122,6 +99,9 @@ class CollisionProperty(Bound):
         radius.x = largest[0]
         radius.y = largest[1]
         radius.z = largest[2]
+
+
+class CollisionProperty(Collision):
 
     def export_nicollisiondata(self, b_obj, n_parent):
         """ Export b_obj as a NiCollisionData """
