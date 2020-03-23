@@ -41,7 +41,6 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export import collision
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.utils import util_math, util_consts
@@ -214,7 +213,7 @@ class BhkCollision(Collision):
             n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
 
             # update rigid body center of gravity and mass
-            if collision.IGNORE_BLENDER_PHYSICS:
+            if self.IGNORE_BLENDER_PHYSICS:
                 # we are not using blender properties to set the mass
                 # so calculate mass automatically first calculate distribution of mass
                 total_mass = 0
@@ -314,23 +313,11 @@ class BhkCollision(Collision):
             NifLog.warn("Skipping collision object {0} without vertices.".format(b_obj))
             return None
 
-        # TODO [collsion] Replace when method moves to bound class, causes circular dependency
-        # box_extends = Bound.calculate_box_extents(b_obj)
-        # calc_bhkshape_radius = (box_extends[0][1] - box_extends[0][0] +
-        #                         box_extends[1][1] - box_extends[1][0] +
-        #                         box_extends[2][1] - box_extends[2][0]) / (6.0 * self.HAVOK_SCALE)
+        box_extends = self.calculate_box_extents(b_obj)
+        calc_bhkshape_radius = (box_extends[0][1] - box_extends[0][0] +
+                                box_extends[1][1] - box_extends[1][0] +
+                                box_extends[2][1] - box_extends[2][0]) / (6.0 * self.HAVOK_SCALE)
 
-        # TODO [collision] Duplicate code
-        b_vertlist = [vert.co for vert in b_obj.data.vertices]
-
-        minx = min([b_vert[0] for b_vert in b_vertlist])
-        miny = min([b_vert[1] for b_vert in b_vertlist])
-        minz = min([b_vert[2] for b_vert in b_vertlist])
-        maxx = max([b_vert[0] for b_vert in b_vertlist])
-        maxy = max([b_vert[1] for b_vert in b_vertlist])
-        maxz = max([b_vert[2] for b_vert in b_vertlist])
-
-        calc_bhkshape_radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.HAVOK_SCALE)
         if b_obj.game.radius - calc_bhkshape_radius > NifOp.props.epsilon:
             radius = calc_bhkshape_radius
         else:
@@ -358,11 +345,9 @@ class BhkCollision(Collision):
             # so calculate the center in local coordinates
 
             # TODO [collsion] Replace when method moves to bound class, causes circular dependency
-            # center = mathutils.Vector((box_extends[0][0] + box_extends[0][1]) / 2.0,
-            #                           (box_extends[1][0] + box_extends[1][1]) / 2.0,
-            #                           (box_extends[2][0] + box_extends[2][1]) / 2.0)
-
-            center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
+            center = mathutils.Vector(((box_extends[0][0] + box_extends[0][1]) / 2.0,
+                                      (box_extends[1][0] + box_extends[1][1]) / 2.0,
+                                      (box_extends[2][0] + box_extends[2][1]) / 2.0))
 
             # and transform it to global coordinates
             center = center * hktf
@@ -395,19 +380,14 @@ class BhkCollision(Collision):
                 unk_8[6] = 0x8e
                 unk_8[7] = 0x3e
 
-                # TODO [collsion] Replace when method moves to bound class, causes circular dependency
-                # box_extends = Bound.calculate_box_extents(b_obj)
-                # dims = n_colbox.dimensions
-                # dims.x = (box_extends[0][1] - box_extends[0][0]) / (2.0 * self.HAVOK_SCALE)
-                # dims.y = (box_extends[1][1] - box_extends[1][0]) / (2.0 * self.HAVOK_SCALE)
-                # dims.z = (box_extends[2][1] - box_extends[2][0]) / (2.0 * self.HAVOK_SCALE)
-                # n_colbox.minimum_size = min(dims.x, dims.y, dims.z)
-
                 # fix dimensions for havok coordinate system
-                n_colbox.dimensions.x = (maxx - minx) / (2.0 * self.HAVOK_SCALE)
-                n_colbox.dimensions.y = (maxy - miny) / (2.0 * self.HAVOK_SCALE)
-                n_colbox.dimensions.z = (maxz - minz) / (2.0 * self.HAVOK_SCALE)
-                n_colbox.minimum_size = min(n_colbox.dimensions.x, n_colbox.dimensions.y, n_colbox.dimensions.z)
+                box_extends = self.calculate_box_extents(b_obj)
+                dims = n_colbox.dimensions
+                dims.x = (box_extends[0][1] - box_extends[0][0]) / (2.0 * self.HAVOK_SCALE)
+                dims.y = (box_extends[1][1] - box_extends[1][0]) / (2.0 * self.HAVOK_SCALE)
+                dims.z = (box_extends[2][1] - box_extends[2][0]) / (2.0 * self.HAVOK_SCALE)
+                n_colbox.minimum_size = min(dims.x, dims.y, dims.z)
+
 
             elif b_obj.game.collision_bounds_type == 'SPHERE':
                 n_colsphere = block_store.create_block("bhkSphereShape", b_obj)
