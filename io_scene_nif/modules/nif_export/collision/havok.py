@@ -43,13 +43,13 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export import collision
 from io_scene_nif.modules.nif_export.block_registry import block_store
-from io_scene_nif.modules.nif_export.collision.bound import Bound
+from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.utils import util_math, util_consts
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 
 
-class BhkCollision(Bound):
+class BhkCollision(Collision):
 
     IGNORE_BLENDER_PHYSICS = False
     EXPORT_BHKLISTSHAPE = False
@@ -228,7 +228,7 @@ class BhkCollision(Bound):
 
                 # now update the mass ensuring that total mass is EXPORT_OB_MASS
                 for n_block in n_rigid_bodies:
-                    mass = EXPORT_OB_MASS * n_block.mass / total_mass
+                    mass = self.EXPORT_OB_MASS * n_block.mass / total_mass
                     # lower bound on mass
                     if mass < 0.0001:
                         mass = 0.05
