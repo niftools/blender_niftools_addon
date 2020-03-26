@@ -44,7 +44,7 @@ from bisect import bisect_left
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import.animation import Animation
-from io_scene_nif.modules.nif_import.object.block_registry import block_store
+from io_scene_nif.modules.nif_import.object import block_registry
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_logging import NifLog
 
@@ -96,7 +96,7 @@ class TransformAnimation(Animation):
             bone_name = None
             if isinstance(extra, NifFormat.NiStringExtraData):
                 node_name = extra.string_data.decode()
-                bone_name = block_store.get_bone_name_for_blender(node_name)
+                bone_name = block_registry.get_bone_name_for_blender(node_name)
             # import keyframe controller
             if bone_name in bind_data:
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
@@ -122,7 +122,7 @@ class TransformAnimation(Animation):
             # fallout (node_name) & Loki (StringPalette)
             if not n_name:
                 n_name = controlledblock.get_node_name()
-            bone_name = block_store.get_bone_name_for_blender(n_name)
+            bone_name = block_registry.get_bone_name_for_blender(n_name)
             if bone_name not in b_armature_obj.data.bones:
                 continue
             b_bone = b_armature_obj.data.bones[bone_name]
