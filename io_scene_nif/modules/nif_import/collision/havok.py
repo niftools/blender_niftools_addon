@@ -68,18 +68,9 @@ class BhkCollision(Collision):
             self.HAVOK_SCALE = util_consts.HAVOK_SCALE
 
         self.process_bhk = singledispatch(self.process_bhk)
-        self.register_processors()
-
-    def process_bhk(self, bhk_shape):
-        """Base method to warn user that this property is not supported"""
-        NifLog.warn("Unsupported bhk shape {0}".format(bhk_shape.__class__.__name__))
-        NifLog.warn("This type isn't currently supported: {0}".format(type(bhk_shape)))
-        return []
-
-    def register_processors(self):
-        """Imports any supported collision shape as list of blender meshes."""
         self.process_bhk.register(NifFormat.bhkTransformShape, self.import_bhktransform)
-        self.process_bhk.register(NifFormat.bhkRigidBody, self.import_bhkridgidbody)
+        self.process_bhk.register(NifFormat.bhkRigidBodyT, self.import_bhk_ridgidbody_t())
+        self.process_bhk.register(NifFormat.bhkRigidBody, self.import_bhk_ridgid_body)
         self.process_bhk.register(NifFormat.bhkBoxShape, self.import_bhkbox_shape)
         self.process_bhk.register(NifFormat.bhkSphereShape, self.import_bhksphere_shape)
         self.process_bhk.register(NifFormat.bhkCapsuleShape, self.import_bhkcapsule_shape)
@@ -90,11 +81,17 @@ class BhkCollision(Collision):
         self.process_bhk.register(NifFormat.bhkMoppBvTreeShape, self.import_bhk_shape)
         self.process_bhk.register(NifFormat.bhkListShape, self.import_bhk_shape)
 
+    def process_bhk(self, bhk_shape):
+        """Base method to warn user that this property is not supported"""
+        NifLog.warn("Unsupported bhk shape {0}".format(bhk_shape.__class__.__name__))
+        NifLog.warn("This type isn't currently supported: {0}".format(type(bhk_shape)))
+        return []
+
     def import_bhk_shape(self, bhk_shape):
         return self.process_bhk(bhk_shape)
 
     def import_bhk_nitristrips_shape(self, bhk_shape):
-        self.havok_mat = bhk_shape.material
+        self.havok_mat = bhk_shape.material  # TODO [collision] Havok collision when nif.xml supported.
         return reduce(operator.add, (self.import_bhk_shape(strips) for strips in bhk_shape.strips_data))
 
     def import_bhk_list_shape(self, bhk_shape):
@@ -117,64 +114,73 @@ class BhkCollision(Collision):
         # return a list of transformed collision shapes
         return collision_objs
 
-    def import_bhkridgidbody(self, bhkshape):
+    def import_bhk_ridgidbody_t(self, bhkshape):
         """Imports a BhkRigidBody block and applies the transform to the collision objects"""
 
         # import shapes
         collision_objs = self.import_bhk_shape(bhkshape.shape)
 
         # find transformation matrix in case of the T version
-        if isinstance(bhkshape, NifFormat.bhkRigidBodyT):
-            # set rotation
-            transform = mathutils.Quaternion([
-                bhkshape.rotation.w, bhkshape.rotation.x,
-                bhkshape.rotation.y, bhkshape.rotation.z]).to_matrix().to_4x4()
+        # set rotation
+        b_rot = bhkshape.rotation
+        transform = mathutils.Quaternion([b_rot.w, b_rot.x, b_rot.y, b_rot.z]).to_matrix().to_4x4()
 
-            # set translation
-            transform.translation = mathutils.Vector(
-                (bhkshape.translation.x,
-                 bhkshape.translation.y,
-                 bhkshape.translation.z)) * self.HAVOK_SCALE
+        # set translation
+        b_trans = bhkshape.translation
+        transform.translation = mathutils.Vector((b_trans.x, b_trans.y, b_trans.z)) * self.HAVOK_SCALE
 
-            # apply transform
-            for b_col_obj in collision_objs:
-                b_col_obj.matrix_local = b_col_obj.matrix_local * transform
+        # apply transform
+        for b_col_obj in collision_objs:
+            b_col_obj.matrix_local = b_col_obj.matrix_local * transform
 
+        self._import_bhk_rigid_body(bhkshape, collision_objs)
+
+        # and return a list of transformed collision shapes
+        return collision_objs
+
+    def import_bhk_ridgid_body(self, bhkshape):
+        """Imports a BhkRigidBody block and applies the transform to the collision objects"""
+
+        # import shapes
+        collision_objs = self.import_bhk_shape(bhkshape.shape)
+        self._import_bhk_rigid_body(bhkshape, collision_objs)
+
+        # and return a list of transformed collision shapes
+        return collision_objs
+
+    def _import_bhk_rigid_body(self, bhkshape, collision_objs):
         # set physics flags and mass
         for b_col_obj in collision_objs:
             scn = bpy.context.scene
             scn.objects.active = b_col_obj
             bpy.ops.rigidbody.object_add(type='ACTIVE')
-            b_col_obj.rigid_body.enabled = True
+            b_r_body = b_col_obj.rigid_body
+            b_r_body.enabled = True
 
             if bhkshape.mass > 0.0001:
                 # for physics emulation
                 # (mass 0 results in issues with simulation)
-                b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
+                b_r_body.mass = bhkshape.mass / len(collision_objs)
 
             b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
-            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
+            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[
+                bhkshape.solver_deactivation]
             # b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
             # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
 
-            b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
+            b_r_body.mass = bhkshape.mass / len(collision_objs)
 
-            b_col_obj.rigid_body.use_deactivation = True
-            b_col_obj.rigid_body.friction = bhkshape.friction
-            b_col_obj.rigid_body.restitution = bhkshape.restitution
-            b_col_obj.rigid_body.linear_damping = bhkshape.linear_damping
-            b_col_obj.rigid_body.angular_damping = bhkshape.angular_damping
-            b_col_obj.rigid_body.deactivate_linear_velocity = mathutils.Vector([
-                bhkshape.linear_velocity.w,
-                bhkshape.linear_velocity.x,
-                bhkshape.linear_velocity.y,
-                bhkshape.linear_velocity.z]).magnitude
-            b_col_obj.rigid_body.deactivate_angular_velocity = mathutils.Vector([
-                bhkshape.angular_velocity.w,
-                bhkshape.angular_velocity.x,
-                bhkshape.angular_velocity.y,
-                bhkshape.angular_velocity.z]).magnitude
+            b_r_body.use_deactivation = True
+            b_r_body.friction = bhkshape.friction
+            b_r_body.restitution = bhkshape.restitution
+            b_r_body.linear_damping = bhkshape.linear_damping
+            b_r_body.angular_damping = bhkshape.angular_damping
+            vel = bhkshape.linear_velocity
+            b_r_body.deactivate_linear_velocity = mathutils.Vector([vel.w, vel.x, vel.y, vel.z]).magnitude
+            ang_vel = bhkshape.angular_velocity
+            b_r_body.deactivate_angular_velocity = mathutils.Vector(
+                [ang_vel.w, ang_vel.x, ang_vel.y, ang_vel.z]).magnitude
 
             b_col_obj.collision.permeability = bhkshape.penetration_depth
 
@@ -182,24 +188,21 @@ class BhkCollision(Collision):
             b_col_obj.nifcollision.max_angular_velocity = bhkshape.max_angular_velocity
 
             # b_col_obj.nifcollision.col_filter = bhkshape.col_filter
-
         # import constraints
         # this is done once all objects are imported for now, store all imported havok shapes with object lists
         collision.DICT_HAVOK_OBJECTS[bhkshape] = collision_objs
-
-        # and return a list of transformed collision shapes
-        return collision_objs
 
     def import_bhkbox_shape(self, bhkshape):
         """Import a BhkBox block as a simple Box collision object"""
         # create box
         r = bhkshape.radius * self.HAVOK_SCALE
-        minx = -bhkshape.dimensions.x * self.HAVOK_SCALE
-        maxx = +bhkshape.dimensions.x * self.HAVOK_SCALE
-        miny = -bhkshape.dimensions.y * self.HAVOK_SCALE
-        maxy = +bhkshape.dimensions.y * self.HAVOK_SCALE
-        minz = -bhkshape.dimensions.z * self.HAVOK_SCALE
-        maxz = +bhkshape.dimensions.z * self.HAVOK_SCALE
+        dims = bhkshape.dimensions
+        minx = -dims.x * self.HAVOK_SCALE
+        maxx = +dims.x * self.HAVOK_SCALE
+        miny = -dims.y * self.HAVOK_SCALE
+        maxy = +dims.y * self.HAVOK_SCALE
+        minz = -dims.z * self.HAVOK_SCALE
+        maxz = +dims.z * self.HAVOK_SCALE
 
         # create blender object
         b_obj = Object.box_from_extents("box", minx, maxx, miny, maxy, minz, maxz)
@@ -216,9 +219,11 @@ class BhkCollision(Collision):
     def import_bhkcapsule_shape(self, bhkshape):
         """Import a BhkCapsule block as a simple cylinder collision object"""
         radius = bhkshape.radius * self.HAVOK_SCALE
-        length = (bhkshape.first_point - bhkshape.second_point).norm() * self.HAVOK_SCALE
-        first_point = bhkshape.first_point * self.HAVOK_SCALE
-        second_point = bhkshape.second_point * self.HAVOK_SCALE
+        p_1 = bhkshape.first_point
+        p_2 = bhkshape.second_point
+        length = (p_1 - p_2).norm() * self.HAVOK_SCALE
+        first_point = p_1 * self.HAVOK_SCALE
+        second_point = p_2 * self.HAVOK_SCALE
         minx = miny = -radius
         maxx = maxy = +radius
         minz = -radius - length / 2
@@ -238,10 +243,9 @@ class BhkCollision(Collision):
         """Import a BhkConvexVertex block as a convex hull collision object"""
 
         # find vertices (and fix scale)
-        verts, faces = qhull3d([(self.HAVOK_SCALE * n_vert.x,
-                                 self.HAVOK_SCALE * n_vert.y,
-                                 self.HAVOK_SCALE * n_vert.z)
-                                for n_vert in bhkshape.vertices])
+        scaled_verts = [(self.HAVOK_SCALE * n_vert.x, self.HAVOK_SCALE * n_vert.y, self.HAVOK_SCALE * n_vert.z)
+                        for n_vert in bhkshape.vertices]
+        verts, faces = qhull3d(scaled_verts)
 
         b_obj = Object.mesh_from_data("convexpoly", verts, faces)
         radius = bhkshape.radius * self.HAVOK_SCALE
@@ -270,11 +274,12 @@ class BhkCollision(Collision):
                               n_vert.y * self.HAVOK_SCALE,
                               n_vert.z * self.HAVOK_SCALE))
 
-            for hktriangle in bhkshape.data.triangles:
-                if (vertex_offset <= hktriangle.triangle.v_1) and (hktriangle.triangle.v_1 < vertex_offset + subshape.num_vertices):
-                    faces.append((hktriangle.triangle.v_1 - vertex_offset,
-                                  hktriangle.triangle.v_2 - vertex_offset,
-                                  hktriangle.triangle.v_3 - vertex_offset))
+            for bhk_triangle in bhkshape.data.triangles:
+                bhk_tri = bhk_triangle.triangle
+                if (vertex_offset <= bhk_tri.v_1) and (bhk_tri.v_1 < vertex_offset + subshape.num_vertices):
+                    faces.append((bhk_tri.v_1 - vertex_offset,
+                                  bhk_tri.v_2 - vertex_offset,
+                                  bhk_tri.v_3 - vertex_offset))
                 else:
                     continue
 
