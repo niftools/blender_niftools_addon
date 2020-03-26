@@ -41,7 +41,7 @@ import bpy
 import mathutils
 
 import operator
-from functools import reduce
+from functools import reduce, singledispatch
 
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
@@ -67,45 +67,38 @@ class BhkCollision(Collision):
         else:
             self.HAVOK_SCALE = util_consts.HAVOK_SCALE
 
-    def import_bhk_shape(self, bhkshape):
-        """Imports any supported collision shape as list of blender meshes."""
+        self.process_bhk = singledispatch(self.process_bhk)
+        self.register_processors()
 
-        if isinstance(bhkshape, NifFormat.bhkTransformShape):
-            return self.import_bhktransform(bhkshape)
-
-        elif isinstance(bhkshape, NifFormat.bhkRigidBody):
-            return self.import_bhkridgidbody(bhkshape)
-
-        elif isinstance(bhkshape, NifFormat.bhkBoxShape):
-            return self.import_bhkbox_shape(bhkshape)
-
-        elif isinstance(bhkshape, NifFormat.bhkSphereShape):
-            return self.import_bhksphere_shape(bhkshape)
-
-        elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
-            return self.import_bhkcapsule_shape(bhkshape)
-
-        elif isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
-            return self.import_bhkconvex_vertices_shape(bhkshape)
-
-        elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
-            return self.import_bhkpackednitristrips_shape(bhkshape)
-
-        elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
-            self.havok_mat = bhkshape.material
-            return reduce(operator.add, (self.import_bhk_shape(strips) for strips in bhkshape.strips_data))
-
-        elif isinstance(bhkshape, NifFormat.NiTriStripsData):
-            return self.import_nitristrips(bhkshape)
-
-        elif isinstance(bhkshape, NifFormat.bhkMoppBvTreeShape):
-            return self.import_bhk_shape(bhkshape.shape)
-
-        elif isinstance(bhkshape, NifFormat.bhkListShape):
-            return reduce(operator.add, (self.import_bhk_shape(subshape) for subshape in bhkshape.sub_shapes))
-
-        NifLog.warn("Unsupported bhk shape {0}".format(bhkshape.__class__.__name__))
+    def process_bhk(self, bhk_shape):
+        """Base method to warn user that this property is not supported"""
+        NifLog.warn("Unsupported bhk shape {0}".format(bhk_shape.__class__.__name__))
+        NifLog.warn("This type isn't currently supported: {0}".format(type(bhk_shape)))
         return []
+
+    def register_processors(self):
+        """Imports any supported collision shape as list of blender meshes."""
+        self.process_bhk.register(NifFormat.bhkTransformShape, self.import_bhktransform)
+        self.process_bhk.register(NifFormat.bhkRigidBody, self.import_bhkridgidbody)
+        self.process_bhk.register(NifFormat.bhkBoxShape, self.import_bhkbox_shape)
+        self.process_bhk.register(NifFormat.bhkSphereShape, self.import_bhksphere_shape)
+        self.process_bhk.register(NifFormat.bhkCapsuleShape, self.import_bhkcapsule_shape)
+        self.process_bhk.register(NifFormat.bhkConvexVerticesShape, self.import_bhkconvex_vertices_shape)
+        self.process_bhk.register(NifFormat.bhkPackedNiTriStripsShape, self.import_bhkpackednitristrips_shape)
+        self.process_bhk.register(NifFormat.bhkNiTriStripsShape, self.import_bhk_nitristrips_shape)
+        self.process_bhk.register(NifFormat.NiTriStripsData, self.import_nitristrips)
+        self.process_bhk.register(NifFormat.bhkMoppBvTreeShape, self.import_bhk_shape)
+        self.process_bhk.register(NifFormat.bhkListShape, self.import_bhk_shape)
+
+    def import_bhk_shape(self, bhk_shape):
+        return self.process_bhk(bhk_shape)
+
+    def import_bhk_nitristrips_shape(self, bhk_shape):
+        self.havok_mat = bhk_shape.material
+        return reduce(operator.add, (self.import_bhk_shape(strips) for strips in bhk_shape.strips_data))
+
+    def import_bhk_list_shape(self, bhk_shape):
+        return reduce(operator.add, (self.import_bhk_shape(subshape) for subshape in bhk_shape.sub_shapes))
 
     def import_bhktransform(self, bhkshape):
         """Imports a BhkTransform block and applies the transform to the collision object"""
@@ -160,8 +153,7 @@ class BhkCollision(Collision):
                 b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
 
             b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
-            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[
-                bhkshape.solver_deactivation]
+            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
             # b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
             # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
