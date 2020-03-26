@@ -48,7 +48,8 @@ from io_scene_nif.modules.nif_import.animation import Animation
 from io_scene_nif.modules.nif_import.animation.object import ObjectAnimation
 from io_scene_nif.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_import.armature import Armature
-from io_scene_nif.modules.nif_import.collision import Collision
+from io_scene_nif.modules.nif_import.collision.bound import Bound
+from io_scene_nif.modules.nif_import.collision.havok import BhkCollision
 from io_scene_nif.modules.nif_import.constraint import Constraint
 from io_scene_nif.modules.nif_import.geometry.vertex.groups import VertexGroup
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
@@ -73,7 +74,8 @@ class NifImport(NifCommon):
         self.load_files()  # needs to be first to provide version info.
 
         self.armaturehelper = Armature()
-        self.collisionhelper = Collision()
+        self.boundhelper = Bound()
+        self.bhkhelper = BhkCollision()
         self.constrainthelper = Constraint()
         self.objecthelper = Object()
         self.object_anim = ObjectAnimation()
@@ -203,6 +205,15 @@ class NifImport(NifCommon):
         else:
             NifLog.warn("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
 
+    def import_collision(self, n_node):
+        """ Imports a NiNode's collision_object, if present"""
+        if n_node.collision_object:
+            if isinstance(n_node.collision_object, NifFormat.bhkNiCollisionObject):
+                return self.bhkhelper.import_bhk_shape(n_node.collision_object.body)
+            elif isinstance(n_node.collision_object, NifFormat.NiCollisionData):
+                return self.boundhelper.import_bounding_volume(n_node.collision_object.bounding_volume)
+        return []
+
     def import_branch(self, n_block, b_armature=None, n_armature=None):
         """Read the content of the current NIF tree branch to Blender recursively.
 
@@ -270,8 +281,8 @@ class NifImport(NifCommon):
 
             # import collision objects & bounding box
             if NifOp.props.skeleton != "SKELETON_ONLY":
-                b_children.extend(self.collisionhelper.import_collision(n_block))
-                b_children.extend(self.collisionhelper.import_bounding_box(n_block))
+                b_children.extend(self.import_collision(n_block))
+                b_children.extend(self.boundhelper.import_bounding_box(n_block))
 
             # set bind pose for children
             self.objecthelper.set_object_bind(b_obj, b_children, b_armature)
