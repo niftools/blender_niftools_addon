@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 import mathutils
 
 import operator
@@ -50,6 +51,7 @@ from io_scene_nif.modules.nif_import.collision import Collision
 from io_scene_nif.modules.nif_import.object import Object
 from io_scene_nif.utils import util_consts
 from io_scene_nif.utils.util_global import NifData
+from io_scene_nif.utils.util_logging import NifLog
 
 
 class BhkCollision(Collision):
@@ -254,6 +256,45 @@ class BhkCollision(Collision):
         self.set_b_collider(b_obj, "BOX", radius, bhkshape)
         b_obj.game.collision_bounds_type = 'CONVEX_HULL'
         return [b_obj]
+
+    def import_bhkpackednitristrips_shape(self, bhkshape):
+        """Import a BhkPackedNiTriStrips block as a Triangle-Mesh collision object"""
+
+        # create mesh for each sub shape
+        hk_objects = []
+        vertex_offset = 0
+        subshapes = bhkshape.sub_shapes
+
+        if not subshapes:
+            # fallout 3 stores them in the data
+            subshapes = bhkshape.data.sub_shapes
+
+        for subshape_num, subshape in enumerate(subshapes):
+            verts = []
+            faces = []
+            for vert_index in range(vertex_offset, vertex_offset + subshape.num_vertices):
+                n_vert = bhkshape.data.vertices[vert_index]
+                verts.append((n_vert.x * self.HAVOK_SCALE,
+                              n_vert.y * self.HAVOK_SCALE,
+                              n_vert.z * self.HAVOK_SCALE))
+
+            for hktriangle in bhkshape.data.triangles:
+                if (vertex_offset <= hktriangle.triangle.v_1) and (hktriangle.triangle.v_1 < vertex_offset + subshape.num_vertices):
+                    faces.append((hktriangle.triangle.v_1 - vertex_offset,
+                                  hktriangle.triangle.v_2 - vertex_offset,
+                                  hktriangle.triangle.v_3 - vertex_offset))
+                else:
+                    continue
+
+            b_obj = Object.mesh_from_data('poly%i' % subshape_num, verts, faces)
+            radius = min(vert.co.length for vert in b_obj.data.vertices)
+            self.set_b_collider(b_obj, "BOX", radius, subshape)
+            b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+
+            vertex_offset += subshape.num_vertices
+            hk_objects.append(b_obj)
+
+        return hk_objects
 
     def import_nitristrips(self, bhkshape):
         """Import a NiTriStrips block as a Triangle-Mesh collision object"""
