@@ -76,26 +76,32 @@ class Bound(Collision):
 
             # Ninode's bbox behaves like a seperate mesh.
             # bounding_box center(n_block.bounding_box.translation) is relative to the bound_box
-            minx = n_block.bounding_box.translation.x - n_block.translation.x - n_block.bounding_box.radius.x
-            miny = n_block.bounding_box.translation.y - n_block.translation.y - n_block.bounding_box.radius.y
-            minz = n_block.bounding_box.translation.z - n_block.translation.z - n_block.bounding_box.radius.z
-            maxx = n_block.bounding_box.translation.x - n_block.translation.x + n_block.bounding_box.radius.x
-            maxy = n_block.bounding_box.translation.y - n_block.translation.y + n_block.bounding_box.radius.y
-            maxz = n_block.bounding_box.translation.z - n_block.translation.z + n_block.bounding_box.radius.z
-            bbox_center = n_block.bounding_box.translation.as_list()
+            n_bl_trans = n_block.translation
+            n_bbox = n_block.bounding_box
+            n_b_trans = n_bbox.translation
+            minx = n_b_trans.x - n_bl_trans.x - n_bbox.radius.x
+            miny = n_b_trans.y - n_bl_trans.y - n_bbox.radius.y
+            minz = n_b_trans.z - n_bl_trans.z - n_bbox.radius.z
+            maxx = n_b_trans.x - n_bl_trans.x + n_bbox.radius.x
+            maxy = n_b_trans.y - n_bl_trans.y + n_bbox.radius.y
+            maxz = n_b_trans.z - n_bl_trans.z + n_bbox.radius.z
+            bbox_center = n_b_trans.as_list()
 
         # we may still have a BSBound extra data attached to this node
         else:
             for n_extra in n_block.get_extra_datas():
+                # TODO [extra][data] Move to property processor
                 if isinstance(n_extra, NifFormat.BSBound):
                     b_name = 'BSBound'
-                    minx = n_extra.center.x - n_extra.dimensions.x
-                    miny = n_extra.center.y - n_extra.dimensions.y
-                    minz = n_extra.center.z - n_extra.dimensions.z
-                    maxx = n_extra.center.x + n_extra.dimensions.x
-                    maxy = n_extra.center.y + n_extra.dimensions.y
-                    maxz = n_extra.center.z + n_extra.dimensions.z
-                    bbox_center = n_extra.center.as_list()
+                    center = n_extra.center
+                    dims = n_extra.dimensions
+                    minx = center.x - dims.x
+                    miny = center.y - dims.y
+                    minz = center.z - dims.z
+                    maxx = center.x + dims.x
+                    maxy = center.y + dims.y
+                    maxz = center.z + dims.z
+                    bbox_center = center.as_list()
                     break
             # none was found
             else:
