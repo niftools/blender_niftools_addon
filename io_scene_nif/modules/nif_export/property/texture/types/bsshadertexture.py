@@ -75,8 +75,10 @@ class BSShaderTexture(TextureSlotManager):
         # Add in extra texture slots
         texset.num_textures = 9
         texset.textures.update_size()
+
         if self.b_detail_slot:
             texset.textures[6] = TextureWriter.export_texture_filename(self.b_detail_slot.texture)
+
         if self.b_gloss_slot:
             texset.textures[7] = TextureWriter.export_texture_filename(self.b_gloss_slot.texture)
 
@@ -108,10 +110,13 @@ class BSShaderTexture(TextureSlotManager):
 
         if self.b_diffuse_slot:
             texset.textures[0] = TextureWriter.export_texture_filename(self.b_diffuse_slot.texture)
+
         if self.b_normal_slot:
             texset.textures[1] = TextureWriter.export_texture_filename(self.b_normal_slot.texture)
+
         if self.b_glow_slot:
             texset.textures[2] = TextureWriter.export_texture_filename(self.b_glow_slot.texture)
+
         if self.b_detail_slot:
             texset.textures[3] = TextureWriter.export_texture_filename(self.b_detail_slot.texture)
 

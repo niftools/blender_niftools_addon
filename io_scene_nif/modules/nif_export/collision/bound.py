@@ -84,15 +84,16 @@ class BSBound(Collision):
         # set name, flags, translation, and radius
         n_bbox.name = "Bounding Box"
         n_bbox.flags = 4
-        translation = n_bbox.translation
-        translation.x = (box_extends[0][0] + box_extends[0][1]) * 0.5 + b_obj.location[0]
-        translation.y = (box_extends[1][0] + box_extends[1][1]) * 0.5 + b_obj.location[1]
-        translation.z = (box_extends[2][0] + box_extends[2][1]) * 0.5 + b_obj.location[2]
+
+        trans = n_bbox.translation
+        trans.x = (box_extends[0][0] + box_extends[0][1]) * 0.5 + b_obj.location[0]
+        trans.y = (box_extends[1][0] + box_extends[1][1]) * 0.5 + b_obj.location[1]
+        trans.z = (box_extends[2][0] + box_extends[2][1]) * 0.5 + b_obj.location[2]
         n_bbox.rotation.set_identity()
         n_bbox.has_bounding_box = True
         # Ninode's(n_bbox) behaves like a seperate mesh.
-        # bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
-        n_bbox.bounding_box.translation.deepcopy(translation)
+        # bounding_box center(n_bbox.bounding_box.trans) is relative to the bound_box
+        n_bbox.bounding_box.translation.deepcopy(trans)
         n_bbox.bounding_box.rotation.set_identity()
 
         largest = self.calculate_largest_value(box_extends)
