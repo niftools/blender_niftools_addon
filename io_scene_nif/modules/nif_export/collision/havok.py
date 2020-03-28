@@ -81,25 +81,15 @@ class BhkCollision(Collision):
             n_havok_mat = b_obj.data.materials[0].name
         else:
             n_havok_mat = "HAV_MAT_STONE"
-        layer = b_obj.nifcollision.oblivion_layer
-        motion_system = b_obj.nifcollision.motion_system
-        deactivator_type = b_obj.nifcollision.deactivator_type
-        solver_deactivation = b_obj.nifcollision.solver_deactivation
-        quality_type = b_obj.nifcollision.quality_type
-        if not b_obj.rigid_body:
+
+        rigid_body = b_obj.rigid_body
+        if not rigid_body:
             NifLog.warn("'{0}' has no rigid body, skipping rigid body export".format(b_obj.name))
             return
-        mass = b_obj.rigid_body.mass
-        restitution = b_obj.rigid_body.restitution
-        friction = b_obj.rigid_body.friction
-        penetration_depth = b_obj.collision.permeability
-        linear_damping = b_obj.rigid_body.linear_damping
-        angular_damping = b_obj.rigid_body.angular_damping
+
         # linear_velocity = b_obj.rigid_body.deactivate_linear_velocity
         # angular_velocity = b_obj.rigid_body.deactivate_angular_velocity
-        max_linear_velocity = b_obj.nifcollision.max_linear_velocity
-        max_angular_velocity = b_obj.nifcollision.max_angular_velocity
-        col_filter = b_obj.nifcollision.col_filter
+        layer = b_obj.nifcollision.oblivion_layer
 
         # TODO [object][collision][flags] export bsxFlags
         # self.export_bsx_upb_flags(b_obj, parent_block)
@@ -111,85 +101,18 @@ class BhkCollision(Collision):
             # note: collision settings are taken from lowerclasschair01.nif
             if layer == "OL_BIPED":
                 # special collision object for creatures
-                n_col_obj = block_store.create_block("bhkBlendCollisionObject", b_obj)
-                n_col_obj.flags = 9
-                n_col_obj.unknown_float_1 = 1.0
-                n_col_obj.unknown_float_2 = 1.0
+                n_col_obj = self.export_bhk_blend_collision(b_obj)
 
-                # also add a controller for it
-                n_blend_ctrl = block_store.create_block("bhkBlendController", b_obj)
-                n_blend_ctrl.flags = 12
-                n_blend_ctrl.frequency = 1.0
-                n_blend_ctrl.phase = 0.0
-                n_blend_ctrl.start_time = util_consts.FLOAT_MAX
-                n_blend_ctrl.stop_time = util_consts.FLOAT_MIN
-                parent_block.add_controller(n_blend_ctrl)
+                # TODO [collsion][annimation] add detection for this
+                self.export_bhk_blend_controller(b_obj, parent_block)
             else:
                 # usual collision object
-                n_col_obj = block_store.create_block("bhkCollisionObject", b_obj)
-                if layer == "OL_ANIM_STATIC" and col_filter != 128:
-                    # animated collision requires flags = 41
-                    # unless it is a constrainted but not keyframed object
-                    n_col_obj.flags = 41
-                else:
-                    # in all other cases this seems to be enough
-                    n_col_obj.flags = 1
+                n_col_obj = self.export_bhk_collison_object(b_obj)
 
             parent_block.collision_object = n_col_obj
             n_col_obj.target = parent_block
-            n_bhkrigidbody = block_store.create_block("bhkRigidBody", b_obj)
-            n_col_obj.body = n_bhkrigidbody
 
-            n_bhkrigidbody.layer = getattr(NifFormat.OblivionLayer, layer)
-            n_bhkrigidbody.col_filter = col_filter
-            n_bhkrigidbody.unknown_short = 0
-            n_bhkrigidbody.unknown_int_1 = 0
-            n_bhkrigidbody.unknown_int_2 = 2084020722
-
-            unk_3 = n_bhkrigidbody.unknown_3_ints
-            unk_3[0] = 0
-            unk_3[1] = 0
-            unk_3[2] = 0
-
-            n_bhkrigidbody.collision_response = 1
-            n_bhkrigidbody.unknown_byte = 0
-            n_bhkrigidbody.process_contact_callback_delay = 65535
-
-            unk_2 = n_bhkrigidbody.unknown_2_shorts
-            unk_2[0] = 35899
-            unk_2[1] = 16336
-
-            n_bhkrigidbody.layer_copy = n_bhkrigidbody.layer
-            n_bhkrigidbody.col_filter_copy = n_bhkrigidbody.col_filter
-
-            ukn_7 = n_bhkrigidbody.unknown_7_shorts
-            ukn_7[0] = 21280
-            ukn_7[1] = 4581
-            ukn_7[2] = 62977
-            ukn_7[3] = 65535
-            ukn_7[4] = 44
-            ukn_7[5] = 0
-
-            # mass is 1.0 at the moment (unless property was set on import or by the user)
-            # will be fixed in update_rigid_bodies()
-            n_bhkrigidbody.mass = mass
-            n_bhkrigidbody.linear_damping = linear_damping
-            n_bhkrigidbody.angular_damping = angular_damping
-            # n_bhkrigidbody.linear_velocity = linear_velocity
-            # n_bhkrigidbody.angular_velocity = angular_velocity
-            n_bhkrigidbody.friction = friction
-            n_bhkrigidbody.restitution = restitution
-            n_bhkrigidbody.max_linear_velocity = max_linear_velocity
-            n_bhkrigidbody.max_angular_velocity = max_angular_velocity
-            n_bhkrigidbody.penetration_depth = penetration_depth
-            n_bhkrigidbody.motion_system = motion_system
-            n_bhkrigidbody.deactivator_type = deactivator_type
-            n_bhkrigidbody.solver_deactivation = solver_deactivation
-            # TODO [collision][properties][ui] expose unknowns to UI & make sure to keep defaults
-            n_bhkrigidbody.unknown_byte_1 = 1
-            n_bhkrigidbody.unknown_byte_2 = 1
-            n_bhkrigidbody.quality_type = quality_type
-            n_bhkrigidbody.unknown_int_9 = 0
+            n_bhkrigidbody = self.export_bhk_rigid_body(b_obj, n_col_obj)
 
             # we will use n_col_body to attach shapes to below
             n_col_body = n_bhkrigidbody
@@ -197,7 +120,7 @@ class BhkCollision(Collision):
         else:
             n_col_body = parent_block.collision_object.body
             # fix total mass
-            n_col_body.mass += mass
+            n_col_body.mass += rigid_body.mass
 
         if coll_ispacked:
             self.export_collision_packed(b_obj, n_col_body, layer, n_havok_mat)
@@ -206,6 +129,89 @@ class BhkCollision(Collision):
                 self.export_collision_list(b_obj, n_col_body, layer, n_havok_mat)
             else:
                 self.export_collision_single(b_obj, n_col_body, layer, n_havok_mat)
+
+    def export_bhk_rigid_body(self, b_obj, n_col_obj):
+
+        n_r_body = block_store.create_block("bhkRigidBody", b_obj)
+        n_col_obj.body = n_r_body
+        n_r_body.layer = getattr(NifFormat.OblivionLayer, b_obj.nifcollision.oblivion_layer)
+        n_r_body.col_filter = b_obj.nifcollision.col_filter
+        n_r_body.unknown_short = 0
+        n_r_body.unknown_int_1 = 0
+        n_r_body.unknown_int_2 = 2084020722
+        unk_3 = n_r_body.unknown_3_ints
+        unk_3[0] = 0
+        unk_3[1] = 0
+        unk_3[2] = 0
+        n_r_body.collision_response = 1
+        n_r_body.unknown_byte = 0
+        n_r_body.process_contact_callback_delay = 65535
+        unk_2 = n_r_body.unknown_2_shorts
+        unk_2[0] = 35899
+        unk_2[1] = 16336
+        n_r_body.layer_copy = n_r_body.layer
+        n_r_body.col_filter_copy = n_r_body.col_filter
+        ukn_7 = n_r_body.unknown_7_shorts
+        ukn_7[0] = 21280
+        ukn_7[1] = 4581
+        ukn_7[2] = 62977
+        ukn_7[3] = 65535
+        ukn_7[4] = 44
+        ukn_7[5] = 0
+
+        b_r_body = b_obj.rigid_body
+        # mass is 1.0 at the moment (unless property was set on import or by the user)
+        # will be fixed in update_rigid_bodies()
+        n_r_body.mass = b_r_body.mass
+        n_r_body.linear_damping = b_r_body.linear_damping
+        n_r_body.angular_damping = b_r_body.angular_damping
+        # n_r_body.linear_velocity = linear_velocity
+        # n_r_body.angular_velocity = angular_velocity
+        n_r_body.friction = b_r_body.friction
+        n_r_body.restitution = b_r_body.restitution
+        n_r_body.max_linear_velocity = b_obj.nifcollision.max_linear_velocity
+        n_r_body.max_angular_velocity = b_obj.nifcollision.max_angular_velocity
+        n_r_body.penetration_depth = b_obj.collision.permeability
+        n_r_body.motion_system = b_obj.nifcollision.motion_system
+        n_r_body.deactivator_type = b_obj.nifcollision.deactivator_type
+        n_r_body.solver_deactivation = b_obj.nifcollision.solver_deactivation
+        # TODO [collision][properties][ui] expose unknowns to UI & make sure to keep defaults
+        n_r_body.unknown_byte_1 = 1
+        n_r_body.unknown_byte_2 = 1
+        n_r_body.quality_type = b_obj.nifcollision.quality_type
+        n_r_body.unknown_int_9 = 0
+        return n_r_body
+
+    def export_bhk_collison_object(self, b_obj):
+        layer = b_obj.nifcollision.oblivion_layer
+        col_filter = b_obj.nifcollision.col_filter
+
+        n_col_obj = block_store.create_block("bhkCollisionObject", b_obj)
+        if layer == "OL_ANIM_STATIC" and col_filter != 128:
+            # animated collision requires flags = 41
+            # unless it is a constrainted but not keyframed object
+            n_col_obj.flags = 41
+        else:
+            # in all other cases this seems to be enough
+            n_col_obj.flags = 1
+        return n_col_obj
+
+    def export_bhk_blend_collision(self, b_obj):
+        n_col_obj = block_store.create_block("bhkBlendCollisionObject", b_obj)
+        n_col_obj.flags = 9
+        n_col_obj.unknown_float_1 = 1.0
+        n_col_obj.unknown_float_2 = 1.0
+        return n_col_obj
+
+    def export_bhk_blend_controller(self, b_obj, parent_block):
+        # also add a controller for it
+        n_blend_ctrl = block_store.create_block("bhkBlendController", b_obj)
+        n_blend_ctrl.flags = 12
+        n_blend_ctrl.frequency = 1.0
+        n_blend_ctrl.phase = 0.0
+        n_blend_ctrl.start_time = util_consts.FLOAT_MAX
+        n_blend_ctrl.stop_time = util_consts.FLOAT_MIN
+        parent_block.add_controller(n_blend_ctrl)
 
     # TODO [collision] Move to collision
     def update_rigid_bodies(self):
