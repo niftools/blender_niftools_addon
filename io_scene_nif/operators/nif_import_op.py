@@ -39,15 +39,14 @@
 
 import bpy
 from bpy.types import Operator
-from bpy_extras.io_utils import ImportHelper, orientation_helper_factory
+from bpy_extras.io_utils import ImportHelper, orientation_helper
 
 from io_scene_nif import nif_import
 from .nif_common_op import NifOperatorCommon
 
-OrientationHelper = orientation_helper_factory("OrientationHelper", axis_forward='Z', axis_up='Y')
 
-
-class NifImportOperator(Operator, ImportHelper, NifOperatorCommon, OrientationHelper):
+@orientation_helper(axis_forward='-Z', axis_up='Y')
+class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a nif file."""
 
     # Name of function for calling the nif export operators.
