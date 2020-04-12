@@ -36,41 +36,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.nif_export.object import block_store
+
+import mathutils
+
+from io_scene_nif.modules.nif_export.block_registry import block_store
+from io_scene_nif.modules.nif_export.collision import Collision
+from io_scene_nif.utils import util_math
 
 
-class Bound:
+class BSBound(Collision):
 
-    @staticmethod
-    def calculate_largest_value(box_extends):
-        return ((box_extends[0][1] - box_extends[0][0]) * 0.5,
-                (box_extends[1][1] - box_extends[1][0]) * 0.5,
-                (box_extends[2][1] - box_extends[2][0]) * 0.5)
-
-    @staticmethod
-    def calculate_box_extents(b_obj):
-        # calculate bounding box extents
-        b_vertlist = [vert.co for vert in b_obj.data.vertices]
-        minx = min([b_vert[0] for b_vert in b_vertlist])
-        maxx = max([b_vert[0] for b_vert in b_vertlist])
-        maxy = max([b_vert[1] for b_vert in b_vertlist])
-        miny = min([b_vert[1] for b_vert in b_vertlist])
-        minz = min([b_vert[2] for b_vert in b_vertlist])
-        maxz = max([b_vert[2] for b_vert in b_vertlist])
-        return [[minx, maxx], [miny, maxy], [minz, maxz]]
-
-
-class BSBound(Bound):
-
-    def export_bounding_box(self, b_obj, block_parent, bsbound=False):
+    def export_bounds(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
         if bsbound:
-            self.exportBSBound(b_obj, block_parent)
+            self.export_bsbound(b_obj, block_parent)
         else:
-            CollisionProperty().exportBoundingBox(b_obj, block_parent)
+            self.export_bounding_box(b_obj, block_parent)
 
     # TODO [object][data] Stored as object property
-    def exportBSBound(self, b_obj, block_parent):
+    def export_bsbound(self, b_obj, block_parent):
         box_extends = self.calculate_box_extents(b_obj)
         n_bbox = block_store.create_block("BSBound")
         # ... the following incurs double scaling because it will be added in
@@ -82,36 +66,122 @@ class BSBound(Bound):
         block_parent.extra_data_list[-1] = n_bbox
         # set name, center, and dimensions
         n_bbox.name = "BBX"
-        n_bbox.center.x = b_obj.location[0]
-        n_bbox.center.y = b_obj.location[1]
-        n_bbox.center.z = b_obj.location[2]
+        center = n_bbox.center
+        center.x = b_obj.location[0]
+        center.y = b_obj.location[1]
+        center.z = b_obj.location[2]
 
         largest = self.calculate_largest_value(box_extends)
-        n_bbox.dimensions.x = largest[0]
-        n_bbox.dimensions.y = largest[1]
-        n_bbox.dimensions.z = largest[2]
+        dims = n_bbox.dimensions
+        dims.x = largest[0]
+        dims.y = largest[1]
+        dims.z = largest[2]
 
-
-class CollisionProperty(Bound):
-
-    def exportBoundingBox(self, b_obj, block_parent):
+    def export_bounding_box(self, b_obj, block_parent):
         box_extends = self.calculate_box_extents(b_obj)
         n_bbox = block_store.create_ninode()
         block_parent.add_child(n_bbox)
         # set name, flags, translation, and radius
         n_bbox.name = "Bounding Box"
         n_bbox.flags = 4
-        n_bbox.translation.x = (box_extends[0][0] + box_extends[0][1]) * 0.5 + b_obj.location[0]
-        n_bbox.translation.y = (box_extends[1][0] + box_extends[1][1]) * 0.5 + b_obj.location[1]
-        n_bbox.translation.z = (box_extends[2][0] + box_extends[2][1]) * 0.5 + b_obj.location[2]
+
+        trans = n_bbox.translation
+        trans.x = (box_extends[0][0] + box_extends[0][1]) * 0.5 + b_obj.location[0]
+        trans.y = (box_extends[1][0] + box_extends[1][1]) * 0.5 + b_obj.location[1]
+        trans.z = (box_extends[2][0] + box_extends[2][1]) * 0.5 + b_obj.location[2]
         n_bbox.rotation.set_identity()
         n_bbox.has_bounding_box = True
         # Ninode's(n_bbox) behaves like a seperate mesh.
-        # bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
-        n_bbox.bounding_box.translation.deepcopy(n_bbox.translation)
+        # bounding_box center(n_bbox.bounding_box.trans) is relative to the bound_box
+        n_bbox.bounding_box.translation.deepcopy(trans)
         n_bbox.bounding_box.rotation.set_identity()
 
         largest = self.calculate_largest_value(box_extends)
-        n_bbox.bounding_box.radius.x = largest[0]
-        n_bbox.bounding_box.radius.y = largest[1]
-        n_bbox.bounding_box.radius.z = largest[2]
+        radius = n_bbox.bounding_box.radius
+        radius.x = largest[0]
+        radius.y = largest[1]
+        radius.z = largest[2]
+
+
+class NiCollision(Collision):
+
+    def export_nicollisiondata(self, b_obj, n_parent):
+        """ Export b_obj as a NiCollisionData """
+        n_coll_data = block_store.create_block("NiCollisionData", b_obj)
+        n_coll_data.use_abv = 1
+        n_coll_data.target = n_parent
+        n_parent.collision_object = n_coll_data
+
+        n_bv = n_coll_data.bounding_volume
+        if b_obj.draw_bounds_type == 'SPHERE':
+            self.export_spherebv(b_obj, n_bv)
+        elif b_obj.draw_bounds_type == 'BOX':
+            self.export_boxbv(b_obj, n_bv)
+        elif b_obj.draw_bounds_type == 'CAPSULE':
+            self.export_capsulebv(b_obj, n_bv)
+
+    def export_spherebv(self, b_obj, n_bv):
+        """ Export b_obj as a NiCollisionData's bounding_volume sphere """
+
+        n_bv.collision_type = 0
+        matrix = util_math.get_object_bind(b_obj)
+        center = matrix.translation
+        n_bv.sphere.radius = b_obj.dimensions.x / 2
+        sphere_center = n_bv.sphere.center
+        sphere_center.x = center.x
+        sphere_center.y = center.y
+        sphere_center.z = center.z
+
+    def export_boxbv(self, b_obj, n_bv):
+        """ Export b_obj as a NiCollisionData's bounding_volume box """
+
+        n_bv.collision_type = 1
+        matrix = util_math.get_object_bind(b_obj)
+
+        # set center
+        center = matrix.translation
+        box_center = n_bv.box.center
+        box_center.x = center.x
+        box_center.y = center.y
+        box_center.z = center.z
+
+        # set axes to unity 3x3 matrix
+        axis = n_bv.box.axis
+        axis[0].x = 1
+        axis[1].y = 1
+        axis[2].z = 1
+
+        # set extent
+        extent = b_obj.dimensions / 2
+        box_extent = n_bv.box.extent
+        box_extent[0] = extent.x
+        box_extent[1] = extent.y
+        box_extent[2] = extent.z
+
+    def export_capsulebv(self, b_obj, n_bv):
+        """ Export b_obj as a NiCollisionData's bounding_volume capsule """
+
+        n_bv.collision_type = 2
+        matrix = util_math.get_object_bind(b_obj)
+        offset = matrix.translation
+        # calculate the direction unit vector
+        v_dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
+        extent = b_obj.dimensions.z - b_obj.dimensions.x
+        radius = b_obj.dimensions.x / 2
+
+        # store data
+        capsule = n_bv.capsule
+
+        center = capsule.center
+        center.x = offset.x
+        center.y = offset.y
+        center.z = offset.z
+
+        origin = capsule.origin
+        origin.x = v_dir.x
+        origin.y = v_dir.y
+        origin.z = v_dir.z
+
+        # TODO [collision] nb properly named in newer nif.xmls
+        capsule.unknown_float_1 = extent
+        capsule.unknown_float_2 = radius
