@@ -98,12 +98,23 @@ def menu_func_export(self, context):
     # self.layout.operator(operators.kf_export_op.KfExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
 
 
+# we have to 'register' the operators so we can access them like this to register them for blender
+operators.register()
+classes = (
+    operators.nif_import_op.NifImportOperator,
+    operators.kf_import_op.KfImportOperator,
+    operators.nif_export_op.NifExportOperator
+    )
+
+
 def register():
     _init_loggers()
     operators.register()
     properties.register()
     ui.register()
-    bpy.utils.register_module(__name__)
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
@@ -112,7 +123,9 @@ def unregister():
     # no idea how to do this... oh well, let's not lose any sleep over it uninit_loggers()
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
-    bpy.utils.unregister_module(__name__)
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)
 
 
 if __name__ == "__main__":
