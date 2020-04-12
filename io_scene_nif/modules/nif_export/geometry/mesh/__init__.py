@@ -46,11 +46,9 @@ from io_scene_nif.modules.nif_export.geometry import mesh
 from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
-from io_scene_nif.modules.nif_export.property import texture
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.modules.nif_export.property.shader import BSShaderProperty
-from io_scene_nif.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
 from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_math import NifError
