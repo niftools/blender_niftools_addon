@@ -41,6 +41,21 @@
 import bpy
 from bpy.props import PointerProperty, IntProperty
 from bpy.types import PropertyGroup
+from pyffi.formats.nif import NifFormat
+
+
+def _game_to_enum(game):
+    symbols = ":,'\" +-*!?;./="
+    table = str.maketrans(symbols, "_" * len(symbols))
+    enum = game.upper().translate(table).replace("__", "_")
+    return enum
+
+
+def update_version_from_game(self, context):
+    """Updates the Scene panel's numerical version fields if its game value has been changed"""
+    self.nif_version = self.VERSION.get(self.game, 0)
+    self.user_version = self.USER_VERSION.get(self.game, 0)
+    self.user_version_2 = self.USER_VERSION_2.get(self.game, 0)
 
 
 class Scene(PropertyGroup):
@@ -60,3 +75,35 @@ class Scene(PropertyGroup):
         default=0
     )
 
+    #: For which game to export.
+    game: bpy.props.EnumProperty(
+        items=[
+            (_game_to_enum(game), game, "Export for " + game)
+            # implementation note: reversed makes it show alphabetically
+            # (at least with the current blender)
+            for game in reversed(sorted(
+                [x for x in NifFormat.games.keys() if x != '?']))
+        ],
+        name="Game",
+        description="For which game to export.",
+        default='OBLIVION',
+        update=update_version_from_game)
+
+    #: Map game enum to nif version.
+    VERSION = {
+        _game_to_enum(game): versions[-1]
+        for game, versions in NifFormat.games.items() if game != '?'
+    }
+
+    USER_VERSION = {
+        'OBLIVION': 11,
+        'FALLOUT_3': 11,
+        'SKYRIM': 12,
+        'DIVINITY_2': 131072
+    }
+
+    USER_VERSION_2 = {
+        'OBLIVION': 11,
+        'FALLOUT_3': 34,
+        'SKYRIM': 83
+    }
