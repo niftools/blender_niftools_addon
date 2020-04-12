@@ -63,14 +63,14 @@ class KfExportOperator(Operator, ExportHelper, NifOperatorCommon):
     bl_label = "Export KF"
 
     #: Number of blender units per nif unit.
-    scale_correction_export = bpy.props.FloatProperty(
+    scale_correction_export: bpy.props.FloatProperty(
         name="Scale Correction Export",
         description="Changes size of mesh from Blender default to nif default.",
         default=1.0,
         min=0.01, max=100.0, precision=2)
 
     #: For which game to export.
-    game = bpy.props.EnumProperty(
+    game: bpy.props.EnumProperty(
         items=[
             (_game_to_enum(game), game, "Export for " + game)
             # implementation note: reversed makes it show alphabetically
@@ -83,7 +83,7 @@ class KfExportOperator(Operator, ExportHelper, NifOperatorCommon):
         default='OBLIVION')
 
     #: Use BSAnimationNode (for Morrowind).
-    bs_animation_node = bpy.props.BoolProperty(
+    bs_animation_node: bpy.props.BoolProperty(
         name="Use NiBSAnimationNode",
         description="Use NiBSAnimationNode (for Morrowind).",
         default=False)

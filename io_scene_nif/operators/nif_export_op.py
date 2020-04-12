@@ -63,14 +63,14 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
     bl_label = "Export NIF"
 
     # Number of blender units per nif unit.
-    scale_correction_export = bpy.props.FloatProperty(
+    scale_correction_export: bpy.props.FloatProperty(
         name="Scale Correction Export",
         description="Changes size of mesh from Blender default to nif default.",
         default=1.0,
         min=0.01, max=100.0, precision=2)
 
     # For which game to export.
-    game = bpy.props.EnumProperty(
+    game: bpy.props.EnumProperty(
         items=[
             (_game_to_enum(game), game, "Export for " + game)
             # implementation note: reversed makes it show alphabetically
@@ -83,7 +83,7 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
         default='OBLIVION')
 
     # How to export animation.
-    animation = bpy.props.EnumProperty(
+    animation: bpy.props.EnumProperty(
         items=[
             ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
             ('ALL_NIF_XNIF_XKF', "All (nif, xnif, xkf)",
@@ -96,70 +96,70 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
         default='ALL_NIF')
 
     # Smoothen inter-object seams.
-    smooth_object_seams = bpy.props.BoolProperty(
+    smooth_object_seams: bpy.props.BoolProperty(
         name="Smooth Inter-Object Seams",
         description="Smooth normal data along inter-object seams.",
         default=True)
 
     # Use BSAnimationNode (for Morrowind).
-    bs_animation_node = bpy.props.BoolProperty(
+    bs_animation_node: bpy.props.BoolProperty(
         name="Use NiBSAnimationNode",
         description="Use NiBSAnimationNode (for Morrowind).",
         default=False)
 
     # Stripify geometries. Deprecate? (Strips are slower than triangle shapes.)
-    stripify = bpy.props.BoolProperty(
+    stripify: bpy.props.BoolProperty(
         name="Stripify Geometries",
         description="Stripify geometries.",
         default=False,
         options={'HIDDEN'})
 
     # Stitch strips. Deprecate? (Strips are slower than triangle shapes.)
-    stitch_strips = bpy.props.BoolProperty(
+    stitch_strips: bpy.props.BoolProperty(
         name="Stitch Strips",
         description="Stitch strips.",
         default=True,
         options={'HIDDEN'})
 
     # Flatten skin.
-    flatten_skin = bpy.props.BoolProperty(
+    flatten_skin: bpy.props.BoolProperty(
         name="Flatten Skin",
         description="Flatten skin.",
         default=False)
 
     # Export skin partition.
-    skin_partition = bpy.props.BoolProperty(
+    skin_partition: bpy.props.BoolProperty(
         name="Skin Partition",
         description="Export skin partition.",
         default=True)
 
     # Pad and sort bones.
-    pad_bones = bpy.props.BoolProperty(
+    pad_bones: bpy.props.BoolProperty(
         name="Pad & Sort Bones",
         description="Pad and sort bones.",
         default=False)
 
     # Maximum number of bones per skin partition.
-    max_bones_per_partition = bpy.props.IntProperty(
+    max_bones_per_partition: bpy.props.IntProperty(
         name="Max Partition Bones",
         description="Maximum number of bones per skin partition.",
         default=18, min=4, max=63)
 
     # Maximum number of bones per vertex in skin partitions.
-    max_bones_per_vertex = bpy.props.IntProperty(
+    max_bones_per_vertex: bpy.props.IntProperty(
         name="Max Vertex Bones",
         description="Maximum number of bones per vertex in skin partitions.",
         default=4, min=1,
     )
 
     # Pad and sort bones.
-    force_dds = bpy.props.BoolProperty(
+    force_dds: bpy.props.BoolProperty(
         name="Force DDS",
         description="Force texture .dds extension.",
         default=True)
 
     # Whether or not to remove duplicate materials
-    optimise_materials = bpy.props.BoolProperty(
+    optimise_materials: bpy.props.BoolProperty(
         name="Optimise Materials",
         description="",
         default=True)

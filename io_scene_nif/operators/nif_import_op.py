@@ -56,20 +56,20 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
     bl_label = "Import NIF"
 
     # Number of nif units per blender unit.
-    scale_correction_import = bpy.props.FloatProperty(
+    scale_correction_import: bpy.props.FloatProperty(
         name="Scale Correction Import",
         description="Changes size of mesh to fit onto Blender's default grid.",
         default=1.0,
         min=0.01, max=100.0, precision=2)
 
     # Whether or not to import the header information into the scene
-    override_scene_info = bpy.props.BoolProperty(
+    override_scene_info: bpy.props.BoolProperty(
         name="Override Scene Information",
         description="This will overwrite any previously stored scene information with the Nif header info.",
         default=True)
 
     # FaceGen EGM file for morphs.
-    egm_file = bpy.props.StringProperty(
+    egm_file: bpy.props.StringProperty(
         name="FaceGen EGM File",
         description="FaceGen EGM file for morphs.",
         maxlen=1024,
@@ -77,43 +77,43 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         subtype="FILE_PATH")
 
     # Import animation.
-    animation = bpy.props.BoolProperty(
+    animation: bpy.props.BoolProperty(
         name="Animation",
         description="Import animation.",
         default=False)
 
     # Merge skeleton roots.
-    merge_skeleton_roots = bpy.props.BoolProperty(
+    merge_skeleton_roots: bpy.props.BoolProperty(
         name="Merge Skeleton Roots",
         description="Merge skeleton roots.",
         default=False)
 
     # Send all geometries to their bind position.
-    send_geoms_to_bind_pos = bpy.props.BoolProperty(
+    send_geoms_to_bind_pos: bpy.props.BoolProperty(
         name="Send Geometries To Bind Position",
         description="Send all geometries to their bind position.",
         default=False)
 
     # Send all detached geometries to the position of their parent node.
-    send_detached_geoms_to_node_pos = bpy.props.BoolProperty(
+    send_detached_geoms_to_node_pos: bpy.props.BoolProperty(
         name="Send Detached Geometries To Node Position",
         description="Send all detached geometries to the position of their parent node.",
         default=False)
 
     # Send all bones to their bind position.
-    send_bones_to_bind_position = bpy.props.BoolProperty(
+    send_bones_to_bind_position: bpy.props.BoolProperty(
         name="Send Bones To Bind Position",
         description="Send all bones to their bind position.",
         default=False)
 
     # Apply skin deformation to all skinned geometries.
-    apply_skin_deformation = bpy.props.BoolProperty(
+    apply_skin_deformation: bpy.props.BoolProperty(
         name="Apply Skin Deformation",
         description="Apply skin deformation to all skinned geometries.",
         default=False)
 
     # What should be imported.
-    skeleton = bpy.props.EnumProperty(
+    skeleton: bpy.props.EnumProperty(
         items=(
             ("EVERYTHING", "Everything",
              "Import everything."),
@@ -127,13 +127,13 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         default="EVERYTHING")
 
     # Import multi-material shapes as a single mesh.
-    combine_shapes = bpy.props.BoolProperty(
+    combine_shapes: bpy.props.BoolProperty(
         name="Combine Shapes",
         description="Import multi-material shapes as a single mesh.",
         default=False)
 
     # Merge vertices that have identical location and normal values.
-    combine_vertices = bpy.props.BoolProperty(
+    combine_vertices: bpy.props.BoolProperty(
         name="Combine Vertices",
         description="Merge vertices that have identical location and normal values.",
         default=False)
