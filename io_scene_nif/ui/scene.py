@@ -61,3 +61,4 @@ class ScenePanel(Panel):
         row.prop(nif_sceme_props, "nif_version")
         row.prop(nif_sceme_props, "user_version")
         row.prop(nif_sceme_props, "user_version_2")
+        row.prop(nif_sceme_props, "game")

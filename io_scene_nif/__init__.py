@@ -100,10 +100,16 @@ def menu_func_export(self, context):
 
 # we have to 'register' the operators so we can access them like this to register them for blender
 operators.register()
+properties.register()
+ui.register()
+# todo [general] add more properties, make sure they show up
 classes = (
     operators.nif_import_op.NifImportOperator,
     operators.kf_import_op.KfImportOperator,
-    operators.nif_export_op.NifExportOperator
+    operators.nif_export_op.NifExportOperator,
+    properties.scene.Scene,
+
+    ui.scene.ScenePanel,
     )
 
 
@@ -117,6 +123,9 @@ def register():
         register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+
+    # register all property groups after their classes have been registered
+    bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
 
 
 def unregister():
