@@ -69,11 +69,11 @@ class NiPropertyProcessor:
             NiPropertyProcessor.__instance = self
 
     def register_niproperty(self, processor):
-        # processor.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
-        # processor.register(NifFormat.NiAlphaProperty, self.process_nialpha_property)
+        processor.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
+        processor.register(NifFormat.NiAlphaProperty, self.process_nialpha_property)
         # processor.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
-        # processor.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
-        # processor.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
+        processor.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
+        processor.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
         processor.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
         processor.register(NifFormat.NiVertexColorProperty, self.process_nivertexcolor_property)
 

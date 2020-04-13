@@ -93,33 +93,25 @@ class Material:
 
     @staticmethod
     def import_material_specular(b_mat, n_specular_color):
-        b_mat.specular_color.r = n_specular_color.r
-        b_mat.specular_color.g = n_specular_color.g
-        b_mat.specular_color.b = n_specular_color.b
+        b_mat.specular_color = (n_specular_color.r, n_specular_color.g, n_specular_color.b)
 
     @staticmethod
     def import_material_emissive(b_mat, n_emissive_color):
-        b_mat.niftools.emissive_color.r = n_emissive_color.r
-        b_mat.niftools.emissive_color.g = n_emissive_color.g
-        b_mat.niftools.emissive_color.b = n_emissive_color.b
+        b_mat.niftools.emissive_color = (n_emissive_color.r, n_emissive_color.g, n_emissive_color.b)
 
     @staticmethod
     def import_material_diffuse(b_mat, n_diffuse_color):
-        b_mat.diffuse_color.r = n_diffuse_color.r
-        b_mat.diffuse_color.g = n_diffuse_color.g
-        b_mat.diffuse_color.b = n_diffuse_color.b
-        b_mat.diffuse_intensity = 1.0
+        b_mat.diffuse_color = (n_diffuse_color.r, n_diffuse_color.g, n_diffuse_color.b, 1.0)
+        # b_mat.diffuse_intensity = 1.0
 
     @staticmethod
     def import_material_ambient(b_mat, n_mat_prop):
-        b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
-        b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
-        b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b
+        b_mat.niftools.ambient_color = (n_mat_prop.ambient_color.r, n_mat_prop.ambient_color.g, n_mat_prop.ambient_color.b)
 
     @staticmethod
     def import_material_gloss(b_mat, glossiness):
-        b_mat.specular_hardness = glossiness
-
+        # b_mat.specular_hardness = glossiness
+        b_mat.specular_intensity = glossiness  # Blender multiplies specular color with this value
 
 class NiMaterial(Material):
 
@@ -151,13 +143,12 @@ class NiMaterial(Material):
 
         # Emissive
         self.import_material_emissive(b_mat, n_mat_prop.emissive_color)
-        b_mat.emit = n_mat_prop.emit_multi
+        # b_mat.emit = n_mat_prop.emit_multi
 
         # gloss
         self.import_material_gloss(b_mat, n_mat_prop.glossiness)
 
         # Specular color
         self.import_material_specular(b_mat, n_mat_prop.specular_color)
-        b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
 
         return b_mat
