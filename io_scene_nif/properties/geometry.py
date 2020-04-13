@@ -47,14 +47,6 @@ from bpy.types import PropertyGroup
 
 
 class SkinPartHeader(PropertyGroup):
-    # @classmethod
-    # def register(cls):
-        # bpy.types.Object.niftools_part_flags_panel = PointerProperty(
-        #     name='Niftools Skin Part Flag Panel',
-        #     description='Properties used by the BsShader for the Nif File Format',
-        #     type=cls,
-        # )
-
     pf_partcount: IntProperty(
         name='Partition count',
         min=0,
@@ -75,7 +67,3 @@ class SkinPartFlags(PropertyGroup):
     pf_editorflag: BoolProperty(
         name="Editor Visible"
     )
-
-    # @classmethod
-    # def register(cls):
-    #     bpy.types.Object.niftools_part_flags = CollectionProperty(type=SkinPartFlags)
