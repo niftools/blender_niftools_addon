@@ -58,6 +58,7 @@ class MorphAnimation(Animation):
 
         n_morphCtrl = util_math.find_controller(n_node, NifFormat.NiGeomMorpherController)
         if n_morphCtrl:
+            NifLog.debug("NiGeomMorpherController processed")
             b_mesh = b_obj.data
             morphData = n_morphCtrl.data
             if morphData.num_morphs:
@@ -67,7 +68,7 @@ class MorphAnimation(Animation):
                     keyname = 'Base'
 
                 # insert base key at frame 1, using relative keys
-                sk_basis = b_obj.shape_key_add(keyname)
+                sk_basis = b_obj.shape_key_add(name=keyname)
 
                 # get base vectors and import all morphs
                 baseverts = morphData.morphs[0].vectors
@@ -83,7 +84,7 @@ class MorphAnimation(Animation):
                     # get vectors
                     morph_verts = morphData.morphs[idxMorph].vectors
                     self.morph_mesh(b_mesh, baseverts, morph_verts)
-                    shape_key = b_obj.shape_key_add(keyname, from_mix=False)
+                    shape_key = b_obj.shape_key_add(name=keyname, from_mix=False)
 
                     # first find the keys
                     # older versions store keys in the morphData
@@ -115,7 +116,7 @@ class MorphAnimation(Animation):
         asym_morphs = [list(morph.get_relative_vertices()) for morph in EGMData.data.asym_morphs]
 
         # insert base key at frame 1, using absolute keys
-        sk_basis = b_obj.shape_key_add("Basis")
+        sk_basis = b_obj.shape_key_add(name="Basis")
         b_mesh.shape_keys.use_relative = False
 
         morphs = ([(morph, "EGM SYM %i" % i) for i, morph in enumerate(sym_morphs)] +
@@ -130,7 +131,7 @@ class MorphAnimation(Animation):
                 morphvert_out.append(v)
             self.morph_mesh(b_mesh, n_verts, morphvert_out)
             # TODO [animation] unused variable is it required
-            shape_key = b_obj.shape_key_add(key_name, from_mix=False)
+            shape_key = b_obj.shape_key_add(name=key_name, from_mix=False)
 
     def morph_mesh(self, b_mesh, baseverts, morphverts):
         """Transform a mesh to be in the shape given by morphverts."""
