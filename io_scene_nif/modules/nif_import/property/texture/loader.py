@@ -51,6 +51,24 @@ from io_scene_nif.utils.util_logging import NifLog
 
 class TextureLoader:
 
+    # for reference
+    # @staticmethod
+    # def load_tex(tree, tex_path):
+    #     name = os.path.basename(tex_path)
+    #     if name not in bpy.data.images:
+    #         try:
+    #             img = bpy.data.images.load(tex_path)
+    #         except:
+    #             NifLog.debug("Could not find image " + tex_path + ", generating blank image!")
+    #             img = bpy.data.images.new(name, 1, 1)
+    #     else:
+    #         img = bpy.data.images[name]
+    #     tex = tree.nodes.new('ShaderNodeTexImage')
+    #     tex.image = img
+    #     tex.interpolation = "Smart"
+    #
+    #     return tex
+
     @staticmethod
     def get_texture_hash(source):
         """Helper function for import_texture. Returns a key that uniquely
@@ -66,7 +84,7 @@ class TextureLoader:
         else:
             raise TypeError("source must be NiSourceTexture block or string")
 
-    def import_texture_source(self, source):
+    def import_texture_source(self, source, tree):
         """Convert a NiSourceTexture block, or simply a path string, to a Blender Texture object.
         Stores it in the texture.DICT_TEXTURES dictionary to avoid future duplicate imports.
         :return Texture object
@@ -98,11 +116,10 @@ class TextureLoader:
             b_image = bpy.data.images.new(name=b_text_name, width=1, height=1, alpha=False)
             b_image.filepath = fn
 
-        # create a texture
-        b_texture = bpy.data.textures.new(name=b_text_name, type='IMAGE')
+        # create a texture node
+        b_texture = tree.nodes.new('ShaderNodeTexImage')
         b_texture.image = b_image
-        b_texture.use_interpolation = True
-        b_texture.use_mipmap = True
+        b_texture.interpolation = "Smart"
 
         # save texture to avoid duplicate imports, and return it
         texture.DICT_TEXTURES[texture_hash] = b_texture
@@ -163,9 +180,8 @@ class TextureLoader:
         # go searching for it
         import_path = os.path.dirname(NifOp.props.filepath)
         search_path_list = [import_path]
-        if bpy.context.user_preferences.filepaths.texture_directory:
-            search_path_list.append(
-                bpy.context.user_preferences.filepaths.texture_directory)
+        if bpy.context.preferences.filepaths.texture_directory:
+            search_path_list.append(bpy.context.preferences.filepaths.texture_directory)
 
         # TODO [general][path] Implement full texture path finding.
         nif_dir = os.path.join(os.getcwd(), 'nif')

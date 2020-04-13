@@ -69,7 +69,7 @@ class Material:
             b_mat.blend_method = "OPAQUE"
             b_mat.shadow_method = "OPAQUE"
 
-        b_mat.alpha_threshold = n_alpha_prop.threshold  # transparency threshold
+        b_mat.alpha_threshold = n_alpha_prop.threshold / 255 # transparency threshold
         b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
 
         return b_mat

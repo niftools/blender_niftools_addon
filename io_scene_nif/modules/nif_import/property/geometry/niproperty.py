@@ -71,7 +71,7 @@ class NiPropertyProcessor:
     def register_niproperty(self, processor):
         processor.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
         processor.register(NifFormat.NiAlphaProperty, self.process_nialpha_property)
-        # processor.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
+        processor.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
         processor.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
         processor.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
         processor.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
@@ -147,6 +147,7 @@ class NiPropertyProcessor:
             b_mat = bpy.data.materials.new("")
             # do initial settings for the material here
             b_mat.use_backface_culling = True
+            b_mat.use_nodes = True
             self.b_mesh.materials.append(b_mat)
             NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
         else:

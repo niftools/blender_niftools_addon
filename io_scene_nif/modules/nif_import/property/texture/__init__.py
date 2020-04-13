@@ -66,21 +66,21 @@ class TextureSlotManager:
         self.texture_loader = TextureLoader()
 
     def create_texture_slot(self, b_mat, image_texture):
-        b_mat_texslot = b_mat.texture_slots.add()
+        # b_mat_texslot = b_mat.texture_slots.add()
         try:
-            b_mat_texslot.texture = self.texture_loader.import_texture_source(image_texture.source)
+            texture = self.texture_loader.import_texture_source(image_texture.source, b_mat.node_tree)
             uv_layer_name = image_texture.uv_set
         except:
-            b_mat_texslot.texture = self.texture_loader.import_texture_source(image_texture)
+            texture = self.texture_loader.import_texture_source(image_texture, b_mat.node_tree)
             uv_layer_name = 0
-        b_mat_texslot.use = True
+        # b_mat_texslot.use = True
 
         # Influence mapping
 
         # Mapping
-        b_mat_texslot.texture_coords = 'UV'
-        b_mat_texslot.uv_layer = Vertex.get_uv_layer_name(uv_layer_name)
-        return b_mat_texslot
+        # b_mat_texslot.texture_coords = 'UV'
+        # b_mat_texslot.uv_layer = Vertex.get_uv_layer_name(uv_layer_name)
+        # return b_mat_texslot
 
     def update_diffuse_slot(self, b_mat_texslot):
         # Influence mapping
