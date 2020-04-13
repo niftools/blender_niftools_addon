@@ -50,15 +50,9 @@ from pyffi.formats.nif import NifFormat
 
 
 class ExtraData(PropertyGroup):
-    name = StringProperty()
-    data = StringProperty()
-    sub_class = StringProperty()
-
-
-#     def __new__(self, name, data, sub_class):
-#         self.name = name
-#         self.data = data
-#         self.sub_class = sub_class
+    name: StringProperty()
+    data: StringProperty()
+    sub_class: StringProperty()
 
 
 class BSXFlags:
@@ -70,127 +64,101 @@ class BSXFlags:
 
 
 class ExtraDataStore(PropertyGroup):
-    @classmethod
-    def register(cls):
-        cls.extra_data = CollectionProperty(
-            name="Extra Data",
-            description="Used to store all the Extra data",
-            type=ExtraData
-        )
 
-        cls.extra_data_index = IntProperty()
-
-    @classmethod
-    def unregister(cls):
-        del cls.extra_data
-        del cls.extra_data_index
+    extra_data_index: IntProperty()
+    extra_data: CollectionProperty(
+        name="Extra Data",
+        description="Used to store all the Extra data",
+        type=ExtraData
+    )
 
 
 class ObjectProperty(PropertyGroup):
-    @classmethod
-    def register(cls):
-        bpy.types.Object.niftools = PointerProperty(
-            name='Niftools Object Property',
-            description='Additional object properties used by the Nif File Format',
-            type=cls,
-        )
 
-        cls.rootnode = EnumProperty(
-            name='Nif Root Node',
-            description='Type of property used to display meshes.',
-            items=(
-                ('NiNode', 'NiNode', "", 0),
-                ('BSFadeNode', 'BSFadeNode', "", 1)),
-            default='NiNode',
-        )
+    rootnode: EnumProperty(
+        name='Nif Root Node',
+        description='Type of property used to display meshes.',
+        items=(
+            ('NiNode', 'NiNode', "", 0),
+            ('BSFadeNode', 'BSFadeNode', "", 1)),
+        default='NiNode',
+    )
 
-        cls.prn_location = EnumProperty(
-            name='Weapon Location',
-            description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',
-            items=[(item, item, "", i) for i, item in enumerate(["NONE","BACK","SIDE","QUIVER","SHIELD","HELM","RING"])],
-            # default = 'NONE'
-        )
+    prn_location: EnumProperty(
+        name='Weapon Location',
+        description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',
+        items=[(item, item, "", i) for i, item in enumerate(["NONE","BACK","SIDE","QUIVER","SHIELD","HELM","RING"])],
+        # default = 'NONE'
+    )
 
-        cls.bsnumuvset = IntProperty(
-            name='BS Num UV Set',
-            default=0
-        )
+    bsnumuvset: IntProperty(
+        name='BS Num UV Set',
+        default=0
+    )
 
-        cls.longname = StringProperty(
-            name='Nif Long Name'
-        )
+    longname: StringProperty(
+        name='Nif Long Name'
+    )
 
-        cls.consistency_flags = EnumProperty(
-            name='Consistency Flag',
-            description='Controls animation type',
-            items=[(item, item, "", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
-            # default = 'SHADER_DEFAULT'
-        )
+    consistency_flags: EnumProperty(
+        name='Consistency Flag',
+        description='Controls animation type',
+        items=[(item, item, "", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
+        # default = 'SHADER_DEFAULT'
+    )
 
-        cls.objectflags = IntProperty(
-            name='Object Flag',
-            description='Controls animation and collision',
-            default=0
-        )
+    objectflags: IntProperty(
+        name='Object Flag',
+        description='Controls animation and collision',
+        default=0
+    )
 
-        cls.bsxflags = IntProperty(
-            name='BSX Flags',
-            description='Controls animation and collision',
-            default=0  # 2 = Bit 1, enable collision
-        )
+    bsxflags: IntProperty(
+        name='BSX Flags',
+        description='Controls animation and collision',
+        default=0  # 2 = Bit 1, enable collision
+    )
 
-        cls.upb = StringProperty(
-            name='UPB',
-            description='Commands for an optimizer?',
-            default=''
-        )
+    upb: StringProperty(
+        name='UPB',
+        description='Commands for an optimizer?',
+        default=''
+    )
 
-        cls.extra_data_store = PointerProperty(
-            name="Extra Data",
-            description="Used to store all the Extra data",
-            type=ExtraDataStore,
-        )
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Object.niftools
+    extra_data_store: PointerProperty(
+        name="Extra Data",
+        description="Used to store all the Extra data",
+        type=ExtraDataStore,
+    )
 
 
 class BsInventoryMarker(PropertyGroup):
 
-    @classmethod
-    def register(cls):
-        bpy.types.Object.niftools_bs_invmarker = CollectionProperty(type=BsInventoryMarker)
+    name: StringProperty(
+        name="",
+        default='INV'
+    )
 
-        cls.name = StringProperty(
-            name="",
-            default='INV'
-        )
+    bs_inv_x: IntProperty(
+        name="Inv X value",
+        description="Position of object in inventory on the x axis.",
+        default=0
+    )
 
-        cls.bs_inv_x = IntProperty(
-            name="Inv X value",
-            description="Position of object in inventory on the x axis.",
-            default=0
-        )
+    bs_inv_y: IntProperty(
+        name="Inv Y value",
+        description="Position of object in inventory on the y axis.",
+        default=0
+    )
 
-        cls.bs_inv_y = IntProperty(
-            name="Inv Y value",
-            description="Position of object in inventory on the y axis.",
-            default=0
-        )
+    bs_inv_z: IntProperty(
+        name="Inv Z value",
+        description="Position of object in inventory on the z axis.",
+        default=0
+    )
 
-        cls.bs_inv_z = IntProperty(
-            name="Inv Z value",
-            description="Position of object in inventory on the z axis.",
-            default=0
-        )
-
-        cls.bs_inv_zoom = FloatProperty(
-            name="Inv Zoom Value",
-            description="Inventory object Zoom level.",
-            default=1
-        )
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Object.niftools_bs_invmarker
+    bs_inv_zoom: FloatProperty(
+        name="Inv Zoom Value",
+        description="Inventory object Zoom level.",
+        default=1
+    )
