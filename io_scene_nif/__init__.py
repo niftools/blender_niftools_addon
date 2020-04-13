@@ -107,16 +107,28 @@ classes = (
     operators.nif_import_op.NifImportOperator,
     operators.kf_import_op.KfImportOperator,
     operators.nif_export_op.NifExportOperator,
+    operators.geometry.BsInvMarkerAdd,
+    operators.geometry.BsInvMarkerRemove,
+    operators.geometry.NfTlPartFlagAdd,
+    operators.geometry.NfTlPartFlagRemove,
+    operators.object.BSXExtraDataAdd,
+    operators.object.UPBExtraDataAdd,
+    operators.object.SampleExtraDataAdd,
+    operators.object.NiExtraDataRemove,
+
 
     properties.armature.BoneProperty,
     properties.armature.ArmatureProperty,
     properties.collision.CollisionProperty,
     properties.constraint.ConstraintProperty,
+    properties.geometry.SkinPartHeader,
+    properties.geometry.SkinPartFlags,
     properties.scene.Scene,
 
     ui.armature.BonePanel,
     ui.armature.ArmaturePanel,
     ui.collision.CollisionBoundsPanel,
+    ui.geometry.PartFlag,
     ui.scene.ScenePanel,
     )
 
@@ -137,6 +149,8 @@ def register():
     bpy.types.Armature.niftools = bpy.props.PointerProperty(type=properties.armature.ArmatureProperty)
     bpy.types.Object.nifcollision = bpy.props.PointerProperty(type=properties.collision.CollisionProperty)
     bpy.types.Object.niftools_constraint = bpy.props.PointerProperty(type=properties.constraint.ConstraintProperty)
+    bpy.types.Object.niftools_part_flags_panel = bpy.props.PointerProperty(type=properties.geometry.SkinPartHeader)
+    bpy.types.Object.niftools_part_flags = bpy.props.CollectionProperty(type=properties.geometry.SkinPartFlags)
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
 
 

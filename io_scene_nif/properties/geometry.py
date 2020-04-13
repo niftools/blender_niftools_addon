@@ -47,43 +47,35 @@ from bpy.types import PropertyGroup
 
 
 class SkinPartHeader(PropertyGroup):
-    @classmethod
-    def register(cls):
-        bpy.types.Object.niftools_part_flags_panel = PointerProperty(
-            name='Niftools Skin Part Flag Panel',
-            description='Properties used by the BsShader for the Nif File Format',
-            type=cls,
-        )
+    # @classmethod
+    # def register(cls):
+        # bpy.types.Object.niftools_part_flags_panel = PointerProperty(
+        #     name='Niftools Skin Part Flag Panel',
+        #     description='Properties used by the BsShader for the Nif File Format',
+        #     type=cls,
+        # )
 
-        cls.pf_partcount = IntProperty(
-            name='Partition count',
-            min=0,
-            default=0
-        )
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Object.niftools_part_flags_panel
+    pf_partcount: IntProperty(
+        name='Partition count',
+        min=0,
+        default=0
+    )
 
 
 class SkinPartFlags(PropertyGroup):
-    name = bpy.props.StringProperty(
+    name: bpy.props.StringProperty(
         name='name',
         default=''
     )
 
-    pf_startflag = BoolProperty(
+    pf_startflag: BoolProperty(
         name='Start Net Boneset'
     )
 
-    pf_editorflag = BoolProperty(
+    pf_editorflag: BoolProperty(
         name="Editor Visible"
     )
 
-    @classmethod
-    def register(cls):
-        bpy.types.Object.niftools_part_flags = CollectionProperty(type=SkinPartFlags)
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Object.niftools_part_flags
+    # @classmethod
+    # def register(cls):
+    #     bpy.types.Object.niftools_part_flags = CollectionProperty(type=SkinPartFlags)
