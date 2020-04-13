@@ -76,28 +76,28 @@ correction_inv = None
 
 def import_keymat(rest_rot_inv, key_matrix):
     """Handles space conversions for imported keys """
-    return correction * (rest_rot_inv * key_matrix) * correction_inv
+    return correction @ (rest_rot_inv @ key_matrix) @ correction_inv
 
 
 def export_keymat(rest_rot, key_matrix, bone):
     """Handles space conversions for exported keys """
     if bone:
-        return rest_rot * (correction_inv * key_matrix * correction)
+        return rest_rot @ (correction_inv @ key_matrix @ correction)
     else:
-        return rest_rot * key_matrix
+        return rest_rot @ key_matrix
 
 
 def get_bind_matrix(bone):
     """Get a nif armature-space matrix from a blender bone. """
-    bind = correction * correction_inv * bone.matrix_local * correction
+    bind = correction @ correction_inv @ bone.matrix_local @ correction
     if bone.parent:
-        p_bind_restored = correction * correction_inv * bone.parent.matrix_local * correction
-        bind = p_bind_restored.inverted() * bind
+        p_bind_restored = correction @ correction_inv @ bone.parent.matrix_local @ correction
+        bind = p_bind_restored.inverted() @ bind
     return bind
 
 
 def nif_bind_to_blender_bind(nif_armature_space_matrix):
-    return correction_inv * correction * nif_armature_space_matrix * correction_inv
+    return correction_inv @ correction @ nif_armature_space_matrix @ correction_inv
 
 
 def vec_roll_to_mat3(vec, roll):
@@ -141,7 +141,7 @@ def vec_roll_to_mat3(vec, roll):
     r_matrix = mathutils.Matrix.Rotation(roll, 3, nor)
 
     # Combine and output result
-    mat = r_matrix * b_matrix
+    mat = r_matrix @ b_matrix
     return mat
 
 
@@ -150,7 +150,7 @@ def mat3_to_vec_roll(mat):
     vec = mat.col[1]
     vec_mat = vec_roll_to_mat3(mat.col[1], 0)
     vec_mat_inv = vec_mat.inverted()
-    roll_mat = vec_mat_inv * mat
+    roll_mat = vec_mat_inv @ mat
     roll = math.atan2(roll_mat[0][2], roll_mat[2][2])
     return vec, roll
 
@@ -214,7 +214,7 @@ def get_object_bind(b_obj):
             # undo what was done on import
             mpi = nif_bind_to_blender_bind(b_obj.matrix_parent_inverse).inverted()
             mpi.translation.y -= parent_bone.length
-            return mpi.inverted() * b_obj.matrix_basis
+            return mpi.inverted() @ b_obj.matrix_basis
         # just get the local matrix
         else:
             return b_obj.matrix_local

@@ -244,7 +244,7 @@ class SingleNif(Base):
         print("Objects in scene - {0}".format(len(bpy.data.objects)))
         for b_obj in bpy.data.objects:
             print("Scene Object - " + b_obj.name)
-            b_obj.select = True
+            b_obj.select_set(True)
             b_obj_names.append(b_obj.name)
         return b_obj_names
 

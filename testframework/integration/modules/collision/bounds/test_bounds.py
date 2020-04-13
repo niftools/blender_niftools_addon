@@ -40,8 +40,8 @@ class TestBBox(SingleNif):
         b_obj.name = self.b_name
         b_obj.show_bounds = True
         # the following are optional
-        b_obj.draw_bounds_type = 'BOX'
-        b_obj.draw_type = 'BOUNDS'
+        b_obj.display_bounds_type = 'BOX'
+        b_obj.display_type = 'BOUNDS'
         b_obj.data.show_double_sided = False
 
     def n_create_data(self):
@@ -50,8 +50,8 @@ class TestBBox(SingleNif):
     def b_check_data(self):
         b_bbox = bpy.data.objects[self.b_name]
         nose.tools.assert_true(b_bbox.show_bounds)
-        nose.tools.assert_equal(b_bbox.draw_bounds_type, 'BOX')
-        nose.tools.assert_equal(b_bbox.draw_type, 'BOUNDS')
+        nose.tools.assert_equal(b_bbox.display_bounds_type, 'BOX')
+        nose.tools.assert_equal(b_bbox.display_type, 'BOUNDS')
         verts = {tuple(round(x, 4) for x in vert.co) for vert in b_bbox.data.vertices}
         nose.tools.assert_set_equal(verts, self.b_verts)
 
@@ -72,8 +72,8 @@ class TestBSBound(TestBaseGeometry):
         b_obj = TestBaseGeometry.b_create_object(self)
         b_obj.name = self.b_name
 
-        b_obj.draw_bounds_type = 'BOX'
-        b_obj.draw_type = 'BOUNDS'
+        b_obj.display_bounds_type = 'BOX'
+        b_obj.display_type = 'BOUNDS'
 
         return b_obj
 
@@ -84,8 +84,8 @@ class TestBSBound(TestBaseGeometry):
 
 
         b_bbox = b_obj[b_name]
-        nose.tools.assert_equal(b_bbox.draw_bounds_type, 'BOX')
-        nose.tools.assert_equal(b_bbox.draw_type, 'BOUNDS')
+        nose.tools.assert_equal(b_bbox.display_bounds_type, 'BOX')
+        nose.tools.assert_equal(b_bbox.display_type, 'BOUNDS')
 
 
     def n_check_data(self, n_data):

@@ -117,11 +117,11 @@ Animation
 Collision
 ---------
 
-* Beware of the difference between :attr:`bpy.types.Object.draw_bounds_type`
+* Beware of the difference between :attr:`bpy.types.Object.display_bounds_type`
   and :attr:`bpy.types.GameObjectSettings.collision_bounds_type` (accessible via
   :attr:`bpy.types.Object.game`):
 
-  - There is no ``'CONVEX_HULL'`` :attr:`bpy.types.Object.draw_bounds_type`.
+  - There is no ``'CONVEX_HULL'`` :attr:`bpy.types.Object.display_bounds_type`.
 
   - To identify the collision type to export, we rely exclusively on
     :attr:`bpy.types.GameObjectSettings.collision_bounds_type`.
@@ -197,7 +197,7 @@ Blender API Mysteries
 ---------------------
 
 * What is the difference between ``'CAPSULE'`` and ``'CYLINDER'``
-  :attr:`bpy.types.Object.draw_bounds_type`\ s
+  :attr:`bpy.types.Object.display_bounds_type`\ s
   (and similar for
   :attr:`bpy.types.GameObjectSettings.collision_bounds_type`)?
   We are using

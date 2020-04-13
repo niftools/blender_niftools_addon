@@ -137,7 +137,7 @@ class VertexGroup:
                     vertex_weights = bone_weights[idx].vertex_weights
                     group_name = block_store.import_name(n_bone)
                     if group_name not in b_obj.vertex_groups:
-                        v_group = b_obj.vertex_groups.new(group_name)
+                        v_group = b_obj.vertex_groups.new(name=group_name)
 
                     for skinWeight in vertex_weights:
                         vert = skinWeight.index
@@ -151,7 +151,7 @@ class VertexGroup:
                     # create all vgroups for this block's bones
                     block_bone_names = [block_store.import_name(bones[i]) for i in block.bones]
                     for group_name in block_bone_names:
-                        b_obj.vertex_groups.new(group_name)
+                        b_obj.vertex_groups.new(name=group_name)
 
                     # go over each vert in this block
                     for vert, vertex_weights, bone_indices in zip(block.vertex_map, block.vertex_weights, block.bone_indices):
@@ -175,7 +175,7 @@ class VertexGroup:
 
                 # create vertex group if it did not exist yet
                 if group_name not in b_obj.vertex_groups:
-                    v_group = b_obj.vertex_groups.new(group_name)
+                    v_group = b_obj.vertex_groups.new(name=group_name)
                     skinpart_index = len(skinpart_list)
                     skinpart_list.append((skinpart_index, group_name))
                     bodypart_flag.append(bodypart.part_flag)

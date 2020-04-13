@@ -262,7 +262,7 @@ class Mesh:
                         trishape.flags = 0x0016
                 else:
                     # morrowind
-                    if b_obj.draw_type != 'WIRE':  # not wire
+                    if b_obj.display_type != 'WIRE':  # not wire
                         trishape.flags = 0x0004  # use triangles as bounding box
                     else:
                         trishape.flags = 0x0005  # use triangles as bounding box + hide
@@ -692,10 +692,10 @@ class Mesh:
                         # vertices must be assigned at least one vertex group lets be nice and display them for the user
                         if len(unassigned_verts) > 0:
                             for b_scene_obj in bpy.context.scene.objects:
-                                b_scene_obj.select = False
+                                b_scene_obj.select_set(False)
 
-                            b_obj = bpy.context.scene.objects.active
-                            b_obj.select = True
+                            b_obj = bpy.context.view_layer.objects.active
+                            b_obj.select_set(True)
 
                             # switch to edit mode and raise exception
                             bpy.ops.object.mode_set(mode='EDIT', toggle=False)
@@ -803,9 +803,9 @@ class Mesh:
         """Select any faces which are not weighted to a vertex group"""
         # select mesh object
         for b_deselect_obj in bpy.context.scene.objects:
-            b_deselect_obj.select = False
-        bpy.context.scene.objects.active = b_obj
-        b_obj.select = True
+            b_deselect_obj.select_set(False)
+        bpy.context.view_layer.objects.active = b_obj
+        b_obj.select_set(True)
         for face in b_mesh.polygons:
             face.select = False
         for face in polygons_without_bodypart:

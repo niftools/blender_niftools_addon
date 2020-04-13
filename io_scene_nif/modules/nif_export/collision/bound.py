@@ -113,11 +113,11 @@ class NiCollision(Collision):
         n_parent.collision_object = n_coll_data
 
         n_bv = n_coll_data.bounding_volume
-        if b_obj.draw_bounds_type == 'SPHERE':
+        if b_obj.display_bounds_type == 'SPHERE':
             self.export_spherebv(b_obj, n_bv)
-        elif b_obj.draw_bounds_type == 'BOX':
+        elif b_obj.display_bounds_type == 'BOX':
             self.export_boxbv(b_obj, n_bv)
-        elif b_obj.draw_bounds_type == 'CAPSULE':
+        elif b_obj.display_bounds_type == 'CAPSULE':
             self.export_capsulebv(b_obj, n_bv)
 
     def export_spherebv(self, b_obj, n_bv):

@@ -52,7 +52,7 @@ class BodyPartTestSuite(TestSuite):
         arm_data.drawAxes = True
         arm_data.envelopes = False
         arm_data.vertexGroups = True
-        arm_data.draw_type = 'STICK'
+        arm_data.display_type = 'STICK'
         arm_obj = self.context.scene.objects.new(arm_data, "Scene Root")
         arm_data.makeEditable()
         bone = Blender.Armature.Editbone()

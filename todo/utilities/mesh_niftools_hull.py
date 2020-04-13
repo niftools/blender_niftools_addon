@@ -77,8 +77,8 @@ def hull_box(ob, me, selected_only):
     boxob.setMatrix(ob.getMatrix('worldspace'))
 
     # set bounds type
-    boxob.draw_type = 'BOUNDS'
-    boxob.draw_bounds_type = 'BOX'
+    boxob.display_type = 'BOUNDS'
+    boxob.display_bounds_type = 'BOX'
 
 def hull_sphere(ob, me, selected_only):
     """Hull mesh in a sphere."""
@@ -123,8 +123,8 @@ def hull_sphere(ob, me, selected_only):
     boxob.setMatrix(ob.getMatrix('worldspace'))
 
     # set bounds type
-    boxob.draw_type = 'BOUNDS'
-    boxob.draw_bounds_type = 'SPHERE'
+    boxob.display_type = 'BOUNDS'
+    boxob.display_bounds_type = 'SPHERE'
 
 def hull_convex(ob, me, selected_only, precision = 0.1):
     """Hull mesh in a convex shape."""
@@ -147,8 +147,8 @@ def hull_convex(ob, me, selected_only, precision = 0.1):
     boxob.setMatrix(ob.getMatrix('worldspace'))
 
     # set bounds type
-    boxob.draw_type = 'BOUNDS'
-    boxob.draw_bounds_type = 'POLYHEDRON' # FIXME 'CONVEX' not in blender Python API
+    boxob.display_type = 'BOUNDS'
+    boxob.display_bounds_type = 'POLYHEDRON' # FIXME 'CONVEX' not in blender Python API
     boxob.show_wire = True
 
 def main(arg):
