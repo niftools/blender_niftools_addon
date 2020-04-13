@@ -162,7 +162,8 @@ class TransformAnimation(Animation):
 
         # transform controllers (dartgun.nif)
         if isinstance(n_kfc, NifFormat.NiTransformController):
-            n_kfd = n_kfc.interpolator.data
+            if n_kfc.interpolator:
+                n_kfd = n_kfc.interpolator.data
         # B-spline curve import
         elif isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
             # used by WLP2 (tiger.kf), but only for non-LocRotScale data
