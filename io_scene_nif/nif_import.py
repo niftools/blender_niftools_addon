@@ -262,7 +262,7 @@ class NifImport(NifCommon):
                             geom_group.remove(child)
 
                 # import geometry/empty
-                if not geom_group or not NifOp.props.combine_shapes or len(geom_group) > 16:
+                if not geom_group or not NifOp.props.combine_shapes:
                     # no grouping node, or too many materials to group the geometry into a single mesh
                     # so import it as an empty
                     b_obj = NiTypes.import_empty(n_block)
