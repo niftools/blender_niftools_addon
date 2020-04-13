@@ -62,15 +62,13 @@ class Mesh:
         self.morph_anim = MorphAnimation()
         self.mesh_prop_processor = MeshPropertyProcessor()
 
-    def import_mesh(self, n_block, b_obj, transform=None):
+    def import_mesh(self, n_block, b_obj):
         """Creates and returns a raw mesh, or appends geometry data to group_mesh.
 
         :param n_block: The nif block whose mesh data to import.
         :type n_block: C{NiTriBasedGeom}
         :param b_obj: The mesh to which to append the geometry data. If C{None}, a new mesh is created.
         :type b_obj: A Blender object that has mesh data.
-        :param transform: Apply the n_block's transformation to the mesh.
-        :type transform: C{Matix}
         """
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 

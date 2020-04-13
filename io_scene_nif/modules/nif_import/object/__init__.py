@@ -151,8 +151,8 @@ class Object:
     def import_geometry_object(self, b_armature, n_block):
         # it's a shape node and we're not importing skeleton only
         b_obj = self.create_mesh_object(n_block)
-        transform = util_math.import_matrix(n_block)  # set transform matrix for the mesh
-        self.mesh.import_mesh(n_block, b_obj, transform)
+        b_obj.matrix_local = util_math.import_matrix(n_block)  # set transform matrix for the mesh
+        self.mesh.import_mesh(n_block, b_obj)
         bpy.context.view_layer.objects.active = b_obj
         # store flags etc
         self.import_object_flags(n_block, b_obj)

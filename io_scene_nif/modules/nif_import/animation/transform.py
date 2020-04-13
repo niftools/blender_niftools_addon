@@ -146,6 +146,9 @@ class TransformAnimation(Animation):
 
     # TODO [animation] Is scale param required or can be removed, not used
     def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None, n_bone_bind_scale=None, n_bone_bind_rot_inv=None, n_bone_bind_trans=None):
+
+        NifLog.debug('Importing keyframe controller for'+b_obj.name)
+
         b_action = b_obj.animation_data.action
 
         if bone_name:
@@ -157,8 +160,11 @@ class TransformAnimation(Animation):
         eulers = []
         n_kfd = None
 
+        # transform controllers (dartgun.nif)
+        if isinstance(n_kfc, NifFormat.NiTransformController):
+            n_kfd = n_kfc.interpolator.data
         # B-spline curve import
-        if isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
+        elif isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
             # used by WLP2 (tiger.kf), but only for non-LocRotScale data
             # eg. bone stretching - see controlledblock.get_variable_1()
             # do not support this for now, no good representation in Blender
@@ -257,6 +263,9 @@ class TransformAnimation(Animation):
         """Loads an animation attached to a nif block."""
         # find keyframe controller
         n_kfc = util_math.find_controller(n_block, NifFormat.NiKeyframeController)
+        # try again
+        if not n_kfc:
+            n_kfc = util_math.find_controller(n_block, NifFormat.NiTransformController)
         if n_kfc:
             # skeletal animation
             if bone_name:
