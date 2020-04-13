@@ -44,12 +44,32 @@ from io_scene_nif.utils.util_logging import NifLog
 class Material:
 
     @staticmethod
+    def set_stencil(b_mat, n_alpha_prop):
+        NifLog.debug("Stencil prop detected")
+        b_mat.use_backface_culling = False
+
+        return b_mat
+
+    @staticmethod
     def set_alpha(b_mat, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
-        b_mat.use_transparency = True
-        # TODO [property][material] map alpha material property value
-        b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-        b_mat.offset_z = n_alpha_prop.threshold  # transparency threshold
+        # flags is a bitfield
+        blend_enable = 1 & n_alpha_prop.flags
+        test_enable = (1 << 9) & n_alpha_prop.flags
+        if blend_enable and test_enable:
+            b_mat.blend_method = "HASHED"
+            b_mat.shadow_method = "HASHED"
+        elif blend_enable:
+            b_mat.blend_method = "BLEND"
+            b_mat.shadow_method = "HASHED"
+        elif test_enable:
+            b_mat.blend_method = "CLIP"
+            b_mat.shadow_method = "CLIP"
+        else:
+            b_mat.blend_method = "OPAQUE"
+            b_mat.shadow_method = "OPAQUE"
+
+        b_mat.alpha_threshold = n_alpha_prop.threshold  # transparency threshold
         b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
 
         return b_mat

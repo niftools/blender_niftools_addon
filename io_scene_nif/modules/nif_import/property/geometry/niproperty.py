@@ -95,7 +95,8 @@ class NiPropertyProcessor:
 
     def process_nistencil_property(self, prop):
         """Stencil (for double sided meshes"""
-        self.b_mesh.show_double_sided = True  # We don't check flags for now, nothing fancy
+        b_mat = self._find_or_create_material()
+        Material.set_stencil(b_mat, prop)
         NifLog.debug("NiStencilProperty property processed")
 
     def process_nispecular_property(self, prop):
@@ -130,7 +131,8 @@ class NiPropertyProcessor:
     def process_niwireframe_property(self, prop):
         """Material based specular"""
         b_mat = self._find_or_create_material()
-        b_mat.type = 'WIRE'
+        # todo [material] upgrade needed
+        # b_mat.type = 'WIRE'
         NifLog.debug("NiWireframeProperty property processed")
 
     def process_nivertexcolor_property(self, prop):
@@ -143,6 +145,8 @@ class NiPropertyProcessor:
         b_mats = self.b_mesh.materials
         if len(b_mats) == 0:
             b_mat = bpy.data.materials.new("")
+            # do initial settings for the material here
+            b_mat.use_backface_culling = True
             self.b_mesh.materials.append(b_mat)
             NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
         else:
