@@ -42,6 +42,9 @@ class Vertex:
 
     @staticmethod
     def map_vertex_colors(b_mesh, n_data, v_map):
+        # todo [mesh] breaks, fixme
+        return
+
         # vertex colors
         if b_mesh.polygons and n_data.vertex_colors:
             n_vcol_map = list()
