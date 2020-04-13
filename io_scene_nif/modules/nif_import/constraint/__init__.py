@@ -114,6 +114,9 @@ class Constraint:
                 NifLog.warn("Unknown constraint type ({0}), skipped".format(hkconstraint.__class__.__name__))
                 continue
 
+            # todo [constraints] the following is no longer possible, fixme
+            return
+
             # add the constraint as a rigid body joint
             b_constr = b_hkobj.constraints.new('RIGID_BODY_JOINT')
             b_constr.name = b_hkobj.name
