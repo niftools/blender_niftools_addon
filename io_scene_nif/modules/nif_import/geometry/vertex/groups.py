@@ -120,7 +120,7 @@ class VertexGroup:
                 vold.z = vnew.z
 
     @staticmethod
-    def import_skin(ni_block, b_obj, v_map):
+    def import_skin(ni_block, b_obj):
         """Import a NiSkinInstance and its contents as vertex groups"""
         skininst = ni_block.skin_instance
         if skininst:
@@ -142,7 +142,7 @@ class VertexGroup:
                     for skinWeight in vertex_weights:
                         vert = skinWeight.index
                         weight = skinWeight.weight
-                        v_group.add([v_map[vert]], weight, 'REPLACE')
+                        v_group.add([vert], weight, 'REPLACE')
 
             # WLP2 - hides the weights in the partition
             else:
@@ -161,7 +161,7 @@ class VertexGroup:
                             if w > 0:
                                 group_name = block_bone_names[b_i]
                                 v_group = b_obj.vertex_groups[group_name]
-                                v_group.add([v_map[vert]], w, 'REPLACE')
+                                v_group.add([vert], w, 'REPLACE')
 
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
@@ -181,7 +181,7 @@ class VertexGroup:
                     bodypart_flag.append(bodypart.part_flag)
 
                 # find vertex indices of this group
-                groupverts = [v_map[v_index] for v_index in skinpartblock.vertex_map]
+                groupverts = [v_index for v_index in skinpartblock.vertex_map]
 
                 # create the group
                 v_group.add(groupverts, 1, 'ADD')

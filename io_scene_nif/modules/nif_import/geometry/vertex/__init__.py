@@ -41,62 +41,24 @@
 class Vertex:
 
     @staticmethod
-    def map_vertex_colors(b_mesh, n_data, v_map):
-        # todo [mesh] breaks, fixme
-        return
-
-        # vertex colors
-        if b_mesh.polygons and n_data.vertex_colors:
-            n_vcol_map = list()
-            for n_vcol, n_vmap in zip(n_data.vertex_colors, v_map):
-                n_vcol_map.append((n_vcol, n_vmap))
-
-            # create vertex_layers
-            if "VertexColor" not in b_mesh.vertex_colors:
-                b_mesh.vertex_colors.new(name="VertexColor")  # color layer
-                b_mesh.vertex_colors.new(name="VertexAlpha")  # greyscale
-
-            # Mesh Vertex Color / Mesh Face
-            for b_polygon_loop in b_mesh.loops:
-                b_loop_index = b_polygon_loop.index
-                vcol = b_mesh.vertex_colors["VertexColor"].data[b_loop_index]
-                vcola = b_mesh.vertex_colors["VertexAlpha"].data[b_loop_index]
-                for n_col_index, n_map_index in n_vcol_map:
-                    if n_map_index == b_polygon_loop.vertex_index:
-                        col_list = n_col_index
-                        vcol.color.r = col_list.r
-                        vcol.color.g = col_list.g
-                        vcol.color.b = col_list.b
-                        vcola.color.v = col_list.a
-            # vertex colors influence lighting...
-            # we have to set the use_vertex_color_light flag on the material, see below
+    def map_vertex_colors(b_mesh, n_tri_data):
+        if n_tri_data.has_vertex_colors:
+            b_mesh.vertex_colors.new(name=f"RGBA")
+            b_mesh.vertex_colors[-1].data.foreach_set("color",
+                    [c for col in [n_tri_data.vertex_colors[l.vertex_index] for l in b_mesh.loops] for c in (col.r, col.g, col.b, col.a)])
 
     @staticmethod
-    def map_uv_layer(b_mesh, bf2_index, n_triangles, n_uvco, n_data):
+    def map_uv_layer(b_mesh, n_tri_data):
         """ UV coordinates, NIF files only support 'sticky' UV coordinates, and duplicates vertices to emulate hard edges and UV seam.
             So whenever a hard edge or a UV seam is present the mesh, vertices are duplicated.
             Blender only must duplicate vertices for hard edges; duplicating for UV seams would introduce unnecessary hard edges."""
 
-        # only import UV if there are polygons (some corner cases have only one vertex, and no polygons, and b_mesh.faceUV = 1 on such mesh raises a runtime error)
-        if b_mesh.polygons:
-            for n_uv_set in range(len(n_data.uv_sets)):
-                # Set the face UV's for the mesh. The NIF format only supports vertex UV's.
-                # However Blender only allows explicit editing of face  UV's, so load vertex UV's as face UV's
-                uv_layer = Vertex.get_uv_layer_name(n_uv_set)
-                if uv_layer not in b_mesh.uv_layers:
-                    b_mesh.uv_layers.new(name=uv_layer)
-
-                b_uv_layer = b_mesh.uv_layers[uv_layer].data[:]
-                for b_f_index, f in enumerate(n_triangles):
-                    if b_f_index is None:
-                        continue
-                    v1, v2, v3 = f
-                    b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
-                    b_uv_layer[b_poly_index.loop_start].uv = n_uvco[n_uv_set][v1]
-                    b_uv_layer[b_poly_index.loop_start + 1].uv = n_uvco[n_uv_set][v2]
-                    b_uv_layer[b_poly_index.loop_start + 2].uv = n_uvco[n_uv_set][v3]
-            # b_mesh.uv_textures.active_index = 0
+        # "sticky" UV coordinates: these are transformed in Blender UV's
+        for uv_i, uv_set in enumerate(n_tri_data.uv_sets):
+            b_mesh.uv_layers.new(name=f"UV{uv_i}")
+            b_mesh.uv_layers[-1].data.foreach_set("uv",
+                                              [c for uv in [uv_set[l.vertex_index] for l in b_mesh.loops] for c in (uv.u, 1.0 - uv.v)])
 
     @staticmethod
     def get_uv_layer_name(uvset):
-        return "UVMap-{:d}".format(uvset)
+        return "UV{:d}".format(uvset)
