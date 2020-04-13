@@ -224,8 +224,6 @@ class NifImport(NifCommon):
         if not n_block:
             return None
 
-        # start with no grouping
-        geom_group = []
         NifLog.info("Importing data for block '{0}'".format(n_block.name.decode()))
         if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
             return self.objecthelper.import_geometry_object(b_armature, n_block)
@@ -252,28 +250,12 @@ class NifImport(NifCommon):
                 b_obj.niftools.boneflags = n_block.flags
 
             else:
-                # this may be a grouping node
-                geom_group = Object.get_grouped_geoms(n_block)
+                # import as an empty
+                b_obj = NiTypes.import_empty(n_block)
 
-                # if importing animation, remove children that have morph controllers from geometry group
-                if NifOp.props.animation:
-                    for child in geom_group:
-                        if util_math.find_controller(child, NifFormat.NiGeomMorpherController):
-                            geom_group.remove(child)
-
-                # import geometry/empty
-                if not geom_group or not NifOp.props.combine_shapes:
-                    # no grouping node, or too many materials to group the geometry into a single mesh
-                    # so import it as an empty
-                    b_obj = NiTypes.import_empty(n_block)
-
-                    geom_group = []
-                else:
-                    b_obj = self.objecthelper.import_group_geometry(b_armature, geom_group, n_block)
-
-            # find children that aren't part of the geometry group
+            # find children
             b_children = []
-            n_children = [child for child in n_block.children if child not in geom_group]
+            n_children = [child for child in n_block.children]
             for n_child in n_children:
                 b_child = self.import_branch(n_child, b_armature=b_armature, n_armature=n_armature)
                 if b_child and isinstance(b_child, bpy.types.Object):

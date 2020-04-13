@@ -238,8 +238,6 @@ class Armature:
             if isinstance(bone, NifFormat.NiLODNode):
                 # LOD nodes are never bones
                 continue
-            if Object.get_grouped_geoms(bone):
-                continue
             if bone not in self.dict_armatures[skelroot]:
                 self.dict_armatures[skelroot].append(bone)
                 NifLog.debug("'{0}' marked as extra bone of armature '{1}'".format(bone.name, skelroot.name))

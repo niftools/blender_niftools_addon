@@ -132,39 +132,6 @@ class Object:
         else:
             raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
 
-    @staticmethod
-    def get_grouped_geoms(n_block):
-        """Determine whether node is grouping node.
-        Returns the children which are grouped, or empty list if it is not a grouping node.
-        """
-        # combining shapes: disable grouping
-        if not NifOp.props.combine_shapes:
-            return []
-
-        # check that it is a ninode
-        if not isinstance(n_block, NifFormat.NiNode):
-            return []
-
-        # NiLODNodes are never grouping nodes (this ensures that they are imported as empties, with LODs as child meshes)
-        if isinstance(n_block, NifFormat.NiLODNode):
-            return []
-
-        # root collision node: join everything
-        if isinstance(n_block, NifFormat.RootCollisionNode):
-            return [child for child in n_block.children if isinstance(child, NifFormat.NiTriBasedGeom)]
-
-        # check that node has name
-        node_name = n_block.name
-        if not node_name:
-            return []
-
-        # strip "NonAccum" trailer, if present
-        if node_name[-9:].lower() == " nonaccum":
-            node_name = node_name[:-9]
-
-        # get all geometry children
-        return [child for child in n_block.children if (isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1)]
-
     def create_mesh_object(self, n_block):
         ni_name = n_block.name.decode()
         # create mesh data
@@ -179,22 +146,6 @@ class Object:
         else:
             b_obj.display_type = 'TEXTURED'  # not hidden: shaded
 
-        return b_obj
-
-    def import_group_geometry(self, b_armature, n_geoms, n_block):
-        # node groups geometries, so import it as a mesh
-        NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name.decode() for child in n_geoms], n_block.name.decode()))
-        b_obj = self.create_mesh_object(n_block)
-        b_obj.matrix_local = util_math.import_matrix(n_block)
-        bpy.context.view_layer.objects.active = b_obj
-        for child in n_geoms:
-            self.mesh.import_mesh(child, b_obj)
-
-            # store flags etc
-            self.import_object_flags(child, b_obj)
-        # is there skinning on any of the grouped geometries?
-        if any(child.skin_instance for child in n_geoms):
-            self.append_armature_modifier(b_obj, b_armature)
         return b_obj
 
     def import_geometry_object(self, b_armature, n_block):

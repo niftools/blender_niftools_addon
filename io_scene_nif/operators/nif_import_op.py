@@ -126,12 +126,6 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         description="Parts of nif to be imported.",
         default="EVERYTHING")
 
-    # Import multi-material shapes as a single mesh.
-    combine_shapes: bpy.props.BoolProperty(
-        name="Combine Shapes",
-        description="Import multi-material shapes as a single mesh.",
-        default=False)
-
     # Merge vertices that have identical location and normal values.
     combine_vertices: bpy.props.BoolProperty(
         name="Combine Vertices",
