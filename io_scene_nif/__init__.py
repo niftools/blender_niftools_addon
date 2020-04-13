@@ -110,10 +110,13 @@ classes = (
 
     properties.armature.BoneProperty,
     properties.armature.ArmatureProperty,
+    properties.collision.CollisionProperty,
+    properties.constraint.ConstraintProperty,
     properties.scene.Scene,
 
     ui.armature.BonePanel,
     ui.armature.ArmaturePanel,
+    ui.collision.CollisionBoundsPanel,
     ui.scene.ScenePanel,
     )
 
@@ -132,6 +135,8 @@ def register():
     # register all property groups after their classes have been registered
     bpy.types.Bone.niftools = bpy.props.PointerProperty(type=properties.armature.BoneProperty)
     bpy.types.Armature.niftools = bpy.props.PointerProperty(type=properties.armature.ArmatureProperty)
+    bpy.types.Object.nifcollision = bpy.props.PointerProperty(type=properties.collision.CollisionProperty)
+    bpy.types.Object.niftools_constraint = bpy.props.PointerProperty(type=properties.constraint.ConstraintProperty)
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
 
 

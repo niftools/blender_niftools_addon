@@ -55,8 +55,7 @@ class BonePanel(Panel):
         if context.bone:
             nif_bone_props = context.bone.niftools
 
-            layout = self.layout
-            row = layout.column()
+            row = self.layout.column()
 
             row.prop(nif_bone_props, "boneflags")
             row.prop(nif_bone_props, "bonepriority")
