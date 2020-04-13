@@ -47,64 +47,42 @@ from bpy.types import PropertyGroup
 
 
 class BoneProperty(PropertyGroup):
-    @classmethod
-    def register(cls):
-        bpy.types.Bone.niftools = PointerProperty(
-            name='Niftools Bone Property',
-            description='Additional bone properties used by the Nif File Format',
-            type=cls,
-        )
-        # TODO [object][proprerty][flag] This is probably a general object flag which should be available to all generic objects
-        cls.boneflags = IntProperty(
-            name='Bone Flag',
-            default=0
-        )
-        cls.bonepriority = IntProperty(
-            name='Bone Priority',
-            default=0
-        )
-        cls.longname = StringProperty(
-            name='Nif Long Name'
-        )
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Bone.niftools
+    # TODO [object][proprerty][flag] This is probably a general object flag which should be available to all generic objects
+    boneflags: IntProperty(
+        name='Bone Flag',
+        default=0
+    )
+    bonepriority: IntProperty(
+        name='Bone Priority',
+        default=0
+    )
+    longname: StringProperty(
+        name='Nif Long Name'
+    )
 
 
 class ArmatureProperty(PropertyGroup):
-    @classmethod
-    def register(cls):
-        bpy.types.Armature.niftools = PointerProperty(
-            name='Niftools Armature Property',
-            description='Additional armature properties used by the Nif File Format',
-            type=cls,
-        )
 
-        cls.axis_forward = EnumProperty(
-                name="Forward",
-                items=(('X', "X Forward", ""),
-                       ('Y', "Y Forward", ""),
-                       ('Z', "Z Forward", ""),
-                       ('-X', "-X Forward", ""),
-                       ('-Y', "-Y Forward", ""),
-                       ('-Z', "-Z Forward", ""),
-                       ),
-                default="X",
-                )
+    axis_forward: EnumProperty(
+            name="Forward",
+            items=(('X', "X Forward", ""),
+                   ('Y', "Y Forward", ""),
+                   ('Z', "Z Forward", ""),
+                   ('-X', "-X Forward", ""),
+                   ('-Y', "-Y Forward", ""),
+                   ('-Z', "-Z Forward", ""),
+                   ),
+            default="X",
+            )
 
-        cls.axis_up = EnumProperty(
-                name="Up",
-                items=(('X', "X Up", ""),
-                       ('Y', "Y Up", ""),
-                       ('Z', "Z Up", ""),
-                       ('-X', "-X Up", ""),
-                       ('-Y', "-Y Up", ""),
-                       ('-Z', "-Z Up", ""),
-                       ),
-                default="Y",
-                )
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Armature.niftools
+    axis_up: EnumProperty(
+            name="Up",
+            items=(('X', "X Up", ""),
+                   ('Y', "Y Up", ""),
+                   ('Z', "Z Up", ""),
+                   ('-X', "-X Up", ""),
+                   ('-Y', "-Y Up", ""),
+                   ('-Z', "-Z Up", ""),
+                   ),
+            default="Y",
+            )

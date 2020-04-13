@@ -107,8 +107,13 @@ classes = (
     operators.nif_import_op.NifImportOperator,
     operators.kf_import_op.KfImportOperator,
     operators.nif_export_op.NifExportOperator,
+
+    properties.armature.BoneProperty,
+    properties.armature.ArmatureProperty,
     properties.scene.Scene,
 
+    ui.armature.BonePanel,
+    ui.armature.ArmaturePanel,
     ui.scene.ScenePanel,
     )
 
@@ -125,6 +130,8 @@ def register():
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
     # register all property groups after their classes have been registered
+    bpy.types.Bone.niftools = bpy.props.PointerProperty(type=properties.armature.BoneProperty)
+    bpy.types.Armature.niftools = bpy.props.PointerProperty(type=properties.armature.ArmatureProperty)
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
 
 
