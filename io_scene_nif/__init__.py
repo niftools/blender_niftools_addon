@@ -137,6 +137,9 @@ classes = (
 
     properties.scene.Scene,
 
+    properties.shader.ShaderProps,
+
+
     ui.armature.BonePanel,
     ui.armature.ArmaturePanel,
     ui.collision.CollisionBoundsPanel,
@@ -151,6 +154,8 @@ classes = (
     ui.object.ObjectInvMarkerPanel,
 
     ui.scene.ScenePanel,
+
+    ui.shader.ObjectShader,
     )
 
 
@@ -175,12 +180,11 @@ def register():
     bpy.types.Material.niftools = bpy.props.PointerProperty(type=properties.material.Material)
     bpy.types.Material.niftools_alpha = bpy.props.PointerProperty(type=properties.material.AlphaFlags)
 
-    # bpy.types.Object.extra_data = bpy.props.CollectionProperty(type=properties.object.ExtraDataStore)
-    # bpy.types.Object.extra_data = bpy.props.CollectionProperty(type=properties.object.ExtraData)
     bpy.types.Object.niftools = bpy.props.PointerProperty(type=properties.object.ObjectProperty)
     bpy.types.Object.niftools_bs_invmarker = bpy.props.CollectionProperty(type=properties.object.BsInventoryMarker)
 
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
+    bpy.types.Material.niftools_shader = bpy.props.PointerProperty(type=properties.shader.ShaderProps)
 
 
 def unregister():
