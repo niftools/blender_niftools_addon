@@ -133,7 +133,7 @@ class Object:
             raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
 
     @staticmethod
-    def is_grouping_node(n_block):
+    def get_grouped_geoms(n_block):
         """Determine whether node is grouping node.
         Returns the children which are grouped, or empty list if it is not a grouping node.
         """

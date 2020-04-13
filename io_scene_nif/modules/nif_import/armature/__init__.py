@@ -238,7 +238,7 @@ class Armature:
             if isinstance(bone, NifFormat.NiLODNode):
                 # LOD nodes are never bones
                 continue
-            if Object.is_grouping_node(bone):
+            if Object.get_grouped_geoms(bone):
                 continue
             if bone not in self.dict_armatures[skelroot]:
                 self.dict_armatures[skelroot].append(bone)

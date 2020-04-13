@@ -253,7 +253,7 @@ class NifImport(NifCommon):
 
             else:
                 # this may be a grouping node
-                geom_group = Object.is_grouping_node(n_block)
+                geom_group = Object.get_grouped_geoms(n_block)
 
                 # if importing animation, remove children that have morph controllers from geometry group
                 if NifOp.props.animation:
