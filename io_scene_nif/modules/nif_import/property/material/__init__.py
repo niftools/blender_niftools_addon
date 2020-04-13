@@ -79,16 +79,6 @@ class Material:
                 else:
                     # non-textured material: vertex colors influence color
                     b_mat.use_vertex_color_paint = True
-
-            # if there's a base texture assigned to this material display it in Blender's 3D view, but only if there are UV coordinates
-            if mbasetex and mbasetex.texture and n_uvco:
-                image = mbasetex.texture.image
-                if image:
-                    for b_polyimage_index in f_map:
-                        if b_polyimage_index is None:
-                            continue
-                        tface = b_mesh.uv_textures.active.data[b_polyimage_index]
-                        tface.image = image
     """
 
     @staticmethod
