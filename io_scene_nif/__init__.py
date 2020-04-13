@@ -123,12 +123,16 @@ classes = (
     properties.constraint.ConstraintProperty,
     properties.geometry.SkinPartHeader,
     properties.geometry.SkinPartFlags,
+    properties.material.Material,
+    properties.material.AlphaFlags,
     properties.scene.Scene,
 
     ui.armature.BonePanel,
     ui.armature.ArmaturePanel,
     ui.collision.CollisionBoundsPanel,
     ui.geometry.PartFlag,
+    ui.material.NifMatFlagPanel,
+    ui.material.NifMatColorPanel,
     ui.scene.ScenePanel,
     )
 
@@ -151,6 +155,8 @@ def register():
     bpy.types.Object.niftools_constraint = bpy.props.PointerProperty(type=properties.constraint.ConstraintProperty)
     bpy.types.Object.niftools_part_flags_panel = bpy.props.PointerProperty(type=properties.geometry.SkinPartHeader)
     bpy.types.Object.niftools_part_flags = bpy.props.CollectionProperty(type=properties.geometry.SkinPartFlags)
+    bpy.types.Material.niftools = bpy.props.PointerProperty(type=properties.material.Material)
+    bpy.types.Material.niftools_alpha = bpy.props.PointerProperty(type=properties.material.AlphaFlags)
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
 
 

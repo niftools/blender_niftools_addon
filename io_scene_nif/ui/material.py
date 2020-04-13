@@ -48,16 +48,16 @@ class NifMatFlagPanel(Panel):
     bl_region_type = 'WINDOW'
     bl_context = "material"
 
-    @classmethod
-    def poll(cls, context):
-        mat = context.material
-        if mat is not None:
-            if mat.use_nodes:
-                if mat.active_node_material is not None:
-                    return True
-                return False
-            return True
-        return False
+    # @classmethod
+    # def poll(cls, context):
+    #     mat = context.material
+    #     if mat is not None:
+    #         if mat.use_nodes:
+    #             if mat.active_node_material is not None:
+    #                 return True
+    #             return False
+    #         return True
+    #     return False
 
     def draw(self, context):
         matalpha = context.material.niftools_alpha
@@ -77,16 +77,16 @@ class NifMatColorPanel(Panel):
     bl_region_type = 'WINDOW'
     bl_context = "material"
 
-    @classmethod
-    def poll(cls, context):
-        mat = context.material
-        if mat is not None:
-            if mat.use_nodes:
-                if mat.active_node_material is not None:
-                    return True
-                return False
-            return True
-        return False
+    # @classmethod
+    # def poll(cls, context):
+    #     mat = context.material
+    #     if mat is not None:
+    #         if mat.use_nodes:
+    #             if mat.active_node_material is not None:
+    #                 return True
+    #             return False
+    #         return True
+    #     return False
 
     def draw(self, context):
         mat = context.material.niftools
