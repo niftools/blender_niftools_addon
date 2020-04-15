@@ -70,6 +70,26 @@ class Mesh:
         self.material_anim = MaterialAnimation()
         self.morph_anim = MorphAnimation()
 
+    def select_unweighted_vertices(self, unassigned_verts):
+        # vertices must be assigned at least one vertex group lets be nice and display them for the user
+        if len(unassigned_verts) > 0:
+            for b_scene_obj in bpy.context.scene.objects:
+                b_scene_obj.select_set(False)
+
+            b_obj = bpy.context.view_layer.objects.active
+            b_obj.select_set(True)
+
+            # switch to edit mode and raise exception
+            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+            # clear all currently selected vertices
+            bpy.ops.mesh.select_all(action='DESELECT')
+            # select unweighted vertices
+            bpy.ops.mesh.select_ungrouped(extend=False)
+
+            raise util_math.NifError("Cannot export mesh with unweighted vertices. "
+                                     "The unweighted vertices have been selected in the mesh so they can easily be identified.")
+
+
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """
         Export a blender object ob of the type mesh, child of nif block
@@ -611,7 +631,6 @@ class Mesh:
 
             # now export the vertex weights, if there are any
             vertgroups = {vertex_group.name for vertex_group in b_obj.vertex_groups}
-            bone_names = []
             if b_obj.parent:
                 if b_obj.parent.type == 'ARMATURE':
                     b_obj_armature = b_obj.parent
@@ -673,24 +692,7 @@ class Mesh:
                                 else:
                                     vert_norm[v[0]] = v[1]
 
-                        # TODO [object] Extract to method
-                        # vertices must be assigned at least one vertex group lets be nice and display them for the user
-                        if len(unassigned_verts) > 0:
-                            for b_scene_obj in bpy.context.scene.objects:
-                                b_scene_obj.select_set(False)
-
-                            b_obj = bpy.context.view_layer.objects.active
-                            b_obj.select_set(True)
-
-                            # switch to edit mode and raise exception
-                            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-                            # clear all currently selected vertices
-                            bpy.ops.mesh.select_all(action='DESELECT')
-                            # select unweighted vertices
-                            bpy.ops.mesh.select_ungrouped(extend=False)
-
-                            raise util_math.NifError("Cannot export mesh with unweighted vertices. "
-                                                     "The unweighted vertices have been selected in the mesh so they can easily be identified.")
+                        self.select_unweighted_vertices(unassigned_verts)
 
                         # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                         # note: allocate memory for faster performance
