@@ -70,26 +70,6 @@ class Mesh:
         self.material_anim = MaterialAnimation()
         self.morph_anim = MorphAnimation()
 
-    def select_unweighted_vertices(self, unassigned_verts):
-        # vertices must be assigned at least one vertex group lets be nice and display them for the user
-        if len(unassigned_verts) > 0:
-            for b_scene_obj in bpy.context.scene.objects:
-                b_scene_obj.select_set(False)
-
-            b_obj = bpy.context.view_layer.objects.active
-            b_obj.select_set(True)
-
-            # switch to edit mode and raise exception
-            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-            # clear all currently selected vertices
-            bpy.ops.mesh.select_all(action='DESELECT')
-            # select unweighted vertices
-            bpy.ops.mesh.select_ungrouped(extend=False)
-
-            raise util_math.NifError("Cannot export mesh with unweighted vertices. "
-                                     "The unweighted vertices have been selected in the mesh so they can easily be identified.")
-
-
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
         """
         Export a blender object ob of the type mesh, child of nif block
@@ -630,16 +610,14 @@ class Mesh:
                     trishape.update_tangent_space(as_extra=(NifOp.props.game == 'OBLIVION'))
 
             # now export the vertex weights, if there are any
-            vertgroups = {vertex_group.name for vertex_group in b_obj.vertex_groups}
             if b_obj.parent:
                 if b_obj.parent.type == 'ARMATURE':
                     b_obj_armature = b_obj.parent
-                    bone_names = list(b_obj_armature.data.bones.keys())
+                    vertgroups = {vertex_group.name for vertex_group in b_obj.vertex_groups}
+                    bone_names = set(b_obj_armature.data.bones.keys())
                     # the vertgroups that correspond to bone_names are bones that influence the mesh
-                    boneinfluences = []
-                    for bone in bone_names:
-                        if bone in vertgroups:
-                            boneinfluences.append(bone)
+                    boneinfluences = vertgroups & bone_names
+                    print(boneinfluences)
                     if boneinfluences:  # yes we have skinning!
                         # create new skinning instance block and link it
                         if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
@@ -692,24 +670,14 @@ class Mesh:
                                 else:
                                     vert_norm[v[0]] = v[1]
 
-                        self.select_unweighted_vertices(unassigned_verts)
+                        self.select_unassigned_vertices(unassigned_verts)
 
                         # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                         # note: allocate memory for faster performance
                         vert_added = [False for _ in range(len(vertlist))]
-                        for bone_index, bone in enumerate(boneinfluences):
+                        for bone in boneinfluences:
                             # find bone in exported blocks
-                            bone_block = None
-                            for block in block_store.block_to_obj:
-                                if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == block_store.get_full_name(b_obj_armature.data.bones[bone]):
-                                        if not bone_block:
-                                            bone_block = block
-                                        else:
-                                            raise util_math.NifError("Multiple bones with name '{0}': probably you have multiple armatures. "
-                                                                     "Please parent all meshes to a single armature and try again".format(bone))
-                            if not bone_block:
-                                raise util_math.NifError("Bone '{0}' not found.".format(bone))
+                            bone_block = self.get_bone_block(bone)
 
                             # find vertex weights
                             vert_weights = {}
@@ -785,6 +753,42 @@ class Mesh:
             # export EGM or NiGeomMorpherController animation
             self.morph_anim.export_morph(b_mesh, trishape, vertmap)
         return trishape
+
+    def get_bone_block(self, bone_name):
+        """For a bone name, return the corresponding nif node from the blocks that have already been exported"""
+        bone_block = None
+        for block in block_store.block_to_obj:
+            if isinstance(block, NifFormat.NiNode):
+                if block.name.decode() == block_store.get_full_name(b_obj_armature.data.bones[bone_name]):
+                    if not bone_block:
+                        bone_block = block
+                    else:
+                        raise util_math.NifError("Multiple bones with name '{0}': probably you have multiple armatures. "
+                                                 "Please parent all meshes to a single armature and try again".format(bone_name))
+        if not bone_block:
+            raise util_math.NifError("Bone '{0}' not found.".format(bone))
+        return bone_block
+
+    # todo [mesh] join code paths for those two?
+    def select_unassigned_vertices(self, unassigned_verts):
+        # vertices must be assigned at least one vertex group lets be nice and display them for the user
+        if len(unassigned_verts) > 0:
+            for b_scene_obj in bpy.context.scene.objects:
+                b_scene_obj.select_set(False)
+
+            b_obj = bpy.context.view_layer.objects.active
+            b_obj.select_set(True)
+
+            # switch to edit mode and raise exception
+            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+            # clear all currently selected vertices
+            bpy.ops.mesh.select_all(action='DESELECT')
+            # select unweighted vertices
+            bpy.ops.mesh.select_ungrouped(extend=False)
+
+            raise util_math.NifError("Cannot export mesh with unweighted vertices. "
+                                     "The unweighted vertices have been selected in the mesh so they can easily be identified.")
+
 
     def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""

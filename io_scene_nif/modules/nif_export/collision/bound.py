@@ -165,7 +165,7 @@ class NiCollision(Collision):
         matrix = util_math.get_object_bind(b_obj)
         offset = matrix.translation
         # calculate the direction unit vector
-        v_dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
+        v_dir = (mathutils.Vector((0, 0, 1)) @ matrix.to_3x3().inverted()).normalized()
         extent = b_obj.dimensions.z - b_obj.dimensions.x
         radius = b_obj.dimensions.x / 2
 
