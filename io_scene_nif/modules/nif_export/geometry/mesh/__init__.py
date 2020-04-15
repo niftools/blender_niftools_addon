@@ -112,21 +112,7 @@ class Mesh:
         mesh_doublesided = True
 
         # vertex color check
-        mesh_hasvcol = False
-        mesh_hasvcola = False
-
-        if b_mesh.vertex_colors:
-            mesh_hasvcol = True
-
-            # vertex alpha check
-            if len(b_mesh.vertex_colors) == 1:
-                NifLog.warn("Mesh only has one Vertex Color layer. Default alpha values will be written."
-                            "For Custom alpha values add a second vertex layer, greyscale only")
-            else:
-                for b_loop in b_mesh.vertex_colors[1].data:
-                    if b_loop.color.v > NifOp.props.epsilon:
-                        mesh_hasvcola = True
-                        break
+        mesh_hasvcol = b_mesh.vertex_colors
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
@@ -194,7 +180,7 @@ class Mesh:
                 if b_mat.blend_method != "OPAQUE":
                     if abs(mesh_mat_transparency - 1.0) > NifOp.props.epsilon:
                         mesh_hasalpha = True
-                elif mesh_hasvcola:
+                elif mesh_hasvcol:
                     mesh_hasalpha = True
                 elif b_mat.animation_data and 'Alpha' in b_mat.animation_data.action.fcurves:
                     mesh_hasalpha = True
@@ -467,13 +453,7 @@ class Mesh:
 
                     # TODO [geomotry][mesh] Need to map b_verts -> n_verts
                     if mesh_hasvcol:
-                        # check for an alpha layer
-                        b_color = b_mesh.vertex_colors[0].data[loop_index].color
-                        if mesh_hasvcola:
-                            b_alpha = b_mesh.vertex_colors[1].data[loop_index].color
-                            f_col = [b_color.r, b_color.g, b_color.b, b_alpha.v]
-                        else:
-                            f_col = [b_color.r, b_color.g, b_color.b, 1.0]
+                        f_col = list(b_mesh.vertex_colors[0].data[loop_index].color)
                     else:
                         f_col = None
 
