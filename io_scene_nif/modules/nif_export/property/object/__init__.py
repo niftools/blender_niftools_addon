@@ -159,7 +159,7 @@ class ObjectDataProperty:
     def has_collision():
         """Helper function that determines if a blend file contains a collider."""
         for b_obj in bpy.data.objects:
-            if b_obj.game.use_collision_bounds:
+            if b_obj.display_type == "BOUNDS":
                 return b_obj
 
     # TODO [object][property] Move to object property

@@ -108,7 +108,8 @@ class Mesh:
             mesh_materials = [None]
 
         # is mesh double sided?
-        mesh_doublesided = b_mesh.show_double_sided
+        # todo [mesh/material] detect from material settings!
+        mesh_doublesided = True
 
         # vertex color check
         mesh_hasvcol = False
@@ -142,16 +143,17 @@ class Mesh:
             b_alpha_prop = False
             b_emit_prop = False
 
-            # use the texture properties as preference
-            for b_slot in self.texture_helper.get_used_textslots(b_mat):
-                # replace with texture helper queries
-                b_ambient_prop |= b_slot.use_map_ambient
-                b_diffuse_prop |= b_slot.use_map_color_diffuse
-                b_spec_prop |= b_slot.use_map_color_spec
-                b_emissive_prop |= b_slot.use_map_emit
-                b_gloss_prop |= b_slot.use_map_hardness
-                b_alpha_prop |= b_slot.use_map_alpha
-                b_emit_prop |= b_slot.use_map_emit
+            # todo [material/texture] reimplement for node materials
+            # # use the texture properties as preference
+            # for b_slot in self.texture_helper.get_used_textslots(b_mat):
+            #     # replace with texture helper queries
+            #     b_ambient_prop |= b_slot.use_map_ambient
+            #     b_diffuse_prop |= b_slot.use_map_color_diffuse
+            #     b_spec_prop |= b_slot.use_map_color_spec
+            #     b_emissive_prop |= b_slot.use_map_emit
+            #     b_gloss_prop |= b_slot.use_map_hardness
+            #     b_alpha_prop |= b_slot.use_map_alpha
+            #     b_emit_prop |= b_slot.use_map_emit
 
             # -> first, extract valuable info from our b_obj
 
@@ -174,7 +176,8 @@ class Mesh:
                 mesh_mat_diffuse_color = b_mat.diffuse_color
                 # emissive mat
                 mesh_mat_emissive_color = b_mat.niftools.emissive_color
-                mesh_mat_emitmulti = b_mat.emit
+                # mesh_mat_emitmulti = b_mat.emit
+                mesh_mat_emitmulti = b_mat.niftools.emissive_color
                 # specular mat
                 mesh_mat_specular_color = b_mat.specular_color
 
@@ -183,12 +186,12 @@ class Mesh:
                     mesh_hasspec = b_spec_prop
 
                 # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = b_mat.specular_hardness
+                mesh_mat_gloss = b_mat.specular_intensity
 
                 # alpha mat
                 mesh_hasalpha = b_alpha_prop
-                mesh_mat_transparency = (1 - b_mat.alpha)
-                if b_mat.use_transparency:
+                mesh_mat_transparency = 1
+                if b_mat.blend_method != "OPAQUE":
                     if abs(mesh_mat_transparency - 1.0) > NifOp.props.epsilon:
                         mesh_hasalpha = True
                 elif mesh_hasvcola:
@@ -197,7 +200,9 @@ class Mesh:
                     mesh_hasalpha = True
 
                 # wire mat
-                mesh_haswire = (b_mat.type == 'WIRE')
+                # mesh_haswire = (b_mat.type == 'WIRE')
+                # todo [material] find alternative
+                mesh_haswire = False
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
@@ -279,58 +284,58 @@ class Mesh:
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
                 util_math.set_object_matrix(b_obj, trishape)
-
-            # add textures
-            if NifOp.props.game == 'FALLOUT_3':
-                if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-                    block_store.register_block(bsshader)
-                    trishape.add_property(bsshader)
-            elif NifOp.props.game == 'SKYRIM':
-                if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-                    block_store.register_block(bsshader)
-                    num_props = trishape.num_properties
-                    trishape.num_properties = num_props + 1
-                    trishape.bs_properties.update_size()
-                    trishape.bs_properties[num_props] = bsshader
-
-            else:
-                if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
-                    # sid meier's railroad and civ4: set shader slots in extra data
-                    self.texture_helper.add_shader_integer_extra_datas(trishape)
-
-                if b_mat:
-                    n_nitextureprop = self.texture_helper.export_texturing_property(
-                        flags=0x0001,  # standard
-                        # TODO [object][texture][material] Move out and break dependency
-                        applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
-                        b_mat=b_mat)
-
-                    block_store.register_block(n_nitextureprop)
-                    trishape.add_property(n_nitextureprop)
-
-            # add texture effect block (must be added as preceding child of the trishape)
-            if n_parent:
-                ref_mtex = self.texture_helper.b_ref_slot
-                if NifOp.props.game == 'MORROWIND' and ref_mtex:
-                    # create a new parent block for this shape
-                    extra_node = block_store.create_block("NiNode", ref_mtex)
-                    n_parent.add_child(extra_node)
-                    # set default values for this ninode
-                    extra_node.rotation.set_identity()
-                    extra_node.scale = 1.0
-                    extra_node.flags = 0x000C  # morrowind
-                    # create texture effect block and parent the texture effect and trishape to it
-                    texeff = self.texture_helper.export_texture_effect(ref_mtex)
-                    extra_node.add_child(texeff)
-                    extra_node.add_child(trishape)
-                    extra_node.add_effect(texeff)
-                else:
-                    # refer to this block in the parent's children list
-                    n_parent.add_child(trishape)
+            #
+            # # add textures
+            # if NifOp.props.game == 'FALLOUT_3':
+            #     if b_mat:
+            #         bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+            #
+            #         block_store.register_block(bsshader)
+            #         trishape.add_property(bsshader)
+            # elif NifOp.props.game == 'SKYRIM':
+            #     if b_mat:
+            #         bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+            #
+            #         block_store.register_block(bsshader)
+            #         num_props = trishape.num_properties
+            #         trishape.num_properties = num_props + 1
+            #         trishape.bs_properties.update_size()
+            #         trishape.bs_properties[num_props] = bsshader
+            #
+            # else:
+            #     if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+            #         # sid meier's railroad and civ4: set shader slots in extra data
+            #         self.texture_helper.add_shader_integer_extra_datas(trishape)
+            #
+            #     if b_mat:
+            #         n_nitextureprop = self.texture_helper.export_texturing_property(
+            #             flags=0x0001,  # standard
+            #             # TODO [object][texture][material] Move out and break dependency
+            #             applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
+            #             b_mat=b_mat)
+            #
+            #         block_store.register_block(n_nitextureprop)
+            #         trishape.add_property(n_nitextureprop)
+            #
+            # # add texture effect block (must be added as preceding child of the trishape)
+            # if n_parent:
+            #     ref_mtex = self.texture_helper.b_ref_slot
+            #     if NifOp.props.game == 'MORROWIND' and ref_mtex:
+            #         # create a new parent block for this shape
+            #         extra_node = block_store.create_block("NiNode", ref_mtex)
+            #         n_parent.add_child(extra_node)
+            #         # set default values for this ninode
+            #         extra_node.rotation.set_identity()
+            #         extra_node.scale = 1.0
+            #         extra_node.flags = 0x000C  # morrowind
+            #         # create texture effect block and parent the texture effect and trishape to it
+            #         texeff = self.texture_helper.export_texture_effect(ref_mtex)
+            #         extra_node.add_child(texeff)
+            #         extra_node.add_child(trishape)
+            #         extra_node.add_effect(texeff)
+            #     else:
+            #         # refer to this block in the parent's children list
+            #         n_parent.add_child(trishape)
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery refer to the alpha property in the trishape block

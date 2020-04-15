@@ -76,8 +76,9 @@ class TextureSlotManager:
     @staticmethod
     def get_used_textslots(b_mat):
         used_slots = []
-        if b_mat is not None:
-            used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
+        # todo [material] update for node materials
+        # if b_mat is not None:
+        #     used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
         return used_slots
 
     @staticmethod

@@ -101,8 +101,8 @@ class Object:
             b_obj.display_type = 'BOUNDS'
             b_obj.show_wire = True
             b_obj.display_bounds_type = 'BOX'
-            b_obj.game.use_collision_bounds = True
-            b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+            # b_obj.game.use_collision_bounds = True
+            # b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             b_obj.niftools.objectflags = n_node.flags
             b_mesh = b_obj.data
             b_mesh.validate()

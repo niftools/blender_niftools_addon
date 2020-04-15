@@ -171,7 +171,7 @@ class Object:
         elif b_obj_type == 'MESH':
             # -> mesh data.
             # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
-            is_collision = b_obj.game.use_collision_bounds
+            is_collision = b_obj.display_type == "BOUNDS"
             has_children = len(b_obj_children) > 0
             is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
 
