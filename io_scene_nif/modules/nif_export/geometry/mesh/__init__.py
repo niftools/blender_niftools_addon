@@ -302,26 +302,27 @@ class Mesh:
             #
             #         block_store.register_block(n_nitextureprop)
             #         trishape.add_property(n_nitextureprop)
-            #
-            # # add texture effect block (must be added as preceding child of the trishape)
-            # if n_parent:
-            #     ref_mtex = self.texture_helper.b_ref_slot
-            #     if NifOp.props.game == 'MORROWIND' and ref_mtex:
-            #         # create a new parent block for this shape
-            #         extra_node = block_store.create_block("NiNode", ref_mtex)
-            #         n_parent.add_child(extra_node)
-            #         # set default values for this ninode
-            #         extra_node.rotation.set_identity()
-            #         extra_node.scale = 1.0
-            #         extra_node.flags = 0x000C  # morrowind
-            #         # create texture effect block and parent the texture effect and trishape to it
-            #         texeff = self.texture_helper.export_texture_effect(ref_mtex)
-            #         extra_node.add_child(texeff)
-            #         extra_node.add_child(trishape)
-            #         extra_node.add_effect(texeff)
-            #     else:
-            #         # refer to this block in the parent's children list
-            #         n_parent.add_child(trishape)
+
+            # add texture effect block (must be added as preceding child of the trishape)
+            if n_parent:
+                # ref_mtex = self.texture_helper.b_ref_slot
+                ref_mtex = False
+                if NifOp.props.game == 'MORROWIND' and ref_mtex:
+                    # create a new parent block for this shape
+                    extra_node = block_store.create_block("NiNode", ref_mtex)
+                    n_parent.add_child(extra_node)
+                    # set default values for this ninode
+                    extra_node.rotation.set_identity()
+                    extra_node.scale = 1.0
+                    extra_node.flags = 0x000C  # morrowind
+                    # create texture effect block and parent the texture effect and trishape to it
+                    texeff = self.texture_helper.export_texture_effect(ref_mtex)
+                    extra_node.add_child(texeff)
+                    extra_node.add_child(trishape)
+                    extra_node.add_effect(texeff)
+                else:
+                    # refer to this block in the parent's children list
+                    n_parent.add_child(trishape)
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery refer to the alpha property in the trishape block
@@ -621,6 +622,7 @@ class Mesh:
                     # create new skinning instance block and link it
                     n_root_name = block_store.get_full_name(b_obj_armature)
                     skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name)
+                    trishape.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
                     vert_list = {}
@@ -680,9 +682,8 @@ class Mesh:
                         if vert_weights:
                             trishape.add_bone(bone_block, vert_weights)
 
-                    # todo [mesh/object] fixme - this errors on export since meshes are currently not integrated into the node tree
                     # update bind position skinning data
-                    # trishape.update_bind_position()
+                    trishape.update_bind_position()
 
                     # calculate center and radius for each skin bone data block
                     trishape.update_skin_center_radius()
@@ -757,7 +758,6 @@ class Mesh:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
             skininst = block_store.create_block("NiSkinInstance", b_obj)
-        trishape.skin_instance = skininst
         for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiNode):
                 if block.name.decode() == n_root_name:
