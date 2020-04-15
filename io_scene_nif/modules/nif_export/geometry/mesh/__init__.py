@@ -609,143 +609,126 @@ class Mesh:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     trishape.update_tangent_space(as_extra=(NifOp.props.game == 'OBLIVION'))
 
+            # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any
-            if b_obj.parent:
-                if b_obj.parent.type == 'ARMATURE':
-                    b_obj_armature = b_obj.parent
-                    vertgroups = {vertex_group.name for vertex_group in b_obj.vertex_groups}
-                    bone_names = set(b_obj_armature.data.bones.keys())
-                    # the vertgroups that correspond to bone_names are bones that influence the mesh
-                    boneinfluences = vertgroups & bone_names
-                    print(boneinfluences)
-                    if boneinfluences:  # yes we have skinning!
-                        # create new skinning instance block and link it
-                        if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
-                            skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
-                        else:
-                            skininst = block_store.create_block("NiSkinInstance", b_obj)
-                        trishape.skin_instance = skininst
-                        for block in block_store.block_to_obj:
-                            if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == block_store.get_full_name(b_obj_armature):
-                                    skininst.skeleton_root = block
-                                    break
-                        else:
-                            raise util_math.NifError("Skeleton root '%s' not found." % b_obj_armature.name)
+            if b_obj.parent and b_obj.parent.type == 'ARMATURE':
+                b_obj_armature = b_obj.parent
+                vertgroups = {vertex_group.name for vertex_group in b_obj.vertex_groups}
+                bone_names = set(b_obj_armature.data.bones.keys())
+                # the vertgroups that correspond to bone_names are bones that influence the mesh
+                boneinfluences = vertgroups & bone_names
+                if boneinfluences:  # yes we have skinning!
+                    # create new skinning instance block and link it
+                    n_root_name = block_store.get_full_name(b_obj_armature)
+                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name)
 
-                        # create skinning data and link it
-                        skindata = block_store.create_block("NiSkinData", b_obj)
-                        skininst.data = skindata
+                    # Vertex weights,  find weights and normalization factors
+                    vert_list = {}
+                    vert_norm = {}
+                    unassigned_verts = []
 
-                        skindata.has_vertex_weights = True
-                        # fix geometry rest pose: transform relative to skeleton root
-                        skindata.set_transform(util_math.get_object_matrix(b_obj).get_inverse())
+                    for bone_group in boneinfluences:
+                        b_list_weight = []
+                        b_vert_group = b_obj.vertex_groups[bone_group]
 
-                        # Vertex weights,  find weights and normalization factors
-                        vert_list = {}
-                        vert_norm = {}
-                        unassigned_verts = []
+                        for b_vert in b_obj.data.vertices:
+                            if len(b_vert.groups) == 0:  # check vert has weight_groups
+                                unassigned_verts.append(b_vert)
+                                continue
 
-                        for bone_group in boneinfluences:
-                            b_list_weight = []
-                            b_vert_group = b_obj.vertex_groups[bone_group]
+                            for g in b_vert.groups:
+                                if b_vert_group.name in boneinfluences:
+                                    if g.group == b_vert_group.index:
+                                        b_list_weight.append((b_vert.index, g.weight))
+                                        break
 
-                            for b_vert in b_obj.data.vertices:
-                                if len(b_vert.groups) == 0:  # check vert has weight_groups
-                                    unassigned_verts.append(b_vert)
-                                    continue
+                        vert_list[bone_group] = b_list_weight
 
-                                for g in b_vert.groups:
-                                    if b_vert_group.name in boneinfluences:
-                                        if g.group == b_vert_group.index:
-                                            b_list_weight.append((b_vert.index, g.weight))
-                                            break
+                        # create normalisation groupings
+                        for v in vert_list[bone_group]:
+                            if v[0] in vert_norm:
+                                vert_norm[v[0]] += v[1]
+                            else:
+                                vert_norm[v[0]] = v[1]
 
-                            vert_list[bone_group] = b_list_weight
+                    self.select_unassigned_vertices(unassigned_verts)
 
-                            # create normalisation groupings
-                            for v in vert_list[bone_group]:
-                                if v[0] in vert_norm:
-                                    vert_norm[v[0]] += v[1]
-                                else:
-                                    vert_norm[v[0]] = v[1]
+                    # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
+                    # note: allocate memory for faster performance
+                    vert_added = [False for _ in range(len(vertlist))]
+                    for b_bone_name in boneinfluences:
+                        # find bone in exported blocks
+                        full_bone_name = block_store.get_full_name(b_obj_armature.data.bones[b_bone_name])
+                        bone_block = self.get_bone_block(full_bone_name)
 
-                        self.select_unassigned_vertices(unassigned_verts)
+                        # find vertex weights
+                        vert_weights = {}
+                        for v in vert_list[b_bone_name]:
+                            # v[0] is the original vertex index
+                            # v[1] is the weight
 
-                        # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
-                        # note: allocate memory for faster performance
-                        vert_added = [False for _ in range(len(vertlist))]
-                        for bone in boneinfluences:
-                            # find bone in exported blocks
-                            bone_block = self.get_bone_block(bone)
+                            # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
+                            # so we simply export the same weight as the original vertex for each new vertex
 
-                            # find vertex weights
-                            vert_weights = {}
-                            for v in vert_list[bone]:
-                                # v[0] is the original vertex index
-                                # v[1] is the weight
+                            # write the weights
+                            # extra check for multi material meshes
+                            if vertmap[v[0]] and vert_norm[v[0]]:
+                                for vert_index in vertmap[v[0]]:
+                                    vert_weights[vert_index] = v[1] / vert_norm[v[0]]
+                                    vert_added[vert_index] = True
+                        # add bone as influence, but only if there were actually any vertices influenced by the bone
+                        if vert_weights:
+                            trishape.add_bone(bone_block, vert_weights)
 
-                                # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
-                                # so we simply export the same weight as the original vertex for each new vertex
+                    # todo [mesh/object] fixme - this errors on export since meshes are currently not integrated into the node tree
+                    # update bind position skinning data
+                    # trishape.update_bind_position()
 
-                                # write the weights
-                                # extra check for multi material meshes
-                                if vertmap[v[0]] and vert_norm[v[0]]:
-                                    for vert_index in vertmap[v[0]]:
-                                        vert_weights[vert_index] = v[1] / vert_norm[v[0]]
-                                        vert_added[vert_index] = True
-                            # add bone as influence, but only if there were actually any vertices influenced by the bone
-                            if vert_weights:
-                                trishape.add_bone(bone_block, vert_weights)
+                    # calculate center and radius for each skin bone data block
+                    trishape.update_skin_center_radius()
 
-                        # update bind position skinning data
-                        trishape.update_bind_position()
+                    if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
+                        NifLog.info("Creating skin partition")
+                        lostweight = trishape.update_skin_partition(
+                            maxbonesperpartition=NifOp.props.max_bones_per_partition,
+                            maxbonespervertex=NifOp.props.max_bones_per_vertex,
+                            stripify=NifOp.props.stripify,
+                            stitchstrips=NifOp.props.stitch_strips,
+                            padbones=NifOp.props.pad_bones,
+                            triangles=trilist,
+                            trianglepartmap=bodypartfacemap,
+                            maximize_bone_sharing=(NifOp.props.game in ('FALLOUT_3', 'SKYRIM')))
 
-                        # calculate center and radius for each skin bone data block
-                        trishape.update_skin_center_radius()
+                        # warn on bad config settings
+                        if NifOp.props.game == 'OBLIVION':
+                            if NifOp.props.pad_bones:
+                                NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
+                        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3'):
+                            if NifOp.props.max_bones_per_partition < 18:
+                                NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
+                                            "Set it to 18 to get higher quality skin partitions.")
+                        if NifOp.props.game in 'SKYRIM':
+                            if NifOp.props.max_bones_per_partition < 24:
+                                NifLog.warn("Using less than 24 bones per partition on Skyrim export."
+                                            "Set it to 24 to get higher quality skin partitions.")
+                        if lostweight > NifOp.props.epsilon:
+                            NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')".format(
+                                str(lostweight), b_obj.name, trishape.name))
 
-                        if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
-                            NifLog.info("Creating skin partition")
-                            lostweight = trishape.update_skin_partition(
-                                maxbonesperpartition=NifOp.props.max_bones_per_partition,
-                                maxbonespervertex=NifOp.props.max_bones_per_vertex,
-                                stripify=NifOp.props.stripify,
-                                stitchstrips=NifOp.props.stitch_strips,
-                                padbones=NifOp.props.pad_bones,
-                                triangles=trilist,
-                                trianglepartmap=bodypartfacemap,
-                                maximize_bone_sharing=(NifOp.props.game in ('FALLOUT_3', 'SKYRIM')))
+                    if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
+                        partitions = skininst.partitions
+                        b_obj_part_flags = b_obj.niftools_part_flags
+                        for s_part in partitions:
+                            s_part_index = NifFormat.BSDismemberBodyPartType._enumvalues.index(s_part.body_part)
+                            s_part_name = NifFormat.BSDismemberBodyPartType._enumkeys[s_part_index]
+                            for b_part in b_obj_part_flags:
+                                if s_part_name == b_part.name:
+                                    s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
+                                    s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
 
-                            # warn on bad config settings
-                            if NifOp.props.game == 'OBLIVION':
-                                if NifOp.props.pad_bones:
-                                    NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3'):
-                                if NifOp.props.max_bones_per_partition < 18:
-                                    NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
-                                                "Set it to 18 to get higher quality skin partitions.")
-                            if NifOp.props.game in 'SKYRIM':
-                                if NifOp.props.max_bones_per_partition < 24:
-                                    NifLog.warn("Using less than 24 bones per partition on Skyrim export."
-                                                "Set it to 24 to get higher quality skin partitions.")
-                            if lostweight > NifOp.props.epsilon:
-                                NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')".format(
-                                    str(lostweight), b_obj.name, trishape.name))
-
-                        if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-                            partitions = skininst.partitions
-                            b_obj_part_flags = b_obj.niftools_part_flags
-                            for s_part in partitions:
-                                s_part_index = NifFormat.BSDismemberBodyPartType._enumvalues.index(s_part.body_part)
-                                s_part_name = NifFormat.BSDismemberBodyPartType._enumkeys[s_part_index]
-                                for b_part in b_obj_part_flags:
-                                    if s_part_name == b_part.name:
-                                        s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
-                                        s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
-
-                        # clean up
-                        del vert_weights
-                        del vert_added
+                    # clean up
+                    del vert_weights
+                    del vert_added
 
             # fix data consistency type
             tridata.consistency_flags = b_obj.niftools.consistency_flags
@@ -759,7 +742,7 @@ class Mesh:
         bone_block = None
         for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiNode):
-                if block.name.decode() == block_store.get_full_name(b_obj_armature.data.bones[bone_name]):
+                if block.name.decode() == bone_name:
                     if not bone_block:
                         bone_block = block
                     else:
@@ -768,6 +751,29 @@ class Mesh:
         if not bone_block:
             raise util_math.NifError("Bone '{0}' not found.".format(bone))
         return bone_block
+
+    def create_skin_inst_data(self, b_obj, n_root_name):
+        if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
+            skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
+        else:
+            skininst = block_store.create_block("NiSkinInstance", b_obj)
+        trishape.skin_instance = skininst
+        for block in block_store.block_to_obj:
+            if isinstance(block, NifFormat.NiNode):
+                if block.name.decode() == n_root_name:
+                    skininst.skeleton_root = block
+                    break
+        else:
+            raise util_math.NifError("Skeleton root '%s' not found." % n_root_name)
+
+        # create skinning data and link it
+        skindata = block_store.create_block("NiSkinData", b_obj)
+        skininst.data = skindata
+
+        skindata.has_vertex_weights = True
+        # fix geometry rest pose: transform relative to skeleton root
+        skindata.set_transform(util_math.get_object_matrix(b_obj).get_inverse())
+        return skininst, skindata
 
     # todo [mesh] join code paths for those two?
     def select_unassigned_vertices(self, unassigned_verts):
