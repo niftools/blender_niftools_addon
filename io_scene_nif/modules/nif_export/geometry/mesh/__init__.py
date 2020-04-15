@@ -234,29 +234,7 @@ class Mesh:
                 else:
                     trishape.name = block_store.get_full_name(trishape)
 
-            # TODO [object][flags] Move up to object
-            # Trishape Flags...
-            if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
-                trishape.flags = b_obj.niftools.objectflags
-            else:
-                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                    trishape.flags = 0x000E
-
-                elif NifOp.props.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
-                    trishape.flags = 0x0010
-                elif NifOp.props.game in ('EMPIRE_EARTH_II',):
-                    trishape.flags = 0x0016
-                elif NifOp.props.game in ('DIVINITY_2',):
-                    if trishape.name.lower[-3:] in ("med", "low"):
-                        trishape.flags = 0x0014
-                    else:
-                        trishape.flags = 0x0016
-                else:
-                    # morrowind
-                    if b_obj.display_type != 'WIRE':  # not wire
-                        trishape.flags = 0x0004  # use triangles as bounding box
-                    else:
-                        trishape.flags = 0x0005  # use triangles as bounding box + hide
+            self.set_mesh_flags(b_obj, trishape)
 
             # extra shader for Sid Meier's Railroads
             if NifOp.props.game == 'SID_MEIER_S_RAILROADS':
@@ -397,7 +375,7 @@ class Mesh:
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
-            mesh_uv_layers = self.texture_helper.get_uv_layers(b_mat)
+            mesh_uv_layers = b_mesh.uv_layers
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
             vertlist = []
@@ -442,15 +420,7 @@ class Mesh:
                     else:
                         fn = None
 
-                    fuv = []
-                    for uv_layer in mesh_uv_layers:
-                        if uv_layer != "":
-                            # TODO [geomotry][uv]  map uv layer to index
-                            # currently we have uv_layer names, but we need their index value
-                            # b_mesh.uv_layers[0].data[poly.index].uv
-                            fuv.append(b_mesh.uv_layers[uv_layer].data[loop_index].uv)
-                        else:
-                            NifLog.warn("Texture is set to use UV but no UV Map is Selected for Mapping > Map")
+                    fuv = [uv_layer.data[loop_index].uv for uv_layer in b_mesh.uv_layers]
 
                     # TODO [geomotry][mesh] Need to map b_verts -> n_verts
                     if mesh_hasvcol:
@@ -774,6 +744,32 @@ class Mesh:
         # fix geometry rest pose: transform relative to skeleton root
         skindata.set_transform(util_math.get_object_matrix(b_obj).get_inverse())
         return skininst, skindata
+
+    # TODO [object][flags] Move up to object
+    def set_mesh_flags(self, b_obj, trishape):
+        # use blender flags
+        if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
+            trishape.flags = b_obj.niftools.objectflags
+        # fall back to defaults
+        else:
+            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                trishape.flags = 0x000E
+
+            elif NifOp.props.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
+                trishape.flags = 0x0010
+            elif NifOp.props.game in ('EMPIRE_EARTH_II',):
+                trishape.flags = 0x0016
+            elif NifOp.props.game in ('DIVINITY_2',):
+                if trishape.name.lower[-3:] in ("med", "low"):
+                    trishape.flags = 0x0014
+                else:
+                    trishape.flags = 0x0016
+            else:
+                # morrowind
+                if b_obj.display_type != 'WIRE':  # not wire
+                    trishape.flags = 0x0004  # use triangles as bounding box
+                else:
+                    trishape.flags = 0x0005  # use triangles as bounding box + hide
 
     # todo [mesh] join code paths for those two?
     def select_unassigned_vertices(self, unassigned_verts):
