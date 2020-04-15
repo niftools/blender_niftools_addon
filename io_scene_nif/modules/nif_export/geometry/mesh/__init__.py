@@ -175,11 +175,11 @@ class Mesh:
                 mesh_mat_gloss = b_mat.specular_intensity
 
                 # alpha mat
+                # todo [material] check for transparent node in node tree
                 mesh_hasalpha = b_alpha_prop
                 mesh_mat_transparency = 1
                 if b_mat.blend_method != "OPAQUE":
-                    if abs(mesh_mat_transparency - 1.0) > NifOp.props.epsilon:
-                        mesh_hasalpha = True
+                    mesh_hasalpha = True
                 elif mesh_hasvcol:
                     mesh_hasalpha = True
                 elif b_mat.animation_data and 'Alpha' in b_mat.animation_data.action.fcurves:
@@ -248,7 +248,7 @@ class Mesh:
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
                 util_math.set_object_matrix(b_obj, trishape)
-            #
+
             # # add textures
             # if NifOp.props.game == 'FALLOUT_3':
             #     if b_mat:
@@ -283,6 +283,7 @@ class Mesh:
 
             # add texture effect block (must be added as preceding child of the trishape)
             if n_parent:
+                # todo [texture] detect effect and move out
                 # ref_mtex = self.texture_helper.b_ref_slot
                 ref_mtex = False
                 if NifOp.props.game == 'MORROWIND' and ref_mtex:
@@ -304,19 +305,7 @@ class Mesh:
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery refer to the alpha property in the trishape block
-                if b_mat.niftools_alpha.alphaflag != 0:
-                    alphaflags = b_mat.niftools_alpha.alphaflag
-                    alphathreshold = b_mat.offset_z
-                elif NifOp.props.game == 'SID_MEIER_S_RAILROADS':
-                    alphaflags = 0x32ED
-                    alphathreshold = 150
-                elif NifOp.props.game == 'EMPIRE_EARTH_II':
-                    alphaflags = 0x00ED
-                    alphathreshold = 0
-                else:
-                    alphaflags = 0x12ED
-                    alphathreshold = 0
-                trishape.add_property(self.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
+                trishape.add_property(self.object_property.export_alpha_property(b_mat))
 
             if mesh_haswire:
                 # add NiWireframeProperty
