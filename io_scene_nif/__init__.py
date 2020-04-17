@@ -66,7 +66,8 @@ bl_info = {
     "wiki_url": "https://blender-nif-plugin.readthedocs.io/",
     "tracker_url": "https://github.com/niftools/blender_nif_plugin/issues",
     "support": "COMMUNITY",
-    "category": "Import-Export"}
+    "category": "Import-Export"
+}
 
 
 def _init_loggers():
