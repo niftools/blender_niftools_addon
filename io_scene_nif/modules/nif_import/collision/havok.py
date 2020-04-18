@@ -78,8 +78,8 @@ class BhkCollision(Collision):
         self.process_bhk.register(NifFormat.bhkPackedNiTriStripsShape, self.import_bhkpackednitristrips_shape)
         self.process_bhk.register(NifFormat.bhkNiTriStripsShape, self.import_bhk_nitristrips_shape)
         self.process_bhk.register(NifFormat.NiTriStripsData, self.import_nitristrips)
-        self.process_bhk.register(NifFormat.bhkMoppBvTreeShape, self.import_bhk_shape)
-        self.process_bhk.register(NifFormat.bhkListShape, self.import_bhk_shape)
+        self.process_bhk.register(NifFormat.bhkMoppBvTreeShape, self.import_bhk_mopp_bv_tree_shape)
+        self.process_bhk.register(NifFormat.bhkListShape, self.import_bhk_list_shape)
 
     def process_bhk(self, bhk_shape):
         """Base method to warn user that this property is not supported"""
@@ -97,6 +97,10 @@ class BhkCollision(Collision):
 
     def import_bhk_list_shape(self, bhk_shape):
         return reduce(operator.add, (self.import_bhk_shape(subshape) for subshape in bhk_shape.sub_shapes))
+
+    def import_bhk_mopp_bv_tree_shape(self, bhk_shape):
+        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        return self.process_bhk(bhk_shape.shape)
 
     def import_bhktransform(self, bhkshape):
         """Imports a BhkTransform block and applies the transform to the collision object"""
