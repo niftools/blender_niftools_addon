@@ -40,6 +40,7 @@
 import bpy
 import pyffi
 
+from io_scene_nif.utils import util_debug
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 
@@ -55,6 +56,8 @@ class NifCommon:
         """Common initialization functions for executing the import/export operators: """
 
         NifOp.init(operator, context)
+
+        util_debug.start_debug()
 
         # print scripts info
         from . import bl_info
