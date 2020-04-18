@@ -45,13 +45,20 @@ import bpy
 import bpy.props
 
 # Python dependencies are bundled inside the io_scene_nif/dependencies folder
-_dependencies_path = os.path.join(os.path.dirname(__file__), "dependencies")
+current_dir = os.path.dirname(__file__)
+_dependencies_path = os.path.join(current_dir, "dependencies")
 if _dependencies_path not in sys.path:
     sys.path.append(_dependencies_path)
 del _dependencies_path
 
 import io_scene_nif
 from io_scene_nif import properties, operators, ui
+
+from io_scene_nif.utils.util_logging import NifLog
+with open(os.path.join(current_dir, "VERSION.txt")) as version:
+    NifLog.info("Loading: Blender Nif Plugin: {}".format(version.read()))
+
+from io_scene_nif.utils import util_debug
 
 # Blender addon info.
 bl_info = {
@@ -66,15 +73,16 @@ bl_info = {
     "wiki_url": "https://blender-nif-plugin.readthedocs.io/",
     "tracker_url": "https://github.com/niftools/blender_nif_plugin/issues",
     "support": "COMMUNITY",
-    "category": "Import-Export"}
+    "category": "Import-Export"
+}
 
 
 def _init_loggers():
     """Set up loggers."""
-    niftools_logger = logging.getLogger("niftools")
-    niftools_logger.setLevel(logging.WARNING)
     pyffi_logger = logging.getLogger("pyffi")
     pyffi_logger.setLevel(logging.WARNING)
+    niftools_logger = logging.getLogger("niftools")
+    niftools_logger.setLevel(logging.WARNING)
     log_handler = logging.StreamHandler()
     log_handler.setLevel(logging.DEBUG)
     log_formatter = logging.Formatter("%(name)s:%(levelname)s:%(message)s")
