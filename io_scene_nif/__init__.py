@@ -58,6 +58,8 @@ from io_scene_nif.utils.util_logging import NifLog
 with open(os.path.join(current_dir, "VERSION.txt")) as version:
     NifLog.info("Loading: Blender Nif Plugin: {}".format(version.read()))
 
+from io_scene_nif.utils import util_debug
+
 # Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
@@ -77,10 +79,10 @@ bl_info = {
 
 def _init_loggers():
     """Set up loggers."""
-    niftools_logger = logging.getLogger("niftools")
-    niftools_logger.setLevel(logging.WARNING)
     pyffi_logger = logging.getLogger("pyffi")
     pyffi_logger.setLevel(logging.WARNING)
+    niftools_logger = logging.getLogger("niftools")
+    niftools_logger.setLevel(logging.WARNING)
     log_handler = logging.StreamHandler()
     log_handler.setLevel(logging.DEBUG)
     log_formatter = logging.Formatter("%(name)s:%(levelname)s:%(message)s")
