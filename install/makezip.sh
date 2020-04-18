@@ -9,7 +9,8 @@ ROOT="${BUILD_DIR}"/..
 PLUGIN_IN="${ROOT}"/io_scene_nif/
 HASH=$(git rev-parse --short HEAD)
 VERSION=$(cat "${PLUGIN_IN}/VERSION.txt")
-ZIP_NAME="${NAME}-${VERSION}-${HASH}.zip"
+DATE=$(date +%F)
+ZIP_NAME="${NAME}-${VERSION}-${HASH}-${DATE}.zip"
 TEMP="${BUILD_DIR}"/temp
 PLUGIN_OUT="${TEMP}"/io_scene_nif
 DEPS_OUT="${PLUGIN_OUT}"/dependencies
@@ -32,7 +33,6 @@ cp "${ROOT}"/AUTHORS.rst "${PLUGIN_OUT}"
 cp "${ROOT}"/CHANGELOG.rst "${PLUGIN_OUT}"
 cp "${ROOT}"/LICENSE.rst "${PLUGIN_OUT}"
 cp "${ROOT}"/README.rst "${PLUGIN_OUT}"
-
 
 echo "Creating zip ${ZIP_NAME}"
 cd "${TEMP}" || exit

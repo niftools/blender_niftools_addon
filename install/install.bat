@@ -6,10 +6,11 @@ set DIR=%~dps0
 :: remove trailing backslash
 if "%DIR:~-1%" == "\" set DIR="%DIR:~0,-1%"
 set ROOT="%DIR%\.."
-set /p VERSION=<%ROOT%\io_scene_nif\VERSION
 set NAME=blender_nif_plugin
+set /p VERSION=<%ROOT%\io_scene_nif\VERSION
 for /f %%i in ('git rev-parse --short HEAD') do set HASH=%%i
-set ZIP_NAME="%NAME%-%VERSION%-%HASH%"
+for /f %%i in ('date +%F') do set DATE=%%i
+set ZIP_NAME="%NAME%-%VERSION%-%HASH%-%DATE%"
 
 if "%BLENDER_ADDONS_DIR%" == "" if not exist "%BLENDER_ADDONS_DIR%" (
 echo. "Update BLENDER_ADDONS_DIR to the folder where the blender addons reside, such as:"
