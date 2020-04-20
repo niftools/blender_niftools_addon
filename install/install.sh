@@ -34,10 +34,11 @@ fi
 PLUGIN_DIR="${BLENDER_ADDONS_DIR}"/io_scene_nif/
 echo "Installing to: ${PLUGIN_DIR}"
 if [[ -d "${PLUGIN_DIR}" ]]; then
-  echo "Removing old io_scene_nif directory"
+  echo "Removing old io_scene_nif directory ${PLUGIN_DIR}"
   rm -rf "${PLUGIN_DIR}"
 else
   echo "Plugin directory does not exist"
+  exit 1
 fi
 
 # create zip
