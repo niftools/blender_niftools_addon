@@ -156,9 +156,9 @@ class ObjectProperty:
     def export_stencil_property(self, flags=None):
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
-        # search for duplicate
         if NifOp.props.game == 'FALLOUT_3':
             flags = 19840
+        # search for duplicate
         return self.get_matching_block("NiStencilProperty", flags=flags)
 
 

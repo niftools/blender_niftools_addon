@@ -105,7 +105,7 @@ class BSShaderTexture(TextureSlotManager):
         if diffuse_map:
             NifLog.debug("Loading diffuse texture {0}".format(diffuse_map))
             b_texture = self.create_texture_slot(b_mat, diffuse_map)
-            self.update_diffuse_slot(b_texture)
+            self.link_diffuse_node(b_texture)
 
     def _load_glow(self, b_mat, texture):
         glow_map = texture.decode()

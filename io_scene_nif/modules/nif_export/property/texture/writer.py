@@ -91,15 +91,15 @@ class TextureWriter:
         # no identical source texture found, so use and register the new one
         return block_store.register_block(srctex, n_texture)
 
-    def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):
+    def export_tex_desc(self, texdesc=None, uvlayers=None, b_texture_node=None):
         """Helper function for export_texturing_property to export each texture slot."""
         try:
-            texdesc.uv_set = uvlayers.index(b_mat_texslot.uv_layer) if b_mat_texslot.uv_layer else 0
+            texdesc.uv_set = uvlayers.index(b_texture_node.uv_layer) if b_texture_node.uv_layer else 0
         except ValueError:  # mtex.uv_layer not in uvlayers list
-            NifLog.warn("Bad uv layer name '{0}' in texture '{1}'. Using first uv layer".format(b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
+            NifLog.warn("Bad uv layer name '{0}' in texture '{1}'. Using first uv layer".format(b_texture_node.uv_layer, b_texture_node.texture.name))
             texdesc.uv_set = 0  # assume 0 is active layer
 
-        texdesc.source = TextureWriter.export_source_texture(b_mat_texslot.texture)
+        texdesc.source = TextureWriter.export_source_texture(b_texture_node.texture)
 
     @staticmethod
     def export_texture_filename(n_texture):

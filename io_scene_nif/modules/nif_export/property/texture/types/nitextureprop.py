@@ -108,7 +108,7 @@ class NiTextureProp(TextureSlotManager):
             texprop.has_base_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.base_texture,
                                                 uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.b_diffuse_slot)
+                                                b_texture_node=self.b_diffuse_slot)
             # check for texture flip definition
             try:
                 fliptxt = Blender.Text.Get(basemtex.texture.name)
@@ -124,14 +124,14 @@ class NiTextureProp(TextureSlotManager):
             texprop.has_glow_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.glow_texture,
                                                 uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.b_glow_slot)
+                                                b_texture_node=self.b_glow_slot)
 
         if self.b_bump_slot:
             if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_bump_map_texture = True
                 self.texture_writer.export_tex_desc(texdesc=texprop.bump_map_texture,
                                                     uvlayers=self.dict_mesh_uvlayers,
-                                                    b_mat_texslot=self.b_bump_slot)
+                                                    b_texture_node=self.b_bump_slot)
                 texprop.bump_map_luma_scale = 1.0
                 texprop.bump_map_luma_offset = 0.0
                 texprop.bump_map_matrix.m_11 = 1.0
@@ -149,7 +149,7 @@ class NiTextureProp(TextureSlotManager):
                 texprop.has_gloss_texture = True
                 self.texture_writer.export_tex_desc(texdesc=texprop.gloss_texture,
                                                     uvlayers=self.dict_mesh_uvlayers,
-                                                    b_mat_texslot=self.b_gloss_slot)
+                                                    b_texture_node=self.b_gloss_slot)
             else:
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
@@ -159,13 +159,13 @@ class NiTextureProp(TextureSlotManager):
             texprop.has_dark_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.dark_texture,
                                                 uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.b_dark_slot)
+                                                b_texture_node=self.b_dark_slot)
 
         if self.b_detail_slot:
             texprop.has_detail_texture = True
             self.texture_writer.export_tex_desc(texdesc=texprop.detail_texture,
                                                 uvlayers=self.dict_mesh_uvlayers,
-                                                b_mat_texslot=self.b_detail_slot)
+                                                b_texture_node=self.b_detail_slot)
 
         if self.b_ref_slot:
             if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
@@ -177,7 +177,7 @@ class NiTextureProp(TextureSlotManager):
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.b_ref_slot.texture)
 
-    def export_texture_effect(self, b_mat_texslot=None):
+    def export_texture_effect(self, b_texture_node=None):
         """Export a texture effect block from material texture mtex (MTex, not Texture)."""
         texeff = NifFormat.NiTextureEffect()
         texeff.flags = 4
@@ -188,8 +188,8 @@ class NiTextureProp(TextureSlotManager):
         texeff.texture_clamping = NifFormat.TexClampMode.WRAP_S_WRAP_T
         texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
         texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
-        if b_mat_texslot:
-            texeff.source_texture = TextureWriter.export_source_texture(b_mat_texslot.texture)
+        if b_texture_node:
+            texeff.source_texture = TextureWriter.export_source_texture(b_texture_node.texture)
             if NifOp.props.game == 'MORROWIND':
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()

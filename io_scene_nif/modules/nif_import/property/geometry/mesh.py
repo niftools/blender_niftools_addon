@@ -38,7 +38,10 @@
 # ***** END LICENSE BLOCK *****
 
 from functools import singledispatch
+import itertools
+import bpy
 
+from io_scene_nif.modules.nif_import.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.modules.nif_import.property.geometry.niproperty import NiPropertyProcessor
 from io_scene_nif.modules.nif_import.property.shader.bsshaderlightingproperty import BSShaderLightingPropertyProcessor
 from io_scene_nif.modules.nif_import.property.shader.bsshaderproperty import BSShaderPropertyProcessor
@@ -48,35 +51,56 @@ from io_scene_nif.utils.util_logging import NifLog
 class MeshPropertyProcessor:
 
     def __init__(self):
-        self.niproperty = NiPropertyProcessor.get()
-        self.bsshader = BSShaderPropertyProcessor.get()
-        self.bsshaderlighting = BSShaderLightingPropertyProcessor.get()
+        # get processor singletons
+        self.processors = (
+            NiPropertyProcessor.get(),
+            BSShaderPropertyProcessor.get(),
+            BSShaderLightingPropertyProcessor.get()
+        )
 
         # Register processors
         self.process_property = singledispatch(self.process_property)
-        self.niproperty.register_niproperty(self.process_property)
-        self.bsshader.register_bsproperty(self.process_property)
-        self.bsshaderlighting.register_bsproperty(self.process_property)
+        for processor in self.processors:
+            processor.register(self.process_property)
 
     def process_property_list(self, n_block, b_mesh):
-        self.niproperty.b_mesh = b_mesh
-        self.niproperty.n_block = n_block
-        self.bsshader.b_mesh = b_mesh
-        self.bsshader.n_block = n_block
-        self.bsshaderlighting.b_mesh = b_mesh
-        self.bsshaderlighting.n_block = n_block
+        # get all valid properties that are attached to n_block
+        props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
+        # just to avoid duped materials, a first pass, make sure a named material is created
+        for prop in props:
+            if prop.name:
+                print("Found name for mat")
+                name = prop.name.decode()
+                if name and name in bpy.data.materials:
+                    b_mat = bpy.data.materials[name]
+                    # todo [material] fixme - we have to avoid multiple passes on the same material
+                    # it seems to mess with the singleton, or the bmat
+                    b_mesh.materials.append(b_mat)
+                    NifLog.debug(f"Retrieved already imported material {b_mat} from name {name}")
+                    return
+                else:
+                    b_mat = bpy.data.materials.new(name)
+                    NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
+                break
+        else:
+            b_mat = bpy.data.materials.new("Noname")
+            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
 
-        if n_block.num_properties > 0:
-            self.process_props(n_block.properties)
+        # do initial settings for the material here
+        b_mat.use_backface_culling = True
+        b_mat.use_nodes = True
+        b_mesh.materials.append(b_mat)
 
-        if len(n_block.bs_properties) > 0:
-            self.process_props(n_block.bs_properties)
+        for processor in self.processors:
+            processor.b_mesh = b_mesh
+            processor.n_block = n_block
+            processor.b_mat = b_mat
 
-    def process_props(self, properties):
-        for prop in properties:
-            if prop is not None:
-                NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
-                self.process_property(prop)
+        # just retrieve it
+        for prop in props:
+            NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
+            self.process_property(prop)
+        NiTextureProp.get().connect_to_output()
 
     def process_property(self, prop):
         """Base method to warn user that this property is not supported"""

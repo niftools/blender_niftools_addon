@@ -68,7 +68,7 @@ class NiPropertyProcessor:
             super().__init__()
             NiPropertyProcessor.__instance = self
 
-    def register_niproperty(self, processor):
+    def register(self, processor):
         processor.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
         processor.register(NifFormat.NiAlphaProperty, self.process_nialpha_property)
         processor.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
@@ -116,7 +116,7 @@ class NiPropertyProcessor:
 
     def process_nimaterial_property(self, prop):
         """Import a NiMaterialProperty based material"""
-        b_mat = self._find_or_create_material()
+        b_mat = self._find_or_create_material(prop.name.decode())
         b_mat = NiMaterial().import_material(self.n_block, b_mat, prop)
         # TODO [animation][material] merge this call into import_material
         MaterialAnimation().import_material_controllers(self.n_block, b_mat)
@@ -141,18 +141,23 @@ class NiPropertyProcessor:
         # TODO [property][mesh] Use the vertex color modes
         NifLog.debug("NiVertexColorProperty property processed")
 
-    def _find_or_create_material(self):
-        b_mats = self.b_mesh.materials
-        if len(b_mats) == 0:
-            b_mat = bpy.data.materials.new("")
-            # do initial settings for the material here
-            b_mat.use_backface_culling = True
-            b_mat.use_nodes = True
-            self.b_mesh.materials.append(b_mat)
-            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
-        else:
-            b_mat = self.b_mesh.materials[0]
-            NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
-        return b_mat
+    def _find_or_create_material(self, name=""):
+        # b_mats = self.b_mesh.materials
+        # print("matname",name)
+        # if len(b_mats) == 0:
+        #     if name and name in bpy.data.materials:
+        #         b_mat = bpy.data.materials[name]
+        #         NifLog.debug("Retrieved placeholder material of name to store properties in {0}".format(b_mat))
+        #     else:
+        #         b_mat = bpy.data.materials.new(name)
+        #         NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
+        #     # do initial settings for the material here
+        #     b_mat.use_backface_culling = True
+        #     b_mat.use_nodes = True
+        #     self.b_mesh.materials.append(b_mat)
+        # else:
+        #     b_mat = self.b_mesh.materials[0]
+        #     NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
+        return self.b_mat
 
 

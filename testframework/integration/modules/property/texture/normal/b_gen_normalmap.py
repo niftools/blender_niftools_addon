@@ -39,23 +39,23 @@
 import nose
 
 
-def b_create_normal_texture_properties(b_mat_texslot):
+def b_create_normal_texture_properties(b_texture_node):
     """Sets the textureslot settings for using a normal map"""
     
     # Influence mapping
-    b_mat_texslot.use_map_color_diffuse = False
-    b_mat_texslot.texture.use_normal_map = True
+    b_texture_node.use_map_color_diffuse = False
+    b_texture_node.texture.use_normal_map = True
 
     # Influence
-    b_mat_texslot.use_map_normal = True
+    b_texture_node.use_map_normal = True
 
     
-def b_check_normal_texture_settings(b_mat_texslot):
+def b_check_normal_texture_settings(b_texture_node):
     """Test the textureslot for settings to use a normal map"""
     
     # Influence mapping
-    nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, False)
-    nose.tools.assert_equal(b_mat_texslot.texture.use_normal_map, True)
+    nose.tools.assert_equal(b_texture_node.use_map_color_diffuse, False)
+    nose.tools.assert_equal(b_texture_node.texture.use_normal_map, True)
     
     # Influence
-    nose.tools.assert_equal(b_mat_texslot.use_map_normal, True)
+    nose.tools.assert_equal(b_texture_node.use_map_normal, True)

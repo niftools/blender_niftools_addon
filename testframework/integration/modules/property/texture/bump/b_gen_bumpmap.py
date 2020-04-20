@@ -38,21 +38,21 @@
 import nose
 
 
-def b_create_bumpmap_texture_properties(b_mat_texslot):
+def b_create_bumpmap_texture_properties(b_texture_node):
     """Sets the textureslot settings for using a diffuse map"""
     
     # Influence mapping
-    b_mat_texslot.use_map_color_diffuse = False  # auto-set on creation
-    b_mat_texslot.texture.use_normal_map = False  # causes artifacts, bumpmap is actually a heighmap.
+    b_texture_node.use_map_color_diffuse = False  # auto-set on creation
+    b_texture_node.texture.use_normal_map = False  # causes artifacts, bumpmap is actually a heighmap.
 
     # Influence
-    b_mat_texslot.use_map_normal = True
+    b_texture_node.use_map_normal = True
     
     
-def b_check_bumpmap_texture_settings(b_mat_texslot):
+def b_check_bumpmap_texture_settings(b_texture_node):
     """Test the textureslot for settings to use a bumpmap"""
     
-    nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, False)
-    nose.tools.assert_equal(b_mat_texslot.texture.use_normal_map, False)
+    nose.tools.assert_equal(b_texture_node.use_map_color_diffuse, False)
+    nose.tools.assert_equal(b_texture_node.texture.use_normal_map, False)
     
-    nose.tools.assert_equal(b_mat_texslot.use_map_normal, True)
+    nose.tools.assert_equal(b_texture_node.use_map_normal, True)
