@@ -25,7 +25,8 @@ mkdir "${TEMP}"
 echo "Copying io_scene_nif directory"
 cp -r "${PLUGIN_IN}" "${PLUGIN_OUT}"
 
-echo "Creating dependencies folder"
+echo "Creating dependencies folder ${DEPS_OUT:-${BUILD_DIR}/dependencies}"
+#python -m pip install -i https://test.pypi.org/simple/ PyFFI==2.2.4.dev5 --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 python -m pip install "PyFFI==${PYFFI_VERSION}" --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 
 echo "Copying loose files"
