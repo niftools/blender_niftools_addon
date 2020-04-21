@@ -53,6 +53,7 @@ class CollisionBoundsPanel(Panel):
 
     def draw_header(self, context):
         pass
+        #  todo [collision/ui] we use removed game engine properties here - can we use standard blender properties or do we need custom ones?
         # game = context.active_object.game
         # col_setting = context.active_object.nifcollision
         # self.layout.prop(col_setting, "use_collision_bounds", text="")
