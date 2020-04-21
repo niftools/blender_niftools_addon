@@ -395,7 +395,6 @@ class BhkCollision(Collision):
                 dims.z = (box_extends[2][1] - box_extends[2][0]) / (2.0 * self.HAVOK_SCALE)
                 n_colbox.minimum_size = min(dims.x, dims.y, dims.z)
 
-
             elif b_obj.game.collision_bounds_type == 'SPHERE':
                 n_colsphere = block_store.create_block("bhkSphereShape", b_obj)
                 n_coltf.shape = n_colsphere
@@ -532,7 +531,10 @@ class BhkCollision(Collision):
                 triangles.append([face.vertices[i] for i in (0, 2, 3)])
                 normals.append(rotation * face.normal)
 
-        n_col_shape.add_shape(triangles, normals, vertices, layer, n_havok_mat)
+        # TODO [collision][havok] Redo this as a material lookup
+        havok_mat = NifFormat.HavokMaterial()
+        havok_mat.material = n_havok_mat
+        n_col_shape.add_shape(triangles, normals, vertices, layer, havok_mat.material)
 
     def export_collision_single(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add collision object to n_col_body.
