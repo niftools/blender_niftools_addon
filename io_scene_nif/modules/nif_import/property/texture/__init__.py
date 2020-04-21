@@ -139,6 +139,12 @@ class TextureSlotManager:
             return rgb_mixer
         return b_texture_node
 
+    def connect_vertex_colors_to_pass(self, ):
+        # if ob.data.vertex_colors:
+        vcol = self.tree.nodes.new('ShaderNodeAttribute')
+        vcol.attribute_name = "RGBA"
+        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, vcol, texture_type="Detail")
+
     def connect_to_output(self):
 
         if self.diffuse_pass:
@@ -191,7 +197,7 @@ class TextureSlotManager:
             uv_layer_index = 0
         # todo [texture] pass info about reflective coordinates
         # UV mapping
-        self.set_uv_map( b_texture_node, uv_index=uv_layer_index, reflective=False)
+        self.set_uv_map(b_texture_node, uv_index=uv_layer_index, reflective=False)
 
         # todo [texture] support clamping and interpolation settings
         return b_texture_node

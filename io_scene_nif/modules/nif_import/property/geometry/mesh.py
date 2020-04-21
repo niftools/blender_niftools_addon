@@ -100,6 +100,8 @@ class MeshPropertyProcessor:
         for prop in props:
             NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
             self.process_property(prop)
+        if b_mesh.vertex_colors:
+            NiTextureProp.get().connect_vertex_colors_to_pass()
         NiTextureProp.get().connect_to_output()
 
     def process_property(self, prop):
