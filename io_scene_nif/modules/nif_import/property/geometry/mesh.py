@@ -69,7 +69,6 @@ class MeshPropertyProcessor:
         # just to avoid duped materials, a first pass, make sure a named material is created
         for prop in props:
             if prop.name:
-                print("Found name for mat")
                 name = prop.name.decode()
                 if name and name in bpy.data.materials:
                     b_mat = bpy.data.materials[name]
@@ -89,6 +88,7 @@ class MeshPropertyProcessor:
         # do initial settings for the material here
         b_mat.use_backface_culling = True
         b_mat.use_nodes = True
+        # link the material to the mesh
         b_mesh.materials.append(b_mat)
 
         for processor in self.processors:

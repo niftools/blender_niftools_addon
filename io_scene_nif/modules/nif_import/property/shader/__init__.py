@@ -90,17 +90,6 @@ class BSShader(ABC):
         b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
         return b_mat
 
-    def _find_or_create_material(self):
-        b_mats = self.b_mesh.materials
-        if len(b_mats) == 0:
-            b_mat = bpy.data.materials.new("")
-            self.b_mesh.materials.append(b_mat)
-            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
-        else:
-            b_mat = self.b_mesh.materials[0]
-            NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
-        return b_mat
-
     def create_material_name(self, bs_shader_property):
         name = block_store.import_name(bs_shader_property)
         if name is None:

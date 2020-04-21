@@ -95,69 +95,44 @@ class NiPropertyProcessor:
 
     def process_nistencil_property(self, prop):
         """Stencil (for double sided meshes"""
-        b_mat = self._find_or_create_material()
-        Material.set_stencil(b_mat, prop)
+        Material.set_stencil(self.b_mat, prop)
         NifLog.debug("NiStencilProperty property processed")
 
     def process_nispecular_property(self, prop):
         """SpecularProperty based specular"""
-        b_mat = self._find_or_create_material()
 
         # TODO [material][property]
         if NifData.data.version == 0x14000004:
-            b_mat.specular_intensity = 0.0  # no specular prop
+            self.b_mat.specular_intensity = 0.0  # no specular prop
         NifLog.debug("NiSpecularProperty property processed")
 
     def process_nialpha_property(self, prop):
         """Import a NiAlphaProperty based material"""
-        b_mat = self._find_or_create_material()
-        Material.set_alpha(b_mat, prop)
+        Material.set_alpha(self.b_mat, prop)
         NifLog.debug("NiAlphaProperty property processed")
 
     def process_nimaterial_property(self, prop):
         """Import a NiMaterialProperty based material"""
-        b_mat = self._find_or_create_material(prop.name.decode())
-        b_mat = NiMaterial().import_material(self.n_block, b_mat, prop)
+        NiMaterial().import_material(self.n_block, self.b_mat, prop)
         # TODO [animation][material] merge this call into import_material
-        MaterialAnimation().import_material_controllers(self.n_block, b_mat)
+        MaterialAnimation().import_material_controllers(self.n_block, self.b_mat)
         NifLog.debug("NiMaterialProperty property processed")
 
     def process_nitexturing_property(self, prop):
         """Import a NiTexturingProperty based material"""
-        b_mat = self._find_or_create_material()
-        NiTextureProp.get().import_nitextureprop_textures(b_mat, prop)
+        NiTextureProp.get().import_nitextureprop_textures(self.b_mat, prop)
         NifLog.debug("NiTexturingProperty property processed")
 
     def process_niwireframe_property(self, prop):
         """Material based specular"""
-        b_mat = self._find_or_create_material()
         # todo [material] upgrade needed
         # b_mat.type = 'WIRE'
         NifLog.debug("NiWireframeProperty property processed")
 
     def process_nivertexcolor_property(self, prop):
         """Material based specular"""
-        b_mat = self._find_or_create_material()
         # TODO [property][mesh] Use the vertex color modes
         NifLog.debug("NiVertexColorProperty property processed")
 
-    def _find_or_create_material(self, name=""):
-        # b_mats = self.b_mesh.materials
-        # print("matname",name)
-        # if len(b_mats) == 0:
-        #     if name and name in bpy.data.materials:
-        #         b_mat = bpy.data.materials[name]
-        #         NifLog.debug("Retrieved placeholder material of name to store properties in {0}".format(b_mat))
-        #     else:
-        #         b_mat = bpy.data.materials.new(name)
-        #         NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
-        #     # do initial settings for the material here
-        #     b_mat.use_backface_culling = True
-        #     b_mat.use_nodes = True
-        #     self.b_mesh.materials.append(b_mat)
-        # else:
-        #     b_mat = self.b_mesh.materials[0]
-        #     NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
-        return self.b_mat
 
 
