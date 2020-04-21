@@ -181,17 +181,19 @@ class TextureSlotManager:
 
     def create_texture_slot(self, b_mat, n_tex_desc):
         # todo [texture] refactor this to separate code paths?
-        # when processing a texturing property
+        # when processing a NiTextureProperty
         if isinstance(n_tex_desc, NifFormat.TexDesc):
             b_texture_node = self.texture_loader.import_texture_source(n_tex_desc.source, b_mat.node_tree)
             uv_layer_index = n_tex_desc.uv_set
-        # when processing a texturing property - n_tex_desc is a bare string
+        # when processing a BS shader property - n_tex_desc is a bare string
         else:
             b_texture_node = self.texture_loader.import_texture_source(n_tex_desc, b_mat.node_tree)
             uv_layer_index = 0
         # todo [texture] pass info about reflective coordinates
         # UV mapping
         self.set_uv_map( b_texture_node, uv_index=uv_layer_index, reflective=False)
+
+        # todo [texture] support clamping and interpolation settings
         return b_texture_node
 
     def link_diffuse_node(self, b_texture_node):
