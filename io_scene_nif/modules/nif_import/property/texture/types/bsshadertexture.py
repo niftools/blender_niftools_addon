@@ -84,7 +84,7 @@ class BSShaderTexture(TextureSlotManager):
             if decal_map:
                 NifLog.debug("Loading decal texture {0}".format(decal_map))
                 b_texture = self.create_texture_slot(b_mat, decal_map)
-                self.update_decal_slot(b_texture)
+                self.update_decal_slot_0(b_texture)
 
             gloss_map = textures[7].decode()
             if gloss_map:

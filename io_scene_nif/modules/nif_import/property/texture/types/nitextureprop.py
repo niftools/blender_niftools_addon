@@ -116,26 +116,24 @@ class NiTextureProp(TextureSlotManager):
             decal_0 = n_texture_desc.decal_0_texture
             # NifLog.debug("Loading decal 0 texture {0}".format(decal_0))
             b_texture = self.create_texture_slot(b_mat, decal_0)
-            # self.update_decal_slot_0(b_texture)
+            self.update_decal_slot_0(b_texture)
 
         if n_texture_desc.has_decal_1_texture:
             decal_1 = n_texture_desc.decal_1_texture
             # NifLog.debug("Loading decal 1 texture {0}".format(decal_1))
             b_texture = self.create_texture_slot(b_mat, decal_1)
-            # self.update_decal_slot_1(b_texture)
+            self.update_decal_slot_1(b_texture)
 
         if n_texture_desc.has_decal_2_texture:
             decal_2 = n_texture_desc.decal_2_texture
             # NifLog.debug("Loading decal 2 texture {0}".format(decal_2))
             b_texture = self.create_texture_slot(b_mat, decal_2)
-            # self.update_decal_slot_2(b_texture)
+            self.update_decal_slot_2(b_texture)
 
         # TODO [property][texture][map] Process unknown type
         # 'has_unknown_2_texture',
         # 'unknown_2_texture',
         # 'unknown_2_float',
-
-        # self.connect_to_output()
 
     def _import_apply_mode(self, n_texture_desc, b_texture):
         # Blend mode

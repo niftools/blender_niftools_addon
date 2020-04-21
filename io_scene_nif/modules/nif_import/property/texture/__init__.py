@@ -73,6 +73,37 @@ class TextureSlotManager:
         # raw texture nodes
         self.diffuse_texture = None
 
+    def set_uv_map(self, b_texture_node, uv_index=0, reflective=False):
+        """Attaches a vector node describing the desired coordinate transforms to the texture node's UV input."""
+        if reflective:
+            uv = self.tree.nodes.new('ShaderNodeTexCoord')
+            self.tree.links.new(uv.outputs[6], b_texture_node.inputs[0])
+        # use supplied UV maps for everything else, if present
+        else:
+            uv = self.tree.nodes.new('ShaderNodeUVMap')
+            uv.name = "TexCoordIndex" + str(uv_index)
+            uv.uv_map = f"UV{uv_index}"
+            self.tree.links.new(uv.outputs[0], b_texture_node.inputs[0])
+            # todo [texture/anim] if present in nifs, support it and move to anim sys
+            # if tex_transform or tex_anim:
+            #     transform = tree.nodes.new('ShaderNodeMapping')
+            #     # todo [texture] negate V coordinate
+            #     if tex_transform:
+            #         matrix_4x4 = mathutils.Matrix(tex_transform)
+            #         transform.scale = matrix_4x4.to_scale()
+            #         transform.rotation = matrix_4x4.to_euler()
+            #         transform.translation = matrix_4x4.to_translation()
+            #         transform.name = "TextureTransform" + str(i)
+            #     if tex_anim:
+            #         for j, dtype in enumerate(("offsetu", "offsetv")):
+            #             for key in tex_anim[dtype]:
+            #                 transform.translation[j] = key[1]
+            #                 # note that since we are dealing with UV coordinates, V has to be negated
+            #                 if j == 1: transform.translation[j] *= -1
+            #                 transform.keyframe_insert("translation", index=j, frame=int(key[0] * fps))
+            #     tree.links.new(uv.outputs[0], transform.inputs[0])
+            #     tree.links.new(transform.outputs[0], tex.inputs[0])
+
     def clear_default_nodes(self):
         self.b_mat.use_nodes = True
         self.tree = self.b_mat.node_tree
@@ -81,7 +112,6 @@ class TextureSlotManager:
             self.tree.nodes.remove(node)
 
         self.output = self.tree.nodes.new('ShaderNodeOutputMaterial')
-        # principled = self.tree.nodes.new('ShaderNodeBsdfPrincipled')
 
         # shaders
         self.diffuse_shader = self.tree.nodes.new('ShaderNodeBsdfDiffuse')
@@ -92,16 +122,21 @@ class TextureSlotManager:
         # raw texture nodes
         self.diffuse_texture = None
 
-    def connect_to_pass(self, b_node_pass, b_texture_node):
+    def connect_to_pass(self, b_node_pass, b_texture_node, texture_type="Detail"):
         """Connect to an image premixing pass"""
-        # connect
+        # connect if the pass has been established, ie. the base texture already exists
         if b_node_pass:
-            mixRGB = self.tree.nodes.new('ShaderNodeMixRGB')
-            mixRGB.inputs[0].default_value = 1
-            mixRGB.blend_type = "OVERLAY"
-            self.tree.links.new(b_node_pass.outputs[0], mixRGB.inputs[1])
-            self.tree.links.new(b_texture_node.outputs[0], mixRGB.inputs[2])
-            return mixRGB
+            rgb_mixer = self.tree.nodes.new('ShaderNodeMixRGB')
+            # these textures are overlaid onto the base
+            if texture_type in ("Detail", "Reflect"):
+                rgb_mixer.inputs[0].default_value = 1
+                rgb_mixer.blend_type = "OVERLAY"
+            # these textures use their alpha channel as a mask over the input pass
+            elif texture_type == "Decal":
+                self.tree.links.new(b_texture_node.outputs[1], rgb_mixer.inputs[0])
+            self.tree.links.new(b_node_pass.outputs[0], rgb_mixer.inputs[1])
+            self.tree.links.new(b_texture_node.outputs[0], rgb_mixer.inputs[2])
+            return rgb_mixer
         return b_texture_node
 
     def connect_to_output(self):
@@ -110,7 +145,7 @@ class TextureSlotManager:
             try:
                 self.tree.links.new(self.diffuse_pass.outputs[0], self.diffuse_shader.inputs[0])
             except:
-                print("bug")
+                print("bug, happens in successive runs over same b_mat")
         # transparency
         if self.b_mat.blend_method == "OPAQUE":
             self.tree.links.new(self.diffuse_shader.outputs[0], self.output.inputs[0])
@@ -128,7 +163,7 @@ class TextureSlotManager:
             #     tree.links.new(vcol.outputs[0], mixAAA.inputs[2])
             #     tree.links.new(mixAAA.outputs[0], alpha_mixer.inputs[0])
             if self.diffuse_texture:
-                print("self.diffuse_texture", self.diffuse_texture)
+                # print("self.diffuse_texture", self.diffuse_texture)
                 try:
                     self.tree.links.new(self.diffuse_texture.outputs[1], alpha_mixer.inputs[0])
                 except:
@@ -145,27 +180,22 @@ class TextureSlotManager:
         nodes_iterate(self.tree, self.output)
 
     def create_texture_slot(self, b_mat, n_tex_desc):
-        print(n_tex_desc)
         # todo [texture] refactor this to separate code paths?
         # when processing a texturing property
         if isinstance(n_tex_desc, NifFormat.TexDesc):
             b_texture_node = self.texture_loader.import_texture_source(n_tex_desc.source, b_mat.node_tree)
-            uv_layer_name = n_tex_desc.uv_set
+            uv_layer_index = n_tex_desc.uv_set
         # when processing a texturing property - n_tex_desc is a bare string
         else:
             b_texture_node = self.texture_loader.import_texture_source(n_tex_desc, b_mat.node_tree)
-            uv_layer_name = 0
-
-
-        # Mapping
-        # b_texture_node.texture_coords = 'UV'
-        # b_texture_node.uv_layer = Vertex.get_uv_layer_name(uv_layer_name)
+            uv_layer_index = 0
+        # todo [texture] pass info about reflective coordinates
+        # UV mapping
+        self.set_uv_map( b_texture_node, uv_index=uv_layer_index, reflective=False)
         return b_texture_node
 
     def link_diffuse_node(self, b_texture_node):
-        print("b_texture_node", b_texture_node)
         self.diffuse_texture = b_texture_node
-        print("self.diffuse_texture", self.diffuse_texture)
         b_texture_node.label = "Diffuse"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node)
 
@@ -224,30 +254,25 @@ class TextureSlotManager:
         # b_texture_node.use_map_specular = True
         # b_texture_node.use_map_color_spec = True
 
-    def update_decal_slot(self, b_texture_node):
-        # self.update_decal_slot(b_texture_node)
-        # TODO [property][texture] Add support for decal slots
-        NifLog.warn("This functionality is not currently supported")
-        pass
-
     def update_decal_slot_0(self, b_texture_node):
-        self.update_decal_slot(b_texture_node)
-        # TODO [property][texture] Add support for decal slots
+        b_texture_node.label = "Decal0"
+        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def update_decal_slot_1(self, b_texture_node):
-        self.update_decal_slot(b_texture_node)
-        # TODO [property][texture] Add support for decal slots
+        b_texture_node.label = "Decal1"
+        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
+
+    def update_decal_slot_2(self, b_texture_node):
+        b_texture_node.label = "Decal2"
+        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def update_detail_slot(self, b_texture_node):
         b_texture_node.label = "Detail"
-        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node)
-
-    def update_decal_slot_2(self, b_texture_node):
-        self.update_decal_slot(b_texture_node)
+        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Detail")
 
     def update_dark_slot(self, b_texture_node):
-        self.update_decal_slot(b_texture_node)
-        b_texture_node.blend_type = 'DARK'
+        # todo [texture] implement
+        pass
 
     def update_reflection_slot(self, b_texture_node):
         # Influence mapping
