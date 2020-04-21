@@ -737,8 +737,8 @@ class Mesh:
     # TODO [object][flags] Move up to object
     def set_mesh_flags(self, b_obj, trishape):
         # use blender flags
-        if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
-            trishape.flags = b_obj.niftools.objectflags
+        if (b_obj.type == 'MESH') and (b_obj.niftools.flags != 0):
+            trishape.flags = b_obj.niftools.flags
         # fall back to defaults
         else:
             if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):

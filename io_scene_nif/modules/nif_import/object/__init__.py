@@ -103,7 +103,7 @@ class Object:
             b_obj.display_bounds_type = 'BOX'
             # b_obj.game.use_collision_bounds = True
             # b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
-            b_obj.niftools.objectflags = n_node.flags
+            b_obj.niftools.flags = n_node.flags
             b_mesh = b_obj.data
             b_mesh.validate()
             b_mesh.update()
@@ -165,7 +165,7 @@ class Object:
     @staticmethod
     def import_object_flags(n_block, b_obj):
         """ Various settings in b_obj's niftools panel """
-        b_obj.niftools.objectflags = n_block.flags
+        b_obj.niftools.flags = n_block.flags
 
         if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
             cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)

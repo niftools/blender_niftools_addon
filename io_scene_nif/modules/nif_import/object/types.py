@@ -85,5 +85,5 @@ class NiTypes:
         """Creates and returns a grouping empty."""
         b_empty = Object.create_b_obj(n_block, None)
         # TODO [flags] Move out to generic processing
-        b_empty.niftools.objectflags = n_block.flags
+        b_empty.niftools.flags = n_block.flags
         return b_empty

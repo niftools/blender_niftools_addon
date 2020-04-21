@@ -107,7 +107,7 @@ class ObjectProperty(PropertyGroup):
         # default = 'SHADER_DEFAULT'
     )
 
-    objectflags: IntProperty(
+    flags: IntProperty(
         name='Object Flag',
         description='Controls animation and collision',
         default=0
