@@ -9,7 +9,8 @@ ROOT="${BUILD_DIR}"/..
 PLUGIN_IN="${ROOT}"/io_scene_nif/
 HASH=$(git rev-parse --short HEAD)
 VERSION=$(cat "${PLUGIN_IN}/VERSION.txt")
-ZIP_NAME="${NAME}-${VERSION}-${HASH}.zip"
+DATE=$(date +%F)
+ZIP_NAME="${NAME}-${VERSION}-${HASH}-${DATE}.zip"
 TEMP="${BUILD_DIR}"/temp
 PLUGIN_OUT="${TEMP}"/io_scene_nif
 DEPS_OUT="${PLUGIN_OUT}"/dependencies
@@ -24,7 +25,8 @@ mkdir "${TEMP}"
 echo "Copying io_scene_nif directory"
 cp -r "${PLUGIN_IN}" "${PLUGIN_OUT}"
 
-echo "Creating dependencies folder"
+echo "Creating dependencies folder ${DEPS_OUT:-${BUILD_DIR}/dependencies}"
+#python -m pip install -i https://test.pypi.org/simple/ PyFFI==2.2.4.dev5 --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 python -m pip install "PyFFI==${PYFFI_VERSION}" --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 
 echo "Copying loose files"
@@ -32,7 +34,6 @@ cp "${ROOT}"/AUTHORS.rst "${PLUGIN_OUT}"
 cp "${ROOT}"/CHANGELOG.rst "${PLUGIN_OUT}"
 cp "${ROOT}"/LICENSE.rst "${PLUGIN_OUT}"
 cp "${ROOT}"/README.rst "${PLUGIN_OUT}"
-
 
 echo "Creating zip ${ZIP_NAME}"
 cd "${TEMP}" || exit

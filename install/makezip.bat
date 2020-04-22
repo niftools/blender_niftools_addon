@@ -7,11 +7,12 @@ if "%DIR:~-1%" == "\" (
 )
 
 set ROOT="%DIR%"\..
-set /p VERSION="%ROOT%\io_scene_nif\VERSION.txt"
 set NAME="blender_nif_plugin"
+set /p VERSION="%ROOT%\io_scene_nif\VERSION.txt"
 :: Abuse for loop to execute and store command output
 for /f %%i in ('git rev-parse --short HEAD') do set HASH=%%i
-set ZIP_NAME="%NAME%-%VERSION%-%HASH%"
+for /f %%i in ('date +%F') do set DATE=%%i
+set ZIP_NAME="%NAME%-%VERSION%-%HASH%-%DATE%"
 set PYFFI_VERSION="2.2.4.dev3"
 set DEPS="io_scene_nif\dependencies"
 if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
@@ -31,5 +32,5 @@ xcopy "%ROOT%"\LICENSE.rst io_scene_nif
 xcopy "%ROOT%"\README.rst io_scene_nif
 popd
 
-powershell -executionpolicy bypass -Command "%DIR%\zip.ps1" -source "%DIR%\temp\io_scene_nif" -destination "%DIR%\%NAME%-%VERSION%.zip"
+powershell -executionpolicy bypass -Command "%DIR%\zip.ps1" -source "%DIR%\temp\io_scene_nif" -destination "%DIR%\%ZIP_NAME%.zip"
 rmdir /s /q %DIR%\temp
