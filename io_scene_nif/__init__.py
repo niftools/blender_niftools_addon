@@ -58,7 +58,7 @@ bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
     "description": "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "NifTools Team",
-    "blender": (2, 79, 0),
+    "blender": (2, 81, 0),
     "version": (2, 6, 0),  # can't read from VERSION, blender wants it hardcoded
     "api": 39257,
     "location": "File > Import-Export",
@@ -98,21 +98,102 @@ def menu_func_export(self, context):
     # self.layout.operator(operators.kf_export_op.KfExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
 
 
+# we have to 'register' the operators so we can access them like this to register them for blender
+operators.register()
+properties.register()
+ui.register()
+# todo [general] add more properties, make sure they show up
+classes = (
+    operators.nif_import_op.NifImportOperator,
+    operators.kf_import_op.KfImportOperator,
+    operators.nif_export_op.NifExportOperator,
+    operators.geometry.BsInvMarkerAdd,
+    operators.geometry.BsInvMarkerRemove,
+    operators.geometry.NfTlPartFlagAdd,
+    operators.geometry.NfTlPartFlagRemove,
+    operators.object.BSXExtraDataAdd,
+    operators.object.UPBExtraDataAdd,
+    operators.object.SampleExtraDataAdd,
+    operators.object.NiExtraDataRemove,
+
+
+    properties.armature.BoneProperty,
+    properties.armature.ArmatureProperty,
+
+    properties.collision.CollisionProperty,
+
+    properties.constraint.ConstraintProperty,
+
+    properties.geometry.SkinPartHeader,
+    properties.geometry.SkinPartFlags,
+
+    properties.material.Material,
+    properties.material.AlphaFlags,
+
+    properties.object.ExtraData,
+    properties.object.ExtraDataStore,
+    properties.object.ObjectProperty,
+    properties.object.BsInventoryMarker,
+
+    properties.scene.Scene,
+
+    properties.shader.ShaderProps,
+
+
+    ui.armature.BonePanel,
+    ui.armature.ArmaturePanel,
+    ui.collision.CollisionBoundsPanel,
+    ui.geometry.PartFlag,
+    ui.material.NifMatFlagPanel,
+    ui.material.NifMatColorPanel,
+
+    ui.object.ObjectPanel,
+    ui.object.OBJECT_PT_ExtraData,
+    ui.object.OBJECT_MT_ExtraDataType,
+    ui.object.OBJECT_UL_ExtraData,
+    ui.object.ObjectInvMarkerPanel,
+
+    ui.scene.ScenePanel,
+
+    ui.shader.ObjectShader,
+    )
+
+
 def register():
     _init_loggers()
     operators.register()
     properties.register()
     ui.register()
-    bpy.utils.register_module(__name__)
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
-    bpy.types.INFO_MT_file_export.append(menu_func_export)
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+
+    # register all property groups after their classes have been registered
+    bpy.types.Bone.niftools = bpy.props.PointerProperty(type=properties.armature.BoneProperty)
+    bpy.types.Armature.niftools = bpy.props.PointerProperty(type=properties.armature.ArmatureProperty)
+    bpy.types.Object.nifcollision = bpy.props.PointerProperty(type=properties.collision.CollisionProperty)
+    bpy.types.Object.niftools_constraint = bpy.props.PointerProperty(type=properties.constraint.ConstraintProperty)
+    bpy.types.Object.niftools_part_flags_panel = bpy.props.PointerProperty(type=properties.geometry.SkinPartHeader)
+    bpy.types.Object.niftools_part_flags = bpy.props.CollectionProperty(type=properties.geometry.SkinPartFlags)
+    bpy.types.Material.niftools = bpy.props.PointerProperty(type=properties.material.Material)
+    bpy.types.Material.niftools_alpha = bpy.props.PointerProperty(type=properties.material.AlphaFlags)
+
+    bpy.types.Object.niftools = bpy.props.PointerProperty(type=properties.object.ObjectProperty)
+    bpy.types.Object.niftools_bs_invmarker = bpy.props.CollectionProperty(type=properties.object.BsInventoryMarker)
+
+    bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
+    bpy.types.Material.niftools_shader = bpy.props.PointerProperty(type=properties.shader.ShaderProps)
 
 
 def unregister():
     # no idea how to do this... oh well, let's not lose any sleep over it uninit_loggers()
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    bpy.types.INFO_MT_file_export.remove(menu_func_export)
-    bpy.utils.unregister_module(__name__)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)
 
 
 if __name__ == "__main__":

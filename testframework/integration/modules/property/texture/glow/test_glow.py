@@ -77,14 +77,14 @@ class TestTexturePropertyGlowMap(SingleNif):
         b_gen_material.b_create_set_default_material_property(b_mat)
         
         # diffuse
-        b_mat_texslot = b_gen_texture.b_create_textureslot(b_mat, 'Diffuse')
-        b_gen_texture.b_create_load_texture(b_mat_texslot, self.diffuse_texture_path)
-        b_gen_diffusemap.b_create_diffuse_texture_properties(b_mat_texslot)
+        b_texture_node = b_gen_texture.b_create_textureslot(b_mat, 'Diffuse')
+        b_gen_texture.b_create_load_texture(b_texture_node, self.diffuse_texture_path)
+        b_gen_diffusemap.b_create_diffuse_texture_properties(b_texture_node)
         
         # glow
-        b_mat_texslot = b_gen_texture.b_create_textureslot(b_mat, 'Glow')
-        b_gen_texture.b_create_load_texture(b_mat_texslot, self.glowmap_texture_path)
-        b_gen_glowmap.b_create_glow_texture_properties(b_mat_texslot)
+        b_texture_node = b_gen_texture.b_create_textureslot(b_mat, 'Glow')
+        b_gen_texture.b_create_load_texture(b_texture_node, self.glowmap_texture_path)
+        b_gen_glowmap.b_create_glow_texture_properties(b_texture_node)
 
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]

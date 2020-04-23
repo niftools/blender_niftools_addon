@@ -44,12 +44,32 @@ from io_scene_nif.utils.util_logging import NifLog
 class Material:
 
     @staticmethod
+    def set_stencil(b_mat, n_alpha_prop):
+        NifLog.debug("Stencil prop detected")
+        b_mat.use_backface_culling = False
+
+        return b_mat
+
+    @staticmethod
     def set_alpha(b_mat, n_alpha_prop):
         NifLog.debug("Alpha prop detected")
-        b_mat.use_transparency = True
-        # TODO [property][material] map alpha material property value
-        b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-        b_mat.offset_z = n_alpha_prop.threshold  # transparency threshold
+        # flags is a bitfield
+        blend_enable = 1 & n_alpha_prop.flags
+        test_enable = (1 << 9) & n_alpha_prop.flags
+        if blend_enable and test_enable:
+            b_mat.blend_method = "HASHED"
+            b_mat.shadow_method = "HASHED"
+        elif blend_enable:
+            b_mat.blend_method = "BLEND"
+            b_mat.shadow_method = "HASHED"
+        elif test_enable:
+            b_mat.blend_method = "CLIP"
+            b_mat.shadow_method = "CLIP"
+        else:
+            b_mat.blend_method = "OPAQUE"
+            b_mat.shadow_method = "OPAQUE"
+
+        b_mat.alpha_threshold = n_alpha_prop.threshold / 255 # transparency threshold
         b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
 
         return b_mat
@@ -79,47 +99,29 @@ class Material:
                 else:
                     # non-textured material: vertex colors influence color
                     b_mat.use_vertex_color_paint = True
-
-            # if there's a base texture assigned to this material display it in Blender's 3D view, but only if there are UV coordinates
-            if mbasetex and mbasetex.texture and n_uvco:
-                image = mbasetex.texture.image
-                if image:
-                    for b_polyimage_index in f_map:
-                        if b_polyimage_index is None:
-                            continue
-                        tface = b_mesh.uv_textures.active.data[b_polyimage_index]
-                        tface.image = image
     """
 
     @staticmethod
     def import_material_specular(b_mat, n_specular_color):
-        b_mat.specular_color.r = n_specular_color.r
-        b_mat.specular_color.g = n_specular_color.g
-        b_mat.specular_color.b = n_specular_color.b
+        b_mat.specular_color = (n_specular_color.r, n_specular_color.g, n_specular_color.b)
 
     @staticmethod
     def import_material_emissive(b_mat, n_emissive_color):
-        b_mat.niftools.emissive_color.r = n_emissive_color.r
-        b_mat.niftools.emissive_color.g = n_emissive_color.g
-        b_mat.niftools.emissive_color.b = n_emissive_color.b
+        b_mat.niftools.emissive_color = (n_emissive_color.r, n_emissive_color.g, n_emissive_color.b)
 
     @staticmethod
     def import_material_diffuse(b_mat, n_diffuse_color):
-        b_mat.diffuse_color.r = n_diffuse_color.r
-        b_mat.diffuse_color.g = n_diffuse_color.g
-        b_mat.diffuse_color.b = n_diffuse_color.b
-        b_mat.diffuse_intensity = 1.0
+        b_mat.diffuse_color = (n_diffuse_color.r, n_diffuse_color.g, n_diffuse_color.b, 1.0)
+        # b_mat.diffuse_intensity = 1.0
 
     @staticmethod
     def import_material_ambient(b_mat, n_mat_prop):
-        b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
-        b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
-        b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b
+        b_mat.niftools.ambient_color = (n_mat_prop.ambient_color.r, n_mat_prop.ambient_color.g, n_mat_prop.ambient_color.b)
 
     @staticmethod
     def import_material_gloss(b_mat, glossiness):
-        b_mat.specular_hardness = glossiness
-
+        # b_mat.specular_hardness = glossiness
+        b_mat.specular_intensity = glossiness  # Blender multiplies specular color with this value
 
 class NiMaterial(Material):
 
@@ -151,13 +153,12 @@ class NiMaterial(Material):
 
         # Emissive
         self.import_material_emissive(b_mat, n_mat_prop.emissive_color)
-        b_mat.emit = n_mat_prop.emit_multi
+        # b_mat.emit = n_mat_prop.emit_multi
 
         # gloss
         self.import_material_gloss(b_mat, n_mat_prop.glossiness)
 
         # Specular color
         self.import_material_specular(b_mat, n_mat_prop.specular_color)
-        b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
 
         return b_mat

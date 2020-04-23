@@ -71,11 +71,11 @@ class Object:
             n_name = name
         # let blender choose a name
         b_obj = bpy.data.objects.new(n_name, b_obj_data)
-        b_obj.select = True
         # make the object visible and active
-        bpy.context.scene.objects.link(b_obj)
-        bpy.context.scene.objects.active = b_obj
+        bpy.context.scene.collection.objects.link(b_obj)
+        bpy.context.view_layer.objects.active = b_obj
         block_store.store_longname(b_obj, n_name)
+        b_obj.select_set(True)
         return b_obj
 
     @staticmethod
@@ -98,12 +98,12 @@ class Object:
     def import_root_collision(self, n_node, b_obj):
         """ Import a RootCollisionNode """
         if isinstance(n_node, NifFormat.RootCollisionNode):
-            b_obj.draw_type = 'BOUNDS'
+            b_obj.display_type = 'BOUNDS'
             b_obj.show_wire = True
-            b_obj.draw_bounds_type = 'BOX'
-            b_obj.game.use_collision_bounds = True
-            b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
-            b_obj.niftools.objectflags = n_node.flags
+            b_obj.display_bounds_type = 'BOX'
+            # b_obj.game.use_collision_bounds = True
+            # b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+            b_obj.niftools.flags = n_node.flags
             b_mesh = b_obj.data
             b_mesh.validate()
             b_mesh.update()
@@ -128,42 +128,9 @@ class Object:
                 mpi.translation.y -= b_obj.length
                 # essentially we mimic a transformed matrix_parent_inverse and delegate its transform
                 # nb. matrix local is relative to the armature object, not the bone
-                b_child.matrix_local = mpi * b_child.matrix_basis
+                b_child.matrix_local = mpi @ b_child.matrix_basis
         else:
             raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
-
-    @staticmethod
-    def is_grouping_node(n_block):
-        """Determine whether node is grouping node.
-        Returns the children which are grouped, or empty list if it is not a grouping node.
-        """
-        # combining shapes: disable grouping
-        if not NifOp.props.combine_shapes:
-            return []
-
-        # check that it is a ninode
-        if not isinstance(n_block, NifFormat.NiNode):
-            return []
-
-        # NiLODNodes are never grouping nodes (this ensures that they are imported as empties, with LODs as child meshes)
-        if isinstance(n_block, NifFormat.NiLODNode):
-            return []
-
-        # root collision node: join everything
-        if isinstance(n_block, NifFormat.RootCollisionNode):
-            return [child for child in n_block.children if isinstance(child, NifFormat.NiTriBasedGeom)]
-
-        # check that node has name
-        node_name = n_block.name
-        if not node_name:
-            return []
-
-        # strip "NonAccum" trailer, if present
-        if node_name[-9:].lower() == " nonaccum":
-            node_name = node_name[:-9]
-
-        # get all geometry children
-        return [child for child in n_block.children if (isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1)]
 
     def create_mesh_object(self, n_block):
         ni_name = n_block.name.decode()
@@ -175,34 +142,18 @@ class Object:
 
         # Mesh hidden flag
         if n_block.flags & 1 == 1:
-            b_obj.draw_type = 'WIRE'  # hidden: wire
+            b_obj.display_type = 'WIRE'  # hidden: wire
         else:
-            b_obj.draw_type = 'TEXTURED'  # not hidden: shaded
+            b_obj.display_type = 'TEXTURED'  # not hidden: shaded
 
-        return b_obj
-
-    def import_group_geometry(self, b_armature, n_geoms, n_block):
-        # node groups geometries, so import it as a mesh
-        NifLog.info("Joining geometries {0} to single object '{1}'".format([child.name.decode() for child in n_geoms], n_block.name.decode()))
-        b_obj = self.create_mesh_object(n_block)
-        b_obj.matrix_local = util_math.import_matrix(n_block)
-        bpy.context.scene.objects.active = b_obj
-        for child in n_geoms:
-            self.mesh.import_mesh(child, b_obj)
-
-            # store flags etc
-            self.import_object_flags(child, b_obj)
-        # is there skinning on any of the grouped geometries?
-        if any(child.skin_instance for child in n_geoms):
-            self.append_armature_modifier(b_obj, b_armature)
         return b_obj
 
     def import_geometry_object(self, b_armature, n_block):
         # it's a shape node and we're not importing skeleton only
         b_obj = self.create_mesh_object(n_block)
-        transform = util_math.import_matrix(n_block)  # set transform matrix for the mesh
-        self.mesh.import_mesh(n_block, b_obj, transform)
-        bpy.context.scene.objects.active = b_obj
+        b_obj.matrix_local = util_math.import_matrix(n_block)  # set transform matrix for the mesh
+        self.mesh.import_mesh(n_block, b_obj)
+        bpy.context.view_layer.objects.active = b_obj
         # store flags etc
         self.import_object_flags(n_block, b_obj)
         # skinning? add armature modifier
@@ -214,7 +165,7 @@ class Object:
     @staticmethod
     def import_object_flags(n_block, b_obj):
         """ Various settings in b_obj's niftools panel """
-        b_obj.niftools.objectflags = n_block.flags
+        b_obj.niftools.flags = n_block.flags
 
         if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
             cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)

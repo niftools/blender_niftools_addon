@@ -50,69 +50,46 @@ from bpy.types import PropertyGroup
 class Material(PropertyGroup):
     """Adds custom properties to material"""
 
-    @classmethod
-    def register(cls):
-        bpy.types.Material.niftools = PointerProperty(
-            name='Niftools Materials',
-            description='Additional material properties used by the Nif File Format',
-            type=cls,
-        )
+    ambient_preview: BoolProperty(
+        name='Ambient Preview', description='Allows a viewport preview of the ambient property', default=False)
 
-        cls.ambient_preview = BoolProperty(
-            name='Ambient Preview', description='Allows a viewport preview of the ambient property', default=False)
+    ambient_color: FloatVectorProperty(
+        name='Ambient', subtype='COLOR', default=[1.0, 1.0, 1.0], min=0.0, max=1.0)
 
-        cls.ambient_color = FloatVectorProperty(
-            name='Ambient', subtype='COLOR', default=[1.0, 1.0, 1.0], min=0.0, max=1.0)
+    emissive_preview: BoolProperty(
+        name='Emissive Preview', description='Allows a viewport preview of the emissive property', default=False)
 
-        cls.emissive_preview = BoolProperty(
-            name='Emissive Preview', description='Allows a viewport preview of the emissive property', default=False)
+    emissive_color: FloatVectorProperty(
+        name='Emissive', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
 
-        cls.emissive_color = FloatVectorProperty(
-            name='Emissive', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
+    emissive_alpha: FloatVectorProperty(
+        name='Alpha', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
 
-        cls.emissive_alpha = FloatVectorProperty(
-            name='Alpha', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
-
-        cls.lightingeffect1 = FloatProperty(
-            name='Lighting Effect 1',
-            default=0.3
-        )
-        cls.lightingeffect2 = FloatProperty(
-            name='Lighting Effect 2',
-            default=2
-        )
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Material.niftools
+    lightingeffect1: FloatProperty(
+        name='Lighting Effect 1',
+        default=0.3
+    )
+    lightingeffect2: FloatProperty(
+        name='Lighting Effect 2',
+        default=2
+    )
 
 
 class AlphaFlags(PropertyGroup):
     """Adds custom properties to material"""
 
-    @classmethod
-    def register(cls):
-        bpy.types.Material.niftools_alpha = PointerProperty(
-            name='Niftools Material Alpha',
-            description='Additional material properties used by the Nif File Format',
-            type=cls,
-        )
+    alphaflag: IntProperty(
+        name='Alpha Flag',
+        default=0
+    )
 
-        cls.alphaflag = IntProperty(
-            name='Alpha Flag',
-            default=0
-        )
+    textureflag: IntProperty(
+        name='Texture Flag',
+        default=0
+    )
 
-        cls.textureflag = IntProperty(
-            name='Texture Flag',
-            default=0
-        )
+    materialflag: IntProperty(
+        name='Material Flag',
+        default=0
+    )
 
-        cls.materialflag = IntProperty(
-            name='Material Flag',
-            default=0
-        )
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Material.niftools_alpha

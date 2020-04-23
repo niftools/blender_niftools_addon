@@ -118,14 +118,14 @@ class Object:
         # default node flags
         b_obj_type = b_obj.type
         if b_obj_type in self.export_types:
-            if b_obj_type is 'EMPTY' and b_obj.niftools.objectflags != 0:
-                n_node.flags = b_obj.niftools.objectflags
-            if b_obj_type is 'MESH' and b_obj.niftools.objectflags != 0:
-                n_node.flags = b_obj.niftools.objectflags
-            elif b_obj_type is 'ARMATURE' and b_obj.niftools.objectflags != 0:
-                n_node.flags = b_obj.niftools.objectflags
-            elif b_obj_type is 'ARMATURE' and b_obj.niftools.objectflags == 0 and b_obj.parent is None:
-                n_node.flags = b_obj.niftools.objectflags
+            if b_obj_type is 'EMPTY' and b_obj.niftools.flags != 0:
+                n_node.flags = b_obj.niftools.flags
+            if b_obj_type is 'MESH' and b_obj.niftools.flags != 0:
+                n_node.flags = b_obj.niftools.flags
+            elif b_obj_type is 'ARMATURE' and b_obj.niftools.flags != 0:
+                n_node.flags = b_obj.niftools.flags
+            elif b_obj_type is 'ARMATURE' and b_obj.niftools.flags == 0 and b_obj.parent is None:
+                n_node.flags = b_obj.niftools.flags
             else:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     n_node.flags = 0x000E
@@ -171,7 +171,7 @@ class Object:
         elif b_obj_type == 'MESH':
             # -> mesh data.
             # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
-            is_collision = b_obj.game.use_collision_bounds
+            is_collision = b_obj.display_type == "BOUNDS"
             has_children = len(b_obj_children) > 0
             is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
 
@@ -266,8 +266,8 @@ class Object:
                 node = types.create_ninode(b_obj)
                 # node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy{:d}'.format(n_parent.num_children)
-                if b_obj.niftools.objectflags != 0:
-                    node_flag_hex = hex(b_obj.niftools.objectflags)
+                if b_obj.niftools.flags != 0:
+                    node_flag_hex = hex(b_obj.niftools.flags)
                 else:
                     node_flag_hex = 0x000E  # default
                 node.flags = node_flag_hex

@@ -71,6 +71,20 @@ class BsInvMarkerRemove(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class NfTlPartFlagAdd(bpy.types.Operator):
+    """Adds Dismember partition Flag set"""
+    bl_idname = "object.niftools_part_flags_add"
+    bl_label = "Add Dismember Flags"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        obj = context.active_object
+
+        b_obj_invmarker = obj.niftools_part_flags.add()
+        obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
+        return {'FINISHED'}
+
+
 class NfTlPartFlagRemove(bpy.types.Operator):
     """Removes Dismember partition Flag set"""
     bl_idname = "object.niftools_part_flags_remove"

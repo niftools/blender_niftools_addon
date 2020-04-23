@@ -76,8 +76,9 @@ class TextureSlotManager:
     @staticmethod
     def get_used_textslots(b_mat):
         used_slots = []
-        if b_mat is not None:
-            used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
+        # todo [material] update for node materials
+        # if b_mat is not None:
+        #     used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
         return used_slots
 
     @staticmethod
@@ -93,31 +94,31 @@ class TextureSlotManager:
         used_slots = self.get_used_textslots(b_mat)
         self._reset_fields()
 
-        for b_mat_texslot in used_slots:
+        for b_texture_node in used_slots:
             # check REFL-mapped textures (used for "NiTextureEffect" materials)
-            if b_mat_texslot.texture_coords == 'REFLECTION':
-                if not b_mat_texslot.use_map_color_diffuse:
+            if b_texture_node.texture_coords == 'REFLECTION':
+                if not b_texture_node.use_map_color_diffuse:
                     # it should map to colour
                     raise util_math.NifError(
                         "Non-COL-mapped reflection texture in mesh '%s', material '%s', these cannot be exported to NIF.\n"
                         "Either delete all non-COL-mapped reflection textures, or in the Shading Panel, \n"
                         "under Material Buttons, set texture 'Map To' to 'COL'." % (b_mat.name, b_mat.name))
-                if b_mat_texslot.blend_type != 'ADD':
+                if b_texture_node.blend_type != 'ADD':
                     # it should have "ADD" blending mode
                     NifLog.warn("Reflection texture should have blending mode 'Add'"
                                 " on texture in mesh '{0}', material '{1}').".format(b_mat.name, b_mat.name))
                 # an envmap image should have an empty... don't care
-                self.b_ref_slot = b_mat_texslot
+                self.b_ref_slot = b_texture_node
 
             # check UV-mapped textures
-            elif b_mat_texslot.texture_coords == 'UV':
+            elif b_texture_node.texture_coords == 'UV':
 
                 # update set of uv layers that must be exported
-                if b_mat_texslot.uv_layer not in self.dict_mesh_uvlayers:
-                    self.dict_mesh_uvlayers.append(b_mat_texslot.uv_layer)
+                if b_texture_node.uv_layer not in self.dict_mesh_uvlayers:
+                    self.dict_mesh_uvlayers.append(b_texture_node.uv_layer)
 
                 # glow tex
-                if b_mat_texslot.use_map_emit:
+                if b_texture_node.use_map_emit:
                     # multi-check
                     if self.b_glow_slot:
                         raise util_math.NifError("Multiple emissive textures in mesh '{0}', material '{1}''.\n"
@@ -125,13 +126,13 @@ class TextureSlotManager:
                                                  format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
+                    if b_texture_node.use_map_alpha:
                         self.has_alpha_texture = True
 
-                    self.b_glow_slot = b_mat_texslot
+                    self.b_glow_slot = b_texture_node
 
                 # specular
-                elif b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec:
+                elif b_texture_node.use_map_specular or b_texture_node.use_map_color_spec:
                     # multi-check
                     if self.b_gloss_slot:
                         raise util_math.NifError("Multiple specular gloss textures in mesh '{0}', material '{1}'.\n"
@@ -139,14 +140,14 @@ class TextureSlotManager:
                                                  format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
+                    if b_texture_node.use_map_alpha:
                         self.has_alpha_texture = True
 
                     # got the gloss map
-                    self.b_gloss_slot = b_mat_texslot
+                    self.b_gloss_slot = b_texture_node
 
                 # bump map
-                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map is False:
+                elif b_texture_node.use_map_normal and b_texture_node.texture.use_normal_map is False:
                     # multi-check
                     if self.b_bump_slot:
                         raise util_math.NifError("Multiple bump/normal texture in mesh '{0}', material '{1}'.\n"
@@ -154,25 +155,25 @@ class TextureSlotManager:
                                                  format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
+                    if b_texture_node.use_map_alpha:
                         self.has_alpha_texture = True
 
-                    self.b_bump_slot = b_mat_texslot
+                    self.b_bump_slot = b_texture_node
 
                 # normal map
-                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
+                elif b_texture_node.use_map_normal and b_texture_node.texture.use_normal_map:
                     # multi-check
                     if self.b_normal_slot:
                         raise util_math.NifError("Multiple bump/normal textures in mesh '{0}', material '{1}'.\n"
                                                  "Make sure there is only one texture set as Influence > normal".
                                                  format(b_mat.name, b_mat.name))
                     # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
+                    if b_texture_node.use_map_alpha:
                         self.has_alpha_texture = True
-                    self.b_normal_slot = b_mat_texslot
+                    self.b_normal_slot = b_texture_node
 
                 # darken
-                elif b_mat_texslot.use_map_color_diffuse and b_mat_texslot.blend_type == 'DARKEN':
+                elif b_texture_node.use_map_color_diffuse and b_texture_node.blend_type == 'DARKEN':
 
                     if self.b_dark_slot:
                         raise util_math.NifError("Multiple Darken textures in mesh '{0}', material '{1}'.\n"
@@ -180,22 +181,22 @@ class TextureSlotManager:
                                                  format(b_mat.name, b_mat.name))
 
                     # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
+                    if b_texture_node.use_map_alpha:
                         self.has_alpha_texture = True
                     # got the dark map
-                    self.b_dark_slot = b_mat_texslot
+                    self.b_dark_slot = b_texture_node
 
                 # diffuse
-                elif b_mat_texslot.use_map_color_diffuse:
+                elif b_texture_node.use_map_color_diffuse:
                     if self.b_diffuse_slot:
                         raise util_math.NifError("Multiple Diffuse textures in mesh '{0}', material '{1}'.\n"
                                                  "Make sure there is only one texture with Influence > Diffuse > color".
                                                  format(b_mat.name, b_mat.name))
 
-                    self.b_diffuse_slot = b_mat_texslot
+                    self.b_diffuse_slot = b_texture_node
 
                     # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
+                    if b_texture_node.use_map_alpha:
                         self.has_alpha_texture = True
 
                         '''
@@ -224,11 +225,11 @@ class TextureSlotManager:
                                 " and try again."
                                 %b_mat.name)
     
-                        mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
+                        mesh_mat_transparency = b_texture_node.varfac # we must use the "Var" value
                         '''
 
                 # detail
-                elif b_mat_texslot.use_map_color_diffuse:
+                elif b_texture_node.use_map_color_diffuse:
                     if self.b_detail_slot:
                         raise util_math.NifError("Multiple detail textures in mesh '{0}', material '{1}'.\n"
                                                  "Make sure there is only one texture with Influence Diffuse > color".
@@ -236,12 +237,12 @@ class TextureSlotManager:
                     # extra diffuse consider as detail texture
 
                     # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
+                    if b_texture_node.use_map_alpha:
                         self.has_alpha_texture = True
-                    self.b_detail_slot = b_mat_texslot
+                    self.b_detail_slot = b_texture_node
 
                 # reflection
-                elif b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir:
+                elif b_texture_node.use_map_mirror or b_texture_node.use_map_raymir:
                     # multi-check
                     if self.b_ref_slot:
                         raise util_math.NifError("Multiple reflection textures in mesh '{0}', material '{1}'.\n"
@@ -249,16 +250,16 @@ class TextureSlotManager:
                                                  format(b_mat.name, b_mat.name))
                     # got the reflection map
                     # check if alpha channel is enabled for this texture
-                    if b_mat_texslot.use_map_alpha:
+                    if b_texture_node.use_map_alpha:
                         self.has_alpha_texture = True
-                    self.b_ref_slot = b_mat_texslot
+                    self.b_ref_slot = b_texture_node
 
                 # unsupported map
                 else:
                     raise util_math.NifError("Do not know how to export texture '{0}', in mesh '{1}', material '{2}'.\n"
                                              "Either delete it, or if this texture is to be your base texture.\n"
                                              "Go to the Shading Panel Material Buttons, and set texture 'Map To' to 'COL'.".
-                                             format(b_mat_texslot.texture.name, b_mat.name, b_mat.name))
+                                             format(b_texture_node.texture.name, b_mat.name, b_mat.name))
 
             # nif only support UV-mapped textures
             else:
@@ -271,9 +272,9 @@ class TextureSlotManager:
         if self.b_mat == b_mat:
             return self.b_diffuse_slot is not None
 
-        for b_mat_texslot in self.get_used_textslots(b_mat):
-            if b_mat_texslot.use_map_color_diffuse:
-                self.b_diffuse_slot = b_mat_texslot
+        for b_texture_node in self.get_used_textslots(b_mat):
+            if b_texture_node.use_map_color_diffuse:
+                self.b_diffuse_slot = b_texture_node
 
         return self.b_diffuse_slot
 
@@ -281,27 +282,27 @@ class TextureSlotManager:
         if self.b_mat == b_mat:
             return self.b_glow_slot is not None
 
-        for b_mat_texslot in self.get_used_textslots(b_mat):
-            if b_mat_texslot.use_map_emit:
-                self.b_glow_slot = b_mat_texslot
+        for b_texture_node in self.get_used_textslots(b_mat):
+            if b_texture_node.use_map_emit:
+                self.b_glow_slot = b_texture_node
         return self.b_glow_slot
 
     def has_bumpmap_textures(self, b_mat):
         if self.b_mat == b_mat:
             return self.b_bump_slot is not None
 
-        for b_mat_texslot in self.get_used_textslots(b_mat):
-            if b_mat_texslot.texture.use_normal_map is False and b_mat_texslot.use_map_color_diffuse is False:
-                self.b_bump_slot = b_mat_texslot
+        for b_texture_node in self.get_used_textslots(b_mat):
+            if b_texture_node.texture.use_normal_map is False and b_texture_node.use_map_color_diffuse is False:
+                self.b_bump_slot = b_texture_node
         return self.b_bump_slot
 
     def has_gloss_textures(self, b_mat):
         if self.b_mat == b_mat:
             return self.b_gloss_slot is not None
 
-        for b_mat_texslot in self.get_used_textslots(b_mat):
-            if b_mat_texslot.use_map_color_spec:
-                self.b_gloss_slot = b_mat_texslot
+        for b_texture_node in self.get_used_textslots(b_mat):
+            if b_texture_node.use_map_color_spec:
+                self.b_gloss_slot = b_texture_node
                 return True
         return True
 
@@ -309,8 +310,8 @@ class TextureSlotManager:
         if self.b_mat == b_mat:
             return self.b_normal_slot is not None
 
-        for b_mat_texslot in self.get_used_textslots(b_mat):
-            if b_mat_texslot.use_map_color_diffuse is False and b_mat_texslot.texture.use_normal_map and b_mat_texslot.use_map_normal:
-                self.b_normal_slot = b_mat_texslot
+        for b_texture_node in self.get_used_textslots(b_mat):
+            if b_texture_node.use_map_color_diffuse is False and b_texture_node.texture.use_normal_map and b_texture_node.use_map_normal:
+                self.b_normal_slot = b_texture_node
                 return True
         return False

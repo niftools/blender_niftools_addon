@@ -95,61 +95,71 @@ class ObjectProperty:
 
         return zbuf
 
+    def get_matching_block(self, block_type, **kwargs):
+        """Try to find a block matching block_type. Keyword arguments are a dict of parameters and required attributes of the block"""
+        # go over all blocks of block_type
+
+        NifLog.debug(f"Looking for {block_type} block. Kwargs: {kwargs}")
+        for block in block_store.block_to_obj:
+            # if isinstance(block, block_type):
+            if block_type in str(type(block)):
+                # skip blocks that don't match additional conditions
+                for param, attribute in kwargs.items():
+                    # now skip this block if any of the conditions does not match
+                    if attribute is not None:
+                        ret_attr = getattr(block, param, None)
+                        if ret_attr != attribute:
+                            NifLog.debug(f"break, {param} != {attribute}, returns {ret_attr}")
+                            break
+                else:
+                    # we did not break out of the loop, so all checks went through, so we can use this block
+                    NifLog.debug(f"Found existing {block_type} block matching all criteria!")
+                    return block
+        # we are still here, so we must create a block of this type and set all attributes accordingly
+        NifLog.debug(f"Created new {block_type} block because none matched the required criteria!")
+        block = block_store.create_block(block_type)
+        for param, attribute in kwargs.items():
+            if attribute is not None:
+                setattr(block, param, attribute)
+        return block
+
     # TODO [material][property] Move this to new form property processing
-    def export_alpha_property(self, flags=0x00ED, threshold=0):
+    def export_alpha_property(self, b_mat):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
-        # search for duplicate
-        for block in block_store.block_to_obj:
-            if isinstance(block, NifFormat.NiAlphaProperty) and block.flags == flags and block.threshold == threshold:
-                return block
-
-        # no alpha property with given flag found, so create new one
-        alpha_prop = block_store.create_block("NiAlphaProperty")
-        alpha_prop.flags = flags
-        alpha_prop.threshold = threshold
-        return alpha_prop
+        if b_mat.niftools_alpha.alphaflag != 0:
+            # todo [material] reconstruct flag from material alpha settings
+            flags = b_mat.niftools_alpha.alphaflag
+            threshold = b_mat.alpha_threshold * 255
+        elif NifOp.props.game == 'SID_MEIER_S_RAILROADS':
+            flags = 0x32ED
+            threshold = 150
+        elif NifOp.props.game == 'EMPIRE_EARTH_II':
+            flags = 0x00ED
+            threshold = 0
+        else:
+            flags = 0x12ED
+            threshold = 0
+        return self.get_matching_block("NiAlphaProperty", flags=flags, threshold=int(threshold))
 
     def export_specular_property(self, flags=0x0001):
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
-        for block in block_store.block_to_obj:
-            if isinstance(block, NifFormat.NiSpecularProperty) and block.flags == flags:
-                return block
-
-        # no specular property with given flag found, so create new one
-        spec_prop = block_store.create_block("NiSpecularProperty")
-        spec_prop.flags = flags
-        return spec_prop
+        return self.get_matching_block("NiSpecularProperty", flags=flags)
 
     def export_wireframe_property(self, flags=0x0001):
         """Return existing wire property with given flags, or create new one
         if an wire property with required flags is not found."""
-        # search for duplicate
-        for block in block_store.block_to_obj:
-            if isinstance(block, NifFormat.NiWireframeProperty) and block.flags == flags:
-                return block
+        return self.get_matching_block("NiWireframeProperty", flags=flags)
 
-        # no wire property with given flag found, so create new one
-        wire_prop = block_store.create_block("NiWireframeProperty")
-        wire_prop.flags = flags
-        return wire_prop
-
-    def export_stencil_property(self):
+    def export_stencil_property(self, flags=None):
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
-        # search for duplicate
-        for block in block_store.block_to_obj:
-            if isinstance(block, NifFormat.NiStencilProperty):
-                # all these blocks have the same setting, no further check is needed
-                return block
-
-        # no stencil property found, so create new one
-        stencil_prop = block_store.create_block("NiStencilProperty")
         if NifOp.props.game == 'FALLOUT_3':
-            stencil_prop.flags = 19840
-        return stencil_prop
+            flags = 19840
+        # search for duplicate
+        return self.get_matching_block("NiStencilProperty", flags=flags)
 
 
 # TODO [object][property][extradata] doesn't account for mult-root
@@ -159,7 +169,7 @@ class ObjectDataProperty:
     def has_collision():
         """Helper function that determines if a blend file contains a collider."""
         for b_obj in bpy.data.objects:
-            if b_obj.game.use_collision_bounds:
+            if b_obj.display_type == "BOUNDS":
                 return b_obj
 
     # TODO [object][property] Move to object property

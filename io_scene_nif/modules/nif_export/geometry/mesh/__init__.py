@@ -108,24 +108,11 @@ class Mesh:
             mesh_materials = [None]
 
         # is mesh double sided?
-        mesh_doublesided = b_mesh.show_double_sided
+        # todo [mesh/material] detect from material settings!
+        mesh_doublesided = True
 
         # vertex color check
-        mesh_hasvcol = False
-        mesh_hasvcola = False
-
-        if b_mesh.vertex_colors:
-            mesh_hasvcol = True
-
-            # vertex alpha check
-            if len(b_mesh.vertex_colors) == 1:
-                NifLog.warn("Mesh only has one Vertex Color layer. Default alpha values will be written."
-                            "For Custom alpha values add a second vertex layer, greyscale only")
-            else:
-                for b_loop in b_mesh.vertex_colors[1].data:
-                    if b_loop.color.v > NifOp.props.epsilon:
-                        mesh_hasvcola = True
-                        break
+        mesh_hasvcol = b_mesh.vertex_colors
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
@@ -142,16 +129,17 @@ class Mesh:
             b_alpha_prop = False
             b_emit_prop = False
 
-            # use the texture properties as preference
-            for b_slot in self.texture_helper.get_used_textslots(b_mat):
-                # replace with texture helper queries
-                b_ambient_prop |= b_slot.use_map_ambient
-                b_diffuse_prop |= b_slot.use_map_color_diffuse
-                b_spec_prop |= b_slot.use_map_color_spec
-                b_emissive_prop |= b_slot.use_map_emit
-                b_gloss_prop |= b_slot.use_map_hardness
-                b_alpha_prop |= b_slot.use_map_alpha
-                b_emit_prop |= b_slot.use_map_emit
+            # todo [material/texture] reimplement for node materials
+            # # use the texture properties as preference
+            # for b_slot in self.texture_helper.get_used_textslots(b_mat):
+            #     # replace with texture helper queries
+            #     b_ambient_prop |= b_slot.use_map_ambient
+            #     b_diffuse_prop |= b_slot.use_map_color_diffuse
+            #     b_spec_prop |= b_slot.use_map_color_spec
+            #     b_emissive_prop |= b_slot.use_map_emit
+            #     b_gloss_prop |= b_slot.use_map_hardness
+            #     b_alpha_prop |= b_slot.use_map_alpha
+            #     b_emit_prop |= b_slot.use_map_emit
 
             # -> first, extract valuable info from our b_obj
 
@@ -174,7 +162,8 @@ class Mesh:
                 mesh_mat_diffuse_color = b_mat.diffuse_color
                 # emissive mat
                 mesh_mat_emissive_color = b_mat.niftools.emissive_color
-                mesh_mat_emitmulti = b_mat.emit
+                # mesh_mat_emitmulti = b_mat.emit
+                mesh_mat_emitmulti = b_mat.niftools.emissive_color
                 # specular mat
                 mesh_mat_specular_color = b_mat.specular_color
 
@@ -183,21 +172,23 @@ class Mesh:
                     mesh_hasspec = b_spec_prop
 
                 # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = b_mat.specular_hardness
+                mesh_mat_gloss = b_mat.specular_intensity
 
                 # alpha mat
+                # todo [material] check for transparent node in node tree
                 mesh_hasalpha = b_alpha_prop
-                mesh_mat_transparency = (1 - b_mat.alpha)
-                if b_mat.use_transparency:
-                    if abs(mesh_mat_transparency - 1.0) > NifOp.props.epsilon:
-                        mesh_hasalpha = True
-                elif mesh_hasvcola:
+                mesh_mat_transparency = 1
+                if b_mat.blend_method != "OPAQUE":
+                    mesh_hasalpha = True
+                elif mesh_hasvcol:
                     mesh_hasalpha = True
                 elif b_mat.animation_data and 'Alpha' in b_mat.animation_data.action.fcurves:
                     mesh_hasalpha = True
 
                 # wire mat
-                mesh_haswire = (b_mat.type == 'WIRE')
+                # mesh_haswire = (b_mat.type == 'WIRE')
+                # todo [material] find alternative
+                mesh_haswire = False
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
@@ -243,29 +234,7 @@ class Mesh:
                 else:
                     trishape.name = block_store.get_full_name(trishape)
 
-            # TODO [object][flags] Move up to object
-            # Trishape Flags...
-            if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
-                trishape.flags = b_obj.niftools.objectflags
-            else:
-                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                    trishape.flags = 0x000E
-
-                elif NifOp.props.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
-                    trishape.flags = 0x0010
-                elif NifOp.props.game in ('EMPIRE_EARTH_II',):
-                    trishape.flags = 0x0016
-                elif NifOp.props.game in ('DIVINITY_2',):
-                    if trishape.name.lower[-3:] in ("med", "low"):
-                        trishape.flags = 0x0014
-                    else:
-                        trishape.flags = 0x0016
-                else:
-                    # morrowind
-                    if b_obj.draw_type != 'WIRE':  # not wire
-                        trishape.flags = 0x0004  # use triangles as bounding box
-                    else:
-                        trishape.flags = 0x0005  # use triangles as bounding box + hide
+            self.set_mesh_flags(b_obj, trishape)
 
             # extra shader for Sid Meier's Railroads
             if NifOp.props.game == 'SID_MEIER_S_RAILROADS':
@@ -280,41 +249,43 @@ class Mesh:
                 # only export the bind matrix on trishapes that were not animated
                 util_math.set_object_matrix(b_obj, trishape)
 
-            # add textures
-            if NifOp.props.game == 'FALLOUT_3':
-                if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-                    block_store.register_block(bsshader)
-                    trishape.add_property(bsshader)
-            elif NifOp.props.game == 'SKYRIM':
-                if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-                    block_store.register_block(bsshader)
-                    num_props = trishape.num_properties
-                    trishape.num_properties = num_props + 1
-                    trishape.bs_properties.update_size()
-                    trishape.bs_properties[num_props] = bsshader
-
-            else:
-                if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
-                    # sid meier's railroad and civ4: set shader slots in extra data
-                    self.texture_helper.add_shader_integer_extra_datas(trishape)
-
-                if b_mat:
-                    n_nitextureprop = self.texture_helper.export_texturing_property(
-                        flags=0x0001,  # standard
-                        # TODO [object][texture][material] Move out and break dependency
-                        applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
-                        b_mat=b_mat)
-
-                    block_store.register_block(n_nitextureprop)
-                    trishape.add_property(n_nitextureprop)
+            # # add textures
+            # if NifOp.props.game == 'FALLOUT_3':
+            #     if b_mat:
+            #         bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+            #
+            #         block_store.register_block(bsshader)
+            #         trishape.add_property(bsshader)
+            # elif NifOp.props.game == 'SKYRIM':
+            #     if b_mat:
+            #         bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+            #
+            #         block_store.register_block(bsshader)
+            #         num_props = trishape.num_properties
+            #         trishape.num_properties = num_props + 1
+            #         trishape.bs_properties.update_size()
+            #         trishape.bs_properties[num_props] = bsshader
+            #
+            # else:
+            #     if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+            #         # sid meier's railroad and civ4: set shader slots in extra data
+            #         self.texture_helper.add_shader_integer_extra_datas(trishape)
+            #
+            #     if b_mat:
+            #         n_nitextureprop = self.texture_helper.export_texturing_property(
+            #             flags=0x0001,  # standard
+            #             # TODO [object][texture][material] Move out and break dependency
+            #             applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
+            #             b_mat=b_mat)
+            #
+            #         block_store.register_block(n_nitextureprop)
+            #         trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceding child of the trishape)
             if n_parent:
-                ref_mtex = self.texture_helper.b_ref_slot
+                # todo [texture] detect effect and move out
+                # ref_mtex = self.texture_helper.b_ref_slot
+                ref_mtex = False
                 if NifOp.props.game == 'MORROWIND' and ref_mtex:
                     # create a new parent block for this shape
                     extra_node = block_store.create_block("NiNode", ref_mtex)
@@ -334,19 +305,7 @@ class Mesh:
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery refer to the alpha property in the trishape block
-                if b_mat.niftools_alpha.alphaflag != 0:
-                    alphaflags = b_mat.niftools_alpha.alphaflag
-                    alphathreshold = b_mat.offset_z
-                elif NifOp.props.game == 'SID_MEIER_S_RAILROADS':
-                    alphaflags = 0x32ED
-                    alphathreshold = 150
-                elif NifOp.props.game == 'EMPIRE_EARTH_II':
-                    alphaflags = 0x00ED
-                    alphathreshold = 0
-                else:
-                    alphaflags = 0x12ED
-                    alphathreshold = 0
-                trishape.add_property(self.object_property.export_alpha_property(flags=alphaflags, threshold=alphathreshold))
+                trishape.add_property(self.object_property.export_alpha_property(b_mat))
 
             if mesh_haswire:
                 # add NiWireframeProperty
@@ -405,7 +364,7 @@ class Mesh:
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
-            mesh_uv_layers = self.texture_helper.get_uv_layers(b_mat)
+            mesh_uv_layers = b_mesh.uv_layers
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
             vertlist = []
@@ -450,25 +409,11 @@ class Mesh:
                     else:
                         fn = None
 
-                    fuv = []
-                    for uv_layer in mesh_uv_layers:
-                        if uv_layer != "":
-                            # TODO [geomotry][uv]  map uv layer to index
-                            # currently we have uv_layer names, but we need their index value
-                            # b_mesh.uv_layers[0].data[poly.index].uv
-                            fuv.append(b_mesh.uv_layers[uv_layer].data[loop_index].uv)
-                        else:
-                            NifLog.warn("Texture is set to use UV but no UV Map is Selected for Mapping > Map")
+                    fuv = [uv_layer.data[loop_index].uv for uv_layer in b_mesh.uv_layers]
 
                     # TODO [geomotry][mesh] Need to map b_verts -> n_verts
                     if mesh_hasvcol:
-                        # check for an alpha layer
-                        b_color = b_mesh.vertex_colors[0].data[loop_index].color
-                        if mesh_hasvcola:
-                            b_alpha = b_mesh.vertex_colors[1].data[loop_index].color
-                            f_col = [b_color.r, b_color.g, b_color.b, b_alpha.v]
-                        else:
-                            f_col = [b_color.r, b_color.g, b_color.b, 1.0]
+                        f_col = list(b_mesh.vertex_colors[0].data[loop_index].color)
                     else:
                         f_col = None
 
@@ -624,173 +569,126 @@ class Mesh:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     trishape.update_tangent_space(as_extra=(NifOp.props.game == 'OBLIVION'))
 
+            # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any
-            vertgroups = {vertex_group.name for vertex_group in b_obj.vertex_groups}
-            bone_names = []
-            if b_obj.parent:
-                if b_obj.parent.type == 'ARMATURE':
-                    b_obj_armature = b_obj.parent
-                    bone_names = list(b_obj_armature.data.bones.keys())
-                    # the vertgroups that correspond to bone_names are bones that influence the mesh
-                    boneinfluences = []
-                    for bone in bone_names:
-                        if bone in vertgroups:
-                            boneinfluences.append(bone)
-                    if boneinfluences:  # yes we have skinning!
-                        # create new skinning instance block and link it
-                        if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
-                            skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
-                        else:
-                            skininst = block_store.create_block("NiSkinInstance", b_obj)
-                        trishape.skin_instance = skininst
-                        for block in block_store.block_to_obj:
-                            if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == block_store.get_full_name(b_obj_armature):
-                                    skininst.skeleton_root = block
-                                    break
-                        else:
-                            raise util_math.NifError("Skeleton root '%s' not found." % b_obj_armature.name)
+            if b_obj.parent and b_obj.parent.type == 'ARMATURE':
+                b_obj_armature = b_obj.parent
+                vertgroups = {vertex_group.name for vertex_group in b_obj.vertex_groups}
+                bone_names = set(b_obj_armature.data.bones.keys())
+                # the vertgroups that correspond to bone_names are bones that influence the mesh
+                boneinfluences = vertgroups & bone_names
+                if boneinfluences:  # yes we have skinning!
+                    # create new skinning instance block and link it
+                    n_root_name = block_store.get_full_name(b_obj_armature)
+                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name)
+                    trishape.skin_instance = skininst
 
-                        # create skinning data and link it
-                        skindata = block_store.create_block("NiSkinData", b_obj)
-                        skininst.data = skindata
+                    # Vertex weights,  find weights and normalization factors
+                    vert_list = {}
+                    vert_norm = {}
+                    unassigned_verts = []
 
-                        skindata.has_vertex_weights = True
-                        # fix geometry rest pose: transform relative to skeleton root
-                        skindata.set_transform(util_math.get_object_matrix(b_obj).get_inverse())
+                    for bone_group in boneinfluences:
+                        b_list_weight = []
+                        b_vert_group = b_obj.vertex_groups[bone_group]
 
-                        # Vertex weights,  find weights and normalization factors
-                        vert_list = {}
-                        vert_norm = {}
-                        unassigned_verts = []
+                        for b_vert in b_obj.data.vertices:
+                            if len(b_vert.groups) == 0:  # check vert has weight_groups
+                                unassigned_verts.append(b_vert)
+                                continue
 
-                        for bone_group in boneinfluences:
-                            b_list_weight = []
-                            b_vert_group = b_obj.vertex_groups[bone_group]
+                            for g in b_vert.groups:
+                                if b_vert_group.name in boneinfluences:
+                                    if g.group == b_vert_group.index:
+                                        b_list_weight.append((b_vert.index, g.weight))
+                                        break
 
-                            for b_vert in b_obj.data.vertices:
-                                if len(b_vert.groups) == 0:  # check vert has weight_groups
-                                    unassigned_verts.append(b_vert)
-                                    continue
+                        vert_list[bone_group] = b_list_weight
 
-                                for g in b_vert.groups:
-                                    if b_vert_group.name in boneinfluences:
-                                        if g.group == b_vert_group.index:
-                                            b_list_weight.append((b_vert.index, g.weight))
-                                            break
+                        # create normalisation groupings
+                        for v in vert_list[bone_group]:
+                            if v[0] in vert_norm:
+                                vert_norm[v[0]] += v[1]
+                            else:
+                                vert_norm[v[0]] = v[1]
 
-                            vert_list[bone_group] = b_list_weight
+                    self.select_unassigned_vertices(unassigned_verts)
 
-                            # create normalisation groupings
-                            for v in vert_list[bone_group]:
-                                if v[0] in vert_norm:
-                                    vert_norm[v[0]] += v[1]
-                                else:
-                                    vert_norm[v[0]] = v[1]
+                    # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
+                    # note: allocate memory for faster performance
+                    vert_added = [False for _ in range(len(vertlist))]
+                    for b_bone_name in boneinfluences:
+                        # find bone in exported blocks
+                        full_bone_name = block_store.get_full_name(b_obj_armature.data.bones[b_bone_name])
+                        bone_block = self.get_bone_block(full_bone_name)
 
-                        # TODO [object] Extract to method
-                        # vertices must be assigned at least one vertex group lets be nice and display them for the user
-                        if len(unassigned_verts) > 0:
-                            for b_scene_obj in bpy.context.scene.objects:
-                                b_scene_obj.select = False
+                        # find vertex weights
+                        vert_weights = {}
+                        for v in vert_list[b_bone_name]:
+                            # v[0] is the original vertex index
+                            # v[1] is the weight
 
-                            b_obj = bpy.context.scene.objects.active
-                            b_obj.select = True
+                            # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
+                            # so we simply export the same weight as the original vertex for each new vertex
 
-                            # switch to edit mode and raise exception
-                            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-                            # clear all currently selected vertices
-                            bpy.ops.mesh.select_all(action='DESELECT')
-                            # select unweighted vertices
-                            bpy.ops.mesh.select_ungrouped(extend=False)
+                            # write the weights
+                            # extra check for multi material meshes
+                            if vertmap[v[0]] and vert_norm[v[0]]:
+                                for vert_index in vertmap[v[0]]:
+                                    vert_weights[vert_index] = v[1] / vert_norm[v[0]]
+                                    vert_added[vert_index] = True
+                        # add bone as influence, but only if there were actually any vertices influenced by the bone
+                        if vert_weights:
+                            trishape.add_bone(bone_block, vert_weights)
 
-                            raise util_math.NifError("Cannot export mesh with unweighted vertices. "
-                                                     "The unweighted vertices have been selected in the mesh so they can easily be identified.")
+                    # update bind position skinning data
+                    trishape.update_bind_position()
 
-                        # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
-                        # note: allocate memory for faster performance
-                        vert_added = [False for _ in range(len(vertlist))]
-                        for bone_index, bone in enumerate(boneinfluences):
-                            # find bone in exported blocks
-                            bone_block = None
-                            for block in block_store.block_to_obj:
-                                if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == block_store.get_full_name(b_obj_armature.data.bones[bone]):
-                                        if not bone_block:
-                                            bone_block = block
-                                        else:
-                                            raise util_math.NifError("Multiple bones with name '{0}': probably you have multiple armatures. "
-                                                                     "Please parent all meshes to a single armature and try again".format(bone))
-                            if not bone_block:
-                                raise util_math.NifError("Bone '{0}' not found.".format(bone))
+                    # calculate center and radius for each skin bone data block
+                    trishape.update_skin_center_radius()
 
-                            # find vertex weights
-                            vert_weights = {}
-                            for v in vert_list[bone]:
-                                # v[0] is the original vertex index
-                                # v[1] is the weight
+                    if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
+                        NifLog.info("Creating skin partition")
+                        lostweight = trishape.update_skin_partition(
+                            maxbonesperpartition=NifOp.props.max_bones_per_partition,
+                            maxbonespervertex=NifOp.props.max_bones_per_vertex,
+                            stripify=NifOp.props.stripify,
+                            stitchstrips=NifOp.props.stitch_strips,
+                            padbones=NifOp.props.pad_bones,
+                            triangles=trilist,
+                            trianglepartmap=bodypartfacemap,
+                            maximize_bone_sharing=(NifOp.props.game in ('FALLOUT_3', 'SKYRIM')))
 
-                                # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
-                                # so we simply export the same weight as the original vertex for each new vertex
+                        # warn on bad config settings
+                        if NifOp.props.game == 'OBLIVION':
+                            if NifOp.props.pad_bones:
+                                NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
+                        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3'):
+                            if NifOp.props.max_bones_per_partition < 18:
+                                NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
+                                            "Set it to 18 to get higher quality skin partitions.")
+                        if NifOp.props.game in 'SKYRIM':
+                            if NifOp.props.max_bones_per_partition < 24:
+                                NifLog.warn("Using less than 24 bones per partition on Skyrim export."
+                                            "Set it to 24 to get higher quality skin partitions.")
+                        if lostweight > NifOp.props.epsilon:
+                            NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')".format(
+                                str(lostweight), b_obj.name, trishape.name))
 
-                                # write the weights
-                                # extra check for multi material meshes
-                                if vertmap[v[0]] and vert_norm[v[0]]:
-                                    for vert_index in vertmap[v[0]]:
-                                        vert_weights[vert_index] = v[1] / vert_norm[v[0]]
-                                        vert_added[vert_index] = True
-                            # add bone as influence, but only if there were actually any vertices influenced by the bone
-                            if vert_weights:
-                                trishape.add_bone(bone_block, vert_weights)
+                    if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
+                        partitions = skininst.partitions
+                        b_obj_part_flags = b_obj.niftools_part_flags
+                        for s_part in partitions:
+                            s_part_index = NifFormat.BSDismemberBodyPartType._enumvalues.index(s_part.body_part)
+                            s_part_name = NifFormat.BSDismemberBodyPartType._enumkeys[s_part_index]
+                            for b_part in b_obj_part_flags:
+                                if s_part_name == b_part.name:
+                                    s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
+                                    s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
 
-                        # update bind position skinning data
-                        trishape.update_bind_position()
-
-                        # calculate center and radius for each skin bone data block
-                        trishape.update_skin_center_radius()
-
-                        if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
-                            NifLog.info("Creating skin partition")
-                            lostweight = trishape.update_skin_partition(
-                                maxbonesperpartition=NifOp.props.max_bones_per_partition,
-                                maxbonespervertex=NifOp.props.max_bones_per_vertex,
-                                stripify=NifOp.props.stripify,
-                                stitchstrips=NifOp.props.stitch_strips,
-                                padbones=NifOp.props.pad_bones,
-                                triangles=trilist,
-                                trianglepartmap=bodypartfacemap,
-                                maximize_bone_sharing=(NifOp.props.game in ('FALLOUT_3', 'SKYRIM')))
-
-                            # warn on bad config settings
-                            if NifOp.props.game == 'OBLIVION':
-                                if NifOp.props.pad_bones:
-                                    NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3'):
-                                if NifOp.props.max_bones_per_partition < 18:
-                                    NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
-                                                "Set it to 18 to get higher quality skin partitions.")
-                            if NifOp.props.game in 'SKYRIM':
-                                if NifOp.props.max_bones_per_partition < 24:
-                                    NifLog.warn("Using less than 24 bones per partition on Skyrim export."
-                                                "Set it to 24 to get higher quality skin partitions.")
-                            if lostweight > NifOp.props.epsilon:
-                                NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')".format(
-                                    str(lostweight), b_obj.name, trishape.name))
-
-                        if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-                            partitions = skininst.partitions
-                            b_obj_part_flags = b_obj.niftools_part_flags
-                            for s_part in partitions:
-                                s_part_index = NifFormat.BSDismemberBodyPartType._enumvalues.index(s_part.body_part)
-                                s_part_name = NifFormat.BSDismemberBodyPartType._enumkeys[s_part_index]
-                                for b_part in b_obj_part_flags:
-                                    if s_part_name == b_part.name:
-                                        s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
-                                        s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
-
-                        # clean up
-                        del vert_weights
-                        del vert_added
+                    # clean up
+                    del vert_weights
+                    del vert_added
 
             # fix data consistency type
             tridata.consistency_flags = b_obj.niftools.consistency_flags
@@ -799,13 +697,97 @@ class Mesh:
             self.morph_anim.export_morph(b_mesh, trishape, vertmap)
         return trishape
 
+    def get_bone_block(self, bone_name):
+        """For a bone name, return the corresponding nif node from the blocks that have already been exported"""
+        bone_block = None
+        for block in block_store.block_to_obj:
+            if isinstance(block, NifFormat.NiNode):
+                if block.name.decode() == bone_name:
+                    if not bone_block:
+                        bone_block = block
+                    else:
+                        raise util_math.NifError("Multiple bones with name '{0}': probably you have multiple armatures. "
+                                                 "Please parent all meshes to a single armature and try again".format(bone_name))
+        if not bone_block:
+            raise util_math.NifError("Bone '{0}' not found.".format(bone))
+        return bone_block
+
+    def create_skin_inst_data(self, b_obj, n_root_name):
+        if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
+            skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
+        else:
+            skininst = block_store.create_block("NiSkinInstance", b_obj)
+        for block in block_store.block_to_obj:
+            if isinstance(block, NifFormat.NiNode):
+                if block.name.decode() == n_root_name:
+                    skininst.skeleton_root = block
+                    break
+        else:
+            raise util_math.NifError("Skeleton root '%s' not found." % n_root_name)
+
+        # create skinning data and link it
+        skindata = block_store.create_block("NiSkinData", b_obj)
+        skininst.data = skindata
+
+        skindata.has_vertex_weights = True
+        # fix geometry rest pose: transform relative to skeleton root
+        skindata.set_transform(util_math.get_object_matrix(b_obj).get_inverse())
+        return skininst, skindata
+
+    # TODO [object][flags] Move up to object
+    def set_mesh_flags(self, b_obj, trishape):
+        # use blender flags
+        if (b_obj.type == 'MESH') and (b_obj.niftools.flags != 0):
+            trishape.flags = b_obj.niftools.flags
+        # fall back to defaults
+        else:
+            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                trishape.flags = 0x000E
+
+            elif NifOp.props.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
+                trishape.flags = 0x0010
+            elif NifOp.props.game in ('EMPIRE_EARTH_II',):
+                trishape.flags = 0x0016
+            elif NifOp.props.game in ('DIVINITY_2',):
+                if trishape.name.lower[-3:] in ("med", "low"):
+                    trishape.flags = 0x0014
+                else:
+                    trishape.flags = 0x0016
+            else:
+                # morrowind
+                if b_obj.display_type != 'WIRE':  # not wire
+                    trishape.flags = 0x0004  # use triangles as bounding box
+                else:
+                    trishape.flags = 0x0005  # use triangles as bounding box + hide
+
+    # todo [mesh] join code paths for those two?
+    def select_unassigned_vertices(self, unassigned_verts):
+        # vertices must be assigned at least one vertex group lets be nice and display them for the user
+        if len(unassigned_verts) > 0:
+            for b_scene_obj in bpy.context.scene.objects:
+                b_scene_obj.select_set(False)
+
+            b_obj = bpy.context.view_layer.objects.active
+            b_obj.select_set(True)
+
+            # switch to edit mode and raise exception
+            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+            # clear all currently selected vertices
+            bpy.ops.mesh.select_all(action='DESELECT')
+            # select unweighted vertices
+            bpy.ops.mesh.select_ungrouped(extend=False)
+
+            raise util_math.NifError("Cannot export mesh with unweighted vertices. "
+                                     "The unweighted vertices have been selected in the mesh so they can easily be identified.")
+
+
     def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""
         # select mesh object
         for b_deselect_obj in bpy.context.scene.objects:
-            b_deselect_obj.select = False
-        bpy.context.scene.objects.active = b_obj
-        b_obj.select = True
+            b_deselect_obj.select_set(False)
+        bpy.context.view_layer.objects.active = b_obj
+        b_obj.select_set(True)
         for face in b_mesh.polygons:
             face.select = False
         for face in polygons_without_bodypart:

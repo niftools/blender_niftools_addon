@@ -67,8 +67,13 @@ class BhkCollision(Collision):
         @param parent_block: The NiNode parent of the collision.
         """
 
+        rigid_body = b_obj.rigid_body
+        if not rigid_body:
+            NifLog.warn("'{0}' has no rigid body, skipping rigid body export".format(b_obj.name))
+            return
+
         # is it packed
-        coll_ispacked = (b_obj.game.collision_bounds_type == 'TRIANGLE_MESH')
+        coll_ispacked = (rigid_body.collision_shape == 'MESH')
 
         # Set Havok Scale ratio
         b_scene = bpy.context.scene.niftools_scene
@@ -81,11 +86,6 @@ class BhkCollision(Collision):
             n_havok_mat = b_obj.data.materials[0].name
         else:
             n_havok_mat = "HAV_MAT_STONE"
-
-        rigid_body = b_obj.rigid_body
-        if not rigid_body:
-            NifLog.warn("'{0}' has no rigid body, skipping rigid body export".format(b_obj.name))
-            return
 
         # linear_velocity = b_obj.rigid_body.deactivate_linear_velocity
         # angular_velocity = b_obj.rigid_body.deactivate_angular_velocity

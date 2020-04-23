@@ -53,11 +53,12 @@ class MorphAnimation(Animation):
         super().__init__()
         animation.FPS = bpy.context.scene.render.fps
 
-    def import_morph_controller(self, n_node, b_obj, v_map):
+    def import_morph_controller(self, n_node, b_obj):
         """Import NiGeomMorpherController as shape keys for blender object."""
 
         n_morphCtrl = util_math.find_controller(n_node, NifFormat.NiGeomMorpherController)
         if n_morphCtrl:
+            NifLog.debug("NiGeomMorpherController processed")
             b_mesh = b_obj.data
             morphData = n_morphCtrl.data
             if morphData.num_morphs:
@@ -67,7 +68,7 @@ class MorphAnimation(Animation):
                     keyname = 'Base'
 
                 # insert base key at frame 1, using relative keys
-                sk_basis = b_obj.shape_key_add(keyname)
+                sk_basis = b_obj.shape_key_add(name=keyname)
 
                 # get base vectors and import all morphs
                 baseverts = morphData.morphs[0].vectors
@@ -82,8 +83,8 @@ class MorphAnimation(Animation):
                     NifLog.info("Inserting key '{0}'".format(keyname))
                     # get vectors
                     morph_verts = morphData.morphs[idxMorph].vectors
-                    self.morph_mesh(b_mesh, baseverts, morph_verts, v_map)
-                    shape_key = b_obj.shape_key_add(keyname, from_mix=False)
+                    self.morph_mesh(b_mesh, baseverts, morph_verts)
+                    shape_key = b_obj.shape_key_add(name=keyname, from_mix=False)
 
                     # first find the keys
                     # older versions store keys in the morphData
@@ -107,7 +108,7 @@ class MorphAnimation(Animation):
                     for key in morph_data.keys:
                         self.add_key(fcu, key.time, (key.value,), interp)
 
-    def import_egm_morphs(self, b_obj, v_map, n_verts):
+    def import_egm_morphs(self, b_obj, n_verts):
         """Import all EGM morphs as shape keys for blender object."""
         # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
         b_mesh = b_obj.data
@@ -115,7 +116,7 @@ class MorphAnimation(Animation):
         asym_morphs = [list(morph.get_relative_vertices()) for morph in EGMData.data.asym_morphs]
 
         # insert base key at frame 1, using absolute keys
-        sk_basis = b_obj.shape_key_add("Basis")
+        sk_basis = b_obj.shape_key_add(name="Basis")
         b_mesh.shape_keys.use_relative = False
 
         morphs = ([(morph, "EGM SYM %i" % i) for i, morph in enumerate(sym_morphs)] +
@@ -128,18 +129,18 @@ class MorphAnimation(Animation):
                 v = NifFormat.Vector3()
                 v.x, v.y, v.z = u
                 morphvert_out.append(v)
-            self.morph_mesh(b_mesh, n_verts, morphvert_out, v_map)
+            self.morph_mesh(b_mesh, n_verts, morphvert_out)
             # TODO [animation] unused variable is it required
-            shape_key = b_obj.shape_key_add(key_name, from_mix=False)
+            shape_key = b_obj.shape_key_add(name=key_name, from_mix=False)
 
-    def morph_mesh(self, b_mesh, baseverts, morphverts, v_map):
+    def morph_mesh(self, b_mesh, baseverts, morphverts):
         """Transform a mesh to be in the shape given by morphverts."""
         # for each vertex calculate the key position from base
         # pos + delta offset
         # length check disabled
         # as sometimes, oddly, the morph has more vertices...
-        # assert(len(baseverts) == len(morphverts) == len(v_map))
-        for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
+        # assert(len(baseverts) == len(morphverts))
+        for b_v_index, (bv, mv) in enumerate(zip(baseverts, morphverts)):
             # pyffi vector3
             v = bv + mv
             # if applytransform:

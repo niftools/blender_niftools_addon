@@ -50,14 +50,8 @@ class NifMatFlagPanel(Panel):
 
     @classmethod
     def poll(cls, context):
-        mat = context.material
-        if mat is not None:
-            if mat.use_nodes:
-                if mat.active_node_material is not None:
-                    return True
-                return False
+        if context.material:
             return True
-        return False
 
     def draw(self, context):
         matalpha = context.material.niftools_alpha
@@ -79,14 +73,8 @@ class NifMatColorPanel(Panel):
 
     @classmethod
     def poll(cls, context):
-        mat = context.material
-        if mat is not None:
-            if mat.use_nodes:
-                if mat.active_node_material is not None:
-                    return True
-                return False
+        if context.material:
             return True
-        return False
 
     def draw(self, context):
         mat = context.material.niftools

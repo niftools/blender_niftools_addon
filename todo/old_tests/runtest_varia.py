@@ -73,7 +73,7 @@ class VariaTestSuite(TestSuite):
             filename='test/nif/bounding_box.nif')
         b_bbox = Blender.Object.Get("Bounding Box")
         # test stuff
-        assert(b_bbox.draw_bounds_type == 'BOX')
+        assert(b_bbox.display_bounds_type == 'BOX')
         # export
         nif_export = self.test(
             filename='test/nif/_bounding_box.nif',
@@ -107,7 +107,7 @@ class VariaTestSuite(TestSuite):
             filename='test/nif/bounding_box_bsbound.nif')
         b_bbox = Blender.Object.Get("BSBound")
         # test stuff
-        assert(b_bbox.draw_bounds_type == 'BOX')
+        assert(b_bbox.display_bounds_type == 'BOX')
         # export
         nif_export = self.test(
             filename='test/nif/_bounding_box_bsbound.nif',

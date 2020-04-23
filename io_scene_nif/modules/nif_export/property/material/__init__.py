@@ -78,21 +78,22 @@ class MaterialProp:
         matprop.ambient_color.r = ambient.r
         matprop.ambient_color.g = ambient.g
         matprop.ambient_color.b = ambient.b
-        
-        matprop.diffuse_color.r = diffuse.r
-        matprop.diffuse_color.g = diffuse.g
-        matprop.diffuse_color.b = diffuse.b
-        
-        matprop.specular_color.r = specular.r
-        matprop.specular_color.g = specular.g
-        matprop.specular_color.b = specular.b
-        
-        matprop.emissive_color.r = emissive.r
-        matprop.emissive_color.g = emissive.g
-        matprop.emissive_color.b = emissive.b
-        matprop.glossiness = gloss
-        matprop.alpha = alpha
-        matprop.emit_multi = emitmulti
+
+        # todo [material] some colors in the b2.8 api allow rgb access, others don't - why??
+        # matprop.diffuse_color.r = diffuse.r
+        # matprop.diffuse_color.g = diffuse.g
+        # matprop.diffuse_color.b = diffuse.b
+        #
+        # matprop.specular_color.r = specular.r
+        # matprop.specular_color.g = specular.g
+        # matprop.specular_color.b = specular.b
+        #
+        # matprop.emissive_color.r = emissive.r
+        # matprop.emissive_color.g = emissive.g
+        # matprop.emissive_color.b = emissive.b
+        # matprop.glossiness = gloss
+        # matprop.alpha = alpha
+        # matprop.emit_multi = emitmulti
 
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different materials even when NiMaterialProperty is the same)

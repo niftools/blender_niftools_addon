@@ -62,7 +62,7 @@ def b_create_bhksphere(b_obj, b_name):
     b_radius = max([abs(minx), abs(miny), abs(minz), abs(maxx), abs(maxy), abs(maxz)])
 
     bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=16, size=b_radius)
-    b_sphere_obj = bpy.context.scene.objects.active
+    b_sphere_obj = bpy.context.view_layer.objects.active
     b_sphere_obj.name = b_name
     b_sphere_obj.matrix_local = b_obj_matrix
 

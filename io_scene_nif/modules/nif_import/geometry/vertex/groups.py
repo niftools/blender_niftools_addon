@@ -120,7 +120,7 @@ class VertexGroup:
                 vold.z = vnew.z
 
     @staticmethod
-    def import_skin(ni_block, b_obj, v_map):
+    def import_skin(ni_block, b_obj):
         """Import a NiSkinInstance and its contents as vertex groups"""
         skininst = ni_block.skin_instance
         if skininst:
@@ -137,12 +137,12 @@ class VertexGroup:
                     vertex_weights = bone_weights[idx].vertex_weights
                     group_name = block_store.import_name(n_bone)
                     if group_name not in b_obj.vertex_groups:
-                        v_group = b_obj.vertex_groups.new(group_name)
+                        v_group = b_obj.vertex_groups.new(name=group_name)
 
                     for skinWeight in vertex_weights:
                         vert = skinWeight.index
                         weight = skinWeight.weight
-                        v_group.add([v_map[vert]], weight, 'REPLACE')
+                        v_group.add([vert], weight, 'REPLACE')
 
             # WLP2 - hides the weights in the partition
             else:
@@ -151,7 +151,7 @@ class VertexGroup:
                     # create all vgroups for this block's bones
                     block_bone_names = [block_store.import_name(bones[i]) for i in block.bones]
                     for group_name in block_bone_names:
-                        b_obj.vertex_groups.new(group_name)
+                        b_obj.vertex_groups.new(name=group_name)
 
                     # go over each vert in this block
                     for vert, vertex_weights, bone_indices in zip(block.vertex_map, block.vertex_weights, block.bone_indices):
@@ -161,7 +161,7 @@ class VertexGroup:
                             if w > 0:
                                 group_name = block_bone_names[b_i]
                                 v_group = b_obj.vertex_groups[group_name]
-                                v_group.add([v_map[vert]], w, 'REPLACE')
+                                v_group.add([vert], w, 'REPLACE')
 
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
@@ -175,13 +175,13 @@ class VertexGroup:
 
                 # create vertex group if it did not exist yet
                 if group_name not in b_obj.vertex_groups:
-                    v_group = b_obj.vertex_groups.new(group_name)
+                    v_group = b_obj.vertex_groups.new(name=group_name)
                     skinpart_index = len(skinpart_list)
                     skinpart_list.append((skinpart_index, group_name))
                     bodypart_flag.append(bodypart.part_flag)
 
                 # find vertex indices of this group
-                groupverts = [v_map[v_index] for v_index in skinpartblock.vertex_map]
+                groupverts = [v_index for v_index in skinpartblock.vertex_map]
 
                 # create the group
                 v_group.add(groupverts, 1, 'ADD')

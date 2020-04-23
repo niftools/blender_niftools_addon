@@ -154,8 +154,8 @@ class BhkCollision(Collision):
     def _import_bhk_rigid_body(self, bhkshape, collision_objs):
         # set physics flags and mass
         for b_col_obj in collision_objs:
-            scn = bpy.context.scene
-            scn.objects.active = b_col_obj
+            # todo [collision] make low level, remove operator!
+            bpy.context.view_layer.objects.active = b_col_obj
             bpy.ops.rigidbody.object_add(type='ACTIVE')
             b_r_body = b_col_obj.rigid_body
             b_r_body.enabled = True
@@ -260,7 +260,7 @@ class BhkCollision(Collision):
         b_obj = Object.mesh_from_data("convexpoly", verts, faces)
         radius = bhk_shape.radius * self.HAVOK_SCALE
         self.set_b_collider(b_obj, "BOX", radius, bhk_shape)
-        b_obj.game.collision_bounds_type = 'CONVEX_HULL'
+        # b_obj.rigid_body.collision_shape = 'CONVEX_HULL'
         return [b_obj]
 
     def import_bhkpackednitristrips_shape(self, bhk_shape):
@@ -297,7 +297,7 @@ class BhkCollision(Collision):
             b_obj = Object.mesh_from_data('poly%i' % subshape_num, verts, faces)
             radius = min(vert.co.length for vert in b_obj.data.vertices)
             self.set_b_collider(b_obj, "BOX", radius, subshape)
-            b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+            # b_obj.rigid_body.collision_shape = 'TRIANGLE_MESH'
 
             vertex_offset += subshape.num_vertices
             hk_objects.append(b_obj)
@@ -312,5 +312,5 @@ class BhkCollision(Collision):
         b_obj = Object.mesh_from_data("poly", verts, faces)
         # TODO [collision] self.havok_mat!
         self.set_b_collider(b_obj, "BOX", bhk_shape.radius)
-        b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+        # b_obj.rigid_body.collision_shape = 'TRIANGLE_MESH'
         return [b_obj]

@@ -52,7 +52,7 @@ class ObjectProperty:
         else:
             b_obj.niftools.rootnode = 'NiNode'
         # store its flags
-        b_obj.niftools.objectflags = root_block.flags
+        b_obj.niftools.flags = root_block.flags
         # store extra datas
         for n_extra in root_block.get_extra_datas():
             if isinstance(n_extra, NifFormat.NiStringExtraData):

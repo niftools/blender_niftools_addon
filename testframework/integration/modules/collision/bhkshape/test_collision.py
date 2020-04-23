@@ -64,4 +64,4 @@ class TestBhkCapsuleObject(SingleNif):
         b_coll.data.show_double_sided = False
         b_coll.name = "CollisionCapsule"
         b_coll = bpy.data.objects["CollisionCapsule"]
-        b_coll.draw_type = 'WIRE'
+        b_coll.display_type = 'WIRE'

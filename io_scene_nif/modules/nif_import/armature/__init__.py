@@ -69,13 +69,13 @@ class Armature:
 
         armature_name = block_store.import_name(n_armature)
         b_armature_data = bpy.data.armatures.new(armature_name)
-        b_armature_data.draw_type = 'STICK'
+        b_armature_data.display_type = 'STICK'
 
         # set axis orientation for export
         b_armature_data.niftools.axis_forward = NifOp.props.axis_forward
         b_armature_data.niftools.axis_up = NifOp.props.axis_up
         b_armature_obj = Object.create_b_obj(n_armature, b_armature_data)
-        b_armature_obj.show_x_ray = True
+        b_armature_obj.show_in_front  = True
 
         # make armature editable and create bones
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
@@ -237,8 +237,6 @@ class Armature:
                 continue
             if isinstance(bone, NifFormat.NiLODNode):
                 # LOD nodes are never bones
-                continue
-            if Object.is_grouping_node(bone):
                 continue
             if bone not in self.dict_armatures[skelroot]:
                 self.dict_armatures[skelroot].append(bone)

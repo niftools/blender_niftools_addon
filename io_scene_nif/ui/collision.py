@@ -52,22 +52,26 @@ class CollisionBoundsPanel(Panel):
     '''
 
     def draw_header(self, context):
-        game = context.active_object.game
-        self.layout.prop(game, "use_collision_bounds", text="")
+        pass
+        #  todo [collision/ui] we use removed game engine properties here - can we use standard blender properties or do we need custom ones?
+        # game = context.active_object.game
+        # col_setting = context.active_object.nifcollision
+        # self.layout.prop(col_setting, "use_collision_bounds", text="")
 
     def draw(self, context):
         layout = self.layout
 
-        game = context.active_object.game
+        # game = context.active_object.game
         col_setting = context.active_object.nifcollision
 
-        layout.active = game.use_collision_bounds
-        layout.prop(game, "collision_bounds_type", text="Bounds Type")
-        layout.prop(game, "radius", text="Radius")
-        layout.prop(game, "velocity_max", text="Velocity Max")
+        # todo [collision/ui] we use removed game engine properties here - can we use standard blender properties or do we need custom ones?
+        # layout.active = col_setting.use_collision_bounds
+        # layout.prop(game, "collision_bounds_type", text="Bounds Type")
+        # layout.prop(game, "radius", text="Radius")
+        # layout.prop(game, "velocity_max", text="Velocity Max")
 
         box = layout.box()
-        box.active = game.use_collision_bounds
+        # box.active = game.use_collision_bounds
 
         box.prop(col_setting, "col_filter", text='Col Filter')  # col filter prop
         box.prop(col_setting, "deactivator_type", text='Deactivator Type')  # motion dactivation prop
@@ -77,7 +81,7 @@ class CollisionBoundsPanel(Panel):
         box.prop(col_setting, "max_linear_velocity", text='Max Linear Velocity')  # oblivion layer prop
         box.prop(col_setting, "max_angular_velocity", text='Max Angular Velocity')  # oblivion layer prop
         box.prop(col_setting, "motion_system", text='Motion System')  # motion system prop
-        
+
         con_setting = context.active_object.niftools_constraint
 
         box.prop(con_setting, "LHMaxFriction", text='LHMaxFriction')
