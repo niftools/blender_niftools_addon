@@ -111,7 +111,7 @@ class BhkCollision(Collision):
 
         # apply transform
         for b_col_obj in collision_objs:
-            b_col_obj.matrix_local = b_col_obj.matrix_local * transform
+            b_col_obj.matrix_local = b_col_obj.matrix_local @ transform
         # return a list of transformed collision shapes
         return collision_objs
 
@@ -133,7 +133,7 @@ class BhkCollision(Collision):
 
         # apply transform
         for b_col_obj in collision_objs:
-            b_col_obj.matrix_local = b_col_obj.matrix_local * transform
+            b_col_obj.matrix_local = b_col_obj.matrix_local @ transform
 
         self._import_bhk_rigid_body(bhk_shape, collision_objs)
 
