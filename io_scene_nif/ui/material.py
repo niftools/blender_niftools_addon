@@ -1,4 +1,4 @@
-""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
+"""Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -41,8 +41,9 @@ import bpy
 from bpy.types import Panel
 
 
-class NifMatFlagPanel(Panel):
-    bl_label = "Flag Panel"
+class MaterialFlagPanel(Panel):
+    bl_label = "Material Flags Panel"
+    bl_idname = "NIFTOOLS_PT_MaterialFlagPanel"
 
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -64,8 +65,9 @@ class NifMatFlagPanel(Panel):
         row.prop(matalpha, "textureflag")
 
 
-class NifMatColorPanel(Panel):
+class MaterialColorPanel(Panel):
     bl_label = "Material Color Panel"
+    bl_idname = "NIFTOOLS_PT_MaterialColorPanel"
 
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -92,10 +94,10 @@ class NifMatColorPanel(Panel):
 
 
 def register():
-    bpy.utils.register_class(NifMatColorPanel)
-    bpy.types.MATERIAL_PT_shading.prepend(NifMatColorPanel)
+    bpy.utils.register_class(MaterialColorPanel)
+    bpy.types.MATERIAL_PT_shading.prepend(MaterialColorPanel)
 
 
 def unregister():
-    bpy.types.MATERIAL_PT_shading.remove(NifMatColorPanel)
-    bpy.utils.unregister_class(NifMatColorPanel)
+    bpy.types.MATERIAL_PT_shading.remove(MaterialColorPanel)
+    bpy.utils.unregister_class(MaterialColorPanel)

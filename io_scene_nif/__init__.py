@@ -155,8 +155,8 @@ classes = (
     ui.armature.ArmaturePanel,
     ui.collision.CollisionBoundsPanel,
     ui.geometry.PartFlagPanel,
-    ui.material.NifMatFlagPanel,
-    ui.material.NifMatColorPanel,
+    ui.material.MaterialFlagPanel,
+    ui.material.MaterialColorPanel,
 
     ui.object.ObjectPanel,
     ui.object.OBJECT_PT_ExtraData,
