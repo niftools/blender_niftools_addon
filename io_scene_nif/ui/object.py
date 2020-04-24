@@ -41,7 +41,7 @@ from bpy.types import Panel, UIList, Menu
 
 
 class ObjectPanel(Panel):
-    bl_label = "Niftools Object Panel"
+    bl_label = "Niftools Object Property Panel"
     bl_idname = "NIFTOOLS_PT_ObjectPanel"
 
     bl_space_type = 'PROPERTIES'
@@ -110,7 +110,7 @@ class ObjectExtraData(Panel):
 
 
 class ObjectExtraDataType(Menu):
-    bl_label = "Extra Data Types"
+    bl_label = "Niftools Extra Data Types"
     bl_idname = "NIFTOOLS_MT_ObjectExtraDataType"
 
     # noinspection PyUnusedLocal
@@ -123,7 +123,7 @@ class ObjectExtraDataType(Menu):
 
 
 class ObjectExtraDataList(UIList):
-    bl_label = "Extra Data List"
+    bl_label = "Niftools Extra Data List"
     bl_idname = "NIFTOOLS_UL_ObjectExtraDataType"
 
     # noinspection PyUnusedLocal
@@ -134,7 +134,7 @@ class ObjectExtraDataList(UIList):
 
 
 class ObjectBSInvMarkerPanel(Panel):
-    bl_label = "BS Inv Marker"
+    bl_label = "Niftools BS Inv Marker"
     bl_idname = "NIFTOOLS_PT_ObjectBSInvMarker"
 
     bl_space_type = 'PROPERTIES'

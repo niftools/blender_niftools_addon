@@ -42,7 +42,7 @@ from bpy.types import Panel
 
 
 class MaterialFlagPanel(Panel):
-    bl_label = "Material Flags Panel"
+    bl_label = "Niftools Material Flags Panel"
     bl_idname = "NIFTOOLS_PT_MaterialFlagPanel"
 
     bl_space_type = 'PROPERTIES'
@@ -66,7 +66,7 @@ class MaterialFlagPanel(Panel):
 
 
 class MaterialColorPanel(Panel):
-    bl_label = "Material Color Panel"
+    bl_label = "Niftools Material Color Panel"
     bl_idname = "NIFTOOLS_PT_MaterialColorPanel"
 
     bl_space_type = 'PROPERTIES'
