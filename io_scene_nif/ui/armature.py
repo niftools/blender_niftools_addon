@@ -1,4 +1,4 @@
-""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
+"""Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -41,6 +41,7 @@ from bpy.types import Panel
 
 
 class BonePanel(Panel):
+    bl_idname = "NIFTOOLS_PT_BonePanel"
     bl_label = "Niftools Bone Props"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -64,6 +65,7 @@ class BonePanel(Panel):
 
 class ArmaturePanel(Panel):
     bl_label = "Niftools Armature Props"
+    bl_idname = "NIFTOOLS_PT_ArmaturePropsPanel"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "data"
