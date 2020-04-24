@@ -42,6 +42,7 @@ from bpy.types import Panel, UIList, Menu
 
 class ObjectPanel(Panel):
     bl_label = "Niftools Object Panel"
+    bl_idname = "NIFTOOLS_PT_ObjectPanel"
 
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -67,8 +68,9 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "longname")
 
 
-class OBJECT_PT_ExtraData(Panel):
+class ObjectExtraData(Panel):
     bl_label = "Niftools Object Extra Data Panel"
+    bl_idname = "NIFTOOLS_PT_ObjectExtraDataPanel"
 
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -107,8 +109,9 @@ class OBJECT_PT_ExtraData(Panel):
             box.prop(selected_extra_data, "sub_class")
 
 
-class OBJECT_MT_ExtraDataType(Menu):
+class ObjectExtraDataType(Menu):
     bl_label = "Extra Data Types"
+    bl_idname = "NIFTOOLS_MT_ObjectExtraDataType"
 
     # noinspection PyUnusedLocal
     def draw(self, context):
@@ -119,7 +122,9 @@ class OBJECT_MT_ExtraDataType(Menu):
         layout.operator("object.niftools_extradata_sample_add")
 
 
-class OBJECT_UL_ExtraData(UIList):
+class ObjectExtraDataList(UIList):
+    bl_label = "Extra Data List"
+    bl_idname = "NIFTOOLS_UL_ObjectExtraDataType"
 
     # noinspection PyUnusedLocal
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -128,8 +133,10 @@ class OBJECT_UL_ExtraData(UIList):
         split.prop(item, "data", text="", emboss=False, translate=False, icon='BORDERMOVE')
 
 
-class ObjectInvMarkerPanel(Panel):
+class ObjectBSInvMarkerPanel(Panel):
     bl_label = "BS Inv Marker"
+    bl_idname = "NIFTOOLS_PT_ObjectBSInvMarker"
+
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"

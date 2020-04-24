@@ -159,10 +159,10 @@ classes = (
     ui.material.MaterialColorPanel,
 
     ui.object.ObjectPanel,
-    ui.object.OBJECT_PT_ExtraData,
-    ui.object.OBJECT_MT_ExtraDataType,
-    ui.object.OBJECT_UL_ExtraData,
-    ui.object.ObjectInvMarkerPanel,
+    ui.object.ObjectExtraData,
+    ui.object.ObjectExtraDataType,
+    ui.object.ObjectExtraDataList,
+    ui.object.ObjectBSInvMarkerPanel,
 
     ui.scene.ScenePanel,
 
