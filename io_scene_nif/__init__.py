@@ -166,7 +166,7 @@ classes = (
 
     ui.scene.ScenePanel,
 
-    ui.shader.ObjectShader,
+    ui.shader.ShaderPanel,
     )
 
 
