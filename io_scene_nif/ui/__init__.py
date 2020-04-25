@@ -38,6 +38,5 @@
 # ***** END LICENSE BLOCK *****
 
 
-# TODO [ui] Update the classname so that they follow convention
 def register():
     from . import armature, collision, geometry, material, object, shader, scene
