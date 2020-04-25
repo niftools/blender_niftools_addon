@@ -138,7 +138,7 @@ class BSShaderProperty:
         b_s_type = NifFormat.BSShaderType._enumkeys.index(b_mat.niftools_shader.bsspplp_shaderobjtype)
         bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
 
-        self.texturehelper.export_bs_shader_pp_lighting_prop_textures()
+        self.texturehelper.export_bs_shader_pp_lighting_prop_textures(bsshader)
 
         # Shader Flags
         BSShaderProperty.export_shader_flags(b_mat, bsshader)
