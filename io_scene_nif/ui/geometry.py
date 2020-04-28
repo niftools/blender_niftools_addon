@@ -40,8 +40,10 @@
 from bpy.types import Panel
 
 
-class PartFlag(Panel):
-    bl_label = "Niftools Dismember Flags Panel"
+class PartFlagPanel(Panel):
+    bl_idname = "NIFTOOLS_PT_SkinPartFlagPanel"
+    bl_label = "Niftools Dismemberment Flags Panel"
+
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "data"

@@ -154,19 +154,19 @@ classes = (
     ui.armature.BonePanel,
     ui.armature.ArmaturePanel,
     ui.collision.CollisionBoundsPanel,
-    ui.geometry.PartFlag,
-    ui.material.NifMatFlagPanel,
-    ui.material.NifMatColorPanel,
+    ui.geometry.PartFlagPanel,
+    ui.material.MaterialFlagPanel,
+    ui.material.MaterialColorPanel,
 
     ui.object.ObjectPanel,
-    ui.object.OBJECT_PT_ExtraData,
-    ui.object.OBJECT_MT_ExtraDataType,
-    ui.object.OBJECT_UL_ExtraData,
-    ui.object.ObjectInvMarkerPanel,
+    ui.object.ObjectExtraData,
+    ui.object.ObjectExtraDataType,
+    ui.object.ObjectExtraDataList,
+    ui.object.ObjectBSInvMarkerPanel,
 
     ui.scene.ScenePanel,
 
-    ui.shader.ObjectShader,
+    ui.shader.ShaderPanel,
     )
 
 
