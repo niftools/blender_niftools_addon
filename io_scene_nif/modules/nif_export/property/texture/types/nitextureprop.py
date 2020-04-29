@@ -197,6 +197,8 @@ class NiTextureProp(TextureSlotManager):
         return block_store.register_block(texeff)
 
     def export_texture_shader_effect(self, tex_prop):
+        # disable
+        return
         # export extra shader textures
         if NifOp.props.game == 'SID_MEIER_S_RAILROADS':
             # sid meier's railroads:

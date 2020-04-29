@@ -249,37 +249,37 @@ class Mesh:
                 # only export the bind matrix on trishapes that were not animated
                 util_math.set_object_matrix(b_obj, trishape)
 
-            # # add textures
-            # if NifOp.props.game == 'FALLOUT_3':
-            #     if b_mat:
-            #         bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-            #
-            #         block_store.register_block(bsshader)
-            #         trishape.add_property(bsshader)
-            # elif NifOp.props.game == 'SKYRIM':
-            #     if b_mat:
-            #         bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-            #
-            #         block_store.register_block(bsshader)
-            #         num_props = trishape.num_properties
-            #         trishape.num_properties = num_props + 1
-            #         trishape.bs_properties.update_size()
-            #         trishape.bs_properties[num_props] = bsshader
-            #
-            # else:
-            #     if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
-            #         # sid meier's railroad and civ4: set shader slots in extra data
-            #         self.texture_helper.add_shader_integer_extra_datas(trishape)
-            #
-            #     if b_mat:
-            #         n_nitextureprop = self.texture_helper.export_texturing_property(
-            #             flags=0x0001,  # standard
-            #             # TODO [object][texture][material] Move out and break dependency
-            #             applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
-            #             b_mat=b_mat)
-            #
-            #         block_store.register_block(n_nitextureprop)
-            #         trishape.add_property(n_nitextureprop)
+            # add textures
+            if NifOp.props.game == 'FALLOUT_3':
+                if b_mat:
+                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+
+                    block_store.register_block(bsshader)
+                    trishape.add_property(bsshader)
+            elif NifOp.props.game == 'SKYRIM':
+                if b_mat:
+                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+
+                    block_store.register_block(bsshader)
+                    num_props = trishape.num_properties
+                    trishape.num_properties = num_props + 1
+                    trishape.bs_properties.update_size()
+                    trishape.bs_properties[num_props] = bsshader
+
+            else:
+                if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+                    # sid meier's railroad and civ4: set shader slots in extra data
+                    self.texture_helper.add_shader_integer_extra_datas(trishape)
+
+                if b_mat:
+                    n_nitextureprop = self.texture_helper.export_texturing_property(
+                        flags=0x0001,  # standard
+                        # TODO [object][texture][material] Move out and break dependency
+                        applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
+                        b_mat=b_mat)
+
+                    block_store.register_block(n_nitextureprop)
+                    trishape.add_property(n_nitextureprop)
 
             # add texture effect block (must be added as preceding child of the trishape)
             if n_parent:
