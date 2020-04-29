@@ -1,4 +1,4 @@
-""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
+"""Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -40,8 +40,10 @@
 from bpy.types import Panel
 
 
-class ObjectShader(Panel):
-    bl_label = "Niftools Shader"
+class ShaderPanel(Panel):
+    bl_label = "Niftools Shader Panel"
+    bl_idname = "NIFTOOLS_PT_ShaderPanel"
+
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "material"
@@ -96,7 +98,7 @@ class ObjectShader(Panel):
             row.prop(nif_obj_props, "sf_window_environment_mapping")
             row.prop(nif_obj_props, "sf_z_buffer_test")
 
-        if nif_obj_props.bs_shadertype in ('BSLightingShaderProperty', 'BSEffectShaderProperty'):
+        elif nif_obj_props.bs_shadertype in ('BSLightingShaderProperty', 'BSEffectShaderProperty'):
             row.prop(nif_obj_props, "bslsp_shaderobjtype")
 
             row.prop(nif_obj_props, "slsf_1_cast_shadows")

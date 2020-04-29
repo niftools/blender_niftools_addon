@@ -1,4 +1,4 @@
-""" Nif User Interface, connect custom properties from properties.py into Blenders UI"""
+"""Nif User Interface, connect custom properties from properties.py into Blenders UI"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -41,7 +41,8 @@ from bpy.types import Panel
 
 
 class CollisionBoundsPanel(Panel):
-    bl_label = "Collision Bounds"
+    bl_idname = "NIFTOOLS_PT_CollisionBoundsPanel"
+    bl_label = "Niftools Collision Bounds"
 
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
