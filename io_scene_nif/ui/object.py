@@ -41,7 +41,7 @@ from bpy.types import Panel, UIList, Menu
 
 
 class ObjectPanel(Panel):
-    bl_label = "Niftools Object Property Panel"
+    bl_label = "Niftools Object Property"
     bl_idname = "NIFTOOLS_PT_ObjectPanel"
 
     bl_space_type = 'PROPERTIES'
@@ -69,7 +69,7 @@ class ObjectPanel(Panel):
 
 
 class ObjectExtraData(Panel):
-    bl_label = "Niftools Object Extra Data Panel"
+    bl_label = "Niftools Object Extra Data"
     bl_idname = "NIFTOOLS_PT_ObjectExtraDataPanel"
 
     bl_space_type = 'PROPERTIES'
@@ -89,12 +89,12 @@ class ObjectExtraData(Panel):
         layout = self.layout
 
         row = layout.row()
-        row.template_list("OBJECT_UL_ExtraData", "", extra_data_store, "extra_data", extra_data_store,
+        row.template_list("NIFTOOLS_UL_ExtraData", "", extra_data_store, "extra_data", extra_data_store,
                           "extra_data_index")
 
         # Add/Remove operators
         col = row.column(align=True)
-        col.menu("OBJECT_MT_ExtraDataType", icon='ZOOM_IN', text="")
+        col.menu("NIFTOOLS_MT_ExtraDataType", icon='ZOOM_IN', text="")
 
         if has_extra_data:
             col.operator("object.niftools_extradata_remove", icon='ZOOM_OUT', text="")
@@ -111,7 +111,7 @@ class ObjectExtraData(Panel):
 
 class ObjectExtraDataType(Menu):
     bl_label = "Niftools Extra Data Types"
-    bl_idname = "NIFTOOLS_MT_ObjectExtraDataType"
+    bl_idname = "NIFTOOLS_MT_ExtraDataType"
 
     # noinspection PyUnusedLocal
     def draw(self, context):
@@ -124,7 +124,7 @@ class ObjectExtraDataType(Menu):
 
 class ObjectExtraDataList(UIList):
     bl_label = "Niftools Extra Data List"
-    bl_idname = "NIFTOOLS_UL_ObjectExtraDataType"
+    bl_idname = "NIFTOOLS_UL_ExtraData"
 
     # noinspection PyUnusedLocal
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
