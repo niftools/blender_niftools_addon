@@ -108,7 +108,7 @@ class NiTextureProp(TextureSlotManager):
             if b_texture_node:
                 # get the field name used by nif xml for this texture
                 field_name = f"{slot_name.lower().replace(' ', '_')}_texture"
-                NifLog.warn(f"Activating {field_name} for {b_texture_node.name}")
+                NifLog.debug(f"Activating {field_name} for {b_texture_node.name}")
                 setattr(texprop, "has_"+field_name, True)
                 # get the tex desc link
                 texdesc = getattr(texprop, field_name)
