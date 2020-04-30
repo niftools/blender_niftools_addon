@@ -103,73 +103,58 @@ class NiTextureProp(TextureSlotManager):
         return texprop
 
     def export_nitextureprop_tex_descs(self, texprop):
+        # go over all valid texture slots
+        for slot_name, b_texture_node in self.slots.items():
+            if b_texture_node:
+                # get the field name used by nif xml for this texture
+                field_name = f"{slot_name.lower().replace(' ', '_')}_texture"
+                NifLog.warn(f"Activating {field_name} for {b_texture_node.name}")
+                setattr(texprop, "has_"+field_name, True)
+                # get the tex desc link
+                texdesc = getattr(texprop, field_name)
+                uv_index = self.get_uv_node(b_texture_node)
+                # set uv index and source texture to the texdesc
+                texdesc.uv_set = uv_index
+                texdesc.source = TextureWriter.export_source_texture(b_texture_node)
 
-        if self.slots["Diffuse"]:
-            texprop.has_base_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.base_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_texture_node=self.slots["Diffuse"])
-            # TODO [animation] FIXME Heirarchy
-            # self.texture_anim.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
+        # TODO [animation] FIXME Heirarchy
+        # self.texture_anim.export_flip_controller(fliptxt, self.base_mtex.texture, texprop, 0)
 
-        if self.slots["Glow"]:
-            texprop.has_glow_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.glow_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_texture_node=self.slots["Glow"])
-
-        if self.slots["Bump"]:
-            if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.has_bump_map_texture = True
-                self.texture_writer.export_tex_desc(texdesc=texprop.bump_map_texture,
-                                                    uvlayers=self.dict_mesh_uvlayers,
-                                                    b_texture_node=self.slots["Bump"])
-                texprop.bump_map_luma_scale = 1.0
-                texprop.bump_map_luma_offset = 0.0
-                texprop.bump_map_matrix.m_11 = 1.0
-                texprop.bump_map_matrix.m_12 = 0.0
-                texprop.bump_map_matrix.m_21 = 0.0
-                texprop.bump_map_matrix.m_22 = 1.0
-
-        if self.slots["Normal"]:
-            shadertexdesc = texprop.shader_textures[1]
-            shadertexdesc.is_used = True
-            shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.slots["Bump"])
-
-        if self.slots["Gloss"]:
-            if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.has_gloss_texture = True
-                self.texture_writer.export_tex_desc(texdesc=texprop.gloss_texture,
-                                                    uvlayers=self.dict_mesh_uvlayers,
-                                                    b_texture_node=self.slots["Gloss"])
-            else:
-                shadertexdesc = texprop.shader_textures[2]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.slots["Gloss"])
-
-        if self.slots["Dark"]:
-            texprop.has_dark_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.dark_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_texture_node=self.slots["Dark"])
-
-        if self.slots["Detail"]:
-            texprop.has_detail_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.detail_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_texture_node=self.slots["Detail"])
-
-        if self.slots["Decal0"]:
-            texprop.has_decal_0_texture = True
-            self.texture_writer.export_tex_desc(texdesc=texprop.decal_0_texture,
-                                                uvlayers=self.dict_mesh_uvlayers,
-                                                b_texture_node=self.slots["Decal0"])
+        # todo [texture] support extra shader textures again
+        # if self.slots["Bump Map"]:
+        #     if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
+        #         texprop.has_bump_map_texture = True
+        #         self.texture_writer.export_tex_desc(texdesc=texprop.bump_map_texture,
+        #                                             uv_set=uv_index,
+        #                                             b_texture_node=self.slots["Bump Map"])
+        #         texprop.bump_map_luma_scale = 1.0
+        #         texprop.bump_map_luma_offset = 0.0
+        #         texprop.bump_map_matrix.m_11 = 1.0
+        #         texprop.bump_map_matrix.m_12 = 0.0
+        #         texprop.bump_map_matrix.m_21 = 0.0
+        #         texprop.bump_map_matrix.m_22 = 1.0
+        #
+        # if self.slots["Normal"]:
+        #     shadertexdesc = texprop.shader_textures[1]
+        #     shadertexdesc.is_used = True
+        #     shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.slots["Bump Map"])
+        #
+        # if self.slots["Gloss"]:
+        #     if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
+        #         texprop.has_gloss_texture = True
+        #         self.texture_writer.export_tex_desc(texdesc=texprop.gloss_texture,
+        #                                             uv_set=uv_index,
+        #                                             b_texture_node=self.slots["Gloss"])
+        #     else:
+        #         shadertexdesc = texprop.shader_textures[2]
+        #         shadertexdesc.is_used = True
+        #         shadertexdesc.texture_data.source = TextureWriter.export_source_texture(n_texture=self.slots["Gloss"])
 
         # if self.b_ref_slot:
         #     if NifOp.props.game not in self.USED_EXTRA_SHADER_TEXTURES:
         #         NifLog.warn("Cannot export reflection texture for this game.")
         #         # tex_prop.hasRefTexture = True
-        #         # self.export_tex_desc(texdesc=tex_prop.refTexture, uvlayers=uvlayers, mtex=refmtex)
+        #         # self.export_tex_desc(texdesc=tex_prop.refTexture, uv_set=uv_set, mtex=refmtex)
         #     else:
         #         shadertexdesc = texprop.shader_textures[3]
         #         shadertexdesc.is_used = True

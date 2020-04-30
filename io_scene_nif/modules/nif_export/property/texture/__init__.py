@@ -53,45 +53,44 @@ class TextureSlotManager:
         self.texture_anim = TextureAnimation()
         self.b_mat = None
 
-        # todo [texture] refactor texture grabbing to use the dict below
         self.slots = {}
         self._reset_fields()
-        self.b_diffuse_slot = None
-        self.b_glow_slot = None
-        self.b_bump_slot = None
-        self.b_normal_slot = None
-        self.b_gloss_slot = None
-        self.b_dark_slot = None
-        self.b_detail_slot = None
-        self.b_decal_0_slot = None
-        self.b_ref_slot = None
-        self.has_alpha_texture = False
 
     def _reset_fields(self):
-        self.b_diffuse_slot = None
-        self.b_glow_slot = None
-        self.b_bump_slot = None
-        self.b_normal_slot = None
-        self.b_gloss_slot = None
-        self.b_dark_slot = None
-        self.b_detail_slot = None
-        self.b_decal_0_slot = None
-        self.b_ref_slot = None
-        self.has_alpha_texture = False
         self.slots = {
-            "Diffuse": None,
+            "Base": None,
             "Dark": None,
             "Emit": None,
             "Glow": None,
             "Gloss": None,
             "Specular": None,
             "Normal": None,
-            "Bump": None,
+            "Bump Map": None,
             "Detail": None,
-            "Decal0": None,
-            "Decal1": None,
+            "Decal 0": None,
+            "Decal 1": None,
             "Decal2": None,
         }
+
+    def get_uv_node(self, b_texture_node):
+        # check if a node is plugged into the b_texture_node's vector input
+        links = b_texture_node.inputs[0].links
+        if not links:
+            return 0
+        uv_node = links[0].from_node
+        if isinstance(uv_node, bpy.types.ShaderNodeUVMap):
+            uv_name = uv_node.uv_map
+            try:
+                # ignore the "UV" prefix
+                return int(uv_name[2:])
+            except:
+                return 0
+        elif isinstance(uv_node, bpy.types.ShaderNodeTexCoord):
+            return "REFLECT"
+        else:
+            raise util_math.NifError(f"Unsupported vector input for {b_texture_node.name} in material '{b_mat.name}''.\n"
+                                     f"Expected 'UV Map' or 'Texture Coordinate' nodes")
+
 
     @staticmethod
     def get_used_textslots(b_mat):
@@ -117,25 +116,6 @@ class TextureSlotManager:
         for b_texture_node in self.get_used_textslots(b_mat):
             NifLog.debug(f"Found node {b_texture_node.name} of type {b_texture_node.label}")
 
-            # todo [texture] check which node slot is connected to b_texture_node's vector input
-            # # check REFL-mapped textures (used for "NiTextureEffect" materials)
-            # if b_texture_node.texture_coords == 'REFLECTION':
-            #     if not b_texture_node.use_map_color_diffuse:
-            #         # it should map to colour
-            #         raise util_math.NifError(
-            #             "Non-COL-mapped reflection texture in mesh '%s', material '%s', these cannot be exported to NIF.\n"
-            #             "Either delete all non-COL-mapped reflection textures, or in the Shading Panel, \n"
-            #             "under Material Buttons, set texture 'Map To' to 'COL'." % (b_mat.name, b_mat.name))
-            #     if b_texture_node.blend_type != 'ADD':
-            #         # it should have "ADD" blending mode
-            #         NifLog.warn("Reflection texture should have blending mode 'Add'"
-            #                     " on texture in mesh '{0}', material '{1}').".format(b_mat.name, b_mat.name))
-            #     # an envmap image should have an empty... don't care
-            #     self.b_ref_slot = b_texture_node
-            #
-            # # check UV-mapped textures
-            # elif b_texture_node.texture_coords == 'UV':
-
             # go over all slots
             for slot_name in self.slots.keys():
                 if slot_name in b_texture_node.label:
@@ -145,16 +125,8 @@ class TextureSlotManager:
                                                  f"Make sure there is only one texture node labeled as '{slot_name}'")
                     # it's a new slot so store it
                     self.slots[slot_name] = b_texture_node
-                #     break
-                #
-                # # unsupported texture type
-                # else:
-                #     raise util_math.NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}'."
-                #                              f"Delete it or change its label.")
-            #
-            # # nif only support UV-mapped textures
-            # else:
-            #     NifLog.warn("Non-UV texture in mesh '{0}', material '{1}'.\n"
-            #                 "Either delete all non-UV textures or create a UV map for every texture associated "
-            #                 "with selected object and run the script again.".
-            #                 format(b_mat.name, b_mat.name))
+                    break
+            # unsupported texture type
+            else:
+                raise util_math.NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}'."
+                                         f"Delete it or change its label.")

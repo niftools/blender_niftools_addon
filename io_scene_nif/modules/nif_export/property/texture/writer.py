@@ -91,15 +91,9 @@ class TextureWriter:
         # no identical source texture found, so use and register the new one
         return block_store.register_block(srctex, n_texture)
 
-    def export_tex_desc(self, texdesc=None, uvlayers=None, b_texture_node=None):
+    def export_tex_desc(self, texdesc=None, uv_set=0, b_texture_node=None):
         """Helper function for export_texturing_property to export each texture slot."""
-        # todo [texture] fixme uv sys
-        # try:
-        #     texdesc.uv_set = uvlayers.index(b_texture_node.uv_layer) if b_texture_node.uv_layer else 0
-        # except ValueError:  # mtex.uv_layer not in uvlayers list
-        #     NifLog.warn("Bad uv layer name '{0}' in texture '{1}'. Using first uv layer".format(b_texture_node.uv_layer, b_texture_node.texture.name))
-        #     texdesc.uv_set = 0  # assume 0 is active layer
-        texdesc.uv_set = 0  # assume 0 is active layer
+        texdesc.uv_set = uv_set
         texdesc.source = TextureWriter.export_source_texture(b_texture_node)
 
     @staticmethod

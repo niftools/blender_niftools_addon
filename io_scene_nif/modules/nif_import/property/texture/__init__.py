@@ -204,11 +204,11 @@ class TextureSlotManager:
 
     def link_diffuse_node(self, b_texture_node):
         self.diffuse_texture = b_texture_node
-        b_texture_node.label = "Diffuse"
+        b_texture_node.label = "Base"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node)
 
     def update_bump_slot(self, b_texture_node):
-        b_texture_node.label = "Bump"
+        b_texture_node.label = "Bump Map"
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = False  # causes artifacts otherwise.
         #
@@ -263,11 +263,11 @@ class TextureSlotManager:
         # b_texture_node.use_map_color_spec = True
 
     def update_decal_slot_0(self, b_texture_node):
-        b_texture_node.label = "Decal0"
+        b_texture_node.label = "Decal 0"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def update_decal_slot_1(self, b_texture_node):
-        b_texture_node.label = "Decal1"
+        b_texture_node.label = "Decal 1"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def update_decal_slot_2(self, b_texture_node):
