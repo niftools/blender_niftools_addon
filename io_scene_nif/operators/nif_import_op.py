@@ -45,7 +45,9 @@ from io_scene_nif import nif_import
 from .nif_common_op import NifOperatorCommon
 
 
-@orientation_helper(axis_forward='-Z', axis_up='Y')
+# todo [version/armature] detect or overwrite these
+# @orientation_helper(axis_forward='-Z', axis_up='Y')
+@orientation_helper(axis_forward='X', axis_up='Y')
 class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a nif file."""
 
@@ -104,7 +106,7 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
     send_bones_to_bind_position: bpy.props.BoolProperty(
         name="Send Bones To Bind Position",
         description="Send all bones to their bind position.",
-        default=False)
+        default=True)
 
     # Apply skin deformation to all skinned geometries.
     apply_skin_deformation: bpy.props.BoolProperty(
