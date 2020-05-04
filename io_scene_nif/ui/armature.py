@@ -58,7 +58,7 @@ class BonePanel(Panel):
 
             row = self.layout.column()
 
-            row.prop(nif_bone_props, "boneflags")
+            row.prop(nif_bone_props, "flags")
             row.prop(nif_bone_props, "bonepriority")
             row.prop(nif_bone_props, "longname")
 

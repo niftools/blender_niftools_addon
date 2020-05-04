@@ -88,8 +88,8 @@ class Armature:
             # add the n_bone and the keyframe for this b_bone
             n_bone.name = block_store.get_full_name(b_bone)
 
-            if b_bone.niftools.boneflags != 0:
-                n_bone.flags = b_bone.niftools.boneflags
+            if b_bone.niftools.flags != 0:
+                n_bone.flags = b_bone.niftools.flags
             else:
                 if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     # default for Oblivion bones
