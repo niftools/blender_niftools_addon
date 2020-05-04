@@ -74,6 +74,7 @@ class NifExport(NifCommon):
         self.constrainthelper = Constraint()
         self.objecthelper = Object()
         self.exportable_objects = []
+        self.root_objects = []
 
     def execute(self):
         """Main export function."""
@@ -98,21 +99,11 @@ class NifExport(NifCommon):
 
         try:  # catch export errors
 
-            # get the root object from selected object
-            selected_objects = bpy.context.selected_objects
-            # if none are selected, just get all of this scene's objects
-            if not selected_objects:
-                selected_objects = bpy.context.scene.objects
-
-            # only export empties, meshes, and armatures
-            self.exportable_objects = [b_obj for b_obj in selected_objects if b_obj.type in Object.export_types]
+            # find all objects that do not have a parent
+            self.exportable_objects, self.root_objects = self.objecthelper.get_export_objects()
             if not self.exportable_objects:
                 NifLog.warn("No objects can be exported!")
                 return {'FINISHED'}
-            NifLog.info("Exporting objects")
-
-            # find all objects that do not have a parent
-            self.root_objects = [b_obj for b_obj in self.exportable_objects if not b_obj.parent]
 
             for b_obj in self.exportable_objects:
                 # armatures should not be in rest position
