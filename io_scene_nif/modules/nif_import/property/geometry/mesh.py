@@ -82,7 +82,9 @@ class MeshPropertyProcessor:
                     NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
                 break
         else:
-            b_mat = bpy.data.materials.new("Noname")
+            # bs shaders often have no name, so generate one from mesh name
+            name = n_block.name.decode() + "_nt_mat"
+            b_mat = bpy.data.materials.new(name)
             NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
 
         # do initial settings for the material here

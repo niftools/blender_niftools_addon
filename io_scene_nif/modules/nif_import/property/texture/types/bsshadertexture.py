@@ -60,6 +60,9 @@ class BSShaderTexture(TextureSlotManager):
         return BSShaderTexture.__instance
 
     def import_bsshaderproperty_textureset(self, b_mat, bs_shader_property):
+        self.b_mat = b_mat
+        self.clear_default_nodes()
+
         texture_set = bs_shader_property.texture_set
         textures = texture_set.textures
 
@@ -93,6 +96,8 @@ class BSShaderTexture(TextureSlotManager):
                 self.update_gloss_slot(b_texture)
 
     def import_bseffectshaderproperty_textures(self, b_mat, bs_effect_shader_property):
+        self.b_mat = b_mat
+        self.clear_default_nodes()
 
         self._load_diffuse(b_mat, bs_effect_shader_property.source_texture)
 
