@@ -176,7 +176,9 @@ class BSShaderPropertyProcessor(BSShader):
             b_mat.niftools.emissive_alpha.v = bs_effect_shader_property.emissive_color.a
             b_mat.emit = bs_effect_shader_property.emissive_multiple
 
-        b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
+        # TODO [animation][shader] Move out to a dedicated controller processor
+        if bs_effect_shader_property.controller:
+            b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
 
     def import_shader_flags(self, b_mat, b_prop):
         flags_1 = b_prop.shader_flags_1
