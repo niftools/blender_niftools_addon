@@ -115,6 +115,8 @@ class BSShaderPropertyProcessor(BSShader):
 
         # Textures
         self.texturehelper.import_bsshaderproperty_textureset(self.b_mat, bs_shader_property)
+
+        # todo [material] update for nodes
         # if hasattr(bs_shader_property, 'texture_clamp_mode'):
         #     self.import_clamp(self.b_mat, bs_shader_property)
         #
@@ -157,11 +159,12 @@ class BSShaderPropertyProcessor(BSShader):
 
         self.texturehelper.import_bseffectshaderproperty_textures(self.b_mat, bs_effect_shader_property)
 
-        if hasattr(bs_effect_shader_property, 'uv_offset'):
-            self.import_uv_offset(self.b_mat, bs_effect_shader_property)
-
-        if hasattr(bs_effect_shader_property, 'uv_scale'):
-            self.import_uv_scale(self.b_mat, bs_effect_shader_property)
+        # todo [material] update for nodes
+        # if hasattr(bs_effect_shader_property, 'uv_offset'):
+        #     self.import_uv_offset(self.b_mat, bs_effect_shader_property)
+        #
+        # if hasattr(bs_effect_shader_property, 'uv_scale'):
+        #     self.import_uv_scale(self.b_mat, bs_effect_shader_property)
 
         # TODO [material][shader][property] Handle nialphaproperty node lookup
         # # Alpha
@@ -173,9 +176,12 @@ class BSShaderPropertyProcessor(BSShader):
             Material.import_material_emissive(self.b_mat, bs_effect_shader_property.emissive_color)
             # TODO [property][shader][alpha] Map this to actual alpha when component is available
             self.b_mat.niftools.emissive_alpha.v = bs_effect_shader_property.emissive_color.a
-            self.b_mat.emit = bs_effect_shader_property.emissive_multiple
+            # todo [shader] create custom float property, or use as factor in mix shader?
+            # self.b_mat.emit = bs_effect_shader_property.emissive_multiple
 
-        self.b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
+        # TODO [animation][shader] Move out to a dedicated controller processor
+        if bs_effect_shader_property.controller:
+            self.b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
 
     def import_shader_flags(self, b_prop):
         flags_1 = b_prop.shader_flags_1
