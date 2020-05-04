@@ -72,7 +72,7 @@ class TransformAnimation(Animation):
         # node_kfctrls = self.get_controllers( root_block.tree() )
 
         # morrowind
-        if NifOp.props.game in ('MORROWIND', 'FREEDOM_FORCE'):
+        if bpy.context.scene.niftools_scene.game in ('MORROWIND', 'FREEDOM_FORCE'):
             # create kf root header
             kf_root = block_store.create_block("NiSequenceStreamHelper")
             # kf_root.add_extra_data(anim_textextra)
@@ -94,7 +94,7 @@ class TransformAnimation(Animation):
             #         ctrl.target = None
 
         # oblivion
-        elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
+        elif bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
             # TODO [animation] allow for object kf only
 
             # create kf root header
@@ -169,7 +169,7 @@ class TransformAnimation(Animation):
             # controlledblock.set_variable_2(variable_2)
         else:
             raise util_math.NifError("Keyframe export for '%s' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
-                                     " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % NifOp.props.game)
+                                     " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % bpy.context.scene.niftools_scene.game)
         return kf_root
 
     def export_transforms(self, parent_block, b_obj, b_action, bone=None):

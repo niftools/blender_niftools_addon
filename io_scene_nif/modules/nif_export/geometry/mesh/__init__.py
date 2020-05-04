@@ -153,7 +153,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (NifOp.props.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
+                if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
 
                 # ambient mat
@@ -237,7 +237,7 @@ class Mesh:
             self.set_mesh_flags(b_obj, trishape)
 
             # extra shader for Sid Meier's Railroads
-            if NifOp.props.game == 'SID_MEIER_S_RAILROADS':
+            if bpy.context.scene.niftools_scene.game == 'SID_MEIER_S_RAILROADS':
                 trishape.has_shader = True
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1  # default
@@ -250,13 +250,13 @@ class Mesh:
                 util_math.set_object_matrix(b_obj, trishape)
 
             # add textures
-            if NifOp.props.game == 'FALLOUT_3':
+            if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
                 if b_mat:
                     bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
                     block_store.register_block(bsshader)
                     trishape.add_property(bsshader)
-            elif NifOp.props.game == 'SKYRIM':
+            elif bpy.context.scene.niftools_scene.game == 'SKYRIM':
                 if b_mat:
                     bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
@@ -267,7 +267,7 @@ class Mesh:
                     trishape.bs_properties[num_props] = bsshader
 
             else:
-                if NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+                if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4: set shader slots in extra data
                     self.texture_helper.add_shader_integer_extra_datas(trishape)
 
@@ -286,7 +286,7 @@ class Mesh:
                 # todo [texture] detect effect and move out
                 # ref_mtex = self.texture_helper.b_ref_slot
                 ref_mtex = False
-                if NifOp.props.game == 'MORROWIND' and ref_mtex:
+                if bpy.context.scene.niftools_scene.game == 'MORROWIND' and ref_mtex:
                     # create a new parent block for this shape
                     extra_node = block_store.create_block("NiNode", ref_mtex)
                     n_parent.add_child(extra_node)
@@ -315,11 +315,11 @@ class Mesh:
                 # add NiStencilProperty
                 trishape.add_property(self.object_property.export_stencil_property())
 
-            if b_mat and not (NifOp.props.game == 'SKYRIM'):
+            if b_mat and not (bpy.context.scene.niftools_scene.game == 'SKYRIM'):
                 # add NiTriShape's specular property
                 # but NOT for sid meier's railroads and other extra shader
                 # games (they use specularity even without this property)
-                if mesh_hasspec and (NifOp.props.game not in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                if mesh_hasspec and (bpy.context.scene.niftools_scene.game not in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     # refer to the specular property in the trishape block
                     trishape.add_property(self.object_property.export_specular_property(flags=0x0001))
 
@@ -480,7 +480,7 @@ class Mesh:
                     trilist.append(f_indexed)
 
                     # add body part number
-                    if NifOp.props.game not in ('FALLOUT_3', 'SKYRIM') or not bodypartgroups:
+                    if bpy.context.scene.niftools_scene.game not in ('FALLOUT_3', 'SKYRIM') or not bodypartgroups:
                         # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
@@ -547,7 +547,7 @@ class Mesh:
             if mesh_uv_layers:
                 tridata.num_uv_sets = len(mesh_uv_layers)
                 tridata.bs_num_uv_sets = len(mesh_uv_layers)
-                if NifOp.props.game == 'FALLOUT_3':
+                if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
                     if len(mesh_uv_layers) > 1:
                         raise util_math.NifError("Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
@@ -566,8 +566,8 @@ class Mesh:
             # for extra shader texture games, only export it if those textures are actually exported
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if mesh_uv_layers and mesh_hasnormals:
-                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (NifOp.props.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
-                    trishape.update_tangent_space(as_extra=(NifOp.props.game == 'OBLIVION'))
+                if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                    trishape.update_tangent_space(as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any
@@ -657,17 +657,17 @@ class Mesh:
                             padbones=NifOp.props.pad_bones,
                             triangles=trilist,
                             trianglepartmap=bodypartfacemap,
-                            maximize_bone_sharing=(NifOp.props.game in ('FALLOUT_3', 'SKYRIM')))
+                            maximize_bone_sharing=(bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM')))
 
                         # warn on bad config settings
-                        if NifOp.props.game == 'OBLIVION':
+                        if bpy.context.scene.niftools_scene.game == 'OBLIVION':
                             if NifOp.props.pad_bones:
                                 NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3'):
+                        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3'):
                             if NifOp.props.max_bones_per_partition < 18:
                                 NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
                                             "Set it to 18 to get higher quality skin partitions.")
-                        if NifOp.props.game in 'SKYRIM':
+                        if bpy.context.scene.niftools_scene.game in 'SKYRIM':
                             if NifOp.props.max_bones_per_partition < 24:
                                 NifLog.warn("Using less than 24 bones per partition on Skyrim export."
                                             "Set it to 24 to get higher quality skin partitions.")
@@ -713,7 +713,7 @@ class Mesh:
         return bone_block
 
     def create_skin_inst_data(self, b_obj, n_root_name):
-        if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
+        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
             skininst = block_store.create_block("NiSkinInstance", b_obj)
@@ -741,14 +741,14 @@ class Mesh:
             trishape.flags = b_obj.niftools.flags
         # fall back to defaults
         else:
-            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 trishape.flags = 0x000E
 
-            elif NifOp.props.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
+            elif bpy.context.scene.niftools_scene.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
                 trishape.flags = 0x0010
-            elif NifOp.props.game in ('EMPIRE_EARTH_II',):
+            elif bpy.context.scene.niftools_scene.game in ('EMPIRE_EARTH_II',):
                 trishape.flags = 0x0016
-            elif NifOp.props.game in ('DIVINITY_2',):
+            elif bpy.context.scene.niftools_scene.game in ('DIVINITY_2',):
                 if trishape.name.lower[-3:] in ("med", "low"):
                     trishape.flags = 0x0014
                 else:

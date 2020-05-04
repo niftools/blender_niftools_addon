@@ -216,7 +216,7 @@ class BhkCollision(Collision):
 
     # TODO [collision] Move to collision
     def update_rigid_bodies(self):
-        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
 
             # update rigid body center of gravity and mass

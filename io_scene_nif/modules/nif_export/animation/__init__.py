@@ -102,7 +102,7 @@ class Animation(ABC):
             # get list of all controllers for this node
             ctrls = node.get_controllers()
             for ctrl in ctrls:
-                if NifOp.props.game == 'MORROWIND':
+                if bpy.context.scene.niftools_scene.game == 'MORROWIND':
                     # morrowind: only keyframe controllers
                     if not isinstance(ctrl, NifFormat.NiKeyframeController):
                         continue

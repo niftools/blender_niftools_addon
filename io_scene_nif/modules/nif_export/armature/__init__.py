@@ -36,6 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
+import bpy
 from io_scene_nif.modules.nif_export import types
 from io_scene_nif.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
@@ -91,18 +92,18 @@ class Armature:
             if b_bone.niftools.flags != 0:
                 n_bone.flags = b_bone.niftools.flags
             else:
-                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     # default for Oblivion bones
                     # note: bodies have 0x000E, clothing has 0x000F
                     n_bone.flags = 0x000E
-                elif NifOp.props.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
+                elif bpy.context.scene.niftools_scene.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
                     if b_bone.children:
                         # default for Civ IV/EE II bones with children
                         n_bone.flags = 0x0006
                     else:
                         # default for Civ IV/EE II final bones
                         n_bone.flags = 0x0016
-                elif NifOp.props.game in ('DIVINITY_2',):
+                elif bpy.context.scene.niftools_scene.game in ('DIVINITY_2',):
                     if b_bone.children:
                         # default for Div 2 bones with children
                         n_bone.flags = 0x0186

@@ -131,10 +131,10 @@ class ObjectProperty:
             # todo [material] reconstruct flag from material alpha settings
             flags = b_mat.niftools_alpha.alphaflag
             threshold = b_mat.alpha_threshold * 255
-        elif NifOp.props.game == 'SID_MEIER_S_RAILROADS':
+        elif bpy.context.scene.niftools_scene.game == 'SID_MEIER_S_RAILROADS':
             flags = 0x32ED
             threshold = 150
-        elif NifOp.props.game == 'EMPIRE_EARTH_II':
+        elif bpy.context.scene.niftools_scene.game == 'EMPIRE_EARTH_II':
             flags = 0x00ED
             threshold = 0
         else:
@@ -156,7 +156,7 @@ class ObjectProperty:
     def export_stencil_property(self, flags=None):
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
-        if NifOp.props.game == 'FALLOUT_3':
+        if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
             flags = 19840
         # search for duplicate
         return self.get_matching_block("NiStencilProperty", flags=flags)
@@ -175,7 +175,7 @@ class ObjectDataProperty:
     # TODO [object][property] Move to object property
     @staticmethod
     def export_inventory_marker(n_root, root_objects):
-        if NifOp.props.game in ('SKYRIM',):
+        if bpy.context.scene.niftools_scene.game in ('SKYRIM',):
             for root_object in root_objects:
                 if root_object.niftools_bs_invmarker:
                     for extra_item in n_root.extra_data_list:
@@ -193,7 +193,7 @@ class ObjectDataProperty:
     # TODO [object][property] Move to new object type
     def export_weapon_location(self, n_root, root_obj):
         # export weapon location
-        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             loc = root_obj.niftools.prn_location
             if loc != "NONE":
                 # add string extra data
@@ -207,7 +207,7 @@ class ObjectDataProperty:
         # TODO [object][property] Fixme
         NifLog.info("Checking collision")
         # activate oblivion/Fallout 3 collision and physics
-        if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             b_obj = self.has_collision()
             if b_obj:
                 # enable collision

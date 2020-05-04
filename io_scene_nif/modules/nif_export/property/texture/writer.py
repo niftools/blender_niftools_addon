@@ -125,7 +125,7 @@ class TextureWriter:
             filename = ddsfilename
 
         # sanitize file path
-        if NifOp.props.game not in ('MORROWIND', 'OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game not in ('MORROWIND', 'OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             # strip b_texture_node file path
             filename = os.path.basename(filename)
 
