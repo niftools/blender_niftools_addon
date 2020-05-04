@@ -127,7 +127,7 @@ class TransformAnimation(Animation):
                 continue
             b_bone = b_armature_obj.data.bones[bone_name]
             # import bone priority
-            b_bone.niftools.bonepriority = controlledblock.priority
+            b_bone.niftools.priority = controlledblock.priority
             # import animation
             if bone_name in bind_data:
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]

@@ -199,7 +199,7 @@ class TransformAnimation(Animation):
             # just for more detailed error reporting later on
             bonestr = " in bone " + bone.name
             target_name = block_store.get_full_name(bone)
-            priority = bone.niftools.bonepriority
+            priority = bone.niftools.priority
 
         # object level animation - no coordinate corrections
         elif not bone:

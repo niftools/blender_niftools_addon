@@ -52,7 +52,7 @@ class BoneProperty(PropertyGroup):
         name='Bone Flag',
         default=0
     )
-    bonepriority: IntProperty(
+    priority: IntProperty(
         name='Bone Priority',
         default=0
     )
