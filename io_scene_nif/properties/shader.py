@@ -457,4 +457,3 @@ class ShaderProps(PropertyGroup):
     slsf_2_hd_lod_objects: BoolProperty(
         name='HD LOD Objects'
     )
-

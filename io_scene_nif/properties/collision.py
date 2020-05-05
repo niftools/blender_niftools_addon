@@ -114,4 +114,3 @@ class CollisionProperty(PropertyGroup):
         description='Whether or not to export collision settings via blender properties',
         default=False,
     )
-

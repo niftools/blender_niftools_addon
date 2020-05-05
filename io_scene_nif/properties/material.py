@@ -92,4 +92,3 @@ class AlphaFlags(PropertyGroup):
         name='Material Flag',
         default=0
     )
-
