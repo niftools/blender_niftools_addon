@@ -36,8 +36,8 @@ Double-Sided Mesh
 
 Sometimes you want to allow the mesh to ignore the normal and render both sides, eg a cloak.
 
-  - In the **Properties** Editor, in the **Object Data Tab**
-  - Enable/Disable **Double Sided**, see notes for more detail.
+  - In the **Properties** Editor, in the **Material Properties**
+  - Enable/Disable **Backface Culling**, see notes for more detail.
 
 Double Sided Mesh - Adds a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty` or similiar, 
   see :ref:`Properties - Stencil Property <properties-stencil>` for more info.
@@ -57,7 +57,7 @@ UV Unwrapping/Mapping
 **Example:**
 #. :ref:`Create a mesh-object <geometry-mesh>`.
 #. In **Edit Mode**, select the faces you want to unwrap.
-#. Press U``, select **Unwrap > Smart UV Project**.
+#. Press U``, select **Unwrap > Smart UV Project** or an unwrapping algorithm of your choice.
 
 **Notes:**
 
@@ -67,15 +67,15 @@ UV Unwrapping/Mapping
 
 .. _geometry-vertexcolor:
 
-Vertex Color
-------------
+Vertex Color & Alpha
+--------------------
 
 **Example:**
 
 #. :ref:`Create a mesh-object <geometry-mesh>`.
-#. Switch to Vertex Paint mode, this automatically adds a base vertex colour layer.
+#. Switch to Vertex Paint mode, this automatically adds a base vertex colour layer. Make sure you name this layer 'RGBA'
 #. Apply the desired vertex colours evenly to the vertex.
-#. Ensure you have added a :ref:`material<properties-material-settings>`.
+#. You can alter the alpha channel using the 'Add Alpha' and 'Erase Alpha' brushes.
 
 **Notes:**
 
@@ -83,28 +83,3 @@ Vertex Color
 * Blender treats the vertex as if the faces had been split apart, each face can have a different colour for that vertex.
 * `This image should clarify per-face vertex colouring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
 * On export, the scripts will take an average of colours. 
-
-.. _geometry-vertexalpha:
-
-Vertex Alpha
-------------
-
-Vertex alpha is handled in the same way as vertex colour. The only difference is that vertex alpha use the grey scale.
-   
-**Example:**
-
-#. :ref:`Create a mesh-object <geometry-mesh>`.
-	you will need to add a second layer manually by clicking the + button in the vertex colors 
-	control panel located in the object data menu.
-	use the slider on the right side to change the level of shading with white being fully visible
-	and black being fully transparent.
-#. Switch to Vertex Paint mode, If there are no vertex colour layers this will create a new layer.
-#. In the brush menu on the left side of the screen, leave the colour selector in the centre and 
-#. Apply the shading to the vertices just as you would for :ref:`Vertex Color <geometry-vertexcolor>`
-
-**Notes:**
-
-	* Vertex alpha must use the second vertex color layer, even if there is no color applied in first color layer the default color layer must be in place.
-   
-
-
