@@ -204,6 +204,7 @@ class BhkCollision(Collision):
         n_col_obj.unknown_float_2 = 1.0
         return n_col_obj
 
+    # TODO [collision][animation] Move out to an physic animation class.
     def export_bhk_blend_controller(self, b_obj, parent_block):
         # also add a controller for it
         n_blend_ctrl = block_store.create_block("bhkBlendController", b_obj)
@@ -325,12 +326,16 @@ class BhkCollision(Collision):
                                 box_extends[1][1] - box_extends[1][0] +
                                 box_extends[2][1] - box_extends[2][0]) / (6.0 * self.HAVOK_SCALE)
 
-        if b_obj.game.radius - calc_bhkshape_radius > NifOp.props.epsilon:
-            radius = calc_bhkshape_radius
-        else:
-            radius = b_obj.game.radius
+        b_r_body = b_obj.rigid_body
+        if b_r_body.use_margin:
+            margin = b_r_body.collision_margin
+            if margin - calc_bhkshape_radius > NifOp.props.epsilon:
+                radius = calc_bhkshape_radius
+            else:
+                radius = margin
 
-        if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
+        collision_shape = b_r_body.collision_shape
+        if collision_shape in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
             n_coltf = block_store.create_block("bhkConvexTransformShape", b_obj)
 
@@ -371,7 +376,7 @@ class BhkCollision(Collision):
             n_coltf.transform.m_42 /= self.HAVOK_SCALE
             n_coltf.transform.m_43 /= self.HAVOK_SCALE
 
-            if b_obj.game.collision_bounds_type == 'BOX':
+            if collision_shape == 'BOX':
                 n_colbox = block_store.create_block("bhkBoxShape", b_obj)
                 n_coltf.shape = n_colbox
                 # n_colbox.material = n_havok_mat[0]
@@ -395,7 +400,7 @@ class BhkCollision(Collision):
                 dims.z = (box_extends[2][1] - box_extends[2][0]) / (2.0 * self.HAVOK_SCALE)
                 n_colbox.minimum_size = min(dims.x, dims.y, dims.z)
 
-            elif b_obj.game.collision_bounds_type == 'SPHERE':
+            elif collision_shape == 'SPHERE':
                 n_colsphere = block_store.create_block("bhkSphereShape", b_obj)
                 n_coltf.shape = n_colsphere
                 # n_colsphere.material = n_havok_mat[0]
@@ -405,7 +410,7 @@ class BhkCollision(Collision):
 
             return n_coltf
 
-        elif b_obj.game.collision_bounds_type in {'CYLINDER', 'CAPSULE'}:
+        elif collision_shape in {'CYLINDER', 'CAPSULE'}:
 
             length = b_obj.dimensions.z - b_obj.dimensions.x
             radius = b_obj.dimensions.x / 2
@@ -443,7 +448,7 @@ class BhkCollision(Collision):
             n_col_caps.radius_2 = radius
             return n_col_caps
 
-        elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
+        elif collision_shape == 'CONVEX_HULL':
             b_mesh = b_obj.data
             b_transform_mat = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
 
@@ -490,7 +495,7 @@ class BhkCollision(Collision):
             return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist)
 
         else:
-            raise util_math.NifError('Cannot export collision type %s to collision shape list'.format(b_obj.game.collision_bounds_type))
+            raise util_math.NifError('Cannot export collision type %s to collision shape list'.format(collision_shape))
 
     def export_collision_packed(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add object ob as packed collision object to collision body
