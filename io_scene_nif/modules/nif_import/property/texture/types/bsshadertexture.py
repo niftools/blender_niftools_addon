@@ -60,41 +60,68 @@ class BSShaderTexture(TextureSlotManager):
             BSShaderTexture()
         return BSShaderTexture.__instance
 
-    def import_bsshaderproperty_textureset(self, b_mat, bs_shader_property):
-        self.b_mat = b_mat
-        self.clear_default_nodes()
+    def import_bsshaderproperty_textureset(self, bs_shader_property, nodes_wrapper):
+        textures = bs_shader_property.texture_set.textures
+        slots = {
+            "Base": 0,
+            "Normal": 1,
+            "Glow": 2,
+            "Detail": 3,
+            "Gloss": 7,
+            "Bump Map": None,
+            "Decal 0": 6,
+            "Decal 1": None,
+            "Decal 2": None,
+            # extra shader stuff?
+            "Specular": None,
+            "Normal": None,
+        }
+        for slot_name, slot_i in slots.items():
+            # skip those whose index we don't know from old code
+            if slot_i is not None and len(textures) > slot_i:
+                tex_str = textures[slot_i].decode()
 
-        texture_set = bs_shader_property.texture_set
-        textures = texture_set.textures
-
-        self._load_diffuse(b_mat, textures[0])
-
-        normal_map = textures[1].decode()
-        if normal_map:
-            NifLog.debug("Loading normal map {0}".format(normal_map))
-            b_texture = self.create_texture_slot(b_mat, normal_map)
-            self.link_normal_node(b_texture)
-
-        self._load_glow(b_mat, textures[2])
-
-        detail_map = textures[3].decode()
-        if detail_map:
-            NifLog.debug("Loading detail texture {0}".format(detail_map))
-            b_texture = self.create_texture_slot(b_mat, detail_map)
-            self.link_detail_node(b_texture)
-
-        if len(textures) > 6:
-            decal_map = textures[6].decode()
-            if decal_map:
-                NifLog.debug("Loading decal texture {0}".format(decal_map))
-                b_texture = self.create_texture_slot(b_mat, decal_map)
-                self.link_decal_0_node(b_texture)
-
-            gloss_map = textures[7].decode()
-            if gloss_map:
-                NifLog.debug("Loading gloss map {0}".format(gloss_map))
-                b_texture = self.create_texture_slot(b_mat, gloss_map)
-                self.link_gloss_node(b_texture)
+                # get the field name used by nif xml for this texture
+                slot_lower = slot_name.lower().replace(' ', '_')
+                field_name = f"{slot_lower}_texture"
+                if tex_str:
+                    NifLog.debug(f"Texdesc has active {slot_name}")
+                    import_func_name = f"link_{slot_lower}_node"
+                    import_func = getattr(nodes_wrapper, import_func_name, None)
+                    if not import_func:
+                        NifLog.debug(f"Could not find linking function {import_func_name} for {slot_name}")
+                        continue
+                    b_texture = nodes_wrapper.create_texture_slot(tex_str)
+                    import_func(b_texture)
+        #
+        # self._load_diffuse(b_mat, textures[0])
+        #
+        # normal_map = textures[1].decode()
+        # if normal_map:
+        #     NifLog.debug("Loading normal map {0}".format(normal_map))
+        #     b_texture = self.create_texture_slot(b_mat, normal_map)
+        #     self.link_normal_node(b_texture)
+        #
+        # self._load_glow(b_mat, textures[2])
+        #
+        # detail_map = textures[3].decode()
+        # if detail_map:
+        #     NifLog.debug("Loading detail texture {0}".format(detail_map))
+        #     b_texture = self.create_texture_slot(b_mat, detail_map)
+        #     self.link_detail_node(b_texture)
+        #
+        # if len(textures) > 6:
+        #     decal_map = textures[6].decode()
+        #     if decal_map:
+        #         NifLog.debug("Loading decal texture {0}".format(decal_map))
+        #         b_texture = self.create_texture_slot(b_mat, decal_map)
+        #         self.link_decal_0_node(b_texture)
+        #
+        #     gloss_map = textures[7].decode()
+        #     if gloss_map:
+        #         NifLog.debug("Loading gloss map {0}".format(gloss_map))
+        #         b_texture = self.create_texture_slot(b_mat, gloss_map)
+        #         self.link_gloss_node(b_texture)
 
     def import_bseffectshaderproperty_textures(self, b_mat, bs_effect_shader_property):
         self.b_mat = b_mat

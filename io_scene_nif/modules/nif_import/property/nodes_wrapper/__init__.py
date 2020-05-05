@@ -73,7 +73,7 @@ class NodesWrapper:
         # raw texture nodes
         self.diffuse_texture = None
 
-    def get_material_from_props(self, props):
+    def get_material_from_props(self, n_block, props):
         for prop in props:
             if prop.name:
                 name = prop.name.decode()

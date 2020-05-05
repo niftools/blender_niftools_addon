@@ -105,4 +105,4 @@ class BSShaderLightingPropertyProcessor(BSShader):
 
         flags = bs_shader_prop.shader_flags
         self.import_flags(self.b_mat, flags)
-        self.texturehelper.import_bsshaderproperty_textureset(self.b_mat, bs_shader_prop)
+        self.texturehelper.import_bsshaderproperty_textureset(bs_shader_prop, self._nodes_wrapper)

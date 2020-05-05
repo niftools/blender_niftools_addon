@@ -55,7 +55,7 @@ class MeshPropertyProcessor:
         # get processor singletons
         self.nodes_wrapper = NodesWrapper()
         self.processors = (
-            NiPropertyProcessor.get(),
+            NiPropertyProcessor(),
             BSShaderPropertyProcessor.get(),
             BSShaderLightingPropertyProcessor.get()
         )
@@ -69,7 +69,7 @@ class MeshPropertyProcessor:
         # get all valid properties that are attached to n_block
         props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
         # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
-        b_mat = self.nodes_wrapper.get_material_from_props(props)
+        b_mat = self.nodes_wrapper.get_material_from_props(n_block, props)
         # link the material to the mesh
         b_mesh.materials.append(b_mat)
 
@@ -85,13 +85,9 @@ class MeshPropertyProcessor:
             NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
             self.process_property(prop)
 
-        # todo [material] fixme, restructure this so passes can be shared between bsshader and nitexture stuff
-        try:
-            if b_mesh.vertex_colors:
-                self.nodes_wrapper.connect_vertex_colors_to_pass()
-            self.nodes_wrapper.connect_to_output()
-        except:
-            NifLog.warn("postpro not functional for bsshader props")
+        if b_mesh.vertex_colors:
+            self.nodes_wrapper.connect_vertex_colors_to_pass()
+        self.nodes_wrapper.connect_to_output()
 
 
     def process_property(self, prop):
