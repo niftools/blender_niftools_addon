@@ -65,6 +65,7 @@ class BSShaderPropertyProcessor(BSShader):
     _b_mesh = None
     _n_block = None
     b_mat = None
+    _nodes_wrapper = None
 
     @property
     def b_mesh(self):

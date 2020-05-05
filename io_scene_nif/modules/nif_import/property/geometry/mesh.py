@@ -43,6 +43,7 @@ import bpy
 
 from io_scene_nif.modules.nif_import.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.modules.nif_import.property.geometry.niproperty import NiPropertyProcessor
+from io_scene_nif.modules.nif_import.property.nodes_wrapper import NodesWrapper
 from io_scene_nif.modules.nif_import.property.shader.bsshaderlightingproperty import BSShaderLightingPropertyProcessor
 from io_scene_nif.modules.nif_import.property.shader.bsshaderproperty import BSShaderPropertyProcessor
 from io_scene_nif.utils.util_logging import NifLog
@@ -52,6 +53,7 @@ class MeshPropertyProcessor:
 
     def __init__(self):
         # get processor singletons
+        self.nodes_wrapper = NodesWrapper()
         self.processors = (
             NiPropertyProcessor.get(),
             BSShaderPropertyProcessor.get(),
@@ -66,39 +68,19 @@ class MeshPropertyProcessor:
     def process_property_list(self, n_block, b_mesh):
         # get all valid properties that are attached to n_block
         props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
-        # just to avoid duped materials, a first pass, make sure a named material is created
-        for prop in props:
-            if prop.name:
-                name = prop.name.decode()
-                if name and name in bpy.data.materials:
-                    b_mat = bpy.data.materials[name]
-                    # todo [material] fixme - we have to avoid multiple passes on the same material
-                    # it seems to mess with the singleton, or the bmat
-                    b_mesh.materials.append(b_mat)
-                    NifLog.debug(f"Retrieved already imported material {b_mat} from name {name}")
-                    return
-                else:
-                    b_mat = bpy.data.materials.new(name)
-                    NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
-                break
-        else:
-            # bs shaders often have no name, so generate one from mesh name
-            name = n_block.name.decode() + "_nt_mat"
-            b_mat = bpy.data.materials.new(name)
-            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
-
-        # do initial settings for the material here
-        b_mat.use_backface_culling = True
-        b_mat.use_nodes = True
+        # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
+        b_mat = self.nodes_wrapper.get_material_from_props(props)
         # link the material to the mesh
         b_mesh.materials.append(b_mat)
 
+        # set the vars on every processor
         for processor in self.processors:
             processor.b_mesh = b_mesh
             processor.n_block = n_block
             processor.b_mat = b_mat
+            processor._nodes_wrapper = self.nodes_wrapper
 
-        # just retrieve it
+        # run all processors
         for prop in props:
             NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
             self.process_property(prop)
@@ -106,8 +88,8 @@ class MeshPropertyProcessor:
         # todo [material] fixme, restructure this so passes can be shared between bsshader and nitexture stuff
         try:
             if b_mesh.vertex_colors:
-                NiTextureProp.get().connect_vertex_colors_to_pass()
-            NiTextureProp.get().connect_to_output()
+                self.nodes_wrapper.connect_vertex_colors_to_pass()
+            self.nodes_wrapper.connect_to_output()
         except:
             NifLog.warn("postpro not functional for bsshader props")
 

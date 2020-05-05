@@ -75,10 +75,8 @@ class NiTextureProp(TextureSlotManager):
                 "Normal": None,
             }
 
-    def import_nitextureprop_textures(self, b_mat, n_texture_desc):
+    def import_nitextureprop_textures(self, n_texture_desc, nodes_wrapper):
         # NifLog.debug("Importing {0}".format(n_texture_desc))
-        self.b_mat = b_mat
-        self.clear_default_nodes()
         # go over all valid texture slots
         for slot_name, _ in self.slots.items():
             # get the field name used by nif xml for this texture
@@ -90,11 +88,11 @@ class NiTextureProp(TextureSlotManager):
                 NifLog.debug(f"Texdesc has active {slot_name}")
                 n_tex = getattr(n_texture_desc, field_name)
                 import_func_name = f"link_{slot_lower}_node"
-                import_func = getattr(self, import_func_name, None)
+                import_func = getattr(nodes_wrapper, import_func_name, None)
                 if not import_func:
                     NifLog.debug(f"Could not find linking function {import_func_name} for {slot_name}")
                     continue
-                b_texture = self.create_texture_slot(b_mat, n_tex)
+                b_texture = nodes_wrapper.create_texture_slot(n_tex)
                 import_func(b_texture)
 
     def _import_apply_mode(self, n_texture_desc, b_texture):

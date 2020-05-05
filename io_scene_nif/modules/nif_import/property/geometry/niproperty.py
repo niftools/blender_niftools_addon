@@ -52,6 +52,7 @@ class NiPropertyProcessor:
     __instance = None
     _b_mesh = None
     _n_block = None
+    _nodes_wrapper = None
 
     @staticmethod
     def get():
@@ -120,7 +121,7 @@ class NiPropertyProcessor:
 
     def process_nitexturing_property(self, prop):
         """Import a NiTexturingProperty based material"""
-        NiTextureProp.get().import_nitextureprop_textures(self.b_mat, prop)
+        NiTextureProp.get().import_nitextureprop_textures(prop, self._nodes_wrapper)
         NifLog.debug("NiTexturingProperty property processed")
 
     def process_niwireframe_property(self, prop):

@@ -43,6 +43,7 @@ from io_scene_nif.utils.util_logging import NifLog
 class BSShaderTexture(TextureSlotManager):
 
     __instance = None
+    _nodes_wrapper = None
 
     def __init__(self):
         """ Virtually private constructor. """
