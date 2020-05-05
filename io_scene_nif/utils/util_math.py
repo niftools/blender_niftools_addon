@@ -186,7 +186,7 @@ def get_armature():
     if src_armatures:
         # see if one of these is selected -> get only that one
         if len(src_armatures) > 1:
-            sel_armatures = [ob for ob in src_armatures if ob.select]
+            sel_armatures = [ob for ob in src_armatures if ob.select_get()]
             if sel_armatures:
                 return sel_armatures[0]
         return src_armatures[0]

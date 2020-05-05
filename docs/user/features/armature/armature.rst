@@ -7,7 +7,7 @@ Armature Bones
 
 * The following section deals with Armatures
 
-.. _armature-boneflags:
+.. _armature-flags:
 
 Bone Flags
 ----------

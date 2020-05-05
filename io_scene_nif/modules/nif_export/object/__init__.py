@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 import mathutils
 from pyffi.formats.nif import NifFormat
 
@@ -79,6 +80,26 @@ class Object:
         self.bound_helper = NiCollision()
         self.bs_helper = BSBound()
 
+    def get_export_objects(self, only_selected=True):
+        """Get all exportable object and a subset of those objects representing root objects"""
+        # get the root object from selected object
+        selected_objects = bpy.context.selected_objects
+        # if none are selected to begin with or we ignore the selection, just get all of this scene's objects
+        if not selected_objects or not only_selected:
+            selected_objects = bpy.context.scene.objects
+
+        # only export empties, meshes, and armatures
+        exportable_objects = [b_obj for b_obj in selected_objects if b_obj.type in self.export_types]
+
+        # find all objects that do not have a parent
+        root_objects = [b_obj for b_obj in exportable_objects if not b_obj.parent]
+
+        # we have objects that we can export, but the selection did not contain a suitable root
+        if exportable_objects and not root_objects:
+            # todo [object] better but more complicated: growing the selection recursively until we have a root
+            return self.get_export_objects(only_selected=False)
+        return exportable_objects, root_objects
+
     def export_root_node(self, root_objects, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
         # TODO [collsion] detect root collision -> root collision node (can be mesh or empty)
@@ -86,9 +107,9 @@ class Object:
         #     return None  # done; stop here
 
         # there is only one root object so that will be our final root
-        b_obj_root = root_objects[0]
         if len(root_objects) == 1:
-            n_root = self.export_node(b_obj_root, None)
+            b_obj = root_objects[0]
+            n_root = self.export_node(b_obj, None)
 
         # there is more than one root object so we create a meta root
         else:
@@ -99,8 +120,8 @@ class Object:
 
         # TODO [object] How dow we know we are selecting the right node in the case of multi-root?
         # making root block a fade node
-        root_type = b_obj_root.niftools.rootnode
-        if NifOp.props.game in ('FALLOUT_3', 'SKYRIM') and root_type == 'BSFadeNode':
+        root_type = b_obj.niftools.rootnode
+        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and root_type == 'BSFadeNode':
             NifLog.info("Making root block a BSFadeNode")
             fade_root_block = NifFormat.BSFadeNode().deepcopy(n_root)
             fade_root_block.replace_global_node(n_root, fade_root_block)
@@ -110,7 +131,7 @@ class Object:
         object_property = ObjectDataProperty()
         object_property.export_bsxflags_upb(n_root)
         object_property.export_inventory_marker(n_root, root_objects)
-        object_property.export_weapon_location(n_root, b_obj_root)
+        object_property.export_weapon_location(n_root, b_obj)
         types.export_furniture_marker(n_root, filebase)
         return n_root
 
@@ -127,13 +148,13 @@ class Object:
             elif b_obj_type is 'ARMATURE' and b_obj.niftools.flags == 0 and b_obj.parent is None:
                 n_node.flags = b_obj.niftools.flags
             else:
-                if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     n_node.flags = 0x000E
-                elif NifOp.props.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
+                elif bpy.context.scene.niftools_scene.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
                     n_node.flags = 0x0010
-                elif NifOp.props.game is 'EMPIRE_EARTH_II':
+                elif bpy.context.scene.niftools_scene.game is 'EMPIRE_EARTH_II':
                     n_node.flags = 0x0002
-                elif NifOp.props.game is 'DIVINITY_2':
+                elif bpy.context.scene.niftools_scene.game is 'DIVINITY_2':
                     n_node.flags = 0x0310
                 else:
                     n_node.flags = 0x000C  # morrowind
@@ -241,7 +262,7 @@ class Object:
 
     def export_collision(self, b_obj, n_parent):
         """Main function for adding collision object b_obj to a node."""
-        if NifOp.props.game == 'MORROWIND':
+        if bpy.context.scene.niftools_scene.game == 'MORROWIND':
             if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
                 raise util_math.NifError("Morrowind only supports Triangle Mesh collisions.")
             node = block_store.create_block("RootCollisionNode", b_obj)
@@ -251,7 +272,7 @@ class Object:
             for child in b_obj.children:
                 self.export_node(child, node, None)
 
-        elif NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        elif bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
             nodes = [n_parent]
             nodes.extend([block for block in n_parent.children if block.name[:14] == 'collisiondummy'])
@@ -274,7 +295,7 @@ class Object:
                 n_parent.add_child(node)
                 self.bhk_helper.export_collision_helper(b_obj, node)
 
-        elif NifOp.props.game in ('ZOO_TYCOON_2',):
+        elif bpy.context.scene.niftools_scene.game in ('ZOO_TYCOON_2',):
             self.bound_helper.export_nicollisiondata(b_obj, n_parent)
         else:
-            NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(NifOp.props.game, b_obj.name))
+            NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(bpy.context.scene.niftools_scene.game, b_obj.name))

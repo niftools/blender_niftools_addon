@@ -69,19 +69,6 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
         default=1.0,
         min=0.01, max=100.0, precision=2)
 
-    # For which game to export.
-    game: bpy.props.EnumProperty(
-        items=[
-            (_game_to_enum(game), game, "Export for " + game)
-            # implementation note: reversed makes it show alphabetically
-            # (at least with the current blender)
-            for game in reversed(sorted(
-                [x for x in NifFormat.games.keys() if x != '?']))
-        ],
-        name="Game",
-        description="For which game to export.",
-        default='OBLIVION')
-
     # How to export animation.
     animation: bpy.props.EnumProperty(
         items=[

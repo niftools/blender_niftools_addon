@@ -79,10 +79,8 @@ class Scene(PropertyGroup):
     game: bpy.props.EnumProperty(
         items=[
             (_game_to_enum(game), game, "Export for " + game)
-            # implementation note: reversed makes it show alphabetically
-            # (at least with the current blender)
-            for game in reversed(sorted(
-                [x for x in NifFormat.games.keys() if x != '?']))
+            for game in sorted(
+                [x for x in NifFormat.games.keys() if x != '?'])
         ],
         name="Game",
         description="For which game to export.",

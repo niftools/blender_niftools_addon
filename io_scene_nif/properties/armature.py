@@ -48,11 +48,11 @@ from bpy.types import PropertyGroup
 
 class BoneProperty(PropertyGroup):
     # TODO [object][proprerty][flag] This is probably a general object flag which should be available to all generic objects
-    boneflags: IntProperty(
+    flags: IntProperty(
         name='Bone Flag',
         default=0
     )
-    bonepriority: IntProperty(
+    priority: IntProperty(
         name='Bone Priority',
         default=0
     )

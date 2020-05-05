@@ -246,8 +246,7 @@ class NifImport(NifCommon):
             elif self.armaturehelper.is_bone(n_block):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[block_store.import_name(n_block)]
-                # TODO [object] flags, shouldn't be treated any different than object flags.
-                b_obj.niftools.boneflags = n_block.flags
+                b_obj.niftools.flags = n_block.flags
 
             else:
                 # import as an empty

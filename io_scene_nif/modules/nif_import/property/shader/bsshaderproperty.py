@@ -64,6 +64,7 @@ class BSShaderPropertyProcessor(BSShader):
     __instance = None
     _b_mesh = None
     _n_block = None
+    b_mat = None
 
     @property
     def b_mesh(self):
@@ -102,85 +103,89 @@ class BSShaderPropertyProcessor(BSShader):
         processor.register(NifFormat.BSEffectShaderProperty, self.import_bs_effect_shader_property)
 
     def import_bs_lighting_shader_property(self, bs_shader_property):
-        b_mat = self.create_material_name(bs_shader_property)
 
         # Shader Flags
-        b_shader = b_mat.niftools_shader
+        b_shader = self.b_mat.niftools_shader
         b_shader.bs_shadertype = 'BSLightingShaderProperty'
 
         shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(bs_shader_property.skyrim_shader_type)
         b_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[shader_type]
 
-        self.import_shader_flags(b_mat, bs_shader_property)
+        self.import_shader_flags(bs_shader_property)
 
         # Textures
-        self.texturehelper.import_bsshaderproperty_textureset(b_mat, bs_shader_property)
-        if hasattr(bs_shader_property, 'texture_clamp_mode'):
-            self.import_clamp(b_mat, bs_shader_property)
+        self.texturehelper.import_bsshaderproperty_textureset(self.b_mat, bs_shader_property)
 
-        if hasattr(bs_shader_property, 'uv_offset'):
-            self.import_uv_offset(b_mat, bs_shader_property)
-
-        if hasattr(bs_shader_property, 'uv_scale'):
-            self.import_uv_scale(b_mat, bs_shader_property)
+        # todo [material] update for nodes
+        # if hasattr(bs_shader_property, 'texture_clamp_mode'):
+        #     self.import_clamp(self.b_mat, bs_shader_property)
+        #
+        # if hasattr(bs_shader_property, 'uv_offset'):
+        #     self.import_uv_offset(self.b_mat, bs_shader_property)
+        #
+        # if hasattr(bs_shader_property, 'uv_scale'):
+        #     self.import_uv_scale(self.b_mat, bs_shader_property)
 
         # Diffuse color
         if bs_shader_property.skin_tint_color:
-            Material.import_material_diffuse(b_mat, bs_shader_property.skin_tint_color)
+            Material.import_material_diffuse(self.b_mat, bs_shader_property.skin_tint_color)
 
-        if (b_mat.diffuse_color.r + b_mat.diffuse_color.g + b_mat.diffuse_color.g) == 0:
-            Material.import_material_diffuse(b_mat, bs_shader_property.hair_tint_color)
+        if (self.b_mat.diffuse_color[0] + self.b_mat.diffuse_color[1] + self.b_mat.diffuse_color[2]) == 0:
+            Material.import_material_diffuse(self.b_mat, bs_shader_property.hair_tint_color)
 
         # TODO [material][b_shader][property] Handle nialphaproperty node lookup
         # # Alpha
         # if n_alpha_prop:
-        #     b_mat = self.set_alpha_bsshader(b_mat, bs_shader_property)
+        #     self.b_mat = self.set_alpha_bsshader(self.b_mat, bs_shader_property)
 
         # gloss
-        Material.import_material_gloss(b_mat, bs_shader_property.glossiness)
+        Material.import_material_gloss(self.b_mat, bs_shader_property.glossiness)
 
         # Specular color
-        Material.import_material_specular(b_mat, bs_shader_property.specular_color)
-        b_mat.specular_intensity = bs_shader_property.specular_strength
+        Material.import_material_specular(self.b_mat, bs_shader_property.specular_color)
+        self.b_mat.specular_intensity = bs_shader_property.specular_strength
 
         # lighting effect
-        b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
-        b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
+        self.b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
+        self.b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
 
     def import_bs_effect_shader_property(self, bs_effect_shader_property):
         # update material material name
-        b_mat = self.create_material_name(bs_effect_shader_property)
 
-        shader = b_mat.niftools_shader
+        shader = self.b_mat.niftools_shader
         shader.bs_shadertype = 'BSEffectShaderProperty'
         shader.bslsp_shaderobjtype = 'Default'
-        self.import_shader_flags(b_mat, bs_effect_shader_property)
+        self.import_shader_flags(bs_effect_shader_property)
 
-        self.texturehelper.import_bseffectshaderproperty_textures(b_mat, bs_effect_shader_property)
+        self.texturehelper.import_bseffectshaderproperty_textures(self.b_mat, bs_effect_shader_property)
 
-        if hasattr(bs_effect_shader_property, 'uv_offset'):
-            self.import_uv_offset(b_mat, bs_effect_shader_property)
-
-        if hasattr(bs_effect_shader_property, 'uv_scale'):
-            self.import_uv_scale(b_mat, bs_effect_shader_property)
+        # todo [material] update for nodes
+        # if hasattr(bs_effect_shader_property, 'uv_offset'):
+        #     self.import_uv_offset(self.b_mat, bs_effect_shader_property)
+        #
+        # if hasattr(bs_effect_shader_property, 'uv_scale'):
+        #     self.import_uv_scale(self.b_mat, bs_effect_shader_property)
 
         # TODO [material][shader][property] Handle nialphaproperty node lookup
         # # Alpha
         # if n_alpha_prop:
-        #     b_mat = self.set_alpha_bsshader(b_mat, bs_effect_shader_property)
+        #     self.b_mat = self.set_alpha_bsshader(self.b_mat, bs_effect_shader_property)
 
         # Emissive
         if bs_effect_shader_property.emissive_color:
-            Material.import_material_emissive(b_mat, bs_effect_shader_property.emissive_color)
+            Material.import_material_emissive(self.b_mat, bs_effect_shader_property.emissive_color)
             # TODO [property][shader][alpha] Map this to actual alpha when component is available
-            b_mat.niftools.emissive_alpha.v = bs_effect_shader_property.emissive_color.a
-            b_mat.emit = bs_effect_shader_property.emissive_multiple
+            self.b_mat.niftools.emissive_alpha.v = bs_effect_shader_property.emissive_color.a
+            # todo [shader] create custom float property, or use as factor in mix shader?
+            # self.b_mat.emit = bs_effect_shader_property.emissive_multiple
 
-        b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
+        # TODO [animation][shader] Move out to a dedicated controller processor
+        if bs_effect_shader_property.controller:
+            self.b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
 
-    def import_shader_flags(self, b_mat, b_prop):
+    def import_shader_flags(self, b_prop):
         flags_1 = b_prop.shader_flags_1
-        self.import_flags(b_mat, flags_1)
+        self.import_flags(self.b_mat, flags_1)
 
         flag_2 = b_prop.shader_flags_2
-        self.import_flags(b_mat, flag_2)
+        self.import_flags(self.b_mat, flag_2)

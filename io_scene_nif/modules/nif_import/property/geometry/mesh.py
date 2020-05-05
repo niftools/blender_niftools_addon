@@ -82,7 +82,9 @@ class MeshPropertyProcessor:
                     NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
                 break
         else:
-            b_mat = bpy.data.materials.new("Noname")
+            # bs shaders often have no name, so generate one from mesh name
+            name = n_block.name.decode() + "_nt_mat"
+            b_mat = bpy.data.materials.new(name)
             NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
 
         # do initial settings for the material here
@@ -100,9 +102,15 @@ class MeshPropertyProcessor:
         for prop in props:
             NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
             self.process_property(prop)
-        if b_mesh.vertex_colors:
-            NiTextureProp.get().connect_vertex_colors_to_pass()
-        NiTextureProp.get().connect_to_output()
+
+        # todo [material] fixme, restructure this so passes can be shared between bsshader and nitexture stuff
+        try:
+            if b_mesh.vertex_colors:
+                NiTextureProp.get().connect_vertex_colors_to_pass()
+            NiTextureProp.get().connect_to_output()
+        except:
+            NifLog.warn("postpro not functional for bsshader props")
+
 
     def process_property(self, prop):
         """Base method to warn user that this property is not supported"""

@@ -91,65 +91,53 @@ class TextureWriter:
         # no identical source texture found, so use and register the new one
         return block_store.register_block(srctex, n_texture)
 
-    def export_tex_desc(self, texdesc=None, uvlayers=None, b_texture_node=None):
+    def export_tex_desc(self, texdesc=None, uv_set=0, b_texture_node=None):
         """Helper function for export_texturing_property to export each texture slot."""
-        try:
-            texdesc.uv_set = uvlayers.index(b_texture_node.uv_layer) if b_texture_node.uv_layer else 0
-        except ValueError:  # mtex.uv_layer not in uvlayers list
-            NifLog.warn("Bad uv layer name '{0}' in texture '{1}'. Using first uv layer".format(b_texture_node.uv_layer, b_texture_node.texture.name))
-            texdesc.uv_set = 0  # assume 0 is active layer
-
-        texdesc.source = TextureWriter.export_source_texture(b_texture_node.texture)
+        texdesc.uv_set = uv_set
+        texdesc.source = TextureWriter.export_source_texture(b_texture_node)
 
     @staticmethod
-    def export_texture_filename(n_texture):
-        """Returns file name from n_texture.
+    def export_texture_filename(b_texture_node):
+        """Returns image file name from b_texture_node.
 
-        @param n_texture: The n_texture object in blender.
-        @return: The file name of the image used in the n_texture.
+        @param b_texture_node: The b_texture_node object in blender.
+        @return: The file name of the image used in the b_texture_node.
         """
-        if n_texture.type == 'ENVIRONMENT_MAP':
-            # this works for morrowind only
-            if NifOp.props.game != 'MORROWIND':
-                raise util_math.NifError("Cannot export environment maps for nif version '{0}'".format(NifOp.props.game))
-            return "enviro 01.TGA"
 
-        elif n_texture.type == 'IMAGE':
-            # get filename from image
+        if not isinstance(b_texture_node, bpy.types.ShaderNodeTexImage):
+            raise util_math.NifError(f"Expected a Shader node texture, got {type(b_texture_node)}")
+        # get filename from image
 
-            # TODO [n_texture] still needed? can n_texture.image be None in current blender?
-            # check that image is loaded
-            if n_texture.image is None:
-                raise util_math.NifError("Image type texture has no file loaded ('{0}')".format(n_texture.name))
+        # TODO [b_texture_node] still needed? can b_texture_node.image be None in current blender?
+        # check that image is loaded
+        if b_texture_node.image is None:
+            raise util_math.NifError("Image type texture has no file loaded ('{0}')".format(b_texture_node.name))
 
-            filename = n_texture.image.filepath
+        filename = b_texture_node.image.filepath
 
-            # warn if packed flag is enabled
-            if n_texture.image.packed_file:
-                NifLog.warn("Packed image in texture '{0}' ignored, exporting as '{1}' instead.".format(n_texture.name, filename))
+        # warn if packed flag is enabled
+        if b_texture_node.image.packed_file:
+            NifLog.warn("Packed image in texture '{0}' ignored, exporting as '{1}' instead.".format(b_texture_node.name, filename))
 
-            # try and find a DDS alternative, force it if required
-            ddsfilename = "%s%s" % (filename[:-4], '.dds')
-            if os.path.exists(ddsfilename) or NifOp.props.force_dds:
-                filename = ddsfilename
+        # try and find a DDS alternative, force it if required
+        ddsfilename = "%s%s" % (filename[:-4], '.dds')
+        if os.path.exists(ddsfilename) or NifOp.props.force_dds:
+            filename = ddsfilename
 
-            # sanitize file path
-            if NifOp.props.game not in ('MORROWIND', 'OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                # strip n_texture file path
-                filename = os.path.basename(filename)
-
-            else:
-                # strip the data files prefix from the n_texture's file name
-                filename = filename.lower()
-                idx = filename.find("textures")
-                if idx >= 0:
-                    filename = filename[idx:]
-                else:
-                    NifLog.warn("{0} does not reside in a 'Textures' folder; texture path will be stripped and textures may not display in-game".format(filename))
-                    filename = os.path.basename(filename)
-            # for linux export: fix path separators
-            return filename.replace('/', '\\')
+        # sanitize file path
+        if bpy.context.scene.niftools_scene.game not in ('MORROWIND', 'OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            # strip b_texture_node file path
+            filename = os.path.basename(filename)
 
         else:
-            # n_texture must be of type IMAGE or ENVMAP
-            raise util_math.NifError("Texture '{0}' must be of type IMAGE or ENVMAP".format(n_texture.name))
+            # strip the data files prefix from the b_texture_node's file name
+            filename = filename.lower()
+            idx = filename.find("textures")
+            if idx >= 0:
+                filename = filename[idx:]
+            else:
+                NifLog.warn("{0} does not reside in a 'Textures' folder; texture path will be stripped and textures may not display in-game".format(filename))
+                filename = os.path.basename(filename)
+        # for linux export: fix path separators
+        return filename.replace('/', '\\')
+

@@ -74,6 +74,7 @@ class NifExport(NifCommon):
         self.constrainthelper = Constraint()
         self.objecthelper = Object()
         self.exportable_objects = []
+        self.root_objects = []
 
     def execute(self):
         """Main export function."""
@@ -84,7 +85,7 @@ class NifExport(NifCommon):
 
         # TODO [animation[ Fix morrowind animation support
         '''
-        if NifOp.props.animation == 'ALL_NIF_XNIF_XKF' and NifOp.props.game == 'MORROWIND':
+        if NifOp.props.animation == 'ALL_NIF_XNIF_XKF' and bpy.context.scene.niftools_scene.game == 'MORROWIND':
             # if exporting in nif+xnif+kf mode, then first export
             # the nif with geometry + animation, which is done by:
             NifOp.props.animation = 'ALL_NIF'
@@ -98,21 +99,11 @@ class NifExport(NifCommon):
 
         try:  # catch export errors
 
-            # get the root object from selected object
-            selected_objects = bpy.context.selected_objects
-            # if none are selected, just get all of this scene's objects
-            if not selected_objects:
-                selected_objects = bpy.context.scene.objects
-
-            # only export empties, meshes, and armatures
-            self.exportable_objects = [b_obj for b_obj in selected_objects if b_obj.type in Object.export_types]
+            # find all objects that do not have a parent
+            self.exportable_objects, self.root_objects = self.objecthelper.get_export_objects()
             if not self.exportable_objects:
                 NifLog.warn("No objects can be exported!")
                 return {'FINISHED'}
-            NifLog.info("Exporting objects")
-
-            # find all objects that do not have a parent
-            self.root_objects = [b_obj for b_obj in self.exportable_objects if not b_obj.parent]
 
             for b_obj in self.exportable_objects:
                 # armatures should not be in rest position
@@ -172,7 +163,7 @@ class NifExport(NifCommon):
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
                 data.roots = [kf_root]
-                data.neosteam = (NifOp.props.game == 'NEOSTEAM')
+                data.neosteam = (bpy.context.scene.niftools_scene.game == 'NEOSTEAM')
                 with open(kffile, "wb") as stream:
                     data.write(stream)
                 # if only anim, no need to do the time consuming nif export
@@ -188,7 +179,7 @@ class NifExport(NifCommon):
             # ----------------
 
             NifLog.info("Checking controllers")
-            if NifOp.props.game == 'MORROWIND':
+            if bpy.context.scene.niftools_scene.game == 'MORROWIND':
                 # animations without keyframe animations crash the TESCS
                 # if we are in that situation, add a trivial keyframe animation
                 has_keyframecontrollers = False
@@ -214,7 +205,7 @@ class NifExport(NifCommon):
                                     root_block = new_block
 
             # oblivion skeleton export: check that all bones have a transform controller and transform interpolator
-            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
+            if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
 
                 # TODO [armature] Extract out to armature animation
                 # here comes everything that is Oblivion skeleton export specific
@@ -265,11 +256,11 @@ class NifExport(NifCommon):
 
             object_prop = ObjectProperty()
             # add vertex color and zbuffer properties for civ4 and railroads
-            if NifOp.props.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
+            if bpy.context.scene.niftools_scene.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
                 object_prop.export_vertex_color_property(root_block)
                 object_prop.export_z_buffer_property(root_block)
 
-            elif NifOp.props.game in ('EMPIRE_EARTH_II',):
+            elif bpy.context.scene.niftools_scene.game in ('EMPIRE_EARTH_II',):
                 object_prop.export_vertex_color_property(root_block)
                 object_prop.export_z_buffer_property(root_block, flags=15, function=1)
 
@@ -312,7 +303,7 @@ class NifExport(NifCommon):
                     EGMData.data.apply_scale(NifOp.props.scale_correction_export)
 
             # generate mopps (must be done after applying scale!)
-            if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 for block in block_store.block_to_obj:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         NifLog.info("Generating mopp...")
@@ -326,7 +317,7 @@ class NifExport(NifCommon):
 
             # export nif file:
             # ----------------
-            if NifOp.props.game == 'EMPIRE_EARTH_II':
+            if bpy.context.scene.niftools_scene.game == 'EMPIRE_EARTH_II':
                 ext = ".nifcache"
             else:
                 ext = ".nif"
@@ -339,12 +330,12 @@ class NifExport(NifCommon):
 
             data.roots = [root_block]
             # todo [export] I believe this is redundant and setting modification only is the current way?
-            data.neosteam = (NifOp.props.game == 'NEOSTEAM')
-            if NifOp.props.game == 'NEOSTEAM':
+            data.neosteam = (bpy.context.scene.niftools_scene.game == 'NEOSTEAM')
+            if bpy.context.scene.niftools_scene.game == 'NEOSTEAM':
                 data.modification = "neosteam"
-            elif NifOp.props.game == 'ATLANTICA':
+            elif bpy.context.scene.niftools_scene.game == 'ATLANTICA':
                 data.modification = "ndoors"
-            elif NifOp.props.game == 'HOWLING_SWORD':
+            elif bpy.context.scene.niftools_scene.game == 'HOWLING_SWORD':
                 data.modification = "jmihs1"
 
             with open(niffile, "wb") as stream:

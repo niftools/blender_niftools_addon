@@ -59,12 +59,12 @@ USER_VERSION_2 = {
 
 def get_version_data():
     """ Returns NifFormat.Data of the correct version and user versions """
-    game = NifOp.props.game
-    version = NifOp.op.version[game]
+    b_scene = bpy.context.scene.niftools_scene
+    game = b_scene.game
+    version = b_scene.nif_version
     NifLog.info("Writing NIF version 0x%08X" % version)
 
     # get user version and user version 2 for export
-    b_scene = bpy.context.scene.niftools_scene
     user_version = b_scene.user_version if b_scene.user_version else USER_VERSION.get(game, 0)
     user_version_2 = b_scene.user_version_2 if b_scene.user_version_2 else USER_VERSION_2.get(game, 0)
 

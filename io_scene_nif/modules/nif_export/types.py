@@ -104,7 +104,7 @@ def export_range_lod_data(n_node, b_obj):
 
 def export_furniture_marker(n_root, filebase):
     # oblivion and Fallout 3 furniture markers
-    if NifOp.props.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase[:15].lower() == 'furnituremarker':
+    if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase[:15].lower() == 'furnituremarker':
         # exporting a furniture marker for Oblivion/FO3
         try:
             furniturenumber = int(filebase[15:])
