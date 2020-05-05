@@ -59,81 +59,43 @@ class NiTextureProp(TextureSlotManager):
         else:
             super().__init__()
             NiTextureProp.__instance = self
+            # todo [texture] merge with export slots dict, or change to simple list?
+            self.slots = {
+                "Base": None,
+                "Dark": None,
+                "Detail": None,
+                "Gloss": None,
+                "Glow": None,
+                "Bump Map": None,
+                "Decal 0": None,
+                "Decal 1": None,
+                "Decal 2": None,
+                # extra shader stuff?
+                "Specular": None,
+                "Normal": None,
+            }
 
     def import_nitextureprop_textures(self, b_mat, n_texture_desc):
         # NifLog.debug("Importing {0}".format(n_texture_desc))
         self.b_mat = b_mat
         self.clear_default_nodes()
-
-        if n_texture_desc.has_base_texture:
-            base = n_texture_desc.base_texture
-            # NifLog.debug("Loading base texture {0}".format(base))
-            b_texture = self.create_texture_slot(b_mat, base)
-            self.link_diffuse_node(b_texture)
-
-        if n_texture_desc.has_dark_texture:
-            dark = n_texture_desc.dark_texture
-            # NifLog.debug("Loading dark texture {0}".format(dark))
-            b_texture = self.create_texture_slot(b_mat, dark)
-            # self.update_dark_slot(b_texture)
-
-        if n_texture_desc.has_detail_texture:
-            detail = n_texture_desc.detail_texture
-            # NifLog.debug("Loading detail texture {0}".format(detail))
-            b_texture = self.create_texture_slot(b_mat, detail)
-            self.update_detail_slot(b_texture)
-
-        if n_texture_desc.has_bump_map_texture:
-            bump = n_texture_desc.bump_map_texture
-            # NifLog.debug("Loading bump texture {0}".format(bump))
-            b_texture = self.create_texture_slot(b_mat, bump)
-            # self.update_bump_slot(b_texture)
-            # TODO [property][texture][map] See if additional information that useful
-            # 'bump_map_texture',
-            # 'bump_map_luma_scale',
-            # 'bump_map_luma_offset',
-            # 'bump_map_matrix'
-
-        if n_texture_desc.has_normal_texture:
-            normal = n_texture_desc.normal_texture
-            # NifLog.debug("Loading normal texture {0}".format(normal))
-            b_texture = self.create_texture_slot(b_mat, normal)
-            # self.update_normal_slot(b_texture)
-
-        if n_texture_desc.has_glow_texture:
-            glow = n_texture_desc.glow_texture
-            # NifLog.debug("Loading glow texture {0}".format(glow))
-            b_texture = self.create_texture_slot(b_mat, glow)
-            # self.update_glow_slot(b_texture)
-
-        if n_texture_desc.has_gloss_texture:
-            gloss = n_texture_desc.gloss_texture
-            # NifLog.debug("Loading gloss texture {0}".format(gloss))
-            b_texture = self.create_texture_slot(b_mat, gloss)
-            # self.update_gloss_slot(b_texture)
-        #
-        if n_texture_desc.has_decal_0_texture:
-            decal_0 = n_texture_desc.decal_0_texture
-            # NifLog.debug("Loading decal 0 texture {0}".format(decal_0))
-            b_texture = self.create_texture_slot(b_mat, decal_0)
-            self.update_decal_slot_0(b_texture)
-
-        if n_texture_desc.has_decal_1_texture:
-            decal_1 = n_texture_desc.decal_1_texture
-            # NifLog.debug("Loading decal 1 texture {0}".format(decal_1))
-            b_texture = self.create_texture_slot(b_mat, decal_1)
-            self.update_decal_slot_1(b_texture)
-
-        if n_texture_desc.has_decal_2_texture:
-            decal_2 = n_texture_desc.decal_2_texture
-            # NifLog.debug("Loading decal 2 texture {0}".format(decal_2))
-            b_texture = self.create_texture_slot(b_mat, decal_2)
-            self.update_decal_slot_2(b_texture)
-
-        # TODO [property][texture][map] Process unknown type
-        # 'has_unknown_2_texture',
-        # 'unknown_2_texture',
-        # 'unknown_2_float',
+        # go over all valid texture slots
+        for slot_name, _ in self.slots.items():
+            # get the field name used by nif xml for this texture
+            slot_lower = slot_name.lower().replace(' ', '_')
+            field_name = f"{slot_lower}_texture"
+            # get the tex desc link
+            has_tex = getattr(n_texture_desc, "has_"+field_name, None)
+            if has_tex:
+                NifLog.debug(f"Texdesc has active {slot_name}")
+                n_tex = getattr(n_texture_desc, field_name)
+                import_func_name = f"link_{slot_lower}_node"
+                import_func = getattr(self, import_func_name, None)
+                if not import_func:
+                    NifLog.debug(f"Could not find linking function {import_func_name} for {slot_name}")
+                    continue
+                b_texture = self.create_texture_slot(b_mat, n_tex)
+                import_func(b_texture)
 
     def _import_apply_mode(self, n_texture_desc, b_texture):
         # Blend mode

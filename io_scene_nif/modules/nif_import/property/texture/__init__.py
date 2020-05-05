@@ -202,12 +202,12 @@ class TextureSlotManager:
         # todo [texture] support clamping and interpolation settings
         return b_texture_node
 
-    def link_diffuse_node(self, b_texture_node):
+    def link_base_node(self, b_texture_node):
         self.diffuse_texture = b_texture_node
         b_texture_node.label = "Base"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node)
 
-    def update_bump_slot(self, b_texture_node):
+    def link_bump_map_node(self, b_texture_node):
         b_texture_node.label = "Bump Map"
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = False  # causes artifacts otherwise.
@@ -221,7 +221,7 @@ class TextureSlotManager:
         # b_texture_node.use_map_normal = True
         # b_texture_node.use_map_alpha = False
 
-    def update_normal_slot(self, b_texture_node):
+    def link_normal_node(self, b_texture_node):
         b_texture_node.label = "Normal"
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = True  # causes artifacts otherwise.
@@ -235,7 +235,7 @@ class TextureSlotManager:
         # b_texture_node.use_map_normal = True
         # b_texture_node.use_map_alpha = False
 
-    def update_glow_slot(self, b_texture_node):
+    def link_glow_node(self, b_texture_node):
         b_texture_node.label = "Glow"
         # # Influence mapping
         # b_texture_node.texture.use_alpha = False
@@ -248,7 +248,7 @@ class TextureSlotManager:
         # b_texture_node.use_map_color_diffuse = False
         # b_texture_node.use_map_emit = True
 
-    def update_gloss_slot(self, b_texture_node):
+    def link_gloss_node(self, b_texture_node):
         b_texture_node.label = "Gloss"
         # # Influence mapping
         # b_texture_node.texture.use_alpha = False
@@ -262,27 +262,27 @@ class TextureSlotManager:
         # b_texture_node.use_map_specular = True
         # b_texture_node.use_map_color_spec = True
 
-    def update_decal_slot_0(self, b_texture_node):
+    def link_decal_0_node(self, b_texture_node):
         b_texture_node.label = "Decal 0"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
-    def update_decal_slot_1(self, b_texture_node):
+    def link_decal_1_node(self, b_texture_node):
         b_texture_node.label = "Decal 1"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
-    def update_decal_slot_2(self, b_texture_node):
+    def link_decal_2_node(self, b_texture_node):
         b_texture_node.label = "Decal2"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
-    def update_detail_slot(self, b_texture_node):
+    def link_detail_node(self, b_texture_node):
         b_texture_node.label = "Detail"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Detail")
 
-    def update_dark_slot(self, b_texture_node):
+    def link_dark_node(self, b_texture_node):
         # todo [texture] implement
         pass
 
-    def update_reflection_slot(self, b_texture_node):
+    def link_reflection_node(self, b_texture_node):
         # Influence mapping
 
         # Influence
@@ -294,7 +294,7 @@ class TextureSlotManager:
         b_texture_node.use_map_emit = True
         b_texture_node.use_map_mirror = True
 
-    def update_environment_slot(self, b_texture_node):
+    def link_environment_node(self, b_texture_node):
         # Influence mapping
 
         # Influence

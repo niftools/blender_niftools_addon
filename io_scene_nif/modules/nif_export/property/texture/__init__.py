@@ -58,18 +58,18 @@ class TextureSlotManager:
 
     def _reset_fields(self):
         self.slots = {
-            "Base": None,
-            "Dark": None,
-            "Emit": None,
-            "Glow": None,
-            "Gloss": None,
-            "Specular": None,
-            "Normal": None,
-            "Bump Map": None,
-            "Detail": None,
-            "Decal 0": None,
-            "Decal 1": None,
-            "Decal2": None,
+                "Base": None,
+                "Dark": None,
+                "Detail": None,
+                "Gloss": None,
+                "Glow": None,
+                "Bump Map": None,
+                "Decal 0": None,
+                "Decal 1": None,
+                "Decal 2": None,
+                # extra shader stuff?
+                "Specular": None,
+                "Normal": None,
         }
 
     def get_uv_node(self, b_texture_node):
