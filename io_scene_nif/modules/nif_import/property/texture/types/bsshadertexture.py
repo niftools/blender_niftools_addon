@@ -36,11 +36,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
 from io_scene_nif.utils.util_logging import NifLog
 
 
-class BSShaderTexture(TextureSlotManager):
+class BSShaderTexture:
 
     __instance = None
     _nodes_wrapper = None

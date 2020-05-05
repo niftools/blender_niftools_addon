@@ -103,9 +103,7 @@ class MeshPropertyProcessor:
             NifLog.debug(f"{type(prop)} property found {prop}")
             self.process_property(prop)
 
-        if b_mesh.vertex_colors:
-            self.nodes_wrapper.connect_vertex_colors_to_pass()
-        self.nodes_wrapper.connect_to_output()
+        self.nodes_wrapper.connect_to_output(b_mesh.vertex_colors)
 
 
     def process_property(self, prop):

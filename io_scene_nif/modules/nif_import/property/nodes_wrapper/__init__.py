@@ -45,8 +45,6 @@ from io_scene_nif.modules.nif_import.property.texture.loader import TextureLoade
 from io_scene_nif.utils.util_logging import NifLog
 from io_scene_nif.utils.util_nodes import nodes_iterate
 
-# dictionary of texture files, to reuse textures
-DICT_TEXTURES = {}
 
 # TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
 IMPORT_EMBEDDED_TEXTURES = False
@@ -72,6 +70,7 @@ class NodesWrapper:
         self.diffuse_shader = None
         # raw texture nodes
         self.diffuse_texture = None
+        self.vcol = None
 
 
     def set_uv_map(self, b_texture_node, uv_index=0, reflective=False):
@@ -147,17 +146,16 @@ class NodesWrapper:
 
     def connect_vertex_colors_to_pass(self, ):
         # if ob.data.vertex_colors:
-        vcol = self.tree.nodes.new('ShaderNodeVertexColor')
-        vcol.layer_name = "RGBA"
-        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, vcol, texture_type="Detail")
+        self.vcol = self.tree.nodes.new('ShaderNodeVertexColor')
+        self.vcol.layer_name = "RGBA"
+        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, self.vcol, texture_type="Detail")
 
-    def connect_to_output(self):
+    def connect_to_output(self, has_vcol=False):
+        if has_vcol:
+            self.connect_vertex_colors_to_pass()
 
         if self.diffuse_pass:
-            try:
-                self.tree.links.new(self.diffuse_pass.outputs[0], self.diffuse_shader.inputs[0])
-            except:
-                print("bug, happens in successive runs over same b_mat")
+            self.tree.links.new(self.diffuse_pass.outputs[0], self.diffuse_shader.inputs[0])
         # transparency
         if self.b_mat.blend_method == "OPAQUE":
             self.tree.links.new(self.diffuse_shader.outputs[0], self.output.inputs[0])
@@ -165,25 +163,17 @@ class NodesWrapper:
             transp = self.tree.nodes.new('ShaderNodeBsdfTransparent')
             alpha_mixer = self.tree.nodes.new('ShaderNodeMixShader')
             #
-            # if textures and ob.data.vertex_colors:
-            #     vcol = tree.nodes.new('ShaderNodeAttribute')
-            #     vcol.attribute_name = "AAA"
-            #     mixAAA = tree.nodes.new('ShaderNodeMixRGB')
-            #     mixAAA.inputs[0].default_value = 1
-            #     mixAAA.blend_type = "MULTIPLY"
-            #     tree.links.new(textures[0].outputs[1], mixAAA.inputs[1])
-            #     tree.links.new(vcol.outputs[0], mixAAA.inputs[2])
-            #     tree.links.new(mixAAA.outputs[0], alpha_mixer.inputs[0])
-            if self.diffuse_texture:
-                # print("self.diffuse_texture", self.diffuse_texture)
-                try:
-                    self.tree.links.new(self.diffuse_texture.outputs[1], alpha_mixer.inputs[0])
-                except:
-                    print("Bug in tex sys setting alpha channel, happens in successive runs?")
-            # elif ob.data.vertex_colors:
-            #     vcol = tree.nodes.new('ShaderNodeAttribute')
-            #     vcol.attribute_name = "AAA"
-            #     tree.links.new(vcol.outputs[0], alpha_mixer.inputs[0])
+            if self.diffuse_texture and has_vcol:
+                mixAAA = self.tree.nodes.new('ShaderNodeMixRGB')
+                mixAAA.inputs[0].default_value = 1
+                mixAAA.blend_type = "MULTIPLY"
+                self.tree.links.new(self.diffuse_texture.outputs[1], mixAAA.inputs[1])
+                self.tree.links.new(self.vcol.outputs[1], mixAAA.inputs[2])
+                self.tree.links.new(mixAAA.outputs[0], alpha_mixer.inputs[0])
+            elif self.diffuse_texture:
+                self.tree.links.new(self.diffuse_texture.outputs[1], alpha_mixer.inputs[0])
+            elif has_vcol:
+                self.tree.links.new(self.vcol.outputs[1], alpha_mixer.inputs[0])
 
             self.tree.links.new(transp.outputs[0], alpha_mixer.inputs[1])
             self.tree.links.new(self.diffuse_shader.outputs[0], alpha_mixer.inputs[2])
@@ -301,8 +291,7 @@ class NodesWrapper:
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Detail")
 
     def link_dark_node(self, b_texture_node):
-        # todo [texture] implement
-        pass
+        b_texture_node.label = "Dark"
 
     def link_reflection_node(self, b_texture_node):
         # Influence mapping
