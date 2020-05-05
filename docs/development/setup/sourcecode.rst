@@ -70,7 +70,7 @@ clone the code on GitHub.
 
 #. `Log in <https://github.com/login>`_ on GitHub.
 
-#. Visit the `Blender Nif plugin mothership repository <https://github.com/niftools/blender_nif_plugin>`_.
+#. Visit the `Blender Nif Plugin mothership repository <https://github.com/niftools/blender_nif_plugin>`_.
 
 #. Click **Fork** (top right corner).
 
