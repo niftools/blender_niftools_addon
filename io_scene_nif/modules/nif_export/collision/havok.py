@@ -362,7 +362,7 @@ class BhkCollision(Collision):
                                       (box_extends[2][0] + box_extends[2][1]) / 2.0))
 
             # and transform it to global coordinates
-            center = center * hktf
+            center = center @ hktf
             hktf[0][3] = center[0]
             hktf[1][3] = center[1]
             hktf[2][3] = center[2]
