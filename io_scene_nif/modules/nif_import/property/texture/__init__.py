@@ -141,8 +141,8 @@ class TextureSlotManager:
 
     def connect_vertex_colors_to_pass(self, ):
         # if ob.data.vertex_colors:
-        vcol = self.tree.nodes.new('ShaderNodeAttribute')
-        vcol.attribute_name = "RGBA"
+        vcol = self.tree.nodes.new('ShaderNodeVertexColor')
+        vcol.layer_name = "RGBA"
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, vcol, texture_type="Detail")
 
     def connect_to_output(self):
