@@ -74,10 +74,7 @@ class MeshPropertyProcessor:
                 name = prop.name.decode()
                 if name and name in bpy.data.materials:
                     b_mat = bpy.data.materials[name]
-                    NifLog.debug(f"Retrieved already imported material {b_mat.name} from name {name} - aborting due to bug")
-                    # stop here since it is bugged for multiple runs
-                    b_mesh.materials.append(b_mat)
-                    return b_mat
+                    NifLog.debug(f"Retrieved already imported material {b_mat.name} from name {name}")
                 else:
                     b_mat = bpy.data.materials.new(name)
                     NifLog.debug(f"Created material {name} to store properties in {b_mat.name}")
@@ -103,7 +100,7 @@ class MeshPropertyProcessor:
 
         # run all processors
         for prop in props:
-            NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
+            NifLog.debug(f"{type(prop)} property found {prop}")
             self.process_property(prop)
 
         if b_mesh.vertex_colors:

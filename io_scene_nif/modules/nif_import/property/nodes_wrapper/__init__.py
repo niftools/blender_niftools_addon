@@ -206,12 +206,17 @@ class NodesWrapper:
         # todo [texture] refactor this to separate code paths?
         # when processing a NiTextureProperty
         if isinstance(n_tex_desc, NifFormat.TexDesc):
-            b_texture_node = self.texture_loader.import_texture_source(n_tex_desc.source, self.b_mat.node_tree)
+            b_image = self.texture_loader.import_texture_source(n_tex_desc.source)
             uv_layer_index = n_tex_desc.uv_set
         # when processing a BS shader property - n_tex_desc is a bare string
         else:
-            b_texture_node = self.texture_loader.import_texture_source(n_tex_desc, self.b_mat.node_tree)
+            b_image = self.texture_loader.import_texture_source(n_tex_desc)
             uv_layer_index = 0
+
+        # create a texture node
+        b_texture_node = self.b_mat.node_tree.nodes.new('ShaderNodeTexImage')
+        b_texture_node.image = b_image
+        b_texture_node.interpolation = "Smart"
         # todo [texture] pass info about reflective coordinates
         # UV mapping
         self.set_uv_map(b_texture_node, uv_index=uv_layer_index, reflective=False)
