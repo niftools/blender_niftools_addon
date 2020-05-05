@@ -47,4 +47,3 @@ or from a terminal (Linux | Ubuntu)::
 
     cd ./blender_nif_plugin/install
     sh ./install.sh
-
