@@ -158,7 +158,7 @@ class BSShaderPropertyProcessor(BSShader):
         shader.bslsp_shaderobjtype = 'Default'
         self.import_shader_flags(bs_effect_shader_property)
 
-        self.texturehelper.import_bseffectshaderproperty_textures(self.b_mat, bs_effect_shader_property)
+        self.texturehelper.import_bseffectshaderproperty_textures(bs_effect_shader_property, self._nodes_wrapper)
 
         # todo [material] update for nodes
         # if hasattr(bs_effect_shader_property, 'uv_offset'):

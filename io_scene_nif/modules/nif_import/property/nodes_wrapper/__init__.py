@@ -211,6 +211,17 @@ class NodesWrapper:
 
         nodes_iterate(self.tree, self.output)
 
+    def create_and_link(self, slot_name, n_tex_info):
+        """"""
+        slot_lower = slot_name.lower().replace(' ', '_')
+        import_func_name = f"link_{slot_lower}_node"
+        import_func = getattr(self, import_func_name, None)
+        if not import_func:
+            NifLog.debug(f"Could not find texture linking function {import_func_name}")
+            return
+        b_texture = self.create_texture_slot(n_tex_info)
+        import_func(b_texture)
+
     def create_texture_slot(self, n_tex_desc):
         # todo [texture] refactor this to separate code paths?
         # when processing a NiTextureProperty

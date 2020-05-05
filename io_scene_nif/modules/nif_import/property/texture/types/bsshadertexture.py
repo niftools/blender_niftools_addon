@@ -74,75 +74,21 @@ class BSShaderTexture(TextureSlotManager):
             "Decal 2": None,
             # extra shader stuff?
             "Specular": None,
-            "Normal": None,
         }
         for slot_name, slot_i in slots.items():
             # skip those whose index we don't know from old code
             if slot_i is not None and len(textures) > slot_i:
                 tex_str = textures[slot_i].decode()
-
-                # get the field name used by nif xml for this texture
-                slot_lower = slot_name.lower().replace(' ', '_')
-                field_name = f"{slot_lower}_texture"
+                # see if it holds a texture
                 if tex_str:
-                    NifLog.debug(f"Texdesc has active {slot_name}")
-                    import_func_name = f"link_{slot_lower}_node"
-                    import_func = getattr(nodes_wrapper, import_func_name, None)
-                    if not import_func:
-                        NifLog.debug(f"Could not find linking function {import_func_name} for {slot_name}")
-                        continue
-                    b_texture = nodes_wrapper.create_texture_slot(tex_str)
-                    import_func(b_texture)
-        #
-        # self._load_diffuse(b_mat, textures[0])
-        #
-        # normal_map = textures[1].decode()
-        # if normal_map:
-        #     NifLog.debug("Loading normal map {0}".format(normal_map))
-        #     b_texture = self.create_texture_slot(b_mat, normal_map)
-        #     self.link_normal_node(b_texture)
-        #
-        # self._load_glow(b_mat, textures[2])
-        #
-        # detail_map = textures[3].decode()
-        # if detail_map:
-        #     NifLog.debug("Loading detail texture {0}".format(detail_map))
-        #     b_texture = self.create_texture_slot(b_mat, detail_map)
-        #     self.link_detail_node(b_texture)
-        #
-        # if len(textures) > 6:
-        #     decal_map = textures[6].decode()
-        #     if decal_map:
-        #         NifLog.debug("Loading decal texture {0}".format(decal_map))
-        #         b_texture = self.create_texture_slot(b_mat, decal_map)
-        #         self.link_decal_0_node(b_texture)
-        #
-        #     gloss_map = textures[7].decode()
-        #     if gloss_map:
-        #         NifLog.debug("Loading gloss map {0}".format(gloss_map))
-        #         b_texture = self.create_texture_slot(b_mat, gloss_map)
-        #         self.link_gloss_node(b_texture)
+                    NifLog.debug(f"Shader has active {slot_name}")
+                    nodes_wrapper.create_and_link(slot_name, tex_str)
 
-    def import_bseffectshaderproperty_textures(self, b_mat, bs_effect_shader_property):
-        self.b_mat = b_mat
-        self.clear_default_nodes()
+    def import_bseffectshaderproperty_textures(self, bs_effect_shader_property, nodes_wrapper):
 
-        self._load_diffuse(b_mat, bs_effect_shader_property.source_texture)
-
-        self._load_glow(b_mat, bs_effect_shader_property.source_texture)
+        nodes_wrapper.create_and_link("Base", bs_effect_shader_property.source_texture.decode())
+        glow = bs_effect_shader_property.greyscale_texture.decode()
+        if glow:
+            nodes_wrapper.create_and_link("Glow", glow)
 
         # self.import_texture_game_properties(b_mat, bs_effect_shader_property)
-
-    def _load_diffuse(self, b_mat, texture):
-        diffuse_map = texture.decode()
-        if diffuse_map:
-            NifLog.debug("Loading diffuse texture {0}".format(diffuse_map))
-            b_texture = self.create_texture_slot(b_mat, diffuse_map)
-            self.link_base_node(b_texture)
-
-    def _load_glow(self, b_mat, texture):
-        glow_map = texture.decode()
-        if glow_map:
-            NifLog.debug("Loading glow texture {0}".format(glow_map))
-            b_texture = self.create_texture_slot(b_mat, glow_map)
-            self.link_glow_node(b_texture)
