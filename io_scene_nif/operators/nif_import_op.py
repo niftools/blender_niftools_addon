@@ -46,7 +46,6 @@ from .nif_common_op import NifOperatorCommon
 
 
 # todo [version/armature] detect or overwrite these
-# @orientation_helper(axis_forward='-Z', axis_up='Y')
 @orientation_helper(axis_forward='X', axis_up='Y')
 class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a nif file."""
@@ -62,7 +61,7 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         name="Scale Correction Import",
         description="Changes size of mesh to fit onto Blender's default grid.",
         default=1.0,
-        min=0.01, max=100.0, precision=2)
+        min=0.01, max=100.0, precision=3)
 
     # Whether or not to import the header information into the scene
     override_scene_info: bpy.props.BoolProperty(
@@ -109,12 +108,9 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
     # What should be imported.
     skeleton: bpy.props.EnumProperty(
         items=(
-            ("EVERYTHING", "Everything",
-             "Import everything."),
-            ("SKELETON_ONLY", "Skeleton Only",
-             "Import skeleton only and make it parent of selected geometry."),
-            ("GEOMETRY_ONLY", "Geometry Only",
-             "Import geometry only and parent them to selected skeleton."),
+            ("EVERYTHING", "Everything", "Import everything."),
+            ("SKELETON_ONLY", "Skeleton Only", "Import skeleton only and make it parent of selected geometry."),
+            ("GEOMETRY_ONLY", "Geometry Only", "Import geometry only and parent them to selected skeleton."),
         ),
         name="Process",
         description="Parts of nif to be imported.",
@@ -131,10 +127,7 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         default=False)
 
     def execute(self, context):
-        """Execute the import operators: first constructs a
-        :class:`~io_scene_nif.nif_import.NifImport` instance and then
-        calls its :meth:`~io_scene_nif.nif_import.NifImport.execute`
-        method.
-        """
+        """Execute the import operators: first constructs a :class:`~io_scene_nif.nif_import.NifImport` instance and then
+        calls its :meth:`~io_scene_nif.nif_import.NifImport.execute` method."""
 
         return nif_import.NifImport(self, context).execute()

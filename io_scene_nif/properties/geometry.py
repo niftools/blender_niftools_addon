@@ -1,4 +1,4 @@
-""" Nif User Interface, custom nif properties for geometry"""
+"""Nif User Interface, custom nif properties for geometry"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
