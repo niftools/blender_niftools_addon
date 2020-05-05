@@ -98,6 +98,14 @@ First, we complete the object panel:
 .. Extra Data and InvMarkers I have no idea how to fill them in. Help?
 
 
+Node Types
+---
+
+Blender empties can represent various NIF node types, and are selected according to the following criteria:
+
+   * In the 'Object Constraints Panel', add a 'Track To' object constraint to create a 'NiBillboardNode' that always faces the camera.
+   * Add a custom property to create a 'NiLODNode'. Set Near extent and far extent as properties on the Lod controller's children.
+   * Select the root node type from the dropdown menu.
 
    
    
