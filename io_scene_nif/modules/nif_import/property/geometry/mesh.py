@@ -69,7 +69,28 @@ class MeshPropertyProcessor:
         # get all valid properties that are attached to n_block
         props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
         # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
-        b_mat = self.nodes_wrapper.get_material_from_props(n_block, props)
+        for prop in props:
+            if prop.name:
+                name = prop.name.decode()
+                if name and name in bpy.data.materials:
+                    b_mat = bpy.data.materials[name]
+                    NifLog.debug(f"Retrieved already imported material {b_mat.name} from name {name} - aborting due to bug")
+                    # stop here since it is bugged for multiple runs
+                    b_mesh.materials.append(b_mat)
+                    return b_mat
+                else:
+                    b_mat = bpy.data.materials.new(name)
+                    NifLog.debug(f"Created material {name} to store properties in {b_mat.name}")
+                break
+        else:
+            # bs shaders often have no name, so generate one from mesh name
+            name = n_block.name.decode() + "_nt_mat"
+            b_mat = bpy.data.materials.new(name)
+            NifLog.debug(f"Created material {name} to store properties in {b_mat.name}")
+
+        # do initial settings for the material here
+        self.nodes_wrapper.b_mat = b_mat
+        self.nodes_wrapper.clear_default_nodes()
         # link the material to the mesh
         b_mesh.materials.append(b_mat)
 

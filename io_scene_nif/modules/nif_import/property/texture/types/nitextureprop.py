@@ -74,11 +74,5 @@ class NiTextureProp:
             if has_tex:
                 NifLog.debug(f"Texdesc has active {slot_name}")
                 n_tex = getattr(n_texture_desc, field_name)
-                import_func_name = f"link_{slot_lower}_node"
-                import_func = getattr(nodes_wrapper, import_func_name, None)
-                if not import_func:
-                    NifLog.debug(f"Could not find linking function {import_func_name} for {slot_name}")
-                    continue
-                b_texture = nodes_wrapper.create_texture_slot(n_tex)
-                import_func(b_texture)
+                nodes_wrapper.create_and_link(slot_name, n_tex)
 

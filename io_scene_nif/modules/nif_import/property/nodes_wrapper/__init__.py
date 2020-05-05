@@ -73,26 +73,6 @@ class NodesWrapper:
         # raw texture nodes
         self.diffuse_texture = None
 
-    def get_material_from_props(self, n_block, props):
-        for prop in props:
-            if prop.name:
-                name = prop.name.decode()
-                if name and name in bpy.data.materials:
-                    self.b_mat = bpy.data.materials[name]
-                    NifLog.debug(f"Retrieved already imported material {self.b_mat.name} from name {name}")
-                else:
-                    self.b_mat = bpy.data.materials.new(name)
-                    NifLog.debug(f"Created material {name} to store properties in {self.b_mat.name}")
-                break
-        else:
-            # bs shaders often have no name, so generate one from mesh name
-            name = n_block.name.decode() + "_nt_mat"
-            self.b_mat = bpy.data.materials.new(name)
-            NifLog.debug(f"Created material {name} to store properties in {self.b_mat.name}")
-
-        # do initial settings for the material here
-        self.clear_default_nodes()
-        return self.b_mat
 
     def set_uv_map(self, b_texture_node, uv_index=0, reflective=False):
         """Attaches a vector node describing the desired coordinate transforms to the texture node's UV input."""
