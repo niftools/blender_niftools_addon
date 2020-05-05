@@ -11,9 +11,11 @@ The setting can be viewed in the Niftools Scene Panel. This is visible in the Sc
 Nif Version
 ===========
 
+**Game**
+   Select the game you're working for. This will be set to a suitable game on import, but can not always be resolved as the version number can map to several games.
+
 **Nif Version**
    The base version, generally related to a single game or company.
-   * This is currently not very user-friendly, this will be addressed in a future release
    * Check the nif files included with the game you're modding to know which versions to use.
    
    *Example:*
@@ -35,7 +37,7 @@ Nif Version
 .. note::
 
    
-   * Fill in the **Nif Version**, **User Version** and **User Version 2** adequate for your game.
+   * Select the **Game** from the dropdown - **Nif Version**, **User Version** and **User Version 2** are updated accordingly.
    * All three values are used to verify which data should be attached to a file during the export process.
    * The scene version is checked at export and compared with the intended export format's version.
    * Mismatches will trigger an error and alert the user so that corrections can be affected.
