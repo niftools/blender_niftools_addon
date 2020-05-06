@@ -120,7 +120,11 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         description="Parts of nif to be imported.",
         default="EVERYTHING")
 
-    # Merge vertices that have identical location and normal values.
+    use_custom_normals: bpy.props.BoolProperty(
+        name="Use Custom Normals",
+        description="Store NIF normals as custom normals.",
+        default=True)
+
     combine_vertices: bpy.props.BoolProperty(
         name="Combine Vertices",
         description="Merge vertices that have identical location and normal values.",

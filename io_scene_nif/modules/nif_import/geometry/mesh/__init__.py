@@ -84,6 +84,7 @@ class Mesh:
         # store additional data layers
         Vertex.map_uv_layer(b_mesh, n_tri_data)
         Vertex.map_vertex_colors(b_mesh, n_tri_data)
+        Vertex.map_normals(b_mesh, n_tri_data)
 
         # TODO [properties] Should this be object level process, secondary pass for materials / caching
         self.mesh_prop_processor.process_property_list(n_block, b_obj.data)

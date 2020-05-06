@@ -37,6 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
+from io_scene_nif.utils.util_global import NifOp
+from io_scene_nif.utils.util_logging import NifLog
+import mathutils
 
 class Vertex:
 
@@ -58,6 +61,26 @@ class Vertex:
             b_mesh.uv_layers.new(name=f"UV{uv_i}")
             b_mesh.uv_layers[-1].data.foreach_set("uv",
                                               [c for uv in [uv_set[l.vertex_index] for l in b_mesh.loops] for c in (uv.u, 1.0 - uv.v)])
+
+    @staticmethod
+    def map_normals(b_mesh, n_tri_data):
+        """Import nif normals as custom normals."""
+        assert len(b_mesh.vertices) == len(n_tri_data.normals)
+        # set normals
+        if NifOp.props.use_custom_normals:
+            # map normals so we can set them to the edge corners (stored per loop)
+            no_array = []
+            for face in b_mesh.polygons:
+                for vertex_index in face.vertices:
+                    # no_array.append(model.normals[vertex_index])
+                    # no_array.append(mathutils.Vector(n_tri_data.normals[vertex_index]).normalized())
+                    no_array.append(n_tri_data.normals[vertex_index].as_tuple())
+                    # no_array.append((0,0,1))
+                # no_array.append(model.tangents[vertex_index])
+                # face.use_smooth = True
+
+            b_mesh.use_auto_smooth = True
+            b_mesh.normals_split_custom_set(no_array)
 
     @staticmethod
     def get_uv_layer_name(uvset):
