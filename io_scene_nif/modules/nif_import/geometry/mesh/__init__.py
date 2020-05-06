@@ -47,7 +47,7 @@ from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.nif_import.property.material import Material
 from io_scene_nif.modules.nif_import.property.geometry.mesh import MeshPropertyProcessor
 from io_scene_nif.utils import util_math
-from io_scene_nif.utils.util_global import NifOp, EGMData
+from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 
 # TODO [scene][property][ui] Expose these either through the scene or as ui properties
@@ -104,9 +104,6 @@ class Mesh:
         # import morph controller
         if NifOp.props.animation:
             self.morph_anim.import_morph_controller(n_block, b_obj)
-        # import facegen morphs
-        if EGMData.data:
-            self.morph_anim.import_egm_morphs(b_obj, n_tri_data)
 
         # todo [mesh] remove doubles here using blender operator
 

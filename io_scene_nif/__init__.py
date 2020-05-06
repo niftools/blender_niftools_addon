@@ -98,6 +98,7 @@ def _init_loggers():
 def menu_func_import(self, context):
     self.layout.operator(operators.nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
     self.layout.operator(operators.kf_import_op.KfImportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
+    self.layout.operator(operators.egm_import_op.EgmImportOperator.bl_idname, text="NetImmerse/Gamebryo (.egm)")
     # TODO [general] get default path from config registry
     # default_path = bpy.data.filename.replace(".blend", ".nif")
     # ).filepath = default_path
@@ -117,6 +118,7 @@ ui.register()
 classes = (
     operators.nif_import_op.NifImportOperator,
     operators.kf_import_op.KfImportOperator,
+    operators.egm_import_op.EgmImportOperator,
     operators.nif_export_op.NifExportOperator,
     operators.geometry.BsInvMarkerAdd,
     operators.geometry.BsInvMarkerRemove,

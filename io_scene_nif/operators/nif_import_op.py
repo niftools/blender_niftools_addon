@@ -70,14 +70,6 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         description="This will overwrite any previously stored scene information with the Nif header info.",
         default=True)
 
-    # FaceGen EGM file for morphs.
-    egm_file: bpy.props.StringProperty(
-        name="FaceGen EGM File",
-        description="FaceGen EGM file for morphs.",
-        maxlen=1024,
-        default="",
-        subtype="FILE_PATH")
-
     # Import animation.
     animation: bpy.props.BoolProperty(
         name="Animation",
