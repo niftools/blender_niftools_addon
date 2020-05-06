@@ -3,26 +3,98 @@ Collision Object
 .. _collisionobject:
 
 
-.. warning::
+The following section deals with creating an object which will physically represent our collision object.
 
-   * This section has not been ported yet, meaning it does not currently work.
 
-The following section deals with creating a mesh-object which will physically represent our collision object.
-Once a suitable object has been created, then the appropriate settings should be enabled on 
+.. _collisionobject-mapping:
 
+Collision Object Mapping
+========================
+
+* The following section describes the most appropriate primitive object to represent the desired collision object type.
+* The suggested shapes are the same objects generated through import by the plugin.
+* Upon export, a collision object is created from data pulled from the Collision object.
+* Start by choosing a shape adequate to your model and follow the steps below the appropriate section.
+
+NiCollision
+~~~~~~~~~~~
+- Morrowind:
+
+The following type use the collision bound type and the name to decide what to map to
+
++----------------------------+-------------------+
+| Blender                    | Object Name       |
++============================+===================+
+| `Mesh Collision`_          | RootCollisionNode |
++----------------------------+-------------------+
+| `Bounding Box`_            | BSBound           |
++----------------------------+-------------------+
+| `Bounding Box`_            | BoundingBox       |
++----------------------------+-------------------+
+
+BhkShape
+~~~~~~~~
+- Oblivion, Fallout 3, and Fallout NV; 
+
++----------------------------+--------------------------------------------------------------+
+| Blender                    | Nif                                                          |
++============================+==============================================================+
+| `Box Collision`_           | :class:`~pyffi.formats.nif.NifFormat.bhkBoxShape`            |
++----------------------------+--------------------------------------------------------------+
+| `Sphere Collision`_        | :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape`         |
++----------------------------+--------------------------------------------------------------+
+| `Capsule Collision`_       | :class:`~pyffi.formats.nif.NifFormat.bhkCapsuleShape`        |
++----------------------------+--------------------------------------------------------------+
+| `Convex Hull Collision`_   | :class:`~pyffi.formats.nif.NifFormat.bhkConvexVerticesShape` |
++----------------------------+--------------------------------------------------------------+
+| `Mesh Collision`_          | :class:`~pyffi.formats.nif.NifFormat.bhkMoppBvTreeShape`     |
++----------------------------+--------------------------------------------------------------+
 
 .. _collisionobject-bbox:
 
 Bounding Box
-============
+^^^^^^^^^^^^
 
 This is used as the bound box.
 
-#. Create a Mesh-Object to represent the bound box, a Cube is recommended.
+#. Create an Object of Mesh type to represent the bound box, a Cube is recommended.
 
-#. Name the object BSBound or BoundingBox, depending on which version you wish to be exported.
+#. Name the object BSBound or BoundingBox, depending on which version you need to be exported.
 
-#. In the Object Tab, enable bounds in the display section.
+#. :ref:`Refer to the Collision Settings to add physics to our collision object <collisonsettings>`.
+
+Visualisation
+
+#. In the Object Tab, under the **Viewport Display** section update the **Display As** to `BOUNDS`.
+#. Check the **Bounds** tickbox.
+#. Select `BOX` from the **shape** dropdown.
+
+
+Mesh Collision
+^^^^^^^^^^^^^^
+
+#. :ref:`Create your mesh-object <geometry-mesh>`.
+
+#. Create a convex hulled mesh-object. See :ref:`Notes<collision-convex-hull-notes>`
+
+#. Rename the polyhedron-mesh, eg. 'CollisionPolyhedron' via the Object panel.
+
+#. Scale the 'CollisionPoly' to the size wanted.
+
+#. :ref:`Refer to the Collision Settings to add physics to our collision object <collisonsettings>`.
+
+Visualisation
+
+#. In the Object Tab, under the **Viewport Display** section update the **Display As** to `BOUNDS`.
+#. Check the **Bounds** tickbox.
+#. Select `BOX` from the **shape** dropdown.
+
+.. _collision-mesh-notes:
+
+**Notes:**
+
+* Often a duplicate object can be used, simplified by decimating, then triangulated(**Ctrl + T**).
+* A :ref:`Convex Hulled Object<collision-convex-hull-notes>` can also be used.
 
 
 .. _collisionobject-havok:
@@ -44,43 +116,7 @@ This is used by the havok system for collision detection.
 Notes
 ~~~~~
 
-* Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines. 
-
-
-.. _collisionobject-havokobject:
-
-Collision Object
-~~~~~~~~~~~~~~~~
-
-* The following section describes the most appropriate primitive object to represent the desired collision object type.
-* The suggested shapes are the same objects generated through import by the plugin.
-* Upon export, a BhkShape is created from data pulled from the Collision object.
-* Start by choosing a shape adequate to your model and follow the steps below the appropriate section.
-
-
-- Oblivion, Fallout 3, and Fallout NV; 
-
-+----------------------------+--------------------------------------------------------------+
-| Blender                    | Nif                                                          |
-+============================+==============================================================+
-| `Box Collision`_           | :class:`~pyffi.formats.nif.NifFormat.bhkBoxShape`            |
-+----------------------------+--------------------------------------------------------------+
-| `Sphere Collision`_        | :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape`         |
-+----------------------------+--------------------------------------------------------------+
-| `Capsule Collision`_       | :class:`~pyffi.formats.nif.NifFormat.bhkCapsuleShape`        |
-+----------------------------+--------------------------------------------------------------+
-| `Convex Hull Collision`_   | :class:`~pyffi.formats.nif.NifFormat.bhkConvexVerticesShape` |
-+----------------------------+--------------------------------------------------------------+
-| `Triangle Mesh Collision`_ | :class:`~pyffi.formats.nif.NifFormat.bhkMoppBvTreeShape`     |
-+----------------------------+--------------------------------------------------------------+
-
-- Morrowind:
-
-+----------------------------+-------------------+ 
-| Blender                    | Nif               |
-+============================+===================+
-| `Triangle Mesh Collision`_ | RootCollisionNode |
-+----------------------------+-------------------+
+* Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines.
 
 .. _collisionobject-havokbox:
 
@@ -164,44 +200,5 @@ Convex Hull Collision
 
 * It is advisable to use a convex hull generator to create the collision mesh.
 
-.. _collision-triangle-mesh:
-
-Triangle Mesh Collision
-^^^^^^^^^^^^^^^^^^^^^^^
-
-#. :ref:`Create your mesh-object <geometry-mesh>`.
-
-#. Create a convex hulled mesh-object. See :ref:`Notes<collision-convex-hull-notes>`
-
-#. Rename the polyhedron-mesh, eg. 'CollisionPolyhedron' via the Object panel.
-
-#. Scale the collision cube 'CollisionPoly' to the size wanted.
-
-#. :ref:`Add physics to our collision cube 'CollisionBox' <collisonsettings>`.
-
-.. _collision-triangle-mesh-notes:
-
-**Notes:**
-
-* Often a duplicate object can be used, simplified by decimating, then triangulated(**Ctrl + T**).
-* A :ref:`Convex Hulled Object<collision-convex-hull-notes>` can also be used.
-
-.. _collisionobject-rigidbody:
-
-Rigid Body
-~~~~~~~~~~
-
-.. small intro on what it is needed. Maybe not needed since it is just mass
-
-#. Go to the **Physics** tab in the **Properties** area.
-#. Click on **Rigid Body** to enable this modifier.
-
-   a) Set a mass adequate for your model.
-
-.. _collisionobject-collmodifier:
-
-Collision Modifier
-~~~~~~~~~~~~~~~~~~
-
-.. seems to be used in the code but no errors at export if not used - maybe not ported yet?
+.. _collision-mesh:
 
