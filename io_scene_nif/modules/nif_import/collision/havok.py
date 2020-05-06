@@ -169,13 +169,6 @@ class BhkCollision(Collision):
                 # (mass 0 results in issues with simulation)
                 b_r_body.mass = bhkshape.mass / len(collision_objs)
 
-            b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
-            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[
-                bhkshape.solver_deactivation]
-            # b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
-            # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
-            # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
-
             b_r_body.mass = bhkshape.mass / len(collision_objs)
 
             b_r_body.use_deactivation = True
@@ -186,15 +179,20 @@ class BhkCollision(Collision):
             vel = bhkshape.linear_velocity
             b_r_body.deactivate_linear_velocity = mathutils.Vector([vel.w, vel.x, vel.y, vel.z]).magnitude
             ang_vel = bhkshape.angular_velocity
-            b_r_body.deactivate_angular_velocity = mathutils.Vector(
-                [ang_vel.w, ang_vel.x, ang_vel.y, ang_vel.z]).magnitude
+            b_r_body.deactivate_angular_velocity = mathutils.Vector([ang_vel.w, ang_vel.x, ang_vel.y, ang_vel.z]).magnitude
 
+            # Custom Niftools properties
             b_col_obj.collision.permeability = bhkshape.penetration_depth
-
+            b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
+            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
             b_col_obj.nifcollision.max_linear_velocity = bhkshape.max_linear_velocity
             b_col_obj.nifcollision.max_angular_velocity = bhkshape.max_angular_velocity
 
+            # b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
+            # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
+            # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
             # b_col_obj.nifcollision.col_filter = bhkshape.col_filter
+
         # import constraints
         # this is done once all objects are imported for now, store all imported havok shapes with object lists
         collision.DICT_HAVOK_OBJECTS[bhkshape] = collision_objs
@@ -263,8 +261,7 @@ class BhkCollision(Collision):
 
         b_obj = Object.mesh_from_data("convexpoly", verts, faces)
         radius = bhk_shape.radius * self.HAVOK_SCALE
-        self.set_b_collider(b_obj, "BOX", radius, bhk_shape)
-        # b_obj.rigid_body.collision_shape = 'CONVEX_HULL'
+        self.set_b_collider(b_obj, "CONVEX_HULL", radius, bhk_shape)
         return [b_obj]
 
     def import_bhkpackednitristrips_shape(self, bhk_shape):
@@ -300,8 +297,7 @@ class BhkCollision(Collision):
 
             b_obj = Object.mesh_from_data('poly%i' % subshape_num, verts, faces)
             radius = min(vert.co.length for vert in b_obj.data.vertices)
-            self.set_b_collider(b_obj, "BOX", radius, subshape)
-            # b_obj.rigid_body.collision_shape = 'TRIANGLE_MESH'
+            self.set_b_collider(b_obj, "MESH", radius, subshape)
 
             vertex_offset += subshape.num_vertices
             hk_objects.append(b_obj)
@@ -315,6 +311,5 @@ class BhkCollision(Collision):
         faces = list(bhk_shape.get_triangles())
         b_obj = Object.mesh_from_data("poly", verts, faces)
         # TODO [collision] self.havok_mat!
-        self.set_b_collider(b_obj, "BOX", bhk_shape.radius)
-        # b_obj.rigid_body.collision_shape = 'TRIANGLE_MESH'
+        self.set_b_collider(b_obj, "MESH", bhk_shape.radius)
         return [b_obj]
