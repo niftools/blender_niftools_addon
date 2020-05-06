@@ -74,6 +74,7 @@ class Collision:
         """ Helper function to set up b_obj so it becomes recognizable as a collision object """
         # set bounds type
         b_obj.display_type = 'BOUNDS'
+        b_obj.show_bounds = True
         b_obj.display_bounds_type = bounds_type
 
         override = bpy.context.copy()
