@@ -62,8 +62,10 @@ class BSShaderTexture(TextureSlotManager):
 
     def export_bs_effect_shader_prop_textures(self, bsshader):
         bsshader.texture_set = self._create_textureset()
-        bsshader.source_texture = TextureWriter.export_texture_filename(self.b_diffuse_slot.texture)
-        bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.b_glow_slot.texture)
+        if self.b_diffuse_slot:
+            bsshader.source_texture = TextureWriter.export_texture_filename(self.b_diffuse_slot.texture)
+        if self.b_glow_slot:
+            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.b_glow_slot.texture)
 
         # clamp Mode
         bsshader.texture_clamp_mode = 65283

@@ -96,7 +96,7 @@ class BSShaderTexture(TextureSlotManager):
 
         self._load_diffuse(b_mat, bs_effect_shader_property.source_texture)
 
-        self._load_glow(b_mat, bs_effect_shader_property.source_texture)
+        self._load_glow(b_mat, bs_effect_shader_property.greyscale_texture)
 
         # self.import_texture_game_properties(b_mat, bs_effect_shader_property)
 
