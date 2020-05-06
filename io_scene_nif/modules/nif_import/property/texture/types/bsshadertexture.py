@@ -85,7 +85,10 @@ class BSShaderTexture:
 
     def import_bseffectshaderproperty_textures(self, bs_effect_shader_property, nodes_wrapper):
 
-        nodes_wrapper.create_and_link("Base", bs_effect_shader_property.source_texture.decode())
+        base = bs_effect_shader_property.source_texture.decode()
+        if base:
+            nodes_wrapper.create_and_link("Base", base)
+
         glow = bs_effect_shader_property.greyscale_texture.decode()
         if glow:
             nodes_wrapper.create_and_link("Glow", glow)
