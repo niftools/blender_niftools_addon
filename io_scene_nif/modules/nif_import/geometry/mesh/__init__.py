@@ -69,31 +69,28 @@ class Mesh:
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
         node_name = n_block.name.decode()
-        NifLog.info("Importing mesh data for geometry '{0}'".format(node_name))
+        NifLog.info(f"Importing mesh data for geometry '{node_name}'")
         b_mesh = b_obj.data
 
         # shortcut for mesh geometry data
         n_tri_data = n_block.data
         if not n_tri_data:
-            raise util_math.NifError("No shape data in {0}".format(node_name))
+            raise util_math.NifError(f"No shape data in {node_name}")
 
         # create raw mesh from vertices and triangles
         b_mesh.from_pydata(n_tri_data.vertices, [], n_tri_data.get_triangles())
         b_mesh.update()
+
+        # must set faces to smooth before setting custom normals, or the normals bug out!
+        is_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
+        self.set_face_smooth(b_mesh, is_smooth)
 
         # store additional data layers
         Vertex.map_uv_layer(b_mesh, n_tri_data)
         Vertex.map_vertex_colors(b_mesh, n_tri_data)
         Vertex.map_normals(b_mesh, n_tri_data)
 
-        # TODO [properties] Should this be object level process, secondary pass for materials / caching
         self.mesh_prop_processor.process_property_list(n_block, b_obj.data)
-
-        is_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
-        self.set_face_smooth(b_mesh, is_smooth)
-
-        # FIXME [material][texture] This should be reimplemented
-        # self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, n_uvco)
 
         # import skinning info, for meshes affected by bones
         VertexGroup.import_skin(n_block, b_obj)
