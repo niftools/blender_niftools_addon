@@ -36,13 +36,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
 from io_scene_nif.utils.util_logging import NifLog
 
 
-class BSShaderTexture(TextureSlotManager):
+class BSShaderTexture:
 
     __instance = None
+    _nodes_wrapper = None
 
     def __init__(self):
         """ Virtually private constructor. """
@@ -59,62 +59,35 @@ class BSShaderTexture(TextureSlotManager):
             BSShaderTexture()
         return BSShaderTexture.__instance
 
-    def import_bsshaderproperty_textureset(self, b_mat, bs_shader_property):
-        self.b_mat = b_mat
-        self.clear_default_nodes()
+    def import_bsshaderproperty_textureset(self, bs_shader_property, nodes_wrapper):
+        textures = bs_shader_property.texture_set.textures
+        slots = {
+            "Base": 0,
+            "Normal": 1,
+            "Glow": 2,
+            "Detail": 3,
+            "Gloss": 7,
+            "Bump Map": None,
+            "Decal 0": 6,
+            "Decal 1": None,
+            "Decal 2": None,
+            # extra shader stuff?
+            "Specular": None,
+        }
+        for slot_name, slot_i in slots.items():
+            # skip those whose index we don't know from old code
+            if slot_i is not None and len(textures) > slot_i:
+                tex_str = textures[slot_i].decode()
+                # see if it holds a texture
+                if tex_str:
+                    NifLog.debug(f"Shader has active {slot_name}")
+                    nodes_wrapper.create_and_link(slot_name, tex_str)
 
-        texture_set = bs_shader_property.texture_set
-        textures = texture_set.textures
+    def import_bseffectshaderproperty_textures(self, bs_effect_shader_property, nodes_wrapper):
 
-        self._load_diffuse(b_mat, textures[0])
-
-        normal_map = textures[1].decode()
-        if normal_map:
-            NifLog.debug("Loading normal map {0}".format(normal_map))
-            b_texture = self.create_texture_slot(b_mat, normal_map)
-            self.link_normal_node(b_texture)
-
-        self._load_glow(b_mat, textures[2])
-
-        detail_map = textures[3].decode()
-        if detail_map:
-            NifLog.debug("Loading detail texture {0}".format(detail_map))
-            b_texture = self.create_texture_slot(b_mat, detail_map)
-            self.link_detail_node(b_texture)
-
-        if len(textures) > 6:
-            decal_map = textures[6].decode()
-            if decal_map:
-                NifLog.debug("Loading decal texture {0}".format(decal_map))
-                b_texture = self.create_texture_slot(b_mat, decal_map)
-                self.link_decal_0_node(b_texture)
-
-            gloss_map = textures[7].decode()
-            if gloss_map:
-                NifLog.debug("Loading gloss map {0}".format(gloss_map))
-                b_texture = self.create_texture_slot(b_mat, gloss_map)
-                self.link_gloss_node(b_texture)
-
-    def import_bseffectshaderproperty_textures(self, b_mat, bs_effect_shader_property):
-        self.b_mat = b_mat
-        self.clear_default_nodes()
-
-        self._load_diffuse(b_mat, bs_effect_shader_property.source_texture)
-
-        self._load_glow(b_mat, bs_effect_shader_property.source_texture)
+        nodes_wrapper.create_and_link("Base", bs_effect_shader_property.source_texture.decode())
+        glow = bs_effect_shader_property.greyscale_texture.decode()
+        if glow:
+            nodes_wrapper.create_and_link("Glow", glow)
 
         # self.import_texture_game_properties(b_mat, bs_effect_shader_property)
-
-    def _load_diffuse(self, b_mat, texture):
-        diffuse_map = texture.decode()
-        if diffuse_map:
-            NifLog.debug("Loading diffuse texture {0}".format(diffuse_map))
-            b_texture = self.create_texture_slot(b_mat, diffuse_map)
-            self.link_base_node(b_texture)
-
-    def _load_glow(self, b_mat, texture):
-        glow_map = texture.decode()
-        if glow_map:
-            NifLog.debug("Loading glow texture {0}".format(glow_map))
-            b_texture = self.create_texture_slot(b_mat, glow_map)
-            self.link_glow_node(b_texture)

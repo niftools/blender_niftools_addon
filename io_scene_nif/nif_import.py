@@ -42,7 +42,6 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.io.egm import EGMFile
 from io_scene_nif.io.nif import NifFile
 from io_scene_nif.modules.nif_import.animation import Animation
 from io_scene_nif.modules.nif_import.animation.object import ObjectAnimation
@@ -60,7 +59,7 @@ from io_scene_nif.modules.nif_import.property.object import ObjectProperty
 
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utils import util_math
-from io_scene_nif.utils.util_global import NifOp, EGMData, NifData
+from io_scene_nif.utils.util_global import NifOp, NifData
 from io_scene_nif.utils.util_logging import NifLog
 
 
@@ -146,14 +145,7 @@ class NifImport(NifCommon):
         NifData.init(NifFile.load_nif(NifOp.props.filepath))
         if NifOp.props.override_scene_info:
             scene.import_version_info(NifData.data)
-        egm_path = NifOp.props.egm_file
 
-        if egm_path:
-            EGMData.init(EGMFile.load_egm(egm_path))
-            # scale the data
-            EGMData.data.apply_scale(NifOp.props.scale_correction_import)
-        else:
-            EGMData.init(None)
 
     def import_root(self, root_block):
         """Main import function."""

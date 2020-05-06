@@ -74,33 +74,6 @@ class Material:
 
         return b_mat
 
-    # TODO [texture][vertex][color] Reimplement in newer system
-    """
-    def import_material(self, n_mat_prop, n_texture_prop, n_alpha_prop, n_specular_prop, texture_effect, n_wire_prop, extra_datas):
-
-        # texures
-        if n_texture_prop:
-            self.texturehelper.import_nitextureprop_textures(b_mat, n_texture_prop)
-            if extra_datas:
-                self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
-        if texture_effect:
-            self.texturehelper.import_texture_effect(b_mat, texture_effect)
-
-    def set_material_vertex_mapping(self, b_mesh, f_map, n_uvco):
-        b_mat = b_mesh.materials[0]
-        if b_mat:
-            # fix up vertex colors depending on whether we had textures in the material
-            mbasetex = self.texturehelper.has_base_texture(b_mat)
-            mglowtex = self.texturehelper.has_glow_texture(b_mat)
-            if b_mesh.vertex_colors:
-                if mbasetex or mglowtex:
-                    # textured material: vertex colors influence lighting
-                    b_mat.use_vertex_color_light = True
-                else:
-                    # non-textured material: vertex colors influence color
-                    b_mat.use_vertex_color_paint = True
-    """
-
     @staticmethod
     def import_material_specular(b_mat, n_specular_color):
         b_mat.specular_color = (n_specular_color.r, n_specular_color.g, n_specular_color.b)

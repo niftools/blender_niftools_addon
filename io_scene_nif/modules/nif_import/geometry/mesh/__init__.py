@@ -47,12 +47,8 @@ from io_scene_nif.modules.nif_import.geometry.vertex import Vertex
 from io_scene_nif.modules.nif_import.property.material import Material
 from io_scene_nif.modules.nif_import.property.geometry.mesh import MeshPropertyProcessor
 from io_scene_nif.utils import util_math
-from io_scene_nif.utils.util_global import NifOp, EGMData
+from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
-
-# TODO [scene][property][ui] Expose these either through the scene or as ui properties
-VERTEX_RESOLUTION = 1000
-NORMAL_RESOLUTION = 100
 
 
 class Mesh:
@@ -73,30 +69,28 @@ class Mesh:
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
         node_name = n_block.name.decode()
-        NifLog.info("Importing mesh data for geometry '{0}'".format(node_name))
+        NifLog.info(f"Importing mesh data for geometry '{node_name}'")
         b_mesh = b_obj.data
 
         # shortcut for mesh geometry data
         n_tri_data = n_block.data
         if not n_tri_data:
-            raise util_math.NifError("No shape data in {0}".format(node_name))
+            raise util_math.NifError(f"No shape data in {node_name}")
 
         # create raw mesh from vertices and triangles
         b_mesh.from_pydata(n_tri_data.vertices, [], n_tri_data.get_triangles())
         b_mesh.update()
 
-        # store additional data layers
-        Vertex.map_uv_layer(b_mesh, n_tri_data)
-        Vertex.map_vertex_colors(b_mesh, n_tri_data)
-
-        # TODO [properties] Should this be object level process, secondary pass for materials / caching
-        self.mesh_prop_processor.process_property_list(n_block, b_obj.data)
-
+        # must set faces to smooth before setting custom normals, or the normals bug out!
         is_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
         self.set_face_smooth(b_mesh, is_smooth)
 
-        # FIXME [material][texture] This should be reimplemented
-        # self.materialhelper.set_material_vertex_mapping(b_mesh, f_map, n_uvco)
+        # store additional data layers
+        Vertex.map_uv_layer(b_mesh, n_tri_data)
+        Vertex.map_vertex_colors(b_mesh, n_tri_data)
+        Vertex.map_normals(b_mesh, n_tri_data)
+
+        self.mesh_prop_processor.process_property_list(n_block, b_obj.data)
 
         # import skinning info, for meshes affected by bones
         VertexGroup.import_skin(n_block, b_obj)
@@ -104,9 +98,6 @@ class Mesh:
         # import morph controller
         if NifOp.props.animation:
             self.morph_anim.import_morph_controller(n_block, b_obj)
-        # import facegen morphs
-        if EGMData.data:
-            self.morph_anim.import_egm_morphs(b_obj, n_tri_data)
 
         # todo [mesh] remove doubles here using blender operator
 

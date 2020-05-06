@@ -43,6 +43,7 @@ import bpy
 
 from io_scene_nif.modules.nif_import.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.modules.nif_import.property.geometry.niproperty import NiPropertyProcessor
+from io_scene_nif.modules.nif_import.property.nodes_wrapper import NodesWrapper
 from io_scene_nif.modules.nif_import.property.shader.bsshaderlightingproperty import BSShaderLightingPropertyProcessor
 from io_scene_nif.modules.nif_import.property.shader.bsshaderproperty import BSShaderPropertyProcessor
 from io_scene_nif.utils.util_logging import NifLog
@@ -52,8 +53,9 @@ class MeshPropertyProcessor:
 
     def __init__(self):
         # get processor singletons
+        self.nodes_wrapper = NodesWrapper()
         self.processors = (
-            NiPropertyProcessor.get(),
+            NiPropertyProcessor(),
             BSShaderPropertyProcessor.get(),
             BSShaderLightingPropertyProcessor.get()
         )
@@ -66,50 +68,42 @@ class MeshPropertyProcessor:
     def process_property_list(self, n_block, b_mesh):
         # get all valid properties that are attached to n_block
         props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
-        # just to avoid duped materials, a first pass, make sure a named material is created
+        # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
         for prop in props:
             if prop.name:
                 name = prop.name.decode()
                 if name and name in bpy.data.materials:
                     b_mat = bpy.data.materials[name]
-                    # todo [material] fixme - we have to avoid multiple passes on the same material
-                    # it seems to mess with the singleton, or the bmat
-                    b_mesh.materials.append(b_mat)
-                    NifLog.debug(f"Retrieved already imported material {b_mat} from name {name}")
-                    return
+                    NifLog.debug(f"Retrieved already imported material {b_mat.name} from name {name}")
                 else:
                     b_mat = bpy.data.materials.new(name)
-                    NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
+                    NifLog.debug(f"Created material {name} to store properties in {b_mat.name}")
                 break
         else:
             # bs shaders often have no name, so generate one from mesh name
             name = n_block.name.decode() + "_nt_mat"
             b_mat = bpy.data.materials.new(name)
-            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
+            NifLog.debug(f"Created material {name} to store properties in {b_mat.name}")
 
         # do initial settings for the material here
-        b_mat.use_backface_culling = True
-        b_mat.use_nodes = True
+        self.nodes_wrapper.b_mat = b_mat
+        self.nodes_wrapper.clear_default_nodes()
         # link the material to the mesh
         b_mesh.materials.append(b_mat)
 
+        # set the vars on every processor
         for processor in self.processors:
             processor.b_mesh = b_mesh
             processor.n_block = n_block
             processor.b_mat = b_mat
+            processor._nodes_wrapper = self.nodes_wrapper
 
-        # just retrieve it
+        # run all processors
         for prop in props:
-            NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
+            NifLog.debug(f"{type(prop)} property found {prop}")
             self.process_property(prop)
 
-        # todo [material] fixme, restructure this so passes can be shared between bsshader and nitexture stuff
-        try:
-            if b_mesh.vertex_colors:
-                NiTextureProp.get().connect_vertex_colors_to_pass()
-            NiTextureProp.get().connect_to_output()
-        except:
-            NifLog.warn("postpro not functional for bsshader props")
+        self.nodes_wrapper.connect_to_output(b_mesh.vertex_colors)
 
 
     def process_property(self, prop):

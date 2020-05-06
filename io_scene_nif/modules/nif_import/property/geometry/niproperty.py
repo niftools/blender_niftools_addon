@@ -52,21 +52,25 @@ class NiPropertyProcessor:
     __instance = None
     _b_mesh = None
     _n_block = None
-
-    @staticmethod
-    def get():
-        """ Static access method. """
-        if NiPropertyProcessor.__instance is None:
-            NiPropertyProcessor()
-        return NiPropertyProcessor.__instance
+    _nodes_wrapper = None
 
     def __init__(self):
-        """ Virtually private constructor. """
-        if NiPropertyProcessor.__instance is not None:
-            raise Exception("This class is a singleton!")
-        else:
-            super().__init__()
-            NiPropertyProcessor.__instance = self
+        pass
+    #
+    # @staticmethod
+    # def get():
+    #     """ Static access method. """
+    #     if NiPropertyProcessor.__instance is None:
+    #         NiPropertyProcessor()
+    #     return NiPropertyProcessor.__instance
+    #
+    # def __init__(self):
+    #     """ Virtually private constructor. """
+    #     if NiPropertyProcessor.__instance is not None:
+    #         raise Exception("This class is a singleton!")
+    #     else:
+    #         super().__init__()
+    #         NiPropertyProcessor.__instance = self
 
     def register(self, processor):
         processor.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
@@ -120,7 +124,7 @@ class NiPropertyProcessor:
 
     def process_nitexturing_property(self, prop):
         """Import a NiTexturingProperty based material"""
-        NiTextureProp.get().import_nitextureprop_textures(self.b_mat, prop)
+        NiTextureProp().import_nitextureprop_textures(prop, self._nodes_wrapper)
         NifLog.debug("NiTexturingProperty property processed")
 
     def process_niwireframe_property(self, prop):

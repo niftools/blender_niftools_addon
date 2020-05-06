@@ -37,48 +37,32 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from io_scene_nif.modules.nif_import.property.texture import TextureSlotManager
 from io_scene_nif.utils.util_logging import NifLog
 
 
-class NiTextureProp(TextureSlotManager):
+class NiTextureProp:
 
     __instance = None
 
-    @staticmethod
-    def get():
-        """ Static access method. """
-        if NiTextureProp.__instance is None:
-            NiTextureProp()
-        return NiTextureProp.__instance
-
     def __init__(self):
-        """ Virtually private constructor. """
-        if NiTextureProp.__instance is not None:
-            raise Exception("This class is a singleton!")
-        else:
-            super().__init__()
-            NiTextureProp.__instance = self
-            # todo [texture] merge with export slots dict, or change to simple list?
-            self.slots = {
-                "Base": None,
-                "Dark": None,
-                "Detail": None,
-                "Gloss": None,
-                "Glow": None,
-                "Bump Map": None,
-                "Decal 0": None,
-                "Decal 1": None,
-                "Decal 2": None,
-                # extra shader stuff?
-                "Specular": None,
-                "Normal": None,
-            }
+        # todo [texture] merge with export slots dict, or change to simple list?
+        self.slots = {
+            "Base": None,
+            "Dark": None,
+            "Detail": None,
+            "Gloss": None,
+            "Glow": None,
+            "Bump Map": None,
+            "Decal 0": None,
+            "Decal 1": None,
+            "Decal 2": None,
+            # extra shader stuff?
+            "Specular": None,
+            "Normal": None,
+        }
 
-    def import_nitextureprop_textures(self, b_mat, n_texture_desc):
+    def import_nitextureprop_textures(self, n_texture_desc, nodes_wrapper):
         # NifLog.debug("Importing {0}".format(n_texture_desc))
-        self.b_mat = b_mat
-        self.clear_default_nodes()
         # go over all valid texture slots
         for slot_name, _ in self.slots.items():
             # get the field name used by nif xml for this texture
@@ -89,17 +73,5 @@ class NiTextureProp(TextureSlotManager):
             if has_tex:
                 NifLog.debug(f"Texdesc has active {slot_name}")
                 n_tex = getattr(n_texture_desc, field_name)
-                import_func_name = f"link_{slot_lower}_node"
-                import_func = getattr(self, import_func_name, None)
-                if not import_func:
-                    NifLog.debug(f"Could not find linking function {import_func_name} for {slot_name}")
-                    continue
-                b_texture = self.create_texture_slot(b_mat, n_tex)
-                import_func(b_texture)
+                nodes_wrapper.create_and_link(slot_name, n_tex)
 
-    def _import_apply_mode(self, n_texture_desc, b_texture):
-        # Blend mode
-        if hasattr(n_texture_desc, "apply_mode"):
-            b_texture.blend_type = self.get_b_blend_type_from_n_apply_mode(n_texture_desc.apply_mode)
-        else:
-            b_texture.blend_type = "MIX"

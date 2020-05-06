@@ -48,6 +48,8 @@ from io_scene_nif.modules.nif_import.property import texture
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 
+# dictionary of texture files, to reuse textures
+DICT_TEXTURES = {}
 
 class TextureLoader:
 
@@ -84,7 +86,7 @@ class TextureLoader:
         else:
             raise TypeError("source must be NiSourceTexture block or string")
 
-    def import_texture_source(self, source, tree):
+    def import_texture_source(self, source):
         """Convert a NiSourceTexture block, or simply a path string, to a Blender Texture object.
         Stores it in the texture.DICT_TEXTURES dictionary to avoid future duplicate imports.
         :return Texture object
@@ -99,7 +101,7 @@ class TextureLoader:
 
         try:
             # look up the texture in the dictionary of imported textures and return it if found
-            return texture.DICT_TEXTURES[texture_hash]
+            return DICT_TEXTURES[texture_hash]
         except KeyError:
             NifLog.debug("Storing {0} texture in map".format(str(source)))
             pass
@@ -116,14 +118,9 @@ class TextureLoader:
             b_image = bpy.data.images.new(name=b_text_name, width=1, height=1, alpha=False)
             b_image.filepath = fn
 
-        # create a texture node
-        b_texture = tree.nodes.new('ShaderNodeTexImage')
-        b_texture.image = b_image
-        b_texture.interpolation = "Smart"
-
         # save texture to avoid duplicate imports, and return it
-        texture.DICT_TEXTURES[texture_hash] = b_texture
-        return b_texture
+        DICT_TEXTURES[texture_hash] = b_image
+        return b_image
 
     def import_embedded_texture_source(self, source):
 

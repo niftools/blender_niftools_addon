@@ -1,27 +1,27 @@
-"""Nif Operators, nif specific operators to update nif properties"""
+"""This script imports Netimmerse/Gamebryo nif files to Blender."""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
-# Copyright © 2014, NIF File Format Library and Tools contributors.
+#
+# Copyright © 2019, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -37,6 +37,38 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import os
+import bpy
 
-def register():
-    from . import object, geometry, nif_import_op, nif_export_op, kf_import_op, egm_import_op  # kf_export_op
+import pyffi.spells.nif.fix
+
+from io_scene_nif.io.egm import EGMFile
+from io_scene_nif.modules.nif_import.animation.morph import MorphAnimation
+from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.utils import util_math
+from io_scene_nif.utils.util_global import NifOp, EGMData
+
+
+class EgmImport(NifCommon):
+
+    def __init__(self, operator, context):
+        NifCommon.__init__(self, operator, context)
+
+        # Helper systems
+        self.morph_anim = MorphAnimation()
+
+    def execute(self):
+        """Main import function."""
+
+        egm_path = NifOp.props.filepath
+
+        if egm_path:
+            EGMData.init(EGMFile.load_egm(egm_path))
+            # scale the data
+            EGMData.data.apply_scale(NifOp.props.scale_correction_import)
+            # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
+            # grab the active object
+            b_obj = bpy.context.view_layer.objects.active
+            if b_obj and b_obj.type == "MESH":
+                self.morph_anim.import_egm_morphs(b_obj)
+        return {'FINISHED'}

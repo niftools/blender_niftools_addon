@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import import animation
@@ -108,9 +109,8 @@ class MorphAnimation(Animation):
                     for key in morph_data.keys:
                         self.add_key(fcu, key.time, (key.value,), interp)
 
-    def import_egm_morphs(self, b_obj, n_verts):
+    def import_egm_morphs(self, b_obj):
         """Import all EGM morphs as shape keys for blender object."""
-        # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
         b_mesh = b_obj.data
         sym_morphs = [list(morph.get_relative_vertices()) for morph in EGMData.data.sym_morphs]
         asym_morphs = [list(morph.get_relative_vertices()) for morph in EGMData.data.asym_morphs]
@@ -122,14 +122,11 @@ class MorphAnimation(Animation):
         morphs = ([(morph, "EGM SYM %i" % i) for i, morph in enumerate(sym_morphs)] +
                   [(morph, "EGM ASYM %i" % i) for i, morph in enumerate(asym_morphs)])
 
+        base_verts = [v.co for v in b_mesh.vertices]
         for morph_verts, key_name in morphs:
             # convert tuples into vector here so we can simply add in morph_mesh()
-            morphvert_out = []
-            for u in morph_verts:
-                v = NifFormat.Vector3()
-                v.x, v.y, v.z = u
-                morphvert_out.append(v)
-            self.morph_mesh(b_mesh, n_verts, morphvert_out)
+            for b_v_index, (bv, mv) in enumerate(zip(base_verts, morph_verts)):
+                b_mesh.vertices[b_v_index].co = bv + mathutils.Vector(mv)
             # TODO [animation] unused variable is it required
             shape_key = b_obj.shape_key_add(name=key_name, from_mix=False)
 
