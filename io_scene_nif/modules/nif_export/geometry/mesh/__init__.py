@@ -50,14 +50,10 @@ from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_nif.utils import util_math
+from io_scene_nif.utils import util_math, util_consts
 from io_scene_nif.utils.util_math import NifError
 from io_scene_nif.utils.util_global import NifOp, NifData
 from io_scene_nif.utils.util_logging import NifLog
-
-# TODO [scene][property][ui] Expose these either through the scene or as ui properties
-VERTEX_RESOLUTION = 1000
-NORMAL_RESOLUTION = 100
 
 
 class Mesh:
@@ -814,9 +810,9 @@ class Mesh:
                     pv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[pv_index]
                     vertex_vec = vertex.co
-                    vkey = (int(vertex_vec[0] * mesh.VERTEX_RESOLUTION),
-                            int(vertex_vec[1] * mesh.VERTEX_RESOLUTION),
-                            int(vertex_vec[2] * mesh.VERTEX_RESOLUTION))
+                    vkey = (int(vertex_vec[0] * util_consts.VERTEX_RESOLUTION),
+                            int(vertex_vec[1] * util_consts.VERTEX_RESOLUTION),
+                            int(vertex_vec[2] * util_consts.VERTEX_RESOLUTION))
                     try:
                         vdict[vkey].append((vertex, poly, b_mesh))
                     except KeyError:

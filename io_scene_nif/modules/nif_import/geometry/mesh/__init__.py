@@ -50,10 +50,6 @@ from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 
-# TODO [scene][property][ui] Expose these either through the scene or as ui properties
-VERTEX_RESOLUTION = 1000
-NORMAL_RESOLUTION = 100
-
 
 class Mesh:
 
