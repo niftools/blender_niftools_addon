@@ -65,8 +65,6 @@ class EgmImportOperator(Operator, ImportHelper, NifOperatorCommon):
     filter_glob: bpy.props.StringProperty(
         default="*.egm", options={'HIDDEN'})
 
-    files: bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
-
     def execute(self, context):
         """Execute the import operators: first constructs a
         :class:`~io_scene_nif.egm_import.EgmImport` instance and then

@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import import animation
@@ -124,8 +125,8 @@ class MorphAnimation(Animation):
         base_verts = [v.co for v in b_mesh.vertices]
         for morph_verts, key_name in morphs:
             # convert tuples into vector here so we can simply add in morph_mesh()
-            morph_verts_out = [mathutils.Vector((v.x, v.y, v.z)) for v in morph_verts]
-            self.morph_mesh(b_mesh, base_verts, morph_verts_out)
+            for b_v_index, (bv, mv) in enumerate(zip(base_verts, morph_verts)):
+                b_mesh.vertices[b_v_index].co = bv + mathutils.Vector(mv)
             # TODO [animation] unused variable is it required
             shape_key = b_obj.shape_key_add(name=key_name, from_mix=False)
 

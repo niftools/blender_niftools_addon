@@ -38,11 +38,11 @@
 # ***** END LICENSE BLOCK *****
 
 import os
+import bpy
 
 import pyffi.spells.nif.fix
 
 from io_scene_nif.io.egm import EGMFile
-from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_import.animation.morph import MorphAnimation
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utils import util_math
@@ -60,7 +60,7 @@ class EgmImport(NifCommon):
     def execute(self):
         """Main import function."""
 
-        egm_path = NifOp.props.file_path
+        egm_path = NifOp.props.filepath
 
         if egm_path:
             EGMData.init(EGMFile.load_egm(egm_path))
