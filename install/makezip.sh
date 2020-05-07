@@ -2,7 +2,6 @@
 
 PYFFI_VERSION="2.2.4.dev4"
 NAME="blender_nif_plugin"
-
 CUR_DIR=$(pwd)
 BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 ROOT="${BUILD_DIR}"/..
@@ -10,14 +9,19 @@ PLUGIN_IN="${ROOT}"/io_scene_nif/
 HASH=$(git rev-parse --short HEAD)
 VERSION=$(cat "${PLUGIN_IN}/VERSION.txt")
 DATE=$(date +%F)
-ZIP_NAME="${NAME}-${VERSION}-${HASH}-${DATE}.zip"
+ZIP_NAME="${NAME}-${VERSION}-${DATE}-${HASH}.zip"
 TEMP="${BUILD_DIR}"/temp
 PLUGIN_OUT="${TEMP}"/io_scene_nif
 DEPS_OUT="${PLUGIN_OUT}"/dependencies
 
+echo "Creating Blender Nif Plugin addon zip"
+
+echo "Checking for temp folder: ${TEMP}"
 if [[ -d "${TEMP}" ]]; then
   echo "Removing old temp directory"
   rm -rf "${TEMP}"
+else
+  echo "No existing temp folder"
 fi
 
 mkdir "${TEMP}"
@@ -36,6 +40,6 @@ cp "${ROOT}"/LICENSE.rst "${PLUGIN_OUT}"
 cp "${ROOT}"/README.rst "${PLUGIN_OUT}"
 
 echo "Creating zip ${ZIP_NAME}"
-cd "${TEMP}" || exit
+cd "${TEMP}" || exit 1
 zip -9rq "${TEMP}/${ZIP_NAME}" ./io_scene_nif -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
-cd "${CUR_DIR}" || exit
+cd "${CUR_DIR}" || exit 1
