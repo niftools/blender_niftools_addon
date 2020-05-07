@@ -159,5 +159,3 @@ class NiMaterial(Material):
         # Specular color
         self.import_material_specular(b_mat, n_mat_prop.specular_color)
         b_mat.specular_intensity = 1.0  # Blender multiplies specular color with this value
-
-        return b_mat
