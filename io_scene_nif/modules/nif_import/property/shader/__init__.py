@@ -39,16 +39,10 @@
 
 from abc import ABC
 
-import bpy
-
-from io_scene_nif.modules.nif_import.object.block_registry import block_store
 from io_scene_nif.utils.util_logging import NifLog
 
 
 class BSShader(ABC):
-
-    def __init__(self):
-        self.b_mesh = None
 
     @staticmethod
     def import_uv_offset(b_mat, shader_prop):
@@ -88,25 +82,6 @@ class BSShader(ABC):
         b_mat.use_transparency = True
         b_mat.alpha = (1 - shader_property.alpha)
         b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-        return b_mat
-
-    def _find_or_create_material(self):
-        b_mats = self.b_mesh.materials
-        if len(b_mats) == 0:
-            b_mat = bpy.data.materials.new("")
-            self.b_mesh.materials.append(b_mat)
-            NifLog.debug("Created placeholder material to store properties in {0}".format(b_mat))
-        else:
-            b_mat = self.b_mesh.materials[0]
-            NifLog.debug("Reusing existing material {0} to store additional properties in {0}".format(b_mat))
-        return b_mat
-
-    def create_material_name(self, bs_shader_property):
-        name = block_store.import_name(bs_shader_property)
-        if name is None:
-            name = (self._n_block.name.decode() + "_nt_mat")
-        b_mat = bpy.data.materials.new(name)
-        self._b_mesh.materials.append(b_mat)
         return b_mat
 
     @staticmethod

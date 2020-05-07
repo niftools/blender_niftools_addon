@@ -37,6 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
+
+import itertools
 from functools import singledispatch
 
 from io_scene_nif.modules.nif_import.property.geometry.niproperty import NiPropertyProcessor
@@ -48,35 +51,53 @@ from io_scene_nif.utils.util_logging import NifLog
 class MeshPropertyProcessor:
 
     def __init__(self):
-        self.niproperty = NiPropertyProcessor.get()
-        self.bsshader = BSShaderPropertyProcessor.get()
-        self.bsshaderlighting = BSShaderLightingPropertyProcessor.get()
+        self.processors = (
+            NiPropertyProcessor.get(),
+            BSShaderPropertyProcessor.get(),
+            BSShaderLightingPropertyProcessor.get()
+        )
 
         # Register processors
         self.process_property = singledispatch(self.process_property)
-        self.niproperty.register_niproperty(self.process_property)
-        self.bsshader.register_bsproperty(self.process_property)
-        self.bsshaderlighting.register_bsproperty(self.process_property)
+        for processor in self.processors:
+            processor.register(self.process_property)
 
     def process_property_list(self, n_block, b_mesh):
-        self.niproperty.b_mesh = b_mesh
-        self.niproperty.n_block = n_block
-        self.bsshader.b_mesh = b_mesh
-        self.bsshader.n_block = n_block
-        self.bsshaderlighting.b_mesh = b_mesh
-        self.bsshaderlighting.n_block = n_block
+        props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
 
-        if n_block.num_properties > 0:
-            self.process_props(n_block.properties)
+        # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
+        for prop in props:
+            if prop.name:
+                name = prop.name.decode()
+                if name and name in bpy.data.materials:
+                    b_mat = bpy.data.materials[name]
+                    NifLog.debug("Retrieved already imported material {1} from name {0} - aborting due to bug".format(name, b_mat.name))
+                    # stop here since it is bugged for multiple runs
+                    b_mesh.materials.append(b_mat)
+                    return b_mat
+                else:
+                    b_mat = bpy.data.materials.new(name)
+                    NifLog.debug("Created material {0} to store properties in {1}".format(name, b_mat.name))
+                break
+        else:
+            # bs shaders often have no name, so generate one from mesh name
+            name = n_block.name.decode() + "_nt_mat"
+            b_mat = bpy.data.materials.new(name)
+            NifLog.debug("Created material {0} to store properties in {1}".format(name, b_mat.name))
 
-        if len(n_block.bs_properties) > 0:
-            self.process_props(n_block.bs_properties)
+        # link the material to the mesh
+        b_mesh.materials.append(b_mat)
 
-    def process_props(self, properties):
-        for prop in properties:
-            if prop is not None:
-                NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
-                self.process_property(prop)
+        # set the vars on every processor
+        for processor in self.processors:
+            processor.b_mesh = b_mesh
+            processor.n_block = n_block
+            processor.b_mat = b_mat
+
+        # run all processors
+        for prop in props:
+            NifLog.debug("{0} property found {0}".format(str(type(prop)), str(prop)))
+            self.process_property(prop)
 
     def process_property(self, prop):
         """Base method to warn user that this property is not supported"""

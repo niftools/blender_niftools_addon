@@ -12,7 +12,7 @@ set /p VERSION="%ROOT%\io_scene_nif\VERSION.txt"
 :: Abuse for loop to execute and store command output
 for /f %%i in ('git rev-parse --short HEAD') do set HASH=%%i
 for /f %%i in ('date +%F') do set DATE=%%i
-set ZIP_NAME="%NAME%-%VERSION%-%HASH%-%DATE%"
+set ZIP_NAME="%NAME%-%VERSION%-%DATE%-%HASH%"
 set PYFFI_VERSION="2.2.4.dev3"
 set DEPS="io_scene_nif\dependencies"
 if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
