@@ -56,6 +56,7 @@ class BSShaderLightingPropertyProcessor(BSShader):
     __instance = None
     _b_mesh = None
     _n_block = None
+    _b_mat = None
 
     @property
     def b_mesh(self):
@@ -73,6 +74,14 @@ class BSShaderLightingPropertyProcessor(BSShader):
     def n_block(self, value):
         self._n_block = value
 
+    @property
+    def b_mat(self):
+        return self._b_mat
+
+    @b_mat.setter
+    def b_mat(self, value):
+        self._b_mat = value
+
     def __init__(self):
         """ Virtually private constructor. """
         if BSShaderLightingPropertyProcessor.__instance is not None:
@@ -89,19 +98,16 @@ class BSShaderLightingPropertyProcessor(BSShader):
             BSShaderLightingPropertyProcessor()
         return BSShaderLightingPropertyProcessor.__instance
 
-    def register_bsproperty(self, processor):
+    def register(self, processor):
         processor.register(NifFormat.BSShaderPPLightingProperty, self.import_bs_shader_pp_lighting_proprerty)
 
     def import_bs_shader_pp_lighting_proprerty(self, bs_shader_prop):
-        # update material material name
-        b_mat = self.create_material_name(bs_shader_prop)
-
         # Shader Flags
-        b_shader = b_mat.niftools_shader
+        b_shader = self._b_mat.niftools_shader
         b_shader.bs_shadertype = 'BSShaderPPLightingProperty'
 
         shader_type = NifFormat.BSShaderType._enumvalues.index(bs_shader_prop.shader_type)
         b_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[shader_type]
 
         flags = bs_shader_prop.shader_flags
-        self.import_flags(b_mat, flags)
+        self.import_flags(self._b_mat, flags)
