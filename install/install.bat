@@ -10,7 +10,7 @@ set NAME=blender_nif_plugin
 set /p VERSION=<%ROOT%\io_scene_nif\VERSION
 for /f %%i in ('git rev-parse --short HEAD') do set HASH=%%i
 for /f %%i in ('date +%F') do set DATE=%%i
-set ZIP_NAME="%NAME%-%VERSION%-%HASH%-%DATE%"
+set ZIP_NAME="%NAME%-%VERSION%-%DATE%-%HASH%"
 
 if "%BLENDER_ADDONS_DIR%" == "" if not exist "%BLENDER_ADDONS_DIR%" (
 echo. "Update BLENDER_ADDONS_DIR to the folder where the blender addons reside, such as:"
