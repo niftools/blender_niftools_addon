@@ -129,10 +129,6 @@ class NifExport(NifCommon):
             if b_armature:
                 util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
-            # smooth seams of objects
-            if NifOp.props.smooth_object_seams:
-                self.objecthelper.mesh_helper.smooth_mesh_seams(self.exportable_objects)
-
             prefix = ""
             NifLog.info("Exporting")
             if NifOp.props.animation == 'ALL_NIF':
