@@ -40,6 +40,7 @@
 import mathutils
 
 from io_scene_nif.modules.nif_export.block_registry import block_store
+from io_scene_nif.modules.nif_export import types
 from io_scene_nif.modules.nif_export.collision import Collision
 from io_scene_nif.utils import util_math
 
@@ -79,7 +80,7 @@ class BSBound(Collision):
 
     def export_bounding_box(self, b_obj, block_parent):
         box_extends = self.calculate_box_extents(b_obj)
-        n_bbox = block_store.create_ninode()
+        n_bbox = types.create_ninode()
         block_parent.add_child(n_bbox)
         # set name, flags, translation, and radius
         n_bbox.name = "Bounding Box"
