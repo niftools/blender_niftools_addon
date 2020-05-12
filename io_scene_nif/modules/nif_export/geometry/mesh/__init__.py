@@ -490,7 +490,7 @@ class Mesh:
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
-                self.select_unweighted_vertices(b_mesh, b_obj, polygons_without_bodypart)
+                self.select_unassigned_polygons(b_mesh, b_obj, polygons_without_bodypart)
 
             if len(trilist) > 65535:
                 raise util_math.NifError("Too many polygons. Decimate your mesh and try again.")
@@ -582,7 +582,7 @@ class Mesh:
                     # Vertex weights,  find weights and normalization factors
                     vert_list = {}
                     vert_norm = {}
-                    unassigned_verts = []
+                    unweighted_vertices = []
 
                     for bone_group in boneinfluences:
                         b_list_weight = []
@@ -590,7 +590,7 @@ class Mesh:
 
                         for b_vert in b_obj.data.vertices:
                             if len(b_vert.groups) == 0:  # check vert has weight_groups
-                                unassigned_verts.append(b_vert)
+                                unweighted_vertices.append(b_vert)
                                 continue
 
                             for g in b_vert.groups:
@@ -608,7 +608,7 @@ class Mesh:
                             else:
                                 vert_norm[v[0]] = v[1]
 
-                    self.select_unassigned_vertices(unassigned_verts)
+                    self.select_unweighted_vertices(unweighted_vertices)
 
                     # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                     # note: allocate memory for faster performance
@@ -757,9 +757,9 @@ class Mesh:
                     trishape.flags = 0x0005  # use triangles as bounding box + hide
 
     # todo [mesh] join code paths for those two?
-    def select_unassigned_vertices(self, unassigned_verts):
+    def select_unweighted_vertices(self, unweighted_vertices):
         # vertices must be assigned at least one vertex group lets be nice and display them for the user
-        if len(unassigned_verts) > 0:
+        if len(unweighted_vertices) > 0:
             for b_scene_obj in bpy.context.scene.objects:
                 b_scene_obj.select_set(False)
 
@@ -777,7 +777,7 @@ class Mesh:
                                      "The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
 
-    def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
+    def select_unassigned_polygons(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""
         # select mesh object
         for b_deselect_obj in bpy.context.scene.objects:
