@@ -72,7 +72,6 @@ class Collision:
     @staticmethod
     def set_b_collider(b_obj, bounds_type, radius, n_obj=None):
         """ Helper function to set up b_obj so it becomes recognizable as a collision object """
-        print("set_b_collider", b_obj, bounds_type, radius, n_obj)
         # set bounds type
         b_obj.display_type = 'BOUNDS'
         b_obj.show_bounds = True
@@ -81,12 +80,18 @@ class Collision:
         override = bpy.context.copy()
         override['selected_objects'] = b_obj
         bpy.ops.rigidbody.object_add(override)
+        # alternate but not functional way without context override
+        # bpy.ops.rigidbody.world_add()
+        # bpy.context.scene.rigidbody_world.collection.objects.link(b_obj)
 
         b_r_body = b_obj.rigid_body
         b_r_body.enabled = True
         b_r_body.use_margin = True
         b_r_body.collision_margin = radius
         b_r_body.collision_shape = bounds_type
+        # todo [collision] mainly a visual issue - for some reason, not all types of collision object accept the state of
+        # passive in blender - they remain active although type has been set to passive
+        # if they are set to active they explode once you play back an anim
         b_r_body.type = "PASSIVE"
 
         b_me = b_obj.data
