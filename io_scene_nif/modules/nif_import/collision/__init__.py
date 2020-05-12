@@ -86,6 +86,7 @@ class Collision:
         b_r_body.use_margin = True
         b_r_body.collision_margin = radius
         b_r_body.collision_shape = bounds_type
+        b_r_body.type = "PASSIVE"
 
         b_me = b_obj.data
         if n_obj:
