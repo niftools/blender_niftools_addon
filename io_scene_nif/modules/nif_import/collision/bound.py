@@ -95,12 +95,12 @@ class Bound(Collision):
                     b_name = 'BSBound'
                     center = n_extra.center
                     dims = n_extra.dimensions
-                    minx = center.x - dims.x
-                    miny = center.y - dims.y
-                    minz = center.z - dims.z
-                    maxx = center.x + dims.x
-                    maxy = center.y + dims.y
-                    maxz = center.z + dims.z
+                    minx = - dims.x
+                    miny = - dims.y
+                    minz = - dims.z
+                    maxx = + dims.x
+                    maxy = + dims.y
+                    maxz = + dims.z
                     bbox_center = center.as_list()
                     break
             # none was found
