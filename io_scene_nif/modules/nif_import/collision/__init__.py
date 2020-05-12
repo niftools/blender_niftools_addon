@@ -72,6 +72,7 @@ class Collision:
     @staticmethod
     def set_b_collider(b_obj, bounds_type, radius, n_obj=None):
         """ Helper function to set up b_obj so it becomes recognizable as a collision object """
+        print("set_b_collider", b_obj, bounds_type, radius, n_obj)
         # set bounds type
         b_obj.display_type = 'BOUNDS'
         b_obj.show_bounds = True
