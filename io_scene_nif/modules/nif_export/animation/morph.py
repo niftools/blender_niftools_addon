@@ -59,12 +59,6 @@ class MorphAnimation(Animation):
         b_key = b_mesh.shape_keys
         if b_key and len(b_key.key_blocks) > 1:
             
-            # check that they are relative shape keys
-            if not b_key.use_relative:
-                # XXX if we do "b_key.use_relative = True"
-                # XXX would this automatically fix the keys?
-                raise ValueError("Can only export relative shape keys.")
-            
             # yes, there is a b_key object attached
             # export as egm, or as morph_data?
             if b_key.key_blocks[1].name.startswith("EGM"):
@@ -86,8 +80,8 @@ class MorphAnimation(Animation):
             relative_vertices = []
 
             # note: key_blocks[0] is base b_key
-            for vert, key_vert in zip(key_blocks[0].data, key_block.data):
-                relative_vertices.append(key_vert - vert)
+            for base_vert, key_vert in zip(key_blocks[0].data, key_block.data):
+                relative_vertices.append(key_vert.co - base_vert.co)
             morph.set_relative_vertices(relative_vertices)
 
     def export_morph_animation(self, b_mesh, b_key, n_trishape, vertmap):
