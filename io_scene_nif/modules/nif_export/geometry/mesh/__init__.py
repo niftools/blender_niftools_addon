@@ -518,27 +518,20 @@ class Mesh:
             tridata.has_vertices = True
             tridata.vertices.update_size()
             for i, v in enumerate(tridata.vertices):
-                v.x = vertlist[i][0]
-                v.y = vertlist[i][1]
-                v.z = vertlist[i][2]
+                v.x, v.y, v.z = vertlist[i]
             tridata.update_center_radius()
 
             if mesh_hasnormals:
                 tridata.has_normals = True
                 tridata.normals.update_size()
                 for i, v in enumerate(tridata.normals):
-                    v.x = normlist[i][0]
-                    v.y = normlist[i][1]
-                    v.z = normlist[i][2]
+                    v.x, v.y, v.z = normlist[i]
 
             if mesh_hasvcol:
                 tridata.has_vertex_colors = True
                 tridata.vertex_colors.update_size()
                 for i, v in enumerate(tridata.vertex_colors):
-                    v.r = vcollist[i][0]
-                    v.g = vcollist[i][1]
-                    v.b = vcollist[i][2]
-                    v.a = vcollist[i][3]
+                    v.r, v.g, v.b, v.a = vcollist[i]
 
             if mesh_uv_layers:
                 tridata.num_uv_sets = len(mesh_uv_layers)
