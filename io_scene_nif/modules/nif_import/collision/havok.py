@@ -80,6 +80,7 @@ class BhkCollision(Collision):
         self.process_bhk.register(NifFormat.NiTriStripsData, self.import_nitristrips)
         self.process_bhk.register(NifFormat.bhkMoppBvTreeShape, self.import_bhk_mopp_bv_tree_shape)
         self.process_bhk.register(NifFormat.bhkListShape, self.import_bhk_list_shape)
+        self.process_bhk.register(NifFormat.bhkSimpleShapePhantom, self.import_bhk_simple_shape_phantom)
 
     def process_bhk(self, bhk_shape):
         """Base method to warn user that this property is not supported"""
@@ -101,6 +102,24 @@ class BhkCollision(Collision):
     def import_bhk_mopp_bv_tree_shape(self, bhk_shape):
         NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
         return self.process_bhk(bhk_shape.shape)
+
+    def import_bhk_simple_shape_phantom(self, bhkshape):
+        """Imports a bhkSimpleShapePhantom block and applies the transform to the collision object"""
+
+        # import shapes
+        collision_objs = self.import_bhk_shape(bhkshape.shape)
+        # todo [pyffi/collision] current nifskope shows a transform, our nif xml doesn't, so ignore it for now
+        # # find transformation matrix
+        # transform = mathutils.Matrix(bhkshape.transform.as_list())
+        #
+        # # fix scale
+        # transform.translation = transform.translation * self.HAVOK_SCALE
+        #
+        # # apply transform
+        # for b_col_obj in collision_objs:
+        #     b_col_obj.matrix_local = b_col_obj.matrix_local @ transform
+        # return a list of transformed collision shapes
+        return collision_objs
 
     def import_bhktransform(self, bhkshape):
         """Imports a BhkTransform block and applies the transform to the collision object"""
