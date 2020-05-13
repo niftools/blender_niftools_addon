@@ -88,8 +88,8 @@ class Material:
         # b_mat.diffuse_intensity = 1.0
 
     @staticmethod
-    def import_material_ambient(b_mat, n_mat_prop):
-        b_mat.niftools.ambient_color = (n_mat_prop.ambient_color.r, n_mat_prop.ambient_color.g, n_mat_prop.ambient_color.b)
+    def import_material_ambient(b_mat, ambient_color):
+        b_mat.niftools.ambient_color = (ambient_color.r, ambient_color.g, ambient_color.b)
 
     @staticmethod
     def import_material_gloss(b_mat, glossiness):
@@ -115,7 +115,7 @@ class NiMaterial(Material):
         b_mat.name = name
 
         # Ambient color
-        self.import_material_ambient(b_mat, n_mat_prop)
+        self.import_material_ambient(b_mat, n_mat_prop.ambient_color)
 
         # Diffuse color
         self.import_material_diffuse(b_mat, n_mat_prop.diffuse_color)
