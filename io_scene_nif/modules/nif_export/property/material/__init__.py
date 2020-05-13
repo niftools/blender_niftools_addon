@@ -102,7 +102,7 @@ class MaterialProp:
         # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
         n_mat_prop.glossiness = b_mat.specular_intensity
         n_mat_prop.alpha = b_mat.niftools.emissive_alpha.v
-        # todo [material] what is this, is this even relevant for NiMaterial?
+        # todo [material] this float is used by FO3's material properties
         # n_mat_prop.emit_multi = emitmulti
 
         # search for duplicate
