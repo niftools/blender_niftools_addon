@@ -276,9 +276,8 @@ class Mesh:
                 # add NiTriShape's material property
                 trimatprop = self.material_property.export_material_property(b_mat,
                     name=block_store.get_full_name(b_mat),
-                    flags=0x0001,
+                    flags=0x0001)
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
-                    specular=mesh_mat_specular_color)
 
                 block_store.register_block(trimatprop)
 
