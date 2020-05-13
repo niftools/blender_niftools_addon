@@ -262,10 +262,7 @@ class BhkCollision(Collision):
         # create blender object
         b_obj = Object.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
         # here, these are not encoded as a direction so we must first calculate the direction
-        b_obj.matrix_local = self.center_origin_to_matrix((first_point+second_point)/2, first_point - second_point)
-        # we do it like this so the rigid bodies are correctly drawn in blender
-        # because they always draw around the object center
-        # b_obj.location.z += (length / 2)
+        b_obj.matrix_local = self.center_origin_to_matrix((first_point + second_point) / 2, first_point - second_point)
         self.set_b_collider(b_obj, "CAPSULE", radius, bhk_shape)
         return [b_obj]
 

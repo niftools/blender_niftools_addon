@@ -416,10 +416,7 @@ class BhkCollision(Collision):
             radius = b_obj.dimensions.x / 2
             matrix = util_math.get_object_bind(b_obj)
 
-            # undo centering on matrix
-            # matrix.translation.z -= length / 2
-
-            length_half = length/2
+            length_half = length / 2
             # calculate the direction unit vector
             v_dir = (mathutils.Vector((0, 0, 1)) @ matrix.to_3x3().inverted()).normalized()
             first_point = matrix.translation + v_dir * length_half
