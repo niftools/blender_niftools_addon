@@ -90,7 +90,7 @@ class Mesh:
         Vertex.map_vertex_colors(b_mesh, n_tri_data)
         Vertex.map_normals(b_mesh, n_tri_data)
 
-        self.mesh_prop_processor.process_property_list(n_block, b_obj.data)
+        self.mesh_prop_processor.process_property_list(n_block, b_obj)
 
         # import skinning info, for meshes affected by bones
         VertexGroup.import_skin(n_block, b_obj)
