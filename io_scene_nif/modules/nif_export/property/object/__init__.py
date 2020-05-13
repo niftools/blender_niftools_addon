@@ -43,6 +43,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
+from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.modules.nif_import.object import PRN_DICT
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -53,6 +54,7 @@ from io_scene_nif.utils.util_logging import NifLog
 class ObjectProperty:
     def __init__(self):
         self.material_property = MaterialProp()
+        self.texture_helper = NiTextureProp.get()
 
     def export_vertex_color_property(self, block_parent, flags=1, vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
@@ -137,6 +139,37 @@ class ObjectProperty:
                          ):
                 n_block.add_property(prop)
 
+        # todo [property] refactor this
+        # add textures
+        if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
+            bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+
+            block_store.register_block(bsshader)
+            n_block.add_property(bsshader)
+        elif bpy.context.scene.niftools_scene.game == 'SKYRIM':
+            bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+
+            block_store.register_block(bsshader)
+            num_props = n_block.num_properties
+            n_block.num_properties = num_props + 1
+            n_block.bs_properties.update_size()
+            n_block.bs_properties[num_props] = bsshader
+
+        else:
+            if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+                # sid meier's railroad and civ4: set shader slots in extra data
+                self.texture_helper.add_shader_integer_extra_datas(n_block)
+
+            n_nitextureprop = self.texture_helper.export_texturing_property(
+                flags=0x0001,  # standard
+                # TODO [object][texture][material] Move out and break dependency
+                applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
+                b_mat=b_mat)
+
+            block_store.register_block(n_nitextureprop)
+            n_block.add_property(n_nitextureprop)
+
+
     def export_alpha_property(self, b_mat):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
@@ -166,9 +199,8 @@ class ObjectProperty:
             # add NiTriShape's specular property
             # but NOT for sid meier's railroads and other extra shader
             # games (they use specularity even without this property)
-            # todo [property] access that dict from here
-            # if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
-            #     return
+            if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+                return
             eps = NifOp.props.epsilon
             if (b_mat.specular_color.r > eps) or (b_mat.specular_color.g > eps) or (b_mat.specular_color.b > eps):
                 return self.get_matching_block("NiSpecularProperty", flags=flags)

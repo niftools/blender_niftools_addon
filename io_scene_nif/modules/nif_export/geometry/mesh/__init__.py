@@ -101,6 +101,8 @@ class Mesh:
 
         # vertex color check
         mesh_hasvcol = b_mesh.vertex_colors
+        # list of body part (name, index, vertices) in this mesh
+        bodypartgroups = self.get_body_part_groups(b_obj, b_mesh)
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
@@ -114,16 +116,6 @@ class Mesh:
                 mesh_hasnormals = True  # for proper lighting
                 if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
-
-            # list of body part (name, index, vertices) in this mesh
-            bodypartgroups = self.get_body_part_groups(b_obj, b_mesh)
-
-            # note: we can be in any of the following five situations
-            # material + base texture        -> normal object
-            # material + base tex + glow tex -> normal glow mapped object
-            # material + glow texture        -> (needs to be tested)
-            # material, but no texture       -> uniformly coloured object
-            # no material                    -> typically, collision mesh
 
             # create a trishape block
             if not NifOp.props.stripify:
@@ -164,59 +156,12 @@ class Mesh:
                 # only export the bind matrix on trishapes that were not animated
                 util_math.set_object_matrix(b_obj, trishape)
 
-            # add textures
-            if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
-                if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-                    block_store.register_block(bsshader)
-                    trishape.add_property(bsshader)
-            elif bpy.context.scene.niftools_scene.game == 'SKYRIM':
-                if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-                    block_store.register_block(bsshader)
-                    num_props = trishape.num_properties
-                    trishape.num_properties = num_props + 1
-                    trishape.bs_properties.update_size()
-                    trishape.bs_properties[num_props] = bsshader
-
-            else:
-                if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
-                    # sid meier's railroad and civ4: set shader slots in extra data
-                    self.texture_helper.add_shader_integer_extra_datas(trishape)
-
-                if b_mat:
-                    n_nitextureprop = self.texture_helper.export_texturing_property(
-                        flags=0x0001,  # standard
-                        # TODO [object][texture][material] Move out and break dependency
-                        applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
-                        b_mat=b_mat)
-
-                    block_store.register_block(n_nitextureprop)
-                    trishape.add_property(n_nitextureprop)
-
-            # add texture effect block (must be added as preceding child of the trishape)
+            # check if there is a parent
             if n_parent:
-                # todo [texture] detect effect and move out
-                # ref_mtex = self.texture_helper.b_ref_slot
-                ref_mtex = False
-                if bpy.context.scene.niftools_scene.game == 'MORROWIND' and ref_mtex:
-                    # create a new parent block for this shape
-                    extra_node = block_store.create_block("NiNode", ref_mtex)
-                    n_parent.add_child(extra_node)
-                    # set default values for this ninode
-                    extra_node.rotation.set_identity()
-                    extra_node.scale = 1.0
-                    extra_node.flags = 0x000C  # morrowind
-                    # create texture effect block and parent the texture effect and trishape to it
-                    texeff = self.texture_helper.export_texture_effect(ref_mtex)
-                    extra_node.add_child(texeff)
-                    extra_node.add_child(trishape)
-                    extra_node.add_effect(texeff)
-                else:
-                    # refer to this block in the parent's children list
-                    n_parent.add_child(trishape)
+                # add texture effect block (must be added as parent of the trishape)
+                n_parent = self.export_texture_effect(n_parent, b_mat)
+                # refer to this mesh in the parent's children list
+                n_parent.add_child(trishape)
 
             self.object_property.export_properties(b_obj, b_mat, trishape)
 
@@ -675,3 +620,22 @@ class Mesh:
             for i in range(4):
                 if abs(vertquad[3][i] - v_quad_old[3][i]) > NifOp.props.epsilon:
                     return True
+
+    def export_texture_effect(self, n_block, b_mat):
+        # todo [texture] detect effect
+        ref_mtex = False
+        if ref_mtex:
+            # create a new parent block for this shape
+            extra_node = block_store.create_block("NiNode", ref_mtex)
+            n_block.add_child(extra_node)
+            # set default values for this ninode
+            extra_node.rotation.set_identity()
+            extra_node.scale = 1.0
+            extra_node.flags = 0x000C  # morrowind
+            # create texture effect block and parent the texture effect and trishape to it
+            texeff = self.texture_helper.export_texture_effect(ref_mtex)
+            extra_node.add_child(texeff)
+            extra_node.add_effect(texeff)
+            return extra_node
+        return n_block
+
