@@ -128,6 +128,17 @@ class ObjectProperty:
                 setattr(block, param, attribute)
         return block
 
+    def export_root_node_properties(self, n_root):
+        """Wrapper for exporting properties that are commonly attached to the nif root"""
+        # add vertex color and zbuffer properties for civ4 and railroads
+        if bpy.context.scene.niftools_scene.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
+            self.export_vertex_color_property(n_root)
+            self.export_z_buffer_property(n_root)
+
+        elif bpy.context.scene.niftools_scene.game in ('EMPIRE_EARTH_II',):
+            self.export_vertex_color_property(n_root)
+            self.export_z_buffer_property(n_root, flags=15, function=1)
+
     def export_vertex_color_property(self, block_parent, flags=1, vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
         (typically, the root of the nif tree).

@@ -251,14 +251,7 @@ class NifExport(NifCommon):
                     self.constrainthelper.export_constraints(b_obj, root_block)
 
             object_prop = ObjectProperty()
-            # add vertex color and zbuffer properties for civ4 and railroads
-            if bpy.context.scene.niftools_scene.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
-                object_prop.export_vertex_color_property(root_block)
-                object_prop.export_z_buffer_property(root_block)
-
-            elif bpy.context.scene.niftools_scene.game in ('EMPIRE_EARTH_II',):
-                object_prop.export_vertex_color_property(root_block)
-                object_prop.export_z_buffer_property(root_block, flags=15, function=1)
+            object_prop.export_root_node_properties(root_block)
 
             # FIXME:
             """
