@@ -50,9 +50,7 @@ class BonePanel(Panel):
     # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
-        if context.bone:
-            return True
-        return False
+        return context.bone is not None
 
     def draw(self, context):
         nif_bone_props = context.bone.niftools
@@ -74,9 +72,7 @@ class ArmaturePanel(Panel):
     # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
-        if context.armature:
-            return True
-        return False
+        return context.armature is not None
 
     def draw(self, context):
         nif_armature_props = context.armature.niftools
