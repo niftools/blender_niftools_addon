@@ -138,10 +138,6 @@ class Mesh:
             #     b_emit_prop |= b_slot.use_map_emit
 
             # -> first, extract valuable info from our b_obj
-
-            mesh_texture_alpha = False  # texture has transparency
-
-            mesh_uv_layers = []  # uv layers used by this material
             mesh_hasalpha = False  # mesh has transparency
             mesh_haswire = False  # mesh rendered as wireframe
             mesh_hasspec = False  # mesh specular property
@@ -408,32 +404,12 @@ class Mesh:
                     # check for duplicate vertquad?
                     f_index[i] = len(vertquad_list)
                     if vertmap[vertex_index] is not None:
-                        # iterate only over vertices with the same vertex index and check if they have the same uvs, normals and colors
+                        # iterate only over vertices with the same vertex index
                         for j in vertmap[vertex_index]:
-                            # TODO use function to do comparison
-                            if mesh_uv_layers:
-                                num_uvs_layers = len(mesh_uv_layers)
-                                if max(abs(vertquad[1][uv_layer][0] - vertquad_list[j][1][uv_layer][0]) for uv_layer in range(num_uvs_layers)) > NifOp.props.epsilon:
-                                    continue
-                                if max(abs(vertquad[1][uv_layer][1] - vertquad_list[j][1][uv_layer][1]) for uv_layer in range(num_uvs_layers)) > NifOp.props.epsilon:
-                                    continue
-                            if mesh_hasnormals:
-                                if abs(vertquad[2][0] - vertquad_list[j][2][0]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[2][1] - vertquad_list[j][2][1]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[2][2] - vertquad_list[j][2][2]) > NifOp.props.epsilon:
-                                    continue
-                            if mesh_hasvcol:
-                                if abs(vertquad[3][0] - vertquad_list[j][3][0]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[3][1] - vertquad_list[j][3][1]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[3][2] - vertquad_list[j][3][2]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[3][3] - vertquad_list[j][3][3]) > NifOp.props.epsilon:
-                                    continue
-                            # all tests passed: so yes, we already have it!
+                            # check if they have the same uvs, normals and colors
+                            if self.is_new_face_corner_data(vertquad, vertquad_list[j]):
+                                continue
+                            # all tests passed: so yes, we already have a vert with the same face corner data!
                             f_index[i] = j
                             break
 
@@ -794,3 +770,22 @@ class Mesh:
         # raise exception
         raise NifError("Some polygons of {0} not assigned to any body part."
                        "The unassigned polygons have been selected in the mesh so they can easily be identified.".format(b_obj))
+
+    def is_new_face_corner_data(self, vertquad, v_quad_old):
+        """Compares vert info to old vert info if relevant data is present"""
+        # uvs
+        if v_quad_old[1]:
+            for i in range(2):
+                if max(abs(vertquad[1][uv_index][i] - v_quad_old[1][uv_index][i]) for uv_index in
+                       range(len(v_quad_old[1]))) > NifOp.props.epsilon:
+                    return True
+        # normals
+        if v_quad_old[2]:
+            for i in range(3):
+                if abs(vertquad[2][i] - v_quad_old[2][i]) > NifOp.props.epsilon:
+                    return True
+        # vcols
+        if v_quad_old[3]:
+            for i in range(4):
+                if abs(vertquad[3][i] - v_quad_old[3][i]) > NifOp.props.epsilon:
+                    return True
