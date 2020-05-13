@@ -88,8 +88,8 @@ class NifImport(NifCommon):
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
             if NifOp.props.skeleton == "GEOMETRY_ONLY":
-                if len(NifCommon.SELECTED_OBJECTS) != 1 or NifCommon.SELECTED_OBJECTS[0].type != 'ARMATURE':
-                    raise util_math.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
+                if len(self.SELECTED_OBJECTS) != 1 or self.SELECTED_OBJECTS[0].type != 'ARMATURE':
+                    raise util_math.NifError("You must select exactly one armature in 'Import Geometry Only' mode.")
 
             # the axes used for bone correction depend on the nif version
             util_math.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)

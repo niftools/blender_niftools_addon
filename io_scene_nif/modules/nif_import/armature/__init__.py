@@ -45,9 +45,9 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import.object.block_registry import block_store
+from io_scene_nif.modules.nif_export.block_registry import block_store as block_store_export
 from io_scene_nif.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_nif.modules.nif_import.object import Object
-from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_logging import NifLog
 from io_scene_nif.utils.util_global import NifOp, NifData
@@ -75,7 +75,7 @@ class Armature:
         b_armature_data.niftools.axis_forward = NifOp.props.axis_forward
         b_armature_data.niftools.axis_up = NifOp.props.axis_up
         b_armature_obj = Object.create_b_obj(n_armature, b_armature_data)
-        b_armature_obj.show_in_front  = True
+        b_armature_obj.show_in_front = True
 
         # make armature editable and create bones
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
@@ -172,7 +172,7 @@ class Armature:
 
         # attaching to selected armature -> first identify armature and bones
         elif NifOp.props.skeleton == "GEOMETRY_ONLY" and not self.dict_armatures:
-            b_armature_obj = NifCommon.SELECTED_OBJECTS[0]
+            b_armature_obj = bpy.context.selected_objects[0]
             skelroot = ni_block.find(block_name=b_armature_obj.name)
             if not skelroot:
                 skelroot = ni_block
@@ -181,7 +181,7 @@ class Armature:
             self.dict_armatures[skelroot] = []
             for bone_name in b_armature_obj.data.bones.keys():
                 # blender bone naming -> nif bone naming
-                nif_bone_name = block_store.get_bone_name_for_nif(bone_name)
+                nif_bone_name = block_store_export.get_bone_name_for_nif(bone_name)
                 # find a block with bone name
                 bone_block = skelroot.find(block_name=nif_bone_name)
                 # add it to the name list if there is a bone with that name
