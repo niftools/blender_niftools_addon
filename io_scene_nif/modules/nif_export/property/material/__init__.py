@@ -50,7 +50,7 @@ EXPORT_OPTIMIZE_MATERIALS = True
 
 class MaterialProp:
         
-    def export_material_property(self, b_mat, name, flags, specular, gloss, emitmulti):
+    def export_material_property(self, b_mat, name, flags, specular):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
@@ -93,8 +93,11 @@ class MaterialProp:
         matprop.emissive_color.r = emissive.r
         matprop.emissive_color.g = emissive.g
         matprop.emissive_color.b = emissive.b
-        # matprop.glossiness = gloss
+
+        # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
+        matprop.glossiness = b_mat.specular_intensity
         matprop.alpha = b_mat.niftools.emissive_alpha.v
+        # todo [material] what is this, is this even relevant for NiMaterial?
         # matprop.emit_multi = emitmulti
 
         # search for duplicate

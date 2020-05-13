@@ -143,8 +143,6 @@ class Mesh:
                 if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
 
-                # mesh_mat_emitmulti = b_mat.emit
-                mesh_mat_emitmulti = b_mat.niftools.emissive_color
                 # specular mat
                 mesh_mat_specular_color = b_mat.specular_color
 
@@ -286,9 +284,7 @@ class Mesh:
                     name=block_store.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
-                    specular=mesh_mat_specular_color,
-                    gloss=mesh_mat_gloss,
-                    emitmulti=mesh_mat_emitmulti)
+                    specular=mesh_mat_specular_color)
 
                 block_store.register_block(trimatprop)
 
