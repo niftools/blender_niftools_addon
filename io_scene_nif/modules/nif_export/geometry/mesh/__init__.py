@@ -187,17 +187,7 @@ class Mesh:
                 mesh_haswire = False
 
             # list of body part (name, index, vertices) in this mesh
-            bodypartgroups = []
-            for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
-                vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
-                vertices_list = set()
-                if vertex_group:
-                    for b_vert in b_mesh.vertices:
-                        for b_groupname in b_vert.groups:
-                            if b_groupname.group == vertex_group.index:
-                                vertices_list.add(b_vert.index)
-                    NifLog.debug("Found body part {0}".format(bodypartgroupname))
-                    bodypartgroups.append([bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
+            bodypartgroups = self.get_body_part_groups(b_obj, b_mesh)
 
             # note: we can be in any of the following five situations
             # material + base texture        -> normal object
@@ -569,7 +559,7 @@ class Mesh:
                 if boneinfluences:  # yes we have skinning!
                     # create new skinning instance block and link it
                     n_root_name = block_store.get_full_name(b_obj_armature)
-                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name)
+                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name, bodypartgroups)
                     trishape.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
@@ -701,7 +691,23 @@ class Mesh:
             raise util_math.NifError("Bone '{0}' not found.".format(bone))
         return bone_block
 
-    def create_skin_inst_data(self, b_obj, n_root_name):
+    def get_body_part_groups(self, b_obj, b_mesh):
+        """Returns a set of vertices (no dupes) for each body part"""
+        bodypartgroups = []
+        for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
+            vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
+            vertices_list = set()
+            if vertex_group:
+                for b_vert in b_mesh.vertices:
+                    for b_groupname in b_vert.groups:
+                        if b_groupname.group == vertex_group.index:
+                            vertices_list.add(b_vert.index)
+                NifLog.debug("Found body part {0}".format(bodypartgroupname))
+                bodypartgroups.append(
+                    [bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
+        return bodypartgroups
+
+    def create_skin_inst_data(self, b_obj, n_root_name, bodypartgroups):
         if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
