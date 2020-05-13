@@ -42,6 +42,7 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_import.object import PRN_DICT
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -50,6 +51,8 @@ from io_scene_nif.utils.util_logging import NifLog
 
 
 class ObjectProperty:
+    def __init__(self):
+        self.material_property = MaterialProp()
 
     def export_vertex_color_property(self, block_parent, flags=1, vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
@@ -123,7 +126,17 @@ class ObjectProperty:
                 setattr(block, param, attribute)
         return block
 
-    # TODO [material][property] Move this to new form property processing
+    def export_properties(self, b_obj, b_mat, n_block):
+        if b_obj and b_mat:
+            # export and add properties to n_block
+            for prop in (self.export_alpha_property(b_mat),
+                         self.export_wireframe_property(b_obj),
+                         self.export_stencil_property(b_mat),
+                         self.export_specular_property(b_mat),
+                         self.material_property.export_material_property(b_mat, n_block)
+                         ):
+                n_block.add_property(prop)
+
     def export_alpha_property(self, b_mat):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""

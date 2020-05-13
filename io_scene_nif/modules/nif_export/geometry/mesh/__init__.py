@@ -43,10 +43,8 @@ from pyffi.formats.nif import NifFormat
 
 
 from io_scene_nif.modules.nif_export.geometry import mesh
-from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
-from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
@@ -62,8 +60,6 @@ class Mesh:
         self.texture_helper = NiTextureProp.get()
         self.bss_helper = BSShaderProperty()
         self.object_property = ObjectProperty()
-        self.material_property = MaterialProp()
-        self.material_anim = MaterialAnimation()
         self.morph_anim = MorphAnimation()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
@@ -118,11 +114,6 @@ class Mesh:
                 mesh_hasnormals = True  # for proper lighting
                 if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
-
-                # wire mat
-                # mesh_haswire = (b_mat.type == 'WIRE')
-                # todo [material] find alternative
-                mesh_haswire = False
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = self.get_body_part_groups(b_obj, b_mesh)
@@ -227,27 +218,7 @@ class Mesh:
                     # refer to this block in the parent's children list
                     n_parent.add_child(trishape)
 
-            # add NiTriShape's alpha propery refer to the alpha property in the trishape block
-            trishape.add_property(self.object_property.export_alpha_property(b_mat))
-            trishape.add_property(self.object_property.export_wireframe_property(b_obj, flags=1))
-            trishape.add_property(self.object_property.export_stencil_property(b_mat))
-            trishape.add_property(self.object_property.export_specular_property(b_mat, flags=0x0001))
-
-            if b_mat and not (bpy.context.scene.niftools_scene.game == 'SKYRIM'):
-
-                # add NiTriShape's material property
-                trimatprop = self.material_property.export_material_property(b_mat,
-                    name=block_store.get_full_name(b_mat),
-                    flags=0x0001)
-                    # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
-
-                block_store.register_block(trimatprop)
-
-                # refer to the material property in the trishape block
-                trishape.add_property(trimatprop)
-
-                # material animation
-                self.material_anim.export_material(b_mat, trishape)
+            self.object_property.export_properties(b_obj, b_mat, trishape)
 
             # -> now comes the real export
 

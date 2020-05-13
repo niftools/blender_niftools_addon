@@ -41,6 +41,7 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
@@ -49,11 +50,17 @@ EXPORT_OPTIMIZE_MATERIALS = True
 
 
 class MaterialProp:
-        
-    def export_material_property(self, b_mat, name, flags):
+
+    def __init__(self):
+        self.material_anim = MaterialAnimation()
+
+    def export_material_property(self, b_mat, flags, trishape):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
-
+        # don't export material properties for these games
+        if bpy.context.scene.niftools_scene.game in ('SKYRIM', ):
+            return
+        name = block_store.get_full_name(b_mat)
         # create n_block
         matprop = NifFormat.NiMaterialProperty()
 
@@ -75,6 +82,7 @@ class MaterialProp:
             name = ""
 
         matprop.name = name
+        # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
         matprop.flags = flags
         ambient = b_mat.niftools.ambient_color
         matprop.ambient_color.r = ambient.r
@@ -84,7 +92,7 @@ class MaterialProp:
         # todo [material] some colors in the b2.8 api allow rgb access, others don't - why??
         # diffuse mat
         matprop.diffuse_color.r, matprop.diffuse_color.g, matprop.diffuse_color.b, _ = b_mat.diffuse_color
-        matprop.specular_color.r, matprop.specular_color.g, matprop.specular_color.b, _ = b_mat.specular_color
+        matprop.specular_color.r, matprop.specular_color.g, matprop.specular_color.b = b_mat.specular_color
 
         emissive = b_mat.niftools.emissive_color
         matprop.emissive_color.r = emissive.r
@@ -115,5 +123,8 @@ class MaterialProp:
                 NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, n_block.name))
                 return n_block
 
+        block_store.register_block(matprop)
+        # material animation
+        self.material_anim.export_material(b_mat, trishape)
         # no material property with given settings found, so use and register the new one
         return matprop
