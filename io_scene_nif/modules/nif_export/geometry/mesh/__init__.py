@@ -143,15 +143,9 @@ class Mesh:
                 if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
 
-                # specular mat
-                mesh_mat_specular_color = b_mat.specular_color
-
                 eps = NifOp.props.epsilon
-                if (mesh_mat_specular_color.r > eps) or (mesh_mat_specular_color.g > eps) or (mesh_mat_specular_color.b > eps):
-                    mesh_hasspec = b_spec_prop
-
-                # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = b_mat.specular_intensity
+                if (b_mat.specular_color.r > eps) or (b_mat.specular_color.g > eps) or (b_mat.specular_color.b > eps):
+                    mesh_hasspec = True
 
                 # wire mat
                 # mesh_haswire = (b_mat.type == 'WIRE')
