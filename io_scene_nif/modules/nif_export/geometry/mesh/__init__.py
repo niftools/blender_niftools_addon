@@ -103,10 +103,6 @@ class Mesh:
         if not mesh_materials:
             mesh_materials = [None]
 
-        # is mesh double sided?
-        # todo [mesh/material] detect from material settings!
-        mesh_doublesided = True
-
         # vertex color check
         mesh_hasvcol = b_mesh.vertex_colors
 
@@ -138,7 +134,6 @@ class Mesh:
             #     b_emit_prop |= b_slot.use_map_emit
 
             # -> first, extract valuable info from our b_obj
-            mesh_hasalpha = False  # mesh has transparency
             mesh_haswire = False  # mesh rendered as wireframe
             mesh_hasspec = False  # mesh specular property
 
@@ -148,12 +143,8 @@ class Mesh:
                 if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
 
-                # ambient mat
-                mesh_mat_ambient_color = b_mat.niftools.ambient_color
                 # diffuse mat
                 mesh_mat_diffuse_color = b_mat.diffuse_color
-                # emissive mat
-                mesh_mat_emissive_color = b_mat.niftools.emissive_color
                 # mesh_mat_emitmulti = b_mat.emit
                 mesh_mat_emitmulti = b_mat.niftools.emissive_color
                 # specular mat
@@ -165,17 +156,6 @@ class Mesh:
 
                 # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
                 mesh_mat_gloss = b_mat.specular_intensity
-
-                # alpha mat
-                # todo [material] check for transparent node in node tree
-                mesh_hasalpha = b_alpha_prop
-                mesh_mat_transparency = 1
-                if b_mat.blend_method != "OPAQUE":
-                    mesh_hasalpha = True
-                elif mesh_hasvcol:
-                    mesh_hasalpha = True
-                elif b_mat.animation_data and 'Alpha' in b_mat.animation_data.action.fcurves:
-                    mesh_hasalpha = True
 
                 # wire mat
                 # mesh_haswire = (b_mat.type == 'WIRE')
@@ -285,17 +265,15 @@ class Mesh:
                     # refer to this block in the parent's children list
                     n_parent.add_child(trishape)
 
-            if mesh_hasalpha:
-                # add NiTriShape's alpha propery refer to the alpha property in the trishape block
-                trishape.add_property(self.object_property.export_alpha_property(b_mat))
+            # add NiTriShape's alpha propery refer to the alpha property in the trishape block
+            trishape.add_property(self.object_property.export_alpha_property(b_mat))
 
             if mesh_haswire:
                 # add NiWireframeProperty
                 trishape.add_property(self.object_property.export_wireframe_property(flags=1))
 
-            if mesh_doublesided:
-                # add NiStencilProperty
-                trishape.add_property(self.object_property.export_stencil_property())
+            # add NiStencilProperty
+            trishape.add_property(self.object_property.export_stencil_property(b_mat))
 
             if b_mat and not (bpy.context.scene.niftools_scene.game == 'SKYRIM'):
                 # add NiTriShape's specular property
@@ -306,16 +284,13 @@ class Mesh:
                     trishape.add_property(self.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.material_property.export_material_property(
+                trimatprop = self.material_property.export_material_property(b_mat,
                     name=block_store.get_full_name(b_mat),
                     flags=0x0001,
                     # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
-                    ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
                     specular=mesh_mat_specular_color,
-                    emissive=mesh_mat_emissive_color,
                     gloss=mesh_mat_gloss,
-                    alpha=mesh_mat_transparency,
                     emitmulti=mesh_mat_emitmulti)
 
                 block_store.register_block(trimatprop)

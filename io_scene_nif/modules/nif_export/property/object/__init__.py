@@ -127,6 +127,9 @@ class ObjectProperty:
     def export_alpha_property(self, b_mat):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
+        # don't export an alpha property if mat is opaque in blender
+        if b_mat.blend_method == "OPAQUE":
+            return
         if b_mat.niftools_alpha.alphaflag != 0:
             # todo [material] reconstruct flag from material alpha settings
             flags = b_mat.niftools_alpha.alphaflag
@@ -153,9 +156,12 @@ class ObjectProperty:
         if an wire property with required flags is not found."""
         return self.get_matching_block("NiWireframeProperty", flags=flags)
 
-    def export_stencil_property(self, flags=None):
+    def export_stencil_property(self, b_mat, flags=None):
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
+        # no stencil property
+        if b_mat.use_backface_culling:
+            return
         if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
             flags = 19840
         # search for duplicate

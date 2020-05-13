@@ -50,7 +50,7 @@ EXPORT_OPTIMIZE_MATERIALS = True
 
 class MaterialProp:
         
-    def export_material_property(self, name, flags, ambient, diffuse, specular, emissive, gloss, alpha, emitmulti):
+    def export_material_property(self, b_mat, name, flags, diffuse, specular, gloss, emitmulti):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
@@ -76,6 +76,7 @@ class MaterialProp:
 
         matprop.name = name
         matprop.flags = flags
+        ambient = b_mat.niftools.ambient_color
         matprop.ambient_color.r = ambient.r
         matprop.ambient_color.g = ambient.g
         matprop.ambient_color.b = ambient.b
@@ -88,12 +89,14 @@ class MaterialProp:
         # matprop.specular_color.r = specular.r
         # matprop.specular_color.g = specular.g
         # matprop.specular_color.b = specular.b
-        #
-        # matprop.emissive_color.r = emissive.r
-        # matprop.emissive_color.g = emissive.g
-        # matprop.emissive_color.b = emissive.b
+
+        emissive = b_mat.niftools.emissive_color
+        matprop.emissive_color.r = emissive.r
+        matprop.emissive_color.g = emissive.g
+        matprop.emissive_color.b = emissive.b
         # matprop.glossiness = gloss
-        # matprop.alpha = alpha
+        # where could we store this per-material alpha?
+        matprop.alpha = 1.0
         # matprop.emit_multi = emitmulti
 
         # search for duplicate
