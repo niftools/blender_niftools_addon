@@ -177,11 +177,7 @@ class BhkCollision(Collision):
     def _import_bhk_rigid_body(self, bhkshape, collision_objs):
         # set physics flags and mass
         for b_col_obj in collision_objs:
-            # todo [collision] make low level, remove operator!
-            bpy.context.view_layer.objects.active = b_col_obj
-            bpy.ops.rigidbody.object_add(type='ACTIVE')
             b_r_body = b_col_obj.rigid_body
-            b_r_body.enabled = True
 
             if bhkshape.mass > 0.0001:
                 # for physics emulation
