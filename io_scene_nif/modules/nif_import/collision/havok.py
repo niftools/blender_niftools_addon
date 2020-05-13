@@ -108,6 +108,7 @@ class BhkCollision(Collision):
 
         # import shapes
         collision_objs = self.import_bhk_shape(bhkshape.shape)
+        NifLog.warn("Support for bhkSimpleShapePhantom is limited, transform is ignored")
         # todo [pyffi/collision] current nifskope shows a transform, our nif xml doesn't, so ignore it for now
         # # find transformation matrix
         # transform = mathutils.Matrix(bhkshape.transform.as_list())
