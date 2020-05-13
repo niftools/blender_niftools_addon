@@ -131,57 +131,26 @@ class ObjectProperty:
     def export_root_node_properties(self, n_root):
         """Wrapper for exporting properties that are commonly attached to the nif root"""
         # add vertex color and zbuffer properties for civ4 and railroads
-        if bpy.context.scene.niftools_scene.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
-            self.export_vertex_color_property(n_root)
-            self.export_z_buffer_property(n_root)
+        props = []
+        if bpy.context.scene.niftools_scene.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS', 'EMPIRE_EARTH_II', 'ZOO_TYCOON_2'):
+            props.append(self.export_vertex_color_property())
+            props.append(self.export_z_buffer_property())
+        # todo [property] move other common properties into this function
+        # attach properties to root node
+        for prop in props:
+            n_root.add_property(prop)
 
-        elif bpy.context.scene.niftools_scene.game in ('EMPIRE_EARTH_II',):
-            self.export_vertex_color_property(n_root)
-            self.export_z_buffer_property(n_root, flags=15, function=1)
+    def export_vertex_color_property(self, flags=1, vertex_mode=0, lighting_mode=1):
+        """Return existing vertex color property with given flags, or create new one
+        if an alpha property with required flags is not found."""
+        return self.get_matching_block("NiVertexColorProperty", flags=flags, vertex_mode=vertex_mode, lighting_mode=lighting_mode)
 
-    def export_vertex_color_property(self, block_parent, flags=1, vertex_mode=0, lighting_mode=1):
-        """Create a vertex color property, and attach it to an existing block
-        (typically, the root of the nif tree).
-
-        @param block_parent: The block to which to attach the new property.
-        @param flags: The C{flags} of the new property.
-        @param vertex_mode: The C{vertex_mode} of the new property.
-        @param lighting_mode: The C{lighting_mode} of the new property.
-        @return: The new property block.
-        """
-        # create new vertex color property block
-        vcol_prop = block_store.create_block("NiVertexColorProperty")
-
-        # make it a property of the parent
-        block_parent.add_property(vcol_prop)
-
-        # and now export the parameters
-        vcol_prop.flags = flags
-        vcol_prop.vertex_mode = vertex_mode
-        vcol_prop.lighting_mode = lighting_mode
-
-        return vcol_prop
-
-    def export_z_buffer_property(self, block_parent, flags=15, func=3):
-        """Create a z-buffer property, and attach it to an existing block
-        (typically, the root of the nif tree).
-
-        @param block_parent: The block to which to attach the new property.
-        @param flags: The C{flags} of the new property.
-        @param func: The C{function} of the new property.
-        @return: The new property block.
-        """
-        # create new z-buffer property block
-        zbuf = block_store.create_block("NiZBufferProperty")
-
-        # make it a property of the parent
-        block_parent.add_property(zbuf)
-
-        # and now export the parameters
-        zbuf.flags = flags
-        zbuf.function = func
-
-        return zbuf
+    def export_z_buffer_property(self, flags=15, function=3):
+        """Return existing z-buffer property with given flags, or create new one
+        if an alpha property with required flags is not found."""
+        if bpy.context.scene.niftools_scene.game in ('EMPIRE_EARTH_II',):
+            function = 1
+        return self.get_matching_block("NiZBufferProperty", flags=flags, function=function)
 
     def export_alpha_property(self, b_mat):
         """Return existing alpha property with given flags, or create new one
