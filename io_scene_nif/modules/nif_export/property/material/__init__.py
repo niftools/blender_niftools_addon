@@ -95,8 +95,7 @@ class MaterialProp:
         matprop.emissive_color.g = emissive.g
         matprop.emissive_color.b = emissive.b
         # matprop.glossiness = gloss
-        # where could we store this per-material alpha?
-        matprop.alpha = 1.0
+        matprop.alpha = b_mat.niftools.emissive_alpha.v
         # matprop.emit_multi = emitmulti
 
         # search for duplicate

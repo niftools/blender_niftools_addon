@@ -176,7 +176,7 @@ class BSShaderPropertyProcessor(BSShader):
         if bs_effect_shader_property.emissive_color:
             Material.import_material_emissive(self.b_mat, bs_effect_shader_property.emissive_color)
             # TODO [property][shader][alpha] Map this to actual alpha when component is available
-            self.b_mat.niftools.emissive_alpha.v = bs_effect_shader_property.emissive_color.a
+            Material.import_material_alpha(self.b_mat, bs_effect_shader_property.emissive_color.a)
             # todo [shader] create custom float property, or use as factor in mix shader?
             # self.b_mat.emit = bs_effect_shader_property.emissive_multiple
 

@@ -96,6 +96,10 @@ class Material:
         # b_mat.specular_hardness = glossiness
         b_mat.specular_intensity = glossiness  # Blender multiplies specular color with this value
 
+    @staticmethod
+    def import_material_alpha(b_mat, n_alpha):
+        b_mat.niftools.emissive_alpha.v = n_alpha
+
 class NiMaterial(Material):
 
     def import_material(self, n_block, b_mat, n_mat_prop):
@@ -114,10 +118,7 @@ class NiMaterial(Material):
             name = (n_block.name.decode() + "_nt_mat")
         b_mat.name = name
 
-        # Ambient color
         self.import_material_ambient(b_mat, n_mat_prop.ambient_color)
-
-        # Diffuse color
         self.import_material_diffuse(b_mat, n_mat_prop.diffuse_color)
 
         # TODO [property][material] Detect fallout 3+, use emit multi as a degree of emission
@@ -128,10 +129,8 @@ class NiMaterial(Material):
         self.import_material_emissive(b_mat, n_mat_prop.emissive_color)
         # b_mat.emit = n_mat_prop.emit_multi
 
-        # gloss
         self.import_material_gloss(b_mat, n_mat_prop.glossiness)
-
-        # Specular color
         self.import_material_specular(b_mat, n_mat_prop.specular_color)
+        self.import_material_alpha(b_mat, n_mat_prop.alpha)
 
         return b_mat
