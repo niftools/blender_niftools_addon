@@ -133,7 +133,7 @@ class ObjectProperty:
                          self.export_wireframe_property(b_obj),
                          self.export_stencil_property(b_mat),
                          self.export_specular_property(b_mat),
-                         self.material_property.export_material_property(b_mat, n_block)
+                         self.material_property.export_material_property(b_mat)
                          ):
                 n_block.add_property(prop)
 

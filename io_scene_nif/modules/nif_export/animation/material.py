@@ -51,26 +51,24 @@ class MaterialAnimation(Animation):
     def __init__(self):
         super().__init__()
 
-    def export_material(self, b_material, n_geom):
+    def export_material(self, b_material, n_mat_prop):
         """Export material animations for given geometry."""
 
         if NifOp.props.animation == 'GEOM_NIF':
             # geometry only: don't write controllers
             return
-        
+
         # check if the material holds an animation
         if not self.get_active_action(b_material):
             return
         
-        self.export_material_controllers(b_material, n_geom)
-        self.export_uv_controller(b_material, n_geom)
+        self.export_material_controllers(b_material, n_mat_prop)
+        # self.export_uv_controller(b_material, n_geom)
 
-    def export_material_controllers(self, b_material, n_geom):
+    def export_material_controllers(self, b_material, n_mat_prop):
         """Export material animation data for given geometry."""
 
-        # find the nif material property to attach alpha & color controllers to
-        n_matprop = util_math.find_property(n_geom, NifFormat.NiMaterialProperty)
-        if not n_matprop:
+        if not n_mat_prop:
             raise ValueError("Bug!! must add material property before exporting alpha controller")
         colors = (("alpha", None),
                   ("niftools.ambient_color", NifFormat.TargetColor.TC_AMBIENT),
@@ -78,9 +76,9 @@ class MaterialAnimation(Animation):
                   ("specular_color", NifFormat.TargetColor.TC_SPECULAR))
         # the actual export
         for b_dtype, n_dtype in colors:
-            self.export_material_alpha_color_controller(b_material, n_matprop, b_dtype, n_dtype)
+            self.export_material_alpha_color_controller(b_material, n_mat_prop, b_dtype, n_dtype)
 
-    def export_material_alpha_color_controller(self, b_material, n_matprop, b_dtype, n_dtype):
+    def export_material_alpha_color_controller(self, b_material, n_mat_prop, b_dtype, n_dtype):
         """Export the material alpha or color controller data."""
 
         # get fcurves
@@ -128,7 +126,7 @@ class MaterialAnimation(Animation):
             n_mat_ctrl.data = n_key_data
             n_mat_ipol.data = n_key_data
             # attach block to material property
-            n_matprop.add_controller(n_mat_ctrl)
+            n_mat_prop.add_controller(n_mat_ctrl)
 
     def export_uv_controller(self, b_material, n_geom):
         """Export the material UV controller data."""
