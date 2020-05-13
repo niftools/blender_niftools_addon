@@ -464,7 +464,6 @@ class Mesh:
                 continue  # m_4444x: skip 'empty' material indices
 
             # add NiTriShape's data
-            # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
                 tridata = block_store.create_block("NiTriShapeData", b_obj)
             else:
@@ -512,6 +511,7 @@ class Mesh:
                         if len(uvlist[i]) == 0:
                             continue  # skip non-uv textures
                         uv.u = uvlist[i][j][0]
+                        # NIF flips the texture V-coordinate (OpenGL standard)
                         uv.v = 1.0 - uvlist[i][j][1]  # opengl standard
 
             # set triangles stitch strips for civ4
