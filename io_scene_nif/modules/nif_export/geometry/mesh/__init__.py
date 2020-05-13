@@ -470,14 +470,6 @@ class Mesh:
                 tridata = block_store.create_block("NiTriStripsData", b_obj)
             trishape.data = tridata
 
-            # flags
-            if b_obj.niftools.consistency_flags in NifFormat.ConsistencyType._enumkeys:
-                cf_index = NifFormat.ConsistencyType._enumkeys.index(b_obj.niftools.consistency_flags)
-                tridata.consistency_flags = NifFormat.ConsistencyType._enumvalues[cf_index]
-            else:
-                tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
-                NifLog.warn("{0} has no consistency type set using default CT_STATIC.".format(b_obj))
-
             # data
             tridata.num_vertices = len(vertlist)
             tridata.has_vertices = True
