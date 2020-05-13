@@ -56,6 +56,78 @@ class ObjectProperty:
         self.material_property = MaterialProp()
         self.texture_helper = NiTextureProp.get()
 
+    def export_properties(self, b_obj, b_mat, n_block):
+        """This is the main property processor that attaches
+        all suitable properties gauged from b_obj and b_mat to n_block"""
+
+        if b_obj and b_mat:
+            # export and add properties to n_block
+            for prop in (self.export_alpha_property(b_mat),
+                         self.export_wireframe_property(b_obj),
+                         self.export_stencil_property(b_mat),
+                         self.export_specular_property(b_mat),
+                         self.material_property.export_material_property(b_mat)
+                         ):
+                n_block.add_property(prop)
+
+        # todo [property] refactor this
+        # add textures
+        if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
+            bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+
+            block_store.register_block(bsshader)
+            n_block.add_property(bsshader)
+        elif bpy.context.scene.niftools_scene.game == 'SKYRIM':
+            bsshader = self.bss_helper.export_bs_shader_property(b_mat)
+
+            block_store.register_block(bsshader)
+            num_props = n_block.num_properties
+            n_block.num_properties = num_props + 1
+            n_block.bs_properties.update_size()
+            n_block.bs_properties[num_props] = bsshader
+
+        else:
+            if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+                # sid meier's railroad and civ4: set shader slots in extra data
+                self.texture_helper.add_shader_integer_extra_datas(n_block)
+
+            n_nitextureprop = self.texture_helper.export_texturing_property(
+                flags=0x0001,  # standard
+                # TODO [object][texture][material] Move out and break dependency
+                applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
+                b_mat=b_mat)
+
+            block_store.register_block(n_nitextureprop)
+            n_block.add_property(n_nitextureprop)
+
+    def get_matching_block(self, block_type, **kwargs):
+        """Try to find a block matching block_type. Keyword arguments are a dict of parameters and required attributes of the block"""
+        # go over all blocks of block_type
+
+        NifLog.debug(f"Looking for {block_type} block. Kwargs: {kwargs}")
+        for block in block_store.block_to_obj:
+            # if isinstance(block, block_type):
+            if block_type in str(type(block)):
+                # skip blocks that don't match additional conditions
+                for param, attribute in kwargs.items():
+                    # now skip this block if any of the conditions does not match
+                    if attribute is not None:
+                        ret_attr = getattr(block, param, None)
+                        if ret_attr != attribute:
+                            NifLog.debug(f"break, {param} != {attribute}, returns {ret_attr}")
+                            break
+                else:
+                    # we did not break out of the loop, so all checks went through, so we can use this block
+                    NifLog.debug(f"Found existing {block_type} block matching all criteria!")
+                    return block
+        # we are still here, so we must create a block of this type and set all attributes accordingly
+        NifLog.debug(f"Created new {block_type} block because none matched the required criteria!")
+        block = block_store.create_block(block_type)
+        for param, attribute in kwargs.items():
+            if attribute is not None:
+                setattr(block, param, attribute)
+        return block
+
     def export_vertex_color_property(self, block_parent, flags=1, vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
         (typically, the root of the nif tree).
@@ -99,76 +171,6 @@ class ObjectProperty:
         zbuf.function = func
 
         return zbuf
-
-    def get_matching_block(self, block_type, **kwargs):
-        """Try to find a block matching block_type. Keyword arguments are a dict of parameters and required attributes of the block"""
-        # go over all blocks of block_type
-
-        NifLog.debug(f"Looking for {block_type} block. Kwargs: {kwargs}")
-        for block in block_store.block_to_obj:
-            # if isinstance(block, block_type):
-            if block_type in str(type(block)):
-                # skip blocks that don't match additional conditions
-                for param, attribute in kwargs.items():
-                    # now skip this block if any of the conditions does not match
-                    if attribute is not None:
-                        ret_attr = getattr(block, param, None)
-                        if ret_attr != attribute:
-                            NifLog.debug(f"break, {param} != {attribute}, returns {ret_attr}")
-                            break
-                else:
-                    # we did not break out of the loop, so all checks went through, so we can use this block
-                    NifLog.debug(f"Found existing {block_type} block matching all criteria!")
-                    return block
-        # we are still here, so we must create a block of this type and set all attributes accordingly
-        NifLog.debug(f"Created new {block_type} block because none matched the required criteria!")
-        block = block_store.create_block(block_type)
-        for param, attribute in kwargs.items():
-            if attribute is not None:
-                setattr(block, param, attribute)
-        return block
-
-    def export_properties(self, b_obj, b_mat, n_block):
-        if b_obj and b_mat:
-            # export and add properties to n_block
-            for prop in (self.export_alpha_property(b_mat),
-                         self.export_wireframe_property(b_obj),
-                         self.export_stencil_property(b_mat),
-                         self.export_specular_property(b_mat),
-                         self.material_property.export_material_property(b_mat)
-                         ):
-                n_block.add_property(prop)
-
-        # todo [property] refactor this
-        # add textures
-        if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
-            bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-            block_store.register_block(bsshader)
-            n_block.add_property(bsshader)
-        elif bpy.context.scene.niftools_scene.game == 'SKYRIM':
-            bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-            block_store.register_block(bsshader)
-            num_props = n_block.num_properties
-            n_block.num_properties = num_props + 1
-            n_block.bs_properties.update_size()
-            n_block.bs_properties[num_props] = bsshader
-
-        else:
-            if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
-                # sid meier's railroad and civ4: set shader slots in extra data
-                self.texture_helper.add_shader_integer_extra_datas(n_block)
-
-            n_nitextureprop = self.texture_helper.export_texturing_property(
-                flags=0x0001,  # standard
-                # TODO [object][texture][material] Move out and break dependency
-                applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
-                b_mat=b_mat)
-
-            block_store.register_block(n_nitextureprop)
-            n_block.add_property(n_nitextureprop)
-
 
     def export_alpha_property(self, b_mat):
         """Return existing alpha property with given flags, or create new one
