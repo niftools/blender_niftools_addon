@@ -63,6 +63,7 @@ class MaterialAnimation(Animation):
             return
         
         self.export_material_controllers(b_material, n_mat_prop)
+        # todo [material][animation] needs upgrade to new node api, also needs n_geom
         # self.export_uv_controller(b_material, n_geom)
 
     def export_material_controllers(self, b_material, n_mat_prop):
