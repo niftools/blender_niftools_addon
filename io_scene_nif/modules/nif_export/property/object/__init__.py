@@ -145,16 +145,27 @@ class ObjectProperty:
             threshold = 0
         return self.get_matching_block("NiAlphaProperty", flags=flags, threshold=int(threshold))
 
-    def export_specular_property(self, flags=0x0001):
+    def export_specular_property(self, b_mat, flags=0x0001):
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
-        return self.get_matching_block("NiSpecularProperty", flags=flags)
+        if b_mat and not (bpy.context.scene.niftools_scene.game == 'SKYRIM'):
+            # add NiTriShape's specular property
+            # but NOT for sid meier's railroads and other extra shader
+            # games (they use specularity even without this property)
+            # todo [property] access that dict from here
+            # if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+            #     return
+            eps = NifOp.props.epsilon
+            if (b_mat.specular_color.r > eps) or (b_mat.specular_color.g > eps) or (b_mat.specular_color.b > eps):
+                return self.get_matching_block("NiSpecularProperty", flags=flags)
 
-    def export_wireframe_property(self, flags=0x0001):
+    def export_wireframe_property(self, b_obj, flags=0x0001):
         """Return existing wire property with given flags, or create new one
         if an wire property with required flags is not found."""
-        return self.get_matching_block("NiWireframeProperty", flags=flags)
+        for b_mod in b_obj.modifiers:
+            if b_mod.type == "WIREFRAME":
+                return self.get_matching_block("NiWireframeProperty", flags=flags)
 
     def export_stencil_property(self, b_mat, flags=None):
         """Return existing stencil property with given flags, or create new one

@@ -113,39 +113,11 @@ class Mesh:
         # TODO [material] needs refactoring - move material, texture, etc. to separate function
         for materialIndex, b_mat in enumerate(mesh_materials):
 
-            b_ambient_prop = False
-            b_diffuse_prop = False
-            b_spec_prop = False
-            b_emissive_prop = False
-            b_gloss_prop = False
-            b_alpha_prop = False
-            b_emit_prop = False
-
-            # todo [material/texture] reimplement for node materials
-            # # use the texture properties as preference
-            # for b_slot in self.texture_helper.get_used_textslots(b_mat):
-            #     # replace with texture helper queries
-            #     b_ambient_prop |= b_slot.use_map_ambient
-            #     b_diffuse_prop |= b_slot.use_map_color_diffuse
-            #     b_spec_prop |= b_slot.use_map_color_spec
-            #     b_emissive_prop |= b_slot.use_map_emit
-            #     b_gloss_prop |= b_slot.use_map_hardness
-            #     b_alpha_prop |= b_slot.use_map_alpha
-            #     b_emit_prop |= b_slot.use_map_emit
-
-            # -> first, extract valuable info from our b_obj
-            mesh_haswire = False  # mesh rendered as wireframe
-            mesh_hasspec = False  # mesh specular property
-
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
                 if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
-
-                eps = NifOp.props.epsilon
-                if (b_mat.specular_color.r > eps) or (b_mat.specular_color.g > eps) or (b_mat.specular_color.b > eps):
-                    mesh_hasspec = True
 
                 # wire mat
                 # mesh_haswire = (b_mat.type == 'WIRE')
@@ -257,21 +229,11 @@ class Mesh:
 
             # add NiTriShape's alpha propery refer to the alpha property in the trishape block
             trishape.add_property(self.object_property.export_alpha_property(b_mat))
-
-            if mesh_haswire:
-                # add NiWireframeProperty
-                trishape.add_property(self.object_property.export_wireframe_property(flags=1))
-
-            # add NiStencilProperty
+            trishape.add_property(self.object_property.export_wireframe_property(b_obj, flags=1))
             trishape.add_property(self.object_property.export_stencil_property(b_mat))
+            trishape.add_property(self.object_property.export_specular_property(b_mat, flags=0x0001))
 
             if b_mat and not (bpy.context.scene.niftools_scene.game == 'SKYRIM'):
-                # add NiTriShape's specular property
-                # but NOT for sid meier's railroads and other extra shader
-                # games (they use specularity even without this property)
-                if mesh_hasspec and (bpy.context.scene.niftools_scene.game not in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
-                    # refer to the specular property in the trishape block
-                    trishape.add_property(self.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
                 trimatprop = self.material_property.export_material_property(b_mat,
