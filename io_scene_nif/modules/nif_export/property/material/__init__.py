@@ -50,7 +50,7 @@ EXPORT_OPTIMIZE_MATERIALS = True
 
 class MaterialProp:
         
-    def export_material_property(self, b_mat, name, flags, diffuse, specular, gloss, emitmulti):
+    def export_material_property(self, b_mat, name, flags, specular, gloss, emitmulti):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
@@ -82,9 +82,8 @@ class MaterialProp:
         matprop.ambient_color.b = ambient.b
 
         # todo [material] some colors in the b2.8 api allow rgb access, others don't - why??
-        # matprop.diffuse_color.r = diffuse.r
-        # matprop.diffuse_color.g = diffuse.g
-        # matprop.diffuse_color.b = diffuse.b
+        # diffuse mat
+        matprop.diffuse_color.r, matprop.diffuse_color.g, matprop.diffuse_color.b, _ = b_mat.diffuse_color
         #
         # matprop.specular_color.r = specular.r
         # matprop.specular_color.g = specular.g
