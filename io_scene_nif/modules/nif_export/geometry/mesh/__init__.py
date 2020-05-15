@@ -78,12 +78,12 @@ class Mesh:
         assert (b_obj.type == 'MESH')
 
         # get mesh from b_obj
-        b_mesh = b_obj.data  # get mesh data
+        b_mesh = self.get_triangulated_mesh(b_obj)
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
         # so quickly catch this (rare!) case
-        if not b_obj.data.vertices:
+        if not b_mesh.vertices:
             # do not export anything
             NifLog.warn("{0} has no vertices, skipped.".format(b_obj))
             return
@@ -378,7 +378,7 @@ class Mesh:
                         b_list_weight = []
                         b_vert_group = b_obj.vertex_groups[bone_group]
 
-                        for b_vert in b_obj.data.vertices:
+                        for b_vert in b_mesh.vertices:
                             if len(b_vert.groups) == 0:  # check vert has weight_groups
                                 unweighted_vertices.append(b_vert)
                                 continue
@@ -639,3 +639,25 @@ class Mesh:
             return extra_node
         return n_block
 
+    def get_triangulated_mesh(self, b_obj):
+        # get the armature influencing this mesh, if it exists
+        b_armature_obj = b_obj.find_armature()
+        if b_armature_obj:
+            for pbone in b_armature_obj.pose.bones:
+                pbone.matrix_basis = mathutils.Matrix()
+
+        # make sure the model has a triangulation modifier
+        self.ensure_tri_modifier(b_obj)
+
+        # make a copy with all modifiers applied
+        dg = bpy.context.evaluated_depsgraph_get()
+        eval_obj = b_obj.evaluated_get(dg)
+        return eval_obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+
+    def ensure_tri_modifier(self, b_obj):
+        """Makes sure that ob has a triangulation modifier in its stack."""
+        for mod in b_obj.modifiers:
+            if mod.type in ('TRIANGULATE',):
+                break
+        else:
+            b_obj.modifiers.new('Triangulate', 'TRIANGULATE')
