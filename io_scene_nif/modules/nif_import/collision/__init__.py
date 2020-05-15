@@ -62,7 +62,7 @@ class Collision:
 
     @staticmethod
     def center_origin_to_matrix(n_center, n_dir):
-        """ Helper for capsules to transform nif data into a local matrix """
+        """Helper for capsules to transform nif data into a local matrix """
         # get the rotation that makes (1,0,0) match m_dir
         m_dir = mathutils.Vector((n_dir.x, n_dir.y, n_dir.z)).normalized()
         rot = m_dir.to_track_quat("Z", "Y").to_matrix().to_4x4()
@@ -70,12 +70,12 @@ class Collision:
         return rot
 
     @staticmethod
-    def set_b_collider(b_obj, bounds_type, radius, n_obj=None):
-        """ Helper function to set up b_obj so it becomes recognizable as a collision object """
+    def set_b_collider(b_obj, radius, n_obj=None, bounds_type='BOX', display_type='BOX'):
+        """Helper function to set up b_obj so it becomes recognizable as a collision object"""
         # set bounds type
-        b_obj.display_type = 'BOUNDS'
         b_obj.show_bounds = True
-        b_obj.display_bounds_type = bounds_type
+        b_obj.display_type = 'BOUNDS'
+        b_obj.display_bounds_type = display_type
 
         override = bpy.context.copy()
         override['selected_objects'] = b_obj

@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 import mathutils
 
 import operator
@@ -229,7 +228,7 @@ class BhkCollision(Collision):
 
         # create blender object
         b_obj = Object.box_from_extents("box", minx, maxx, miny, maxy, minz, maxz)
-        self.set_b_collider(b_obj, "BOX", r, bhk_shape)
+        self.set_b_collider(b_obj, radius=r, n_obj=bhk_shape)
         return [b_obj]
 
     def import_bhksphere_shape(self, bhk_shape):
@@ -238,7 +237,7 @@ class BhkCollision(Collision):
 
         r = bhk_shape.radius * self.HAVOK_SCALE
         b_obj = Object.box_from_extents("sphere", -r, r, -r, r, -r, r)
-        self.set_b_collider(b_obj, "SPHERE", r, bhk_shape)
+        self.set_b_collider(b_obj, display_type="SPHERE", bounds_type='SPHERE', radius=r, n_obj=bhk_shape)
         return [b_obj]
 
     def import_bhkcapsule_shape(self, bhk_shape):
@@ -260,7 +259,7 @@ class BhkCollision(Collision):
         b_obj = Object.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
         # here, these are not encoded as a direction so we must first calculate the direction
         b_obj.matrix_local = self.center_origin_to_matrix((first_point + second_point) / 2, first_point - second_point)
-        self.set_b_collider(b_obj, "CAPSULE", radius, bhk_shape)
+        self.set_b_collider(b_obj, bounds_type="CAPSULE", display_type="CAPSULE", radius=radius, n_obj=bhk_shape)
         return [b_obj]
 
     def import_bhkconvex_vertices_shape(self, bhk_shape):
@@ -274,7 +273,7 @@ class BhkCollision(Collision):
 
         b_obj = Object.mesh_from_data("convexpoly", verts, faces)
         radius = bhk_shape.radius * self.HAVOK_SCALE
-        self.set_b_collider(b_obj, "CONVEX_HULL", radius, bhk_shape)
+        self.set_b_collider(b_obj, bounds_type="CONVEX_HULL", radius=radius, n_obj=bhk_shape)
         return [b_obj]
 
     def import_bhkpackednitristrips_shape(self, bhk_shape):
@@ -310,7 +309,7 @@ class BhkCollision(Collision):
 
             b_obj = Object.mesh_from_data('poly%i' % subshape_num, verts, faces)
             radius = min(vert.co.length for vert in b_obj.data.vertices)
-            self.set_b_collider(b_obj, "MESH", radius, subshape)
+            self.set_b_collider(b_obj, bounds_type="MESH", radius=radius, n_obj=subshape)
 
             vertex_offset += subshape.num_vertices
             hk_objects.append(b_obj)
@@ -324,5 +323,5 @@ class BhkCollision(Collision):
         faces = list(bhk_shape.get_triangles())
         b_obj = Object.mesh_from_data("poly", verts, faces)
         # TODO [collision] self.havok_mat!
-        self.set_b_collider(b_obj, "MESH", bhk_shape.radius)
+        self.set_b_collider(b_obj, bounds_type="MESH", radius=bhk_shape.radius)
         return [b_obj]

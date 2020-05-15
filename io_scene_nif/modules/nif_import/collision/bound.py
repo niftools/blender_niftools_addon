@@ -113,7 +113,7 @@ class Bound(Collision):
         if hasattr(n_block, "flags"):
             b_obj.niftools.flags = n_block.flags
         b_obj.location = bbox_center
-        self.set_b_collider(b_obj, "BOX", max(maxx, maxy, maxz))
+        self.set_b_collider(b_obj, radius=max(maxx, maxy, maxz))
         return [b_obj, ]
 
     def import_spherebv(self, sphere):
@@ -121,7 +121,7 @@ class Bound(Collision):
         c = sphere.center
         b_obj = Object.box_from_extents("sphere", -r, r, -r, r, -r, r)
         b_obj.location = (c.x, c.y, c.z)
-        self.set_b_collider(b_obj, "SPHERE", r)
+        self.set_b_collider(b_obj, bounds_type="SPHERE", display_type='SPHERE', radius=r)
         return [b_obj]
 
     def import_boxbv(self, box):
@@ -131,7 +131,7 @@ class Bound(Collision):
         x, y, z = box.extent
         b_obj = Object.box_from_extents("box", -x, x, -y, y, -z, z)
         b_obj.location = (offset.x, offset.y, offset.z)
-        self.set_b_collider(b_obj, "BOX", (x + y + z) / 3)
+        self.set_b_collider(b_obj, radius=(x + y + z) / 3)
         return [b_obj]
 
     def import_capsulebv(self, capsule):
@@ -152,5 +152,5 @@ class Bound(Collision):
         b_obj = Object.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
         # apply transform in local space
         b_obj.matrix_local = self.center_origin_to_matrix(offset, direction)
-        self.set_b_collider(b_obj, "CAPSULE", radius)
+        self.set_b_collider(b_obj, bounds_type="CAPSULE", display_type="CAPSULE", radius=radius)
         return [b_obj]
