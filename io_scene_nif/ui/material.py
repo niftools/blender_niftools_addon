@@ -84,9 +84,9 @@ class MaterialColorPanel(Panel):
         layout = self.layout
         row = layout.column()
         col = row.column()
-        col.prop(mat, "ambient_preview")
+        # col.prop(mat, "ambient_preview")
         col.prop(mat, "ambient_color", text="")
-        col.prop(mat, "emissive_preview")
+        # col.prop(mat, "emissive_preview")
         col.prop(mat, "emissive_color", text="")
         col.prop(mat, "emissive_alpha")
         col.prop(mat, "lightingeffect1")

@@ -69,10 +69,10 @@ class MaterialAnimation(Animation):
         NifLog.info("Importing alpha controller")
 
         b_mat_action = self.create_action(b_material, "MaterialAction")
-        fcurves = self.create_fcurves(b_mat_action, "alpha", (0,), n_alphactrl.flags)
+        fcurves = self.create_fcurves(b_mat_action, "niftools.emissive_alpha", range(3), n_alphactrl.flags)
         interp = self.get_b_interp_from_n_interp(n_alphactrl.data.data.interpolation)
         for key in n_alphactrl.data.data.keys:
-            self.add_key(fcurves, key.time, (key.value,), interp)
+            self.add_key(fcurves, key.time, (key.value, key.value, key.value), interp)
 
     def import_material_color_controller(self, b_material, n_material, b_channel, n_target_color):
         # find material color controller with matching target color

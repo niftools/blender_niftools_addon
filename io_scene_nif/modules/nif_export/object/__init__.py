@@ -113,7 +113,8 @@ class Object:
 
         # there is more than one root object so we create a meta root
         else:
-            n_root = block_store.create_ninode()
+            NifLog.info("Created meta root because blender scene had multiple root objects")
+            n_root = types.create_ninode()
             n_root.name = "Scene Root"
             for b_obj in root_objects:
                 self.export_node(b_obj, n_root)

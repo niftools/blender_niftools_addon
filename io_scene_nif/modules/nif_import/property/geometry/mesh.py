@@ -65,7 +65,8 @@ class MeshPropertyProcessor:
         for processor in self.processors:
             processor.register(self.process_property)
 
-    def process_property_list(self, n_block, b_mesh):
+    def process_property_list(self, n_block, b_obj):
+        b_mesh = b_obj.data
         # get all valid properties that are attached to n_block
         props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
         # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
@@ -96,6 +97,7 @@ class MeshPropertyProcessor:
             processor.b_mesh = b_mesh
             processor.n_block = n_block
             processor.b_mat = b_mat
+            processor.b_obj = b_obj
             processor._nodes_wrapper = self.nodes_wrapper
 
         # run all processors

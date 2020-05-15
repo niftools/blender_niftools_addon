@@ -43,10 +43,8 @@ from pyffi.formats.nif import NifFormat
 
 
 from io_scene_nif.modules.nif_export.geometry import mesh
-from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
-from io_scene_nif.modules.nif_export.property.material import MaterialProp
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
 from io_scene_nif.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
@@ -62,8 +60,6 @@ class Mesh:
         self.texture_helper = NiTextureProp.get()
         self.bss_helper = BSShaderProperty()
         self.object_property = ObjectProperty()
-        self.material_property = MaterialProp()
-        self.material_anim = MaterialAnimation()
         self.morph_anim = MorphAnimation()
 
     def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
@@ -82,12 +78,12 @@ class Mesh:
         assert (b_obj.type == 'MESH')
 
         # get mesh from b_obj
-        b_mesh = b_obj.data  # get mesh data
+        b_mesh = self.get_triangulated_mesh(b_obj)
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
         # so quickly catch this (rare!) case
-        if not b_obj.data.vertices:
+        if not b_mesh.vertices:
             # do not export anything
             NifLog.warn("{0} has no vertices, skipped.".format(b_obj))
             return
@@ -103,12 +99,10 @@ class Mesh:
         if not mesh_materials:
             mesh_materials = [None]
 
-        # is mesh double sided?
-        # todo [mesh/material] detect from material settings!
-        mesh_doublesided = True
-
         # vertex color check
         mesh_hasvcol = b_mesh.vertex_colors
+        # list of body part (name, index, vertices) in this mesh
+        bodypartgroups = self.get_body_part_groups(b_obj, b_mesh)
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
@@ -117,94 +111,11 @@ class Mesh:
         # TODO [material] needs refactoring - move material, texture, etc. to separate function
         for materialIndex, b_mat in enumerate(mesh_materials):
 
-            b_ambient_prop = False
-            b_diffuse_prop = False
-            b_spec_prop = False
-            b_emissive_prop = False
-            b_gloss_prop = False
-            b_alpha_prop = False
-            b_emit_prop = False
-
-            # todo [material/texture] reimplement for node materials
-            # # use the texture properties as preference
-            # for b_slot in self.texture_helper.get_used_textslots(b_mat):
-            #     # replace with texture helper queries
-            #     b_ambient_prop |= b_slot.use_map_ambient
-            #     b_diffuse_prop |= b_slot.use_map_color_diffuse
-            #     b_spec_prop |= b_slot.use_map_color_spec
-            #     b_emissive_prop |= b_slot.use_map_emit
-            #     b_gloss_prop |= b_slot.use_map_hardness
-            #     b_alpha_prop |= b_slot.use_map_alpha
-            #     b_emit_prop |= b_slot.use_map_emit
-
-            # -> first, extract valuable info from our b_obj
-
-            mesh_texture_alpha = False  # texture has transparency
-
-            mesh_uv_layers = []  # uv layers used by this material
-            mesh_hasalpha = False  # mesh has transparency
-            mesh_haswire = False  # mesh rendered as wireframe
-            mesh_hasspec = False  # mesh specular property
-
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
                 if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
-
-                # ambient mat
-                mesh_mat_ambient_color = b_mat.niftools.ambient_color
-                # diffuse mat
-                mesh_mat_diffuse_color = b_mat.diffuse_color
-                # emissive mat
-                mesh_mat_emissive_color = b_mat.niftools.emissive_color
-                # mesh_mat_emitmulti = b_mat.emit
-                mesh_mat_emitmulti = b_mat.niftools.emissive_color
-                # specular mat
-                mesh_mat_specular_color = b_mat.specular_color
-
-                eps = NifOp.props.epsilon
-                if (mesh_mat_specular_color.r > eps) or (mesh_mat_specular_color.g > eps) or (mesh_mat_specular_color.b > eps):
-                    mesh_hasspec = b_spec_prop
-
-                # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = b_mat.specular_intensity
-
-                # alpha mat
-                # todo [material] check for transparent node in node tree
-                mesh_hasalpha = b_alpha_prop
-                mesh_mat_transparency = 1
-                if b_mat.blend_method != "OPAQUE":
-                    mesh_hasalpha = True
-                elif mesh_hasvcol:
-                    mesh_hasalpha = True
-                elif b_mat.animation_data and 'Alpha' in b_mat.animation_data.action.fcurves:
-                    mesh_hasalpha = True
-
-                # wire mat
-                # mesh_haswire = (b_mat.type == 'WIRE')
-                # todo [material] find alternative
-                mesh_haswire = False
-
-            # list of body part (name, index, vertices) in this mesh
-            bodypartgroups = []
-            for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
-                vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
-                vertices_list = set()
-                if vertex_group:
-                    for b_vert in b_mesh.vertices:
-                        for b_groupname in b_vert.groups:
-                            if b_groupname.group == vertex_group.index:
-                                vertices_list.add(b_vert.index)
-                    NifLog.debug("Found body part {0}".format(bodypartgroupname))
-                    bodypartgroups.append([bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
-
-            # note: we can be in any of the following five situations
-            # material + base texture        -> normal object
-            # material + base tex + glow tex -> normal glow mapped object
-            # material + glow texture        -> (needs to be tested)
-            # material, but no texture       -> uniformly coloured object
-            # no material                    -> typically, collision mesh
 
             # create a trishape block
             if not NifOp.props.stripify:
@@ -245,100 +156,14 @@ class Mesh:
                 # only export the bind matrix on trishapes that were not animated
                 util_math.set_object_matrix(b_obj, trishape)
 
-            # add textures
-            if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
-                if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-                    block_store.register_block(bsshader)
-                    trishape.add_property(bsshader)
-            elif bpy.context.scene.niftools_scene.game == 'SKYRIM':
-                if b_mat:
-                    bsshader = self.bss_helper.export_bs_shader_property(b_mat)
-
-                    block_store.register_block(bsshader)
-                    num_props = trishape.num_properties
-                    trishape.num_properties = num_props + 1
-                    trishape.bs_properties.update_size()
-                    trishape.bs_properties[num_props] = bsshader
-
-            else:
-                if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
-                    # sid meier's railroad and civ4: set shader slots in extra data
-                    self.texture_helper.add_shader_integer_extra_datas(trishape)
-
-                if b_mat:
-                    n_nitextureprop = self.texture_helper.export_texturing_property(
-                        flags=0x0001,  # standard
-                        # TODO [object][texture][material] Move out and break dependency
-                        applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
-                        b_mat=b_mat)
-
-                    block_store.register_block(n_nitextureprop)
-                    trishape.add_property(n_nitextureprop)
-
-            # add texture effect block (must be added as preceding child of the trishape)
+            # check if there is a parent
             if n_parent:
-                # todo [texture] detect effect and move out
-                # ref_mtex = self.texture_helper.b_ref_slot
-                ref_mtex = False
-                if bpy.context.scene.niftools_scene.game == 'MORROWIND' and ref_mtex:
-                    # create a new parent block for this shape
-                    extra_node = block_store.create_block("NiNode", ref_mtex)
-                    n_parent.add_child(extra_node)
-                    # set default values for this ninode
-                    extra_node.rotation.set_identity()
-                    extra_node.scale = 1.0
-                    extra_node.flags = 0x000C  # morrowind
-                    # create texture effect block and parent the texture effect and trishape to it
-                    texeff = self.texture_helper.export_texture_effect(ref_mtex)
-                    extra_node.add_child(texeff)
-                    extra_node.add_child(trishape)
-                    extra_node.add_effect(texeff)
-                else:
-                    # refer to this block in the parent's children list
-                    n_parent.add_child(trishape)
+                # add texture effect block (must be added as parent of the trishape)
+                n_parent = self.export_texture_effect(n_parent, b_mat)
+                # refer to this mesh in the parent's children list
+                n_parent.add_child(trishape)
 
-            if mesh_hasalpha:
-                # add NiTriShape's alpha propery refer to the alpha property in the trishape block
-                trishape.add_property(self.object_property.export_alpha_property(b_mat))
-
-            if mesh_haswire:
-                # add NiWireframeProperty
-                trishape.add_property(self.object_property.export_wireframe_property(flags=1))
-
-            if mesh_doublesided:
-                # add NiStencilProperty
-                trishape.add_property(self.object_property.export_stencil_property())
-
-            if b_mat and not (bpy.context.scene.niftools_scene.game == 'SKYRIM'):
-                # add NiTriShape's specular property
-                # but NOT for sid meier's railroads and other extra shader
-                # games (they use specularity even without this property)
-                if mesh_hasspec and (bpy.context.scene.niftools_scene.game not in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
-                    # refer to the specular property in the trishape block
-                    trishape.add_property(self.object_property.export_specular_property(flags=0x0001))
-
-                # add NiTriShape's material property
-                trimatprop = self.material_property.export_material_property(
-                    name=block_store.get_full_name(b_mat),
-                    flags=0x0001,
-                    # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
-                    ambient=mesh_mat_ambient_color,
-                    diffuse=mesh_mat_diffuse_color,
-                    specular=mesh_mat_specular_color,
-                    emissive=mesh_mat_emissive_color,
-                    gloss=mesh_mat_gloss,
-                    alpha=mesh_mat_transparency,
-                    emitmulti=mesh_mat_emitmulti)
-
-                block_store.register_block(trimatprop)
-
-                # refer to the material property in the trishape block
-                trishape.add_property(trimatprop)
-
-                # material animation
-                self.material_anim.export_material(b_mat, trishape)
+            self.object_property.export_properties(b_obj, b_mat, trishape)
 
             # -> now comes the real export
 
@@ -418,32 +243,12 @@ class Mesh:
                     # check for duplicate vertquad?
                     f_index[i] = len(vertquad_list)
                     if vertmap[vertex_index] is not None:
-                        # iterate only over vertices with the same vertex index and check if they have the same uvs, normals and colors
+                        # iterate only over vertices with the same vertex index
                         for j in vertmap[vertex_index]:
-                            # TODO use function to do comparison
-                            if mesh_uv_layers:
-                                num_uvs_layers = len(mesh_uv_layers)
-                                if max(abs(vertquad[1][uv_layer][0] - vertquad_list[j][1][uv_layer][0]) for uv_layer in range(num_uvs_layers)) > NifOp.props.epsilon:
-                                    continue
-                                if max(abs(vertquad[1][uv_layer][1] - vertquad_list[j][1][uv_layer][1]) for uv_layer in range(num_uvs_layers)) > NifOp.props.epsilon:
-                                    continue
-                            if mesh_hasnormals:
-                                if abs(vertquad[2][0] - vertquad_list[j][2][0]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[2][1] - vertquad_list[j][2][1]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[2][2] - vertquad_list[j][2][2]) > NifOp.props.epsilon:
-                                    continue
-                            if mesh_hasvcol:
-                                if abs(vertquad[3][0] - vertquad_list[j][3][0]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[3][1] - vertquad_list[j][3][1]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[3][2] - vertquad_list[j][3][2]) > NifOp.props.epsilon:
-                                    continue
-                                if abs(vertquad[3][3] - vertquad_list[j][3][3]) > NifOp.props.epsilon:
-                                    continue
-                            # all tests passed: so yes, we already have it!
+                            # check if they have the same uvs, normals and colors
+                            if self.is_new_face_corner_data(vertquad, vertquad_list[j]):
+                                continue
+                            # all tests passed: so yes, we already have a vert with the same face corner data!
                             f_index[i] = j
                             break
 
@@ -490,7 +295,7 @@ class Mesh:
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
-                self.select_unweighted_vertices(b_mesh, b_obj, polygons_without_bodypart)
+                self.select_unassigned_polygons(b_mesh, b_obj, polygons_without_bodypart)
 
             if len(trilist) > 65535:
                 raise util_math.NifError("Too many polygons. Decimate your mesh and try again.")
@@ -498,47 +303,31 @@ class Mesh:
                 continue  # m_4444x: skip 'empty' material indices
 
             # add NiTriShape's data
-            # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
                 tridata = block_store.create_block("NiTriShapeData", b_obj)
             else:
                 tridata = block_store.create_block("NiTriStripsData", b_obj)
             trishape.data = tridata
 
-            # flags
-            if b_obj.niftools.consistency_flags in NifFormat.ConsistencyType._enumkeys:
-                cf_index = NifFormat.ConsistencyType._enumkeys.index(b_obj.niftools.consistency_flags)
-                tridata.consistency_flags = NifFormat.ConsistencyType._enumvalues[cf_index]
-            else:
-                tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
-                NifLog.warn("{0} has no consistency type set using default CT_STATIC.".format(b_obj))
-
             # data
             tridata.num_vertices = len(vertlist)
             tridata.has_vertices = True
             tridata.vertices.update_size()
             for i, v in enumerate(tridata.vertices):
-                v.x = vertlist[i][0]
-                v.y = vertlist[i][1]
-                v.z = vertlist[i][2]
+                v.x, v.y, v.z = vertlist[i]
             tridata.update_center_radius()
 
             if mesh_hasnormals:
                 tridata.has_normals = True
                 tridata.normals.update_size()
                 for i, v in enumerate(tridata.normals):
-                    v.x = normlist[i][0]
-                    v.y = normlist[i][1]
-                    v.z = normlist[i][2]
+                    v.x, v.y, v.z = normlist[i]
 
             if mesh_hasvcol:
                 tridata.has_vertex_colors = True
                 tridata.vertex_colors.update_size()
                 for i, v in enumerate(tridata.vertex_colors):
-                    v.r = vcollist[i][0]
-                    v.g = vcollist[i][1]
-                    v.b = vcollist[i][2]
-                    v.a = vcollist[i][3]
+                    v.r, v.g, v.b, v.a = vcollist[i]
 
             if mesh_uv_layers:
                 tridata.num_uv_sets = len(mesh_uv_layers)
@@ -553,6 +342,7 @@ class Mesh:
                         if len(uvlist[i]) == 0:
                             continue  # skip non-uv textures
                         uv.u = uvlist[i][j][0]
+                        # NIF flips the texture V-coordinate (OpenGL standard)
                         uv.v = 1.0 - uvlist[i][j][1]  # opengl standard
 
             # set triangles stitch strips for civ4
@@ -576,21 +366,21 @@ class Mesh:
                 if boneinfluences:  # yes we have skinning!
                     # create new skinning instance block and link it
                     n_root_name = block_store.get_full_name(b_obj_armature)
-                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name)
+                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name, bodypartgroups)
                     trishape.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
                     vert_list = {}
                     vert_norm = {}
-                    unassigned_verts = []
+                    unweighted_vertices = []
 
                     for bone_group in boneinfluences:
                         b_list_weight = []
                         b_vert_group = b_obj.vertex_groups[bone_group]
 
-                        for b_vert in b_obj.data.vertices:
+                        for b_vert in b_mesh.vertices:
                             if len(b_vert.groups) == 0:  # check vert has weight_groups
-                                unassigned_verts.append(b_vert)
+                                unweighted_vertices.append(b_vert)
                                 continue
 
                             for g in b_vert.groups:
@@ -608,7 +398,7 @@ class Mesh:
                             else:
                                 vert_norm[v[0]] = v[1]
 
-                    self.select_unassigned_vertices(unassigned_verts)
+                    self.select_unweighted_vertices(unweighted_vertices)
 
                     # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                     # note: allocate memory for faster performance
@@ -708,7 +498,23 @@ class Mesh:
             raise util_math.NifError("Bone '{0}' not found.".format(bone))
         return bone_block
 
-    def create_skin_inst_data(self, b_obj, n_root_name):
+    def get_body_part_groups(self, b_obj, b_mesh):
+        """Returns a set of vertices (no dupes) for each body part"""
+        bodypartgroups = []
+        for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
+            vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
+            vertices_list = set()
+            if vertex_group:
+                for b_vert in b_mesh.vertices:
+                    for b_groupname in b_vert.groups:
+                        if b_groupname.group == vertex_group.index:
+                            vertices_list.add(b_vert.index)
+                NifLog.debug("Found body part {0}".format(bodypartgroupname))
+                bodypartgroups.append(
+                    [bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
+        return bodypartgroups
+
+    def create_skin_inst_data(self, b_obj, n_root_name, bodypartgroups):
         if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
@@ -757,9 +563,9 @@ class Mesh:
                     trishape.flags = 0x0005  # use triangles as bounding box + hide
 
     # todo [mesh] join code paths for those two?
-    def select_unassigned_vertices(self, unassigned_verts):
+    def select_unweighted_vertices(self, unweighted_vertices):
         # vertices must be assigned at least one vertex group lets be nice and display them for the user
-        if len(unassigned_verts) > 0:
+        if len(unweighted_vertices) > 0:
             for b_scene_obj in bpy.context.scene.objects:
                 b_scene_obj.select_set(False)
 
@@ -777,7 +583,7 @@ class Mesh:
                                      "The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
 
-    def select_unweighted_vertices(self, b_mesh, b_obj, polygons_without_bodypart):
+    def select_unassigned_polygons(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""
         # select mesh object
         for b_deselect_obj in bpy.context.scene.objects:
@@ -796,58 +602,62 @@ class Mesh:
         raise NifError("Some polygons of {0} not assigned to any body part."
                        "The unassigned polygons have been selected in the mesh so they can easily be identified.".format(b_obj))
 
-    def smooth_mesh_seams(self, b_objs):
-        """ Finds vertices that are shared between all blender objects and averages their normals"""
-        # get shared vertices
-        NifLog.info("Smoothing seams between objects...")
-        vdict = {}
-        for b_obj in [b_obj for b_obj in b_objs if b_obj.type == 'MESH']:
-            b_mesh = b_obj.data
-            # for vertex in b_mesh.vertices:
-            #    vertex.sel = False
-            for poly in b_mesh.polygons:
-                for loop_index in range(poly.loop_start, poly.loop_start + poly.loop_total):
-                    pv_index = b_mesh.loops[loop_index].vertex_index
-                    vertex = b_mesh.vertices[pv_index]
-                    vertex_vec = vertex.co
-                    vkey = (int(vertex_vec[0] * util_consts.VERTEX_RESOLUTION),
-                            int(vertex_vec[1] * util_consts.VERTEX_RESOLUTION),
-                            int(vertex_vec[2] * util_consts.VERTEX_RESOLUTION))
-                    try:
-                        vdict[vkey].append((vertex, poly, b_mesh))
-                    except KeyError:
-                        vdict[vkey] = [(vertex, poly, b_mesh)]
+    def is_new_face_corner_data(self, vertquad, v_quad_old):
+        """Compares vert info to old vert info if relevant data is present"""
+        # uvs
+        if v_quad_old[1]:
+            for i in range(2):
+                if max(abs(vertquad[1][uv_index][i] - v_quad_old[1][uv_index][i]) for uv_index in
+                       range(len(v_quad_old[1]))) > NifOp.props.epsilon:
+                    return True
+        # normals
+        if v_quad_old[2]:
+            for i in range(3):
+                if abs(vertquad[2][i] - v_quad_old[2][i]) > NifOp.props.epsilon:
+                    return True
+        # vcols
+        if v_quad_old[3]:
+            for i in range(4):
+                if abs(vertquad[3][i] - v_quad_old[3][i]) > NifOp.props.epsilon:
+                    return True
 
-        # set normals on shared vertices
-        nv = 0
-        for vlist in vdict.values():
-            if len(vlist) <= 1:
-                continue  # not shared
+    def export_texture_effect(self, n_block, b_mat):
+        # todo [texture] detect effect
+        ref_mtex = False
+        if ref_mtex:
+            # create a new parent block for this shape
+            extra_node = block_store.create_block("NiNode", ref_mtex)
+            n_block.add_child(extra_node)
+            # set default values for this ninode
+            extra_node.rotation.set_identity()
+            extra_node.scale = 1.0
+            extra_node.flags = 0x000C  # morrowind
+            # create texture effect block and parent the texture effect and trishape to it
+            texeff = self.texture_helper.export_texture_effect(ref_mtex)
+            extra_node.add_child(texeff)
+            extra_node.add_effect(texeff)
+            return extra_node
+        return n_block
 
-            meshes = set([b_mesh for vertex, poly, b_mesh in vlist])
-            if len(meshes) <= 1:
-                continue  # not shared
+    def get_triangulated_mesh(self, b_obj):
+        # get the armature influencing this mesh, if it exists
+        b_armature_obj = b_obj.find_armature()
+        if b_armature_obj:
+            for pbone in b_armature_obj.pose.bones:
+                pbone.matrix_basis = mathutils.Matrix()
 
-            # take average of all face normals of polygons that have this vertex
-            norm = mathutils.Vector()
-            for vertex, poly, b_mesh in vlist:
-                norm += poly.normal
-            norm.normalize()
-            # remove outliers (fixes better bodies issue) first calculate fitness of each face
-            fitlist = [poly.normal.dot(norm)
-                       for vertex, poly, b_mesh in vlist]
-            bestfit = max(fitlist)
-            # recalculate normals only taking into account
-            # well-fitting polygons
-            norm = mathutils.Vector()
-            for (vertex, poly, b_mesh), fit in zip(vlist, fitlist):
-                if fit >= bestfit - 0.2:
-                    norm += poly.normal
-            norm.normalize()
-            # save normal of this vertex
-            for vertex, poly, b_mesh in vlist:
-                vertex.normal = norm
-                # vertex.sel = True
-            nv += 1
+        # make sure the model has a triangulation modifier
+        self.ensure_tri_modifier(b_obj)
 
-        NifLog.info("Fixed normals on {0} vertices.".format(str(nv)))
+        # make a copy with all modifiers applied
+        dg = bpy.context.evaluated_depsgraph_get()
+        eval_obj = b_obj.evaluated_get(dg)
+        return eval_obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+
+    def ensure_tri_modifier(self, b_obj):
+        """Makes sure that ob has a triangulation modifier in its stack."""
+        for mod in b_obj.modifiers:
+            if mod.type in ('TRIANGULATE',):
+                break
+        else:
+            b_obj.modifiers.new('Triangulate', 'TRIANGULATE')

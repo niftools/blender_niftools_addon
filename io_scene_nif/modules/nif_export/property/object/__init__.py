@@ -42,6 +42,8 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.nif_export.property.material import MaterialProp
+from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.modules.nif_import.object import PRN_DICT
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils import util_math
@@ -50,50 +52,53 @@ from io_scene_nif.utils.util_logging import NifLog
 
 
 class ObjectProperty:
+    def __init__(self):
+        self.material_property = MaterialProp()
+        self.texture_helper = NiTextureProp.get()
 
-    def export_vertex_color_property(self, block_parent, flags=1, vertex_mode=0, lighting_mode=1):
-        """Create a vertex color property, and attach it to an existing block
-        (typically, the root of the nif tree).
+    def export_properties(self, b_obj, b_mat, n_block):
+        """This is the main property processor that attaches
+        all suitable properties gauged from b_obj and b_mat to n_block"""
 
-        @param block_parent: The block to which to attach the new property.
-        @param flags: The C{flags} of the new property.
-        @param vertex_mode: The C{vertex_mode} of the new property.
-        @param lighting_mode: The C{lighting_mode} of the new property.
-        @return: The new property block.
-        """
-        # create new vertex color property block
-        vcol_prop = block_store.create_block("NiVertexColorProperty")
+        if b_obj and b_mat:
+            # export and add properties to n_block
+            for prop in (self.export_alpha_property(b_mat),
+                         self.export_wireframe_property(b_obj),
+                         self.export_stencil_property(b_mat),
+                         self.export_specular_property(b_mat),
+                         self.material_property.export_material_property(b_mat)
+                         ):
+                n_block.add_property(prop)
 
-        # make it a property of the parent
-        block_parent.add_property(vcol_prop)
+        # todo [property] refactor this
+        # add textures
+        if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
+            bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
-        # and now export the parameters
-        vcol_prop.flags = flags
-        vcol_prop.vertex_mode = vertex_mode
-        vcol_prop.lighting_mode = lighting_mode
+            block_store.register_block(bsshader)
+            n_block.add_property(bsshader)
+        elif bpy.context.scene.niftools_scene.game == 'SKYRIM':
+            bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
-        return vcol_prop
+            block_store.register_block(bsshader)
+            num_props = n_block.num_properties
+            n_block.num_properties = num_props + 1
+            n_block.bs_properties.update_size()
+            n_block.bs_properties[num_props] = bsshader
 
-    def export_z_buffer_property(self, block_parent, flags=15, func=3):
-        """Create a z-buffer property, and attach it to an existing block
-        (typically, the root of the nif tree).
+        else:
+            if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+                # sid meier's railroad and civ4: set shader slots in extra data
+                self.texture_helper.add_shader_integer_extra_datas(n_block)
 
-        @param block_parent: The block to which to attach the new property.
-        @param flags: The C{flags} of the new property.
-        @param func: The C{function} of the new property.
-        @return: The new property block.
-        """
-        # create new z-buffer property block
-        zbuf = block_store.create_block("NiZBufferProperty")
+            n_nitextureprop = self.texture_helper.export_texturing_property(
+                flags=0x0001,  # standard
+                # TODO [object][texture][material] Move out and break dependency
+                applymode=self.texture_helper.get_n_apply_mode_from_b_blend_type('MIX'),
+                b_mat=b_mat)
 
-        # make it a property of the parent
-        block_parent.add_property(zbuf)
-
-        # and now export the parameters
-        zbuf.flags = flags
-        zbuf.function = func
-
-        return zbuf
+            block_store.register_block(n_nitextureprop)
+            n_block.add_property(n_nitextureprop)
 
     def get_matching_block(self, block_type, **kwargs):
         """Try to find a block matching block_type. Keyword arguments are a dict of parameters and required attributes of the block"""
@@ -123,10 +128,36 @@ class ObjectProperty:
                 setattr(block, param, attribute)
         return block
 
-    # TODO [material][property] Move this to new form property processing
+    def export_root_node_properties(self, n_root):
+        """Wrapper for exporting properties that are commonly attached to the nif root"""
+        # add vertex color and zbuffer properties for civ4 and railroads
+        props = []
+        if bpy.context.scene.niftools_scene.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS', 'EMPIRE_EARTH_II', 'ZOO_TYCOON_2'):
+            props.append(self.export_vertex_color_property())
+            props.append(self.export_z_buffer_property())
+        # todo [property] move other common properties into this function
+        # attach properties to root node
+        for prop in props:
+            n_root.add_property(prop)
+
+    def export_vertex_color_property(self, flags=1, vertex_mode=0, lighting_mode=1):
+        """Return existing vertex color property with given flags, or create new one
+        if an alpha property with required flags is not found."""
+        return self.get_matching_block("NiVertexColorProperty", flags=flags, vertex_mode=vertex_mode, lighting_mode=lighting_mode)
+
+    def export_z_buffer_property(self, flags=15, function=3):
+        """Return existing z-buffer property with given flags, or create new one
+        if an alpha property with required flags is not found."""
+        if bpy.context.scene.niftools_scene.game in ('EMPIRE_EARTH_II',):
+            function = 1
+        return self.get_matching_block("NiZBufferProperty", flags=flags, function=function)
+
     def export_alpha_property(self, b_mat):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
+        # don't export an alpha property if mat is opaque in blender
+        if b_mat.blend_method == "OPAQUE":
+            return
         if b_mat.niftools_alpha.alphaflag != 0:
             # todo [material] reconstruct flag from material alpha settings
             flags = b_mat.niftools_alpha.alphaflag
@@ -142,20 +173,33 @@ class ObjectProperty:
             threshold = 0
         return self.get_matching_block("NiAlphaProperty", flags=flags, threshold=int(threshold))
 
-    def export_specular_property(self, flags=0x0001):
+    def export_specular_property(self, b_mat, flags=0x0001):
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
-        return self.get_matching_block("NiSpecularProperty", flags=flags)
+        if b_mat and not (bpy.context.scene.niftools_scene.game == 'SKYRIM'):
+            # add NiTriShape's specular property
+            # but NOT for sid meier's railroads and other extra shader
+            # games (they use specularity even without this property)
+            if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
+                return
+            eps = NifOp.props.epsilon
+            if (b_mat.specular_color.r > eps) or (b_mat.specular_color.g > eps) or (b_mat.specular_color.b > eps):
+                return self.get_matching_block("NiSpecularProperty", flags=flags)
 
-    def export_wireframe_property(self, flags=0x0001):
+    def export_wireframe_property(self, b_obj, flags=0x0001):
         """Return existing wire property with given flags, or create new one
         if an wire property with required flags is not found."""
-        return self.get_matching_block("NiWireframeProperty", flags=flags)
+        for b_mod in b_obj.modifiers:
+            if b_mod.type == "WIREFRAME":
+                return self.get_matching_block("NiWireframeProperty", flags=flags)
 
-    def export_stencil_property(self, flags=None):
+    def export_stencil_property(self, b_mat, flags=None):
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
+        # no stencil property
+        if b_mat.use_backface_culling:
+            return
         if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
             flags = 19840
         # search for duplicate

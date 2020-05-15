@@ -50,17 +50,16 @@ class BonePanel(Panel):
     # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
-        return True
+        return context.bone is not None
 
     def draw(self, context):
-        if context.bone:
-            nif_bone_props = context.bone.niftools
+        nif_bone_props = context.bone.niftools
 
-            row = self.layout.column()
+        row = self.layout.column()
 
-            row.prop(nif_bone_props, "flags")
-            row.prop(nif_bone_props, "priority")
-            row.prop(nif_bone_props, "longname")
+        row.prop(nif_bone_props, "flags")
+        row.prop(nif_bone_props, "priority")
+        row.prop(nif_bone_props, "longname")
 
 
 class ArmaturePanel(Panel):
@@ -73,14 +72,13 @@ class ArmaturePanel(Panel):
     # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
-        return True
+        return context.armature is not None
 
     def draw(self, context):
-        if context.armature:
-            nif_armature_props = context.armature.niftools
+        nif_armature_props = context.armature.niftools
 
-            layout = self.layout
-            row = layout.column()
+        layout = self.layout
+        row = layout.column()
 
-            row.prop(nif_armature_props, "axis_forward")
-            row.prop(nif_armature_props, "axis_up")
+        row.prop(nif_armature_props, "axis_forward")
+        row.prop(nif_armature_props, "axis_up")

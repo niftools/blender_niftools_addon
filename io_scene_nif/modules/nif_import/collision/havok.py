@@ -80,6 +80,7 @@ class BhkCollision(Collision):
         self.process_bhk.register(NifFormat.NiTriStripsData, self.import_nitristrips)
         self.process_bhk.register(NifFormat.bhkMoppBvTreeShape, self.import_bhk_mopp_bv_tree_shape)
         self.process_bhk.register(NifFormat.bhkListShape, self.import_bhk_list_shape)
+        self.process_bhk.register(NifFormat.bhkSimpleShapePhantom, self.import_bhk_simple_shape_phantom)
 
     def process_bhk(self, bhk_shape):
         """Base method to warn user that this property is not supported"""
@@ -101,6 +102,25 @@ class BhkCollision(Collision):
     def import_bhk_mopp_bv_tree_shape(self, bhk_shape):
         NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
         return self.process_bhk(bhk_shape.shape)
+
+    def import_bhk_simple_shape_phantom(self, bhkshape):
+        """Imports a bhkSimpleShapePhantom block and applies the transform to the collision object"""
+
+        # import shapes
+        collision_objs = self.import_bhk_shape(bhkshape.shape)
+        NifLog.warn("Support for bhkSimpleShapePhantom is limited, transform is ignored")
+        # todo [pyffi/collision] current nifskope shows a transform, our nif xml doesn't, so ignore it for now
+        # # find transformation matrix
+        # transform = mathutils.Matrix(bhkshape.transform.as_list())
+        #
+        # # fix scale
+        # transform.translation = transform.translation * self.HAVOK_SCALE
+        #
+        # # apply transform
+        # for b_col_obj in collision_objs:
+        #     b_col_obj.matrix_local = b_col_obj.matrix_local @ transform
+        # return a list of transformed collision shapes
+        return collision_objs
 
     def import_bhktransform(self, bhkshape):
         """Imports a BhkTransform block and applies the transform to the collision object"""
@@ -158,11 +178,7 @@ class BhkCollision(Collision):
     def _import_bhk_rigid_body(self, bhkshape, collision_objs):
         # set physics flags and mass
         for b_col_obj in collision_objs:
-            # todo [collision] make low level, remove operator!
-            bpy.context.view_layer.objects.active = b_col_obj
-            bpy.ops.rigidbody.object_add(type='ACTIVE')
             b_r_body = b_col_obj.rigid_body
-            b_r_body.enabled = True
 
             if bhkshape.mass > 0.0001:
                 # for physics emulation
@@ -243,10 +259,7 @@ class BhkCollision(Collision):
         # create blender object
         b_obj = Object.box_from_extents("capsule", minx, maxx, miny, maxy, minz, maxz)
         # here, these are not encoded as a direction so we must first calculate the direction
-        b_obj.matrix_local = self.center_origin_to_matrix(second_point, first_point - second_point)
-        # we do it like this so the rigid bodies are correctly drawn in blender
-        # because they always draw around the object center
-        b_obj.location.z += length / 2
+        b_obj.matrix_local = self.center_origin_to_matrix((first_point + second_point) / 2, first_point - second_point)
         self.set_b_collider(b_obj, "CAPSULE", radius, bhk_shape)
         return [b_obj]
 

@@ -128,9 +128,8 @@ class NiPropertyProcessor:
         NifLog.debug("NiTexturingProperty property processed")
 
     def process_niwireframe_property(self, prop):
-        """Material based specular"""
-        # todo [material] upgrade needed, maybe use Wireframe Modifier (needs access to b_obj)? Or wire display type?
-        # b_mat.type = 'WIRE'
+        """Modifier based wireframe display"""
+        self.b_obj.modifiers.new("WIREFRAME", 'WIREFRAME')
         NifLog.debug("NiWireframeProperty property processed")
 
     def process_nivertexcolor_property(self, prop):

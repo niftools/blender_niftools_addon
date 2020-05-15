@@ -65,6 +65,8 @@ class Vertex:
     @staticmethod
     def map_normals(b_mesh, n_tri_data):
         """Import nif normals as custom normals."""
+        if not n_tri_data.has_normals:
+            return
         assert len(b_mesh.vertices) == len(n_tri_data.normals)
         # set normals
         if NifOp.props.use_custom_normals:

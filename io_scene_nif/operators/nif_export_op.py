@@ -82,12 +82,6 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
         description="Selects which parts of the blender file to export.",
         default='ALL_NIF')
 
-    # Smoothen inter-object seams.
-    smooth_object_seams: bpy.props.BoolProperty(
-        name="Smooth Inter-Object Seams",
-        description="Smooth normal data along inter-object seams.",
-        default=True)
-
     # Use BSAnimationNode (for Morrowind).
     bs_animation_node: bpy.props.BoolProperty(
         name="Use NiBSAnimationNode",

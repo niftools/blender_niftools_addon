@@ -41,6 +41,7 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.modules.nif_export.animation.material import MaterialAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
@@ -49,13 +50,19 @@ EXPORT_OPTIMIZE_MATERIALS = True
 
 
 class MaterialProp:
-        
-    def export_material_property(self, name, flags, ambient, diffuse, specular, emissive, gloss, alpha, emitmulti):
+
+    def __init__(self):
+        self.material_anim = MaterialAnimation()
+
+    def export_material_property(self, b_mat, flags=0x0001):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
-
+        # don't export material properties for these games
+        if bpy.context.scene.niftools_scene.game in ('SKYRIM', ):
+            return
+        name = block_store.get_full_name(b_mat)
         # create n_block
-        matprop = NifFormat.NiMaterialProperty()
+        n_mat_prop = NifFormat.NiMaterialProperty()
 
         # list which determines whether the material name is relevant or not  only for particular names this holds,
         # such as EnvMap2 by default, the material name does not affect rendering
@@ -74,27 +81,29 @@ class MaterialProp:
             NifLog.warn("Renaming material '{0}' to ''".format(name))
             name = ""
 
-        matprop.name = name
-        matprop.flags = flags
-        matprop.ambient_color.r = ambient.r
-        matprop.ambient_color.g = ambient.g
-        matprop.ambient_color.b = ambient.b
+        n_mat_prop.name = name
+        # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
+        n_mat_prop.flags = flags
+        ambient = b_mat.niftools.ambient_color
+        n_mat_prop.ambient_color.r = ambient.r
+        n_mat_prop.ambient_color.g = ambient.g
+        n_mat_prop.ambient_color.b = ambient.b
 
         # todo [material] some colors in the b2.8 api allow rgb access, others don't - why??
-        # matprop.diffuse_color.r = diffuse.r
-        # matprop.diffuse_color.g = diffuse.g
-        # matprop.diffuse_color.b = diffuse.b
-        #
-        # matprop.specular_color.r = specular.r
-        # matprop.specular_color.g = specular.g
-        # matprop.specular_color.b = specular.b
-        #
-        # matprop.emissive_color.r = emissive.r
-        # matprop.emissive_color.g = emissive.g
-        # matprop.emissive_color.b = emissive.b
-        # matprop.glossiness = gloss
-        # matprop.alpha = alpha
-        # matprop.emit_multi = emitmulti
+        # diffuse mat
+        n_mat_prop.diffuse_color.r, n_mat_prop.diffuse_color.g, n_mat_prop.diffuse_color.b, _ = b_mat.diffuse_color
+        n_mat_prop.specular_color.r, n_mat_prop.specular_color.g, n_mat_prop.specular_color.b = b_mat.specular_color
+
+        emissive = b_mat.niftools.emissive_color
+        n_mat_prop.emissive_color.r = emissive.r
+        n_mat_prop.emissive_color.g = emissive.g
+        n_mat_prop.emissive_color.b = emissive.b
+
+        # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
+        n_mat_prop.glossiness = b_mat.specular_intensity
+        n_mat_prop.alpha = b_mat.niftools.emissive_alpha.v
+        # todo [material] this float is used by FO3's material properties
+        # n_mat_prop.emit_multi = emitmulti
 
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different materials even when NiMaterialProperty is the same)
@@ -110,9 +119,13 @@ class MaterialProp:
 
             # check hash
             first_index = 1 if ignore_strings else 0
-            if n_block.get_hash()[first_index:] == matprop.get_hash()[first_index:]:
-                NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, n_block.name))
-                return n_block
+            if n_block.get_hash()[first_index:] == n_mat_prop.get_hash()[first_index:]:
+                NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(n_mat_prop.name, n_block.name))
+                n_mat_prop = n_block
+                break
 
+        block_store.register_block(n_mat_prop)
+        # material animation
+        self.material_anim.export_material(b_mat, n_mat_prop)
         # no material property with given settings found, so use and register the new one
-        return matprop
+        return n_mat_prop

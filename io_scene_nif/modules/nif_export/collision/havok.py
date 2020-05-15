@@ -152,13 +152,13 @@ class BhkCollision(Collision):
         n_r_body.layer_copy = n_r_body.layer
         n_r_body.col_filter_copy = n_r_body.col_filter
         # TODO [format] nif.xml update required
-        ukn_6 = n_r_body.unknown_6_shorts
-        ukn_6[0] = 21280
-        ukn_6[1] = 4581
-        ukn_6[2] = 62977
-        ukn_6[3] = 65535
-        ukn_6[4] = 44
-        ukn_6[5] = 0
+        # ukn_6 = n_r_body.unknown_6_shorts
+        # ukn_6[0] = 21280
+        # ukn_6[1] = 4581
+        # ukn_6[2] = 62977
+        # ukn_6[3] = 65535
+        # ukn_6[4] = 44
+        # ukn_6[5] = 0
 
         b_r_body = b_obj.rigid_body
         # mass is 1.0 at the moment (unless property was set on import or by the user)
@@ -416,14 +416,11 @@ class BhkCollision(Collision):
             radius = b_obj.dimensions.x / 2
             matrix = util_math.get_object_bind(b_obj)
 
-            # undo centering on matrix
-            matrix.translation.z -= length / 2
-
-            second_point = matrix.translation
-
+            length_half = length / 2
             # calculate the direction unit vector
-            v_dir = (mathutils.Vector((0, 0, 1)) * matrix.to_3x3().inverted()).normalized()
-            first_point = second_point + v_dir * length
+            v_dir = (mathutils.Vector((0, 0, 1)) @ matrix.to_3x3().inverted()).normalized()
+            first_point = matrix.translation + v_dir * length_half
+            second_point = matrix.translation - v_dir * length_half
 
             radius /= self.HAVOK_SCALE
             first_point /= self.HAVOK_SCALE

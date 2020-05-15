@@ -80,12 +80,17 @@ class Collision:
         override = bpy.context.copy()
         override['selected_objects'] = b_obj
         bpy.ops.rigidbody.object_add(override)
+        # viable alternative:
+        # bpy.context.view_layer.objects.active = b_col_obj
+        # bpy.ops.rigidbody.object_add(type='PASSIVE')
 
         b_r_body = b_obj.rigid_body
         b_r_body.enabled = True
         b_r_body.use_margin = True
         b_r_body.collision_margin = radius
         b_r_body.collision_shape = bounds_type
+        # if they are set to active they explode once you play back an anim
+        b_r_body.type = "PASSIVE"
 
         b_me = b_obj.data
         if n_obj:
