@@ -461,9 +461,9 @@ class BhkCollision(Collision):
             '''
 
             # calculate vertices, normals, and distances
-            vertlist = [b_transform_mat * vert.co for vert in b_mesh.vertices]
-            fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.polygons]
-            fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.polygons[b_face.index].vertices[0]].co)).dot(b_rot_quat.to_matrix() * b_face.normal) for b_face in b_mesh.polygons]
+            vertlist = [b_transform_mat @ vert.co for vert in b_mesh.vertices]
+            fnormlist = [b_rot_quat @ b_face.normal for b_face in b_mesh.polygons]
+            fdistlist = [(b_transform_mat @ (-1 * b_mesh.vertices[b_mesh.polygons[b_face.index].vertices[0]].co)).dot(b_rot_quat.to_matrix() @ b_face.normal) for b_face in b_mesh.polygons]
 
             # remove duplicates through dictionary
             vertdict = {}
