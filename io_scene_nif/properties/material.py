@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.props import (PointerProperty,
                        FloatVectorProperty,
                        IntProperty,
@@ -92,4 +91,3 @@ class AlphaFlags(PropertyGroup):
         name='Material Flag',
         default=0
     )
-

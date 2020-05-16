@@ -73,8 +73,7 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
     animation: bpy.props.EnumProperty(
         items=[
             ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
-            ('ALL_NIF_XNIF_XKF', "All (nif, xnif, xkf)",
-             "Geometry and animation to a nif, xnif, and xkf (for Morrowind)."),
+            ('ALL_NIF_XNIF_XKF', "All (nif, xnif, xkf)", "Geometry and animation to a nif, xnif, and xkf (for Morrowind)."),
             ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif."),
             ('ANIM_KF', "Animation only (kf)", "Only animation to a single kf."),
         ],

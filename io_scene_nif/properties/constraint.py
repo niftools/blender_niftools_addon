@@ -1,4 +1,4 @@
-""" Nif User Interface, custom properties store for constaints"""
+"""Nif User Interface, custom properties store for constraints"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.props import (PointerProperty,
                        FloatProperty,
                        )

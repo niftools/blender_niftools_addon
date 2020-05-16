@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.props import (PointerProperty,
                        StringProperty,
                        IntProperty,

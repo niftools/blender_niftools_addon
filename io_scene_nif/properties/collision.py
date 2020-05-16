@@ -1,4 +1,4 @@
-""" Nif User Interface, custom nif properties store for collisions settings"""
+"""Nif User Interface, custom nif properties store for collisions settings"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.props import (PointerProperty,
                        IntProperty,
                        BoolProperty,
@@ -114,4 +113,3 @@ class CollisionProperty(PropertyGroup):
         description='Whether or not to export collision settings via blender properties',
         default=False,
     )
-

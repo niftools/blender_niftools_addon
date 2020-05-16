@@ -51,6 +51,7 @@ def _game_to_enum(game):
     return enum
 
 
+# noinspection PyUnusedLocal
 def update_version_from_game(self, context):
     """Updates the Scene panel's numerical version fields if its game value has been changed"""
     self.nif_version = self.VERSION.get(self.game, 0)

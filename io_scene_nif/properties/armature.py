@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.props import (PointerProperty,
                        IntProperty,
                        EnumProperty,
@@ -47,7 +46,6 @@ from bpy.types import PropertyGroup
 
 
 class BoneProperty(PropertyGroup):
-    # TODO [object][proprerty][flag] This is probably a general object flag which should be available to all generic objects
     flags: IntProperty(
         name='Bone Flag',
         default=0
