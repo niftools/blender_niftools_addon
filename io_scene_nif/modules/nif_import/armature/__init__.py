@@ -71,9 +71,13 @@ class Armature:
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.display_type = 'STICK'
 
-        # set axis orientation for export
-        b_armature_data.niftools.axis_forward = NifOp.props.axis_forward
-        b_armature_data.niftools.axis_up = NifOp.props.axis_up
+        # use heuristics to determine a suitable orientation
+        forward, up = self.guess_orientation(n_armature)
+        # pass them to the matrix utility
+        util_math.set_bone_orientation(forward, up)
+        # store axis orientation for export
+        b_armature_data.niftools.axis_forward = forward
+        b_armature_data.niftools.axis_up = up
         b_armature_obj = Object.create_b_obj(n_armature, b_armature_data)
         b_armature_obj.show_in_front = True
 
@@ -125,6 +129,38 @@ class Armature:
         # import and parent bone children
         for n_child in n_block.children:
             self.import_bone(n_child, b_armature_data, n_armature, b_edit_bone)
+
+    def guess_orientation(self, n_armature):
+        """Analyze all bones' translations to see what the nif considers the 'forward' axis"""
+        axis_indices = []
+        ids = ["X", "Y", "Z", "-X", "-Y", "-Z"]
+        for n_child in n_armature.children:
+            self.get_transform(n_child, axis_indices)
+        # the forward index is the most common one from the list
+        forward_ind = max(set(axis_indices), key=axis_indices.count)
+        # move the up index one coordinate to the right, account for end of list
+        up_ind = (forward_ind + 1) % len(ids)
+        # return string identifiers
+        return ids[forward_ind], ids[up_ind]
+
+    def get_transform(self, n_bone, axis_indices):
+        """Helper function to get the forward axis of a bone"""
+        # check that n_block is indeed a bone
+        if not self.is_bone(n_bone):
+            return None
+        trans = n_bone.translation.as_tuple()
+        trans_abs = tuple(abs(v) for v in trans)
+        # do argmax
+        max_coord_ind = max(zip(trans_abs, range(len(trans_abs))))[1]
+        # now check the sign
+        actual_value = trans[max_coord_ind]
+        # handle sign accordingly so negative indices map to the negative identifiers in list
+        if actual_value < 0:
+            max_coord_ind += 3
+        axis_indices.append(max_coord_ind)
+        # move down the hierarchy
+        for n_child in n_bone.children:
+            self.get_transform(n_child, axis_indices)
 
     @staticmethod
     def fix_bone_lengths(b_armature_data):

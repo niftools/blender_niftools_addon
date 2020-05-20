@@ -91,9 +91,6 @@ class NifImport(NifCommon):
                 if len(self.SELECTED_OBJECTS) != 1 or self.SELECTED_OBJECTS[0].type != 'ARMATURE':
                     raise util_math.NifError("You must select exactly one armature in 'Import Geometry Only' mode.")
 
-            # the axes used for bone correction depend on the nif version
-            util_math.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
-
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
