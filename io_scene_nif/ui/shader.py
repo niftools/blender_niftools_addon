@@ -104,7 +104,7 @@ class ShaderPanel(Panel):
             row.prop(nif_obj_props, "slsf_1_cast_shadows")
             row.prop(nif_obj_props, "slsf_1_decal")
             row.prop(nif_obj_props, "slsf_1_dynamic_decal")
-            row.prop(nif_obj_props, "slsf_1_enviroment_mapping")
+            row.prop(nif_obj_props, "slsf_1_environment_mapping")
             row.prop(nif_obj_props, "slsf_1_external_emittance")
             row.prop(nif_obj_props, "slsf_1_eye_environment_mapping")
             row.prop(nif_obj_props, "slsf_1_facegen_detail")
