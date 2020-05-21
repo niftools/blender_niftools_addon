@@ -234,7 +234,7 @@ class Mesh:
                 v_map[n_vert_index] = b_v_index  # NIF vertex i maps to blender vertex b_v_index
                 if transform:
                     n_vert = mathutils.Vector([n_vert.x, n_vert.y, n_vert.z])
-                    n_vert = n_vert * transform
+                    n_vert = transform * n_vert
 
                 # add the vertex
                 b_mesh.vertices.add(1)
