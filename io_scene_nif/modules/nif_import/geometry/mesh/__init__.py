@@ -62,15 +62,13 @@ class Mesh:
         self.morph_anim = MorphAnimation()
         self.mesh_prop_processor = MeshPropertyProcessor()
 
-    def import_mesh(self, n_block, b_obj, transform=None):
+    def import_mesh(self, n_block, b_obj):
         """Creates and returns a raw mesh, or appends geometry data to group_mesh.
 
         :param n_block: The nif block whose mesh data to import.
         :type n_block: C{NiTriBasedGeom}
         :param b_obj: The mesh to which to append the geometry data. If C{None}, a new mesh is created.
         :type b_obj: A Blender object that has mesh data.
-        :param transform: Apply the n_block's transformation to the mesh.
-        :type transform: C{Matix}
         """
         assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
@@ -92,7 +90,7 @@ class Mesh:
         # TODO [properties] Should this be object level process, secondary pass for materials / caching
         self.mesh_prop_processor.process_property_list(n_block, b_obj.data)
 
-        v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data, transform)
+        v_map = Mesh.map_n_verts_to_b_verts(b_mesh, n_tri_data)
 
         bf2_index, f_map = Mesh.add_triangles_to_bmesh(b_mesh, n_triangles, v_map)
 
@@ -185,7 +183,7 @@ class Mesh:
         return b_poly_offset, f_map
 
     @staticmethod
-    def map_n_verts_to_b_verts(b_mesh, n_tri_data, transform):
+    def map_n_verts_to_b_verts(b_mesh, n_tri_data):
         # vertices
         n_verts = n_tri_data.vertices
 
@@ -232,9 +230,6 @@ class Mesh:
                 # no entry: new vertex / normal pair
                 n_map[key] = n_vert_index  # unique vertex / normal pair with key k was added, with NIF index i
                 v_map[n_vert_index] = b_v_index  # NIF vertex i maps to blender vertex b_v_index
-                if transform:
-                    n_vert = mathutils.Vector([n_vert.x, n_vert.y, n_vert.z])
-                    n_vert = transform * n_vert
 
                 # add the vertex
                 b_mesh.vertices.add(1)
