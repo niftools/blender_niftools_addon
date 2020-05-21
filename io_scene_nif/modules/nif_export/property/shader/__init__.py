@@ -95,7 +95,7 @@ class BSShaderProperty:
     def export_bs_lighting_shader_property(self, b_mat):
         bsshader = NifFormat.BSLightingShaderProperty()
         b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_mat.niftools_shader.bslsp_shaderobjtype)
-        bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
+        bsshader.skyrim_shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
 
         self.texturehelper.export_bs_lighting_shader_prop_textures(bsshader)
 
