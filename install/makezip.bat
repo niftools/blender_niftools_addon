@@ -1,18 +1,18 @@
 @echo off
 
-set DIR=%~dps0
+set "DIR=%~dps0"
 :: remove trailing backslash
 if "%DIR:~-1%" == "\" (
-    set DIR="%DIR:~0,-1%"
+    set "DIR=%DIR:~0,-1%"
 )
 
-set ROOT="%DIR%"\..
-set NAME="blender_nif_plugin"
-set /p VERSION="%ROOT%\io_scene_nif\VERSION.txt"
+for %%I in ("%DIR%\..") do set "ROOT=%%~fI"
+set "NAME=blender_nif_plugin"
+set /p VERSION=<%ROOT%\io_scene_nif\VERSION.txt
 :: Abuse for loop to execute and store command output
 for /f %%i in ('git rev-parse --short HEAD') do set HASH=%%i
-for /f %%i in ('date +%F') do set DATE=%%i
-set ZIP_NAME="%NAME%-%VERSION%-%DATE%-%HASH%"
+for /f %%i in ('echo %date%') do set DATE=%%i
+set "ZIP_NAME=%NAME%-%VERSION%-%DATE%-%HASH%"
 set PYFFI_VERSION="2.2.4.dev3"
 set DEPS="io_scene_nif\dependencies"
 if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
@@ -21,7 +21,7 @@ mkdir "%DIR%"\temp
 
 pushd "%DIR%"\temp
 mkdir io_scene_nif
-xcopy /s "%ROOT%"\io_scene_nif io_scene_nif
+xcopy /s "%ROOT%\io_scene_nif" io_scene_nif
 mkdir "%DEPS%"
 
 python -m pip install "PyFFI==%PYFFI_VERSION%" --target="%DEPS%"

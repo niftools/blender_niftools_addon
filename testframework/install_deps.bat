@@ -12,7 +12,9 @@ goto end
 ::TODO replace with equivalent setup.py call via pip to remove
 
 echo. "Installing Sphinx to %BLENDER_ADDONS_DIR%"
-python -m pip install "Sphinx nose" --target="%BLENDER_ADDONS_DIR%"
+python -m pip install "Sphinx" --target="%BLENDER_ADDONS_DIR%"
+echo. "Installing nose to %BLENDER_ADDONS_DIR%"
+python -m pip install "nose" --target="%BLENDER_ADDONS_DIR%"
 echo. "Installing pydevd debugger"
 python -m pip install "pydevd-pycharm~=201.6668.60" --target="%BLENDER_ADDONS_DIR%"
 
