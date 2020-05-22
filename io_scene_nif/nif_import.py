@@ -258,7 +258,7 @@ class NifImport(NifCommon):
             self.objecthelper.set_object_bind(b_obj, b_children, b_armature)
 
             # import extra node data, such as node type
-            self.objecthelper.import_root_collision(n_block, b_obj)
+            NiTypes.import_root_collision(n_block, b_obj)
             NiTypes.import_billboard(n_block, b_obj)
             NiTypes.import_range_lod_data(n_block, b_obj, b_children)
 
