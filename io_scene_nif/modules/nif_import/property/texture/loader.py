@@ -48,47 +48,25 @@ from io_scene_nif.modules.nif_import.property import texture
 from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 
-# dictionary of texture files, to reuse textures
-DICT_TEXTURES = {}
 
 class TextureLoader:
 
-    # for reference
-    # @staticmethod
-    # def load_tex(tree, tex_path):
-    #     name = os.path.basename(tex_path)
-    #     if name not in bpy.data.images:
-    #         try:
-    #             img = bpy.data.images.load(tex_path)
-    #         except:
-    #             NifLog.debug("Could not find image " + tex_path + ", generating blank image!")
-    #             img = bpy.data.images.new(name, 1, 1)
-    #     else:
-    #         img = bpy.data.images[name]
-    #     tex = tree.nodes.new('ShaderNodeTexImage')
-    #     tex.image = img
-    #     tex.interpolation = "Smart"
-    #
-    #     return tex
-
     @staticmethod
-    def get_texture_hash(source):
-        """Helper function for import_texture. Returns a key that uniquely
-        identifies a texture from its source (which is either a
-        NiSourceTexture block, or simply a path string).
-        """
-        if not source:
-            return None
-        elif isinstance(source, NifFormat.NiSourceTexture):
-            return source.get_hash()
-        elif isinstance(source, str):
-            return source.lower()
+    def load_image(tex_path):
+        """Returns an image or a generated image if none was found"""
+        name = os.path.basename(tex_path)
+        if name not in bpy.data.images:
+            try:
+                b_image = bpy.data.images.load(tex_path)
+            except:
+                NifLog.warn(f"Texture '{name}' not found or not supported and no alternate available")
+                b_image = bpy.data.images.new(name=name, width=1, height=1, alpha=True)
         else:
-            raise TypeError("source must be NiSourceTexture block or string")
+            b_image = bpy.data.images[name]
+        return b_image
 
     def import_texture_source(self, source):
         """Convert a NiSourceTexture block, or simply a path string, to a Blender Texture object.
-        Stores it in the texture.DICT_TEXTURES dictionary to avoid future duplicate imports.
         :return Texture object
         """
 
@@ -96,57 +74,24 @@ class TextureLoader:
         if not source:
             return None
 
-        # calculate the texture hash key
-        texture_hash = self.get_texture_hash(source)
-
-        try:
-            # look up the texture in the dictionary of imported textures and return it if found
-            return DICT_TEXTURES[texture_hash]
-        except KeyError:
-            NifLog.debug("Storing {0} texture in map".format(str(source)))
-            pass
-
         if isinstance(source, NifFormat.NiSourceTexture) and not source.use_external and texture.IMPORT_EMBEDDED_TEXTURES:
-            fn, b_image = self.import_embedded_texture_source(source)
+            return self.import_embedded_texture_source(source)
         else:
-            fn, b_image = self.import_external_source(source)
-
-        b_text_name = os.path.basename(fn)
-        # create a stub image if the image could not be loaded
-        if not b_image:
-            NifLog.warn("Texture '{0}' not found or not supported and no alternate available".format(fn))
-            b_image = bpy.data.images.new(name=b_text_name, width=1, height=1, alpha=False)
-            b_image.filepath = fn
-
-        # save texture to avoid duplicate imports, and return it
-        DICT_TEXTURES[texture_hash] = b_image
-        return b_image
+            return self.import_external_source(source)
 
     def import_embedded_texture_source(self, source):
 
         fn, tex = self.generate_image_name()
 
         # save embedded texture as dds file
-        stream = open(tex, "wb")
-        try:
-            NifLog.info("Saving embedded texture as {0}".format(tex))
-            source.pixel_data.save_as_dds(stream)
-        except ValueError:
-            # value error means that the pixel format is not supported
-            b_image = None
-        else:
-            # saving dds succeeded so load the file
-            b_image = bpy.ops.image.open(tex)
-            # Blender will return an image object even if the file format is not supported,
-            # so to check if the image is actually loaded an error is forced via "b_image.size"
+        with open(tex, "wb") as stream:
             try:
-                b_image.size
-            except:  # RuntimeError: couldn't load image data in Blender
-                b_image = None  # not supported, delete image object
-        finally:
-            stream.close()
+                NifLog.info(f"Saving embedded texture as {tex}")
+                source.pixel_data.save_as_dds(stream)
+            except ValueError:
+                NifLog.warn(f"Pixel format not supported in embedded texture {tex}!")
 
-        return [fn, b_image]
+        return self.load_image(tex)
 
     @staticmethod
     def generate_image_name():
@@ -218,21 +163,9 @@ class TextureLoader:
                 tex = bpy.path.resolve_ncase(tex)
                 NifLog.debug("Searching {0}".format(tex))
                 if os.path.exists(tex):
-                    # tries to load the file
-                    b_image = bpy.data.images.load(tex)
-                    # Blender will return an image object even if the file format is not supported,
-                    # so to check if the image is actually loaded an error is forced via "b_image.size"
-                    try:
-                        b_image.size
-                    except:  # RuntimeError: couldn't load image data in Blender
-                        b_image = None  # not supported, delete image object
-                    else:
-                        # file format is supported
-                        NifLog.debug("Found '{0}' at {1}".format(fn, tex))
-                        break
-            if b_image:
-                return [tex, b_image]
+                    return self.load_image(tex)
+
         else:
             tex = os.path.join(search_path_list[0], fn)
-
-        return [tex, b_image]
+        # probably not found, but load a dummy regardless
+        return self.load_image(tex)
