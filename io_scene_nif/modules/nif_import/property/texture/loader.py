@@ -106,9 +106,6 @@ class TextureLoader:
         return fn, tex
 
     def import_external_source(self, source):
-        b_image = None
-        fn = None
-
         # the texture uses an external image file
         if isinstance(source, NifFormat.NiSourceTexture):
             fn = source.file_name.decode()
