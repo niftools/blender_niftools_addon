@@ -69,6 +69,9 @@ class MeshPropertyProcessor:
         b_mesh = b_obj.data
         # get all valid properties that are attached to n_block
         props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
+        # we need no material if we have no properties
+        if not props:
+            return
         # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
         for prop in props:
             if prop.name:
