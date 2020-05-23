@@ -91,9 +91,6 @@ class NifImport(NifCommon):
                 if len(self.SELECTED_OBJECTS) != 1 or self.SELECTED_OBJECTS[0].type != 'ARMATURE':
                     raise util_math.NifError("You must select exactly one armature in 'Import Geometry Only' mode.")
 
-            # the axes used for bone correction depend on the nif version
-            util_math.set_bone_orientation(NifOp.props.axis_forward, NifOp.props.axis_up)
-
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
@@ -261,7 +258,7 @@ class NifImport(NifCommon):
             self.objecthelper.set_object_bind(b_obj, b_children, b_armature)
 
             # import extra node data, such as node type
-            self.objecthelper.import_root_collision(n_block, b_obj)
+            NiTypes.import_root_collision(n_block, b_obj)
             NiTypes.import_billboard(n_block, b_obj)
             NiTypes.import_range_lod_data(n_block, b_obj, b_children)
 

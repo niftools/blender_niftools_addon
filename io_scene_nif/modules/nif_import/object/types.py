@@ -46,6 +46,19 @@ from io_scene_nif.modules.nif_import.object import Object
 class NiTypes:
 
     @staticmethod
+    def import_root_collision(n_node, b_obj):
+        """ Import a RootCollisionNode """
+        if isinstance(n_node, NifFormat.RootCollisionNode):
+            b_obj["type"] = "RootCollisionNode"
+            b_obj.name = "RootCollisionNode"
+            b_obj.display_type = 'BOUNDS'
+            b_obj.show_wire = True
+            b_obj.display_bounds_type = 'BOX'
+            # b_obj.game.use_collision_bounds = True
+            # b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+            b_obj.niftools.flags = n_node.flags
+
+    @staticmethod
     def import_range_lod_data(n_node, b_obj, b_children):
         """ Import LOD ranges and mark b_obj as a LOD node """
         if isinstance(n_node, NifFormat.NiLODNode):

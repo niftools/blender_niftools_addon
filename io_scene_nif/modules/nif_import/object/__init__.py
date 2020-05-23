@@ -95,19 +95,6 @@ class Object:
         faces = [[0, 1, 3, 2], [6, 7, 5, 4], [0, 2, 6, 4], [3, 1, 5, 7], [4, 5, 1, 0], [7, 6, 2, 3]]
         return Object.mesh_from_data(b_name, verts, faces)
 
-    def import_root_collision(self, n_node, b_obj):
-        """ Import a RootCollisionNode """
-        if isinstance(n_node, NifFormat.RootCollisionNode):
-            b_obj.display_type = 'BOUNDS'
-            b_obj.show_wire = True
-            b_obj.display_bounds_type = 'BOX'
-            # b_obj.game.use_collision_bounds = True
-            # b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
-            b_obj.niftools.flags = n_node.flags
-            b_mesh = b_obj.data
-            b_mesh.validate()
-            b_mesh.update()
-
     def set_object_bind(self, b_obj, b_obj_children, b_armature):
         """ Sets up parent-child relationships for b_obj and all its children and corrects space for children of bones"""
         if isinstance(b_obj, bpy.types.Object):

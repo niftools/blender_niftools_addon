@@ -263,17 +263,8 @@ class Object:
 
     def export_collision(self, b_obj, n_parent):
         """Main function for adding collision object b_obj to a node."""
-        if bpy.context.scene.niftools_scene.game == 'MORROWIND':
-            if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
-                raise util_math.NifError("Morrowind only supports Triangle Mesh collisions.")
-            node = block_store.create_block("RootCollisionNode", b_obj)
-            n_parent.add_child(node)
-            node.flags = 0x0003  # default
-            util_math.set_object_matrix(b_obj, node)
-            for child in b_obj.children:
-                self.export_node(child, node, None)
 
-        elif bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
             nodes = [n_parent]
             nodes.extend([block for block in n_parent.children if block.name[:14] == 'collisiondummy'])
