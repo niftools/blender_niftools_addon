@@ -227,7 +227,7 @@ class Armature:
         b_bind = util_math.nif_bind_to_blender_bind(n_bind)
 
         # the following is a workaround because blender can no longer set matrices to bones directly
-        tail, roll = util_math.mat3_to_vec_roll(b_bind.to_3x3())
+        tail, roll = bpy.types.Bone.AxisRollFromMatrix(b_bind.to_3x3())
         b_edit_bone.head = b_bind.to_translation()
         b_edit_bone.tail = tail + b_edit_bone.head
         b_edit_bone.roll = roll
@@ -237,34 +237,6 @@ class Armature:
         # import and parent bone children
         for n_child in n_block.children:
             self.import_bone_bind(n_child, n_bind_store, b_armature_data, n_armature, b_edit_bone)
-
-    def import_bone(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
-        """Adds a bone to the armature in edit mode."""
-        # check that n_block is indeed a bone
-        if not self.is_bone(n_block):
-            return None
-        # bone name
-        bone_name = block_store.import_name(n_block)
-        # create a new bone
-        b_edit_bone = b_armature_data.edit_bones.new(bone_name)
-        # store nif block for access from object mode
-        self.name_to_block[b_edit_bone.name] = n_block
-        # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = util_math.import_matrix(n_block, relative_to=n_armature)
-        # get transformation in blender's coordinate space
-        b_bind = util_math.nif_bind_to_blender_bind(n_bind)
-
-        # the following is a workaround because blender can no longer set matrices to bones directly
-        tail, roll = util_math.mat3_to_vec_roll(b_bind.to_3x3())
-        b_edit_bone.head = b_bind.to_translation()
-        b_edit_bone.tail = tail + b_edit_bone.head
-        b_edit_bone.roll = roll
-        # link to parent
-        if b_parent_bone:
-            b_edit_bone.parent = b_parent_bone
-        # import and parent bone children
-        for n_child in n_block.children:
-            self.import_bone(n_child, b_armature_data, n_armature, b_edit_bone)
 
     def guess_orientation(self, n_armature):
         """Analyze all bones' translations to see what the nif considers the 'forward' axis"""
