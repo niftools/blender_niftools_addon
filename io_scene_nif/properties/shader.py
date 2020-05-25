@@ -237,8 +237,8 @@ class ShaderProps(PropertyGroup):
             name='Use Falloff'
         )
 
-        cls.slsf_1_enviroment_mapping = BoolProperty(
-            name='Enviroment Mapping'
+        cls.slsf_1_environment_mapping = BoolProperty(
+            name='Environment Mapping'
         )
 
         cls.slsf_1_recieve_shadows = BoolProperty(

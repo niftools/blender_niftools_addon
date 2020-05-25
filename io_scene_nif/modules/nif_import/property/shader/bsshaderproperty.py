@@ -144,6 +144,10 @@ class BSShaderPropertyProcessor(BSShader):
         # if n_alpha_prop:
         #     b_mat = self.set_alpha_bsshader(b_mat, bs_shader_property)
 
+        #Emissive color
+        Material.import_material_emissive(self._b_mat, bs_shader_property.emissive_color)
+        self._b_mat.emit = bs_shader_property.emissive_multiple
+
         # gloss
         Material.import_material_gloss(self._b_mat, bs_shader_property.glossiness)
 
