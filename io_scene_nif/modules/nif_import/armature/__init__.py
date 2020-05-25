@@ -62,6 +62,103 @@ class Armature:
         # to get access to the nif bone in object mode
         self.name_to_block = {}
 
+    def store_pose_matrix(self, n_node, armature_space_pose_store, n_root):
+        # check that n_block is indeed a bone
+        if not self.is_bone(n_node):
+            return None
+        armature_space_pose_store[n_node] = n_node.get_transform(n_root)
+        # move down the hierarchy
+        for n_child in n_node.children:
+            self.store_pose_matrix(n_child, armature_space_pose_store, n_root)
+
+    def import_pose(self, n_armature):
+        """Ported and adapted from pyffi send_bones_to_bind_position"""
+        armature_space_bind_store = {}
+        armature_space_pose_store = {}
+        # check all bones and bone datas to see if a bind position exists
+        bonelist = []
+        error = 0.0
+        geoms = list(n_armature.get_skinned_geometries())
+        for n_child in n_armature.children:
+            self.store_pose_matrix(n_child, armature_space_pose_store, n_armature)
+
+        for geom in geoms:
+            skininst = geom.skin_instance
+            skindata = skininst.data
+            for bonenode, bonedata in zip(skininst.bones, skindata.bone_list):
+                # bonenode can be None; see pyffi issue #3114079
+                if not bonenode:
+                    continue
+                # make sure all bone data of shared bones coincides
+                for othergeom, otherbonenode, otherbonedata in bonelist:
+                    if bonenode is otherbonenode:
+                        diff = ((otherbonedata.get_transform().get_inverse(fast=False)
+                                 *
+                                 othergeom.get_transform(n_armature))
+                                -
+                                (bonedata.get_transform().get_inverse(fast=False)
+                                 *
+                                 geom.get_transform(n_armature)))
+                        if diff.sup_norm() > 1e-3:
+                            NifLog.warn(
+                                "Geometries %s and %s do not share the same bind position: bone %s will be sent to a position matching only one of these" % (
+                                geom.name, othergeom.name, bonenode.name))
+                        # break the loop
+                        break
+                else:
+                    # the loop did not break, so the bone was not yet added
+                    # add it now
+                    NifLog.debug("Found bind position data for %s" % bonenode.name)
+                    bonelist.append((geom, bonenode, bonedata))
+
+        # the algorithm simply makes all transforms correct by changing
+        # each local bone matrix in such a way that the global matrix
+        # relative to the skeleton root matches the skinning information
+
+        # this algorithm is numerically most stable if bones are traversed
+        # in hierarchical order, so first sort the bones
+        sorted_bonelist = []
+        for node in n_armature.tree():
+            if not isinstance(node, NifFormat.NiNode):
+                continue
+            for geom, bonenode, bonedata in bonelist:
+                if node is bonenode:
+                    sorted_bonelist.append((geom, bonenode, bonedata))
+        bonelist = sorted_bonelist
+
+        # now reposition the bones
+        for geom, bonenode, bonedata in bonelist:
+            # explanation:
+            # v * CHILD * PARENT * ...
+            # = v * CHILD * DIFF^-1 * DIFF * PARENT * ...
+            # and now choose DIFF such that DIFF * PARENT * ... = desired transform
+
+            # calculate desired transform relative to skeleton root
+            # transform is DIFF * PARENT
+            transform = (bonedata.get_transform().get_inverse(fast=False)
+                         * geom.get_transform(n_armature))
+            # calculate difference
+            diff = transform * bonenode.get_transform(n_armature).get_inverse(fast=False)
+            armature_space_bind_store[bonenode] = transform
+            if not diff.is_identity():
+                NifLog.info("Sending %s to bind position" % bonenode.name)
+                # fix transform of this node
+                bonenode.set_transform(diff * bonenode.get_transform())
+                # fix transform of all its children
+                diff_inv = diff.get_inverse(fast=False)
+                for childnode in bonenode.children:
+                    if childnode:
+                        childnode.set_transform(childnode.get_transform() * diff_inv)
+            else:
+                NifLog.debug("%s is already in bind position" % bonenode.name)
+
+        NifLog.debug("Storing non-skeletal bone poses")
+        for n, b in armature_space_pose_store.items():
+            if n not in armature_space_bind_store:
+                armature_space_bind_store[n] = b
+
+        return armature_space_bind_store, armature_space_pose_store
+
     def import_armature(self, n_armature):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
@@ -81,10 +178,12 @@ class Armature:
         b_armature_obj = Object.create_b_obj(n_armature, b_armature_data)
         b_armature_obj.show_in_front = True
 
+        armature_space_bind_store, armature_space_pose_store = self.import_pose(n_armature)
+
         # make armature editable and create bones
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
         for n_child in n_armature.children:
-            self.import_bone(n_child, b_armature_data, n_armature)
+            self.import_bone_bind(n_child, armature_space_bind_store, b_armature_data, n_armature)
         self.fix_bone_lengths(b_armature_data)
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
@@ -100,7 +199,44 @@ class Armature:
             if NifOp.props.animation:
                 self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
+        # import pose
+        for b_name, n_block in self.name_to_block.items():
+            n_pose = armature_space_pose_store[n_block]
+            b_pose_bone = b_armature_obj.pose.bones[b_name]
+            n_bind = mathutils.Matrix(n_pose.as_list()).transposed()
+            b_pose_bone.matrix = util_math.nif_bind_to_blender_bind(n_bind)
+            # force update is required to ensure the transforms are set properly in blender
+            bpy.context.view_layer.update()
+
         return b_armature_obj
+
+    def import_bone_bind(self, n_block, n_bind_store, b_armature_data, n_armature, b_parent_bone=None):
+        """Adds a bone to the armature in edit mode."""
+        # check that n_block is indeed a bone
+        if not self.is_bone(n_block):
+            return None
+        # bone name
+        bone_name = block_store.import_name(n_block)
+        # create a new bone
+        b_edit_bone = b_armature_data.edit_bones.new(bone_name)
+        # store nif block for access from object mode
+        self.name_to_block[b_edit_bone.name] = n_block
+        # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
+        n_bind = mathutils.Matrix(n_bind_store.get(n_block, NifFormat.Matrix44()).as_list()).transposed()
+        # get transformation in blender's coordinate space
+        b_bind = util_math.nif_bind_to_blender_bind(n_bind)
+
+        # the following is a workaround because blender can no longer set matrices to bones directly
+        tail, roll = util_math.mat3_to_vec_roll(b_bind.to_3x3())
+        b_edit_bone.head = b_bind.to_translation()
+        b_edit_bone.tail = tail + b_edit_bone.head
+        b_edit_bone.roll = roll
+        # link to parent
+        if b_parent_bone:
+            b_edit_bone.parent = b_parent_bone
+        # import and parent bone children
+        for n_child in n_block.children:
+            self.import_bone_bind(n_child, n_bind_store, b_armature_data, n_armature, b_edit_bone)
 
     def import_bone(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
         """Adds a bone to the armature in edit mode."""

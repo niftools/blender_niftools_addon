@@ -91,11 +91,11 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         description="Send all detached geometries to the position of their parent node.",
         default=False)
 
-    # Send all bones to their bind position.
-    send_bones_to_bind_position: bpy.props.BoolProperty(
-        name="Send Bones To Bind Position",
-        description="Send all bones to their bind position.",
-        default=True)
+    # # Send all bones to their bind position.
+    # send_bones_to_bind_position: bpy.props.BoolProperty(
+    #     name="Send Bones To Bind Position",
+    #     description="Send all bones to their bind position.",
+    #     default=True)
 
     # Apply skin deformation to all skinned geometries.
     apply_skin_deformation: bpy.props.BoolProperty(
