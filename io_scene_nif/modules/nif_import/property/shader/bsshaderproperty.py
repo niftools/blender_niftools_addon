@@ -139,6 +139,11 @@ class BSShaderPropertyProcessor(BSShader):
         # if n_alpha_prop:
         #     self.b_mat = self.set_alpha_bsshader(self.b_mat, bs_shader_property)
 
+        # Emissive color
+        Material.import_material_emissive(self.b_mat, bs_shader_property.emissive_color)
+        # todo [shader] create custom float property, or use as factor in mix shader?
+        # self.b_mat.emit = bs_shader_property.emissive_multiple
+
         # gloss
         Material.import_material_gloss(self.b_mat, bs_shader_property.glossiness)
 
