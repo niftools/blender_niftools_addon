@@ -63,10 +63,10 @@ class BSShaderTexture(TextureSlotManager):
     def export_bs_effect_shader_prop_textures(self, bsshader):
         bsshader.texture_set = self._create_textureset()
 
-        if self.b_diffuse_slot:
-            bsshader.source_texture = TextureWriter.export_texture_filename(self.b_diffuse_slot.texture)
-        if self.b_glow_slot:
-            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.b_glow_slot.texture)
+        if self.slots["Base"]:
+            bsshader.source_texture = TextureWriter.export_texture_filename(self.slots["Base"])
+        if self.slots["Glow"]:
+            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.slots["Glow"])
 
         # clamp Mode
         bsshader.texture_clamp_mode = 65283
@@ -79,26 +79,27 @@ class BSShaderTexture(TextureSlotManager):
         texset.num_textures = 9
         texset.textures.update_size()
 
-        if self.b_detail_slot:
-            texset.textures[6] = TextureWriter.export_texture_filename(self.b_detail_slot.texture)
+        if self.slots["Detail"]:
+            texset.textures[6] = TextureWriter.export_texture_filename(self.slots["Detail"])
 
-        if self.b_gloss_slot:
-            texset.textures[7] = TextureWriter.export_texture_filename(self.b_gloss_slot.texture)
+        if self.slots["Gloss"]:
+            texset.textures[7] = TextureWriter.export_texture_filename(self.slots["Gloss"])
 
-        # UV Offset
-        if hasattr(bsshader, 'uv_offset'):
-            self.export_uv_offset(bsshader)
-
-        # UV Scale
-        if hasattr(bsshader, 'uv_scale'):
-            self.export_uv_scale(bsshader)
+        # # UV Offset
+        # if hasattr(bsshader, 'uv_offset'):
+        #     self.export_uv_offset(bsshader)
+        #
+        # # UV Scale
+        # if hasattr(bsshader, 'uv_scale'):
+        #     self.export_uv_scale(bsshader)
 
         # Texture Clamping mode
-        if not self.b_diffuse_slot.texture.image.use_clamp_x:
+        b_img = self.slots["Base"].image
+        if not b_img.use_clamp_x:
             wrap_s = 2
         else:
             wrap_s = 0
-        if not self.b_diffuse_slot.texture.image.use_clamp_y:
+        if not b_img.use_clamp_y:
             wrap_t = 1
         else:
             wrap_t = 0
@@ -111,28 +112,28 @@ class BSShaderTexture(TextureSlotManager):
     def _create_textureset(self):
         texset = NifFormat.BSShaderTextureSet()
 
-        if self.b_diffuse_slot:
-            texset.textures[0] = TextureWriter.export_texture_filename(self.b_diffuse_slot.texture)
+        if self.slots["Base"]:
+            texset.textures[0] = TextureWriter.export_texture_filename(self.slots["Base"])
 
-        if self.b_normal_slot:
-            texset.textures[1] = TextureWriter.export_texture_filename(self.b_normal_slot.texture)
+        if self.slots["Normal"]:
+            texset.textures[1] = TextureWriter.export_texture_filename(self.slots["Normal"])
 
-        if self.b_glow_slot:
-            texset.textures[2] = TextureWriter.export_texture_filename(self.b_glow_slot.texture)
+        if self.slots["Glow"]:
+            texset.textures[2] = TextureWriter.export_texture_filename(self.slots["Glow"])
 
-        if self.b_detail_slot:
-            texset.textures[3] = TextureWriter.export_texture_filename(self.b_detail_slot.texture)
+        if self.slots["Detail"]:
+            texset.textures[3] = TextureWriter.export_texture_filename(self.slots["Detail"])
 
         return texset
 
     def export_uv_offset(self, shader):
-        shader.uv_offset.u = self.b_diffuse_slot.offset.x
-        shader.uv_offset.v = self.b_diffuse_slot.offset.y
+        shader.uv_offset.u = self.slots["Base"].offset.x
+        shader.uv_offset.v = self.slots["Base"].offset.y
 
         return shader
 
     def export_uv_scale(self, shader):
-        shader.uv_scale.u = self.b_diffuse_slot.scale.x
-        shader.uv_scale.v = self.b_diffuse_slot.scale.y
+        shader.uv_scale.u = self.slots["Base"].scale.x
+        shader.uv_scale.v = self.slots["Base"].scale.y
 
         return shader
