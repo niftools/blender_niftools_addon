@@ -38,7 +38,6 @@
 # ***** END LICENSE BLOCK *****
 from pyffi.formats.nif import NifFormat
 
-from io_scene_nif.modules.nif_export.property.texture import TextureWriter, TextureSlotManager
 from io_scene_nif.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
 from io_scene_nif.utils import util_math
 

@@ -43,6 +43,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_export.property.material import MaterialProp
+from io_scene_nif.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_nif.modules.nif_import.object import PRN_DICT
 from io_scene_nif.modules.nif_export.block_registry import block_store
@@ -55,6 +56,7 @@ class ObjectProperty:
     def __init__(self):
         self.material_property = MaterialProp()
         self.texture_helper = NiTextureProp.get()
+        self.bss_helper = BSShaderProperty()
 
     def export_properties(self, b_obj, b_mat, n_block):
         """This is the main property processor that attaches
