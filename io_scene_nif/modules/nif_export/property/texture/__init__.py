@@ -88,9 +88,8 @@ class TextureSlotManager:
         elif isinstance(uv_node, bpy.types.ShaderNodeTexCoord):
             return "REFLECT"
         else:
-            raise util_math.NifError(f"Unsupported vector input for {b_texture_node.name} in material '{b_mat.name}''.\n"
+            raise util_math.NifError(f"Unsupported vector input for {b_texture_node.name} in material '{self.b_mat.name}''.\n"
                                      f"Expected 'UV Map' or 'Texture Coordinate' nodes")
-
 
     @staticmethod
     def get_used_textslots(b_mat):
