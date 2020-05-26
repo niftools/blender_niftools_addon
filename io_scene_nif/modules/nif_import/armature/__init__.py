@@ -243,7 +243,7 @@ class Armature:
         axis_indices = []
         ids = ["X", "Y", "Z", "-X", "-Y", "-Z"]
         for n_child in n_armature.children:
-            self.get_transform(n_child, axis_indices)
+            self.get_forward_axis(n_child, axis_indices)
         # the forward index is the most common one from the list
         forward_ind = max(set(axis_indices), key=axis_indices.count)
         # move the up index one coordinate to the right, account for end of list
@@ -251,7 +251,7 @@ class Armature:
         # return string identifiers
         return ids[forward_ind], ids[up_ind]
 
-    def get_transform(self, n_bone, axis_indices):
+    def get_forward_axis(self, n_bone, axis_indices):
         """Helper function to get the forward axis of a bone"""
         # check that n_block is indeed a bone
         if not self.is_bone(n_bone):
@@ -268,7 +268,7 @@ class Armature:
         axis_indices.append(max_coord_ind)
         # move down the hierarchy
         for n_child in n_bone.children:
-            self.get_transform(n_child, axis_indices)
+            self.get_forward_axis(n_child, axis_indices)
 
     @staticmethod
     def fix_bone_lengths(b_armature_data):
