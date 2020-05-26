@@ -115,15 +115,30 @@ class Armature:
             armature_space_bind_store[bonenode] = n_bind
 
         NifLog.debug("Storing non-skeletal bone poses")
-        for n_node, n_matrix in armature_space_pose_store.items():
-            if n_node not in armature_space_bind_store:
-                armature_space_bind_store[n_node] = n_matrix
-
-        # todo [armature] reposition non-skeletal bones to maintain their local orientation to their skeletal parents
-        # get the relative transform of bone from pose (* inverted bind of parent pose)
-        # get object space transform by multiplying with bind pose of parent bone
-
+        self.fix_pose(n_armature, n_armature, armature_space_bind_store, armature_space_pose_store)
         return armature_space_bind_store, armature_space_pose_store
+
+    def fix_pose(self, n_armature, n_node, armature_space_bind_store, armature_space_pose_store):
+        """reposition non-skeletal bones to maintain their local orientation to their skeletal parents"""
+        for n_child_node in n_node.children:
+            # only process nodes
+            if not isinstance(n_child_node, NifFormat.NiNode):
+                continue
+            if n_child_node not in armature_space_bind_store:
+                NifLog.debug(f"Calculating bind pose for non-skeletal bone {n_child_node.name}")
+                # get matrices for n_node (the parent) - fallback to getter if it is not in the store
+                n_armature_pose = armature_space_pose_store.get(n_node, n_node.get_transform(n_armature))
+                # get bind of parent node or pose if it has no bind pose
+                n_armature_bind = armature_space_bind_store.get(n_node, n_armature_pose)
+
+                # the child must have a pose, no need for a fallback
+                n_child_armature_pose = armature_space_pose_store[n_child_node]
+                # get the relative transform of n_child_node from pose * inverted parent pose
+                n_child_local_pose = n_child_armature_pose * n_armature_pose.get_inverse(fast=False)
+                # get object space transform by multiplying with bind of parent bone
+                armature_space_bind_store[n_child_node] = n_child_local_pose * n_armature_bind
+
+            self.fix_pose(n_armature, n_child_node, armature_space_bind_store, armature_space_pose_store)
 
     def import_armature(self, n_armature):
         """Scans an armature hierarchy, and returns a whole armature.
