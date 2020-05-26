@@ -85,6 +85,7 @@ class BSShaderTexture(TextureSlotManager):
         if self.slots["Gloss"]:
             texset.textures[7] = TextureWriter.export_texture_filename(self.slots["Gloss"])
 
+        # TODO [shader] UV offset node support
         # # UV Offset
         # if hasattr(bsshader, 'uv_offset'):
         #     self.export_uv_offset(bsshader)

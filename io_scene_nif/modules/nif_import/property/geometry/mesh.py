@@ -37,11 +37,11 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from functools import singledispatch
-import itertools
 import bpy
 
-from io_scene_nif.modules.nif_import.property.texture.types.nitextureprop import NiTextureProp
+from functools import singledispatch
+import itertools
+
 from io_scene_nif.modules.nif_import.property.geometry.niproperty import NiPropertyProcessor
 from io_scene_nif.modules.nif_import.property.nodes_wrapper import NodesWrapper
 from io_scene_nif.modules.nif_import.property.shader.bsshaderlightingproperty import BSShaderLightingPropertyProcessor
@@ -109,7 +109,6 @@ class MeshPropertyProcessor:
             self.process_property(prop)
 
         self.nodes_wrapper.connect_to_output(b_mesh.vertex_colors)
-
 
     def process_property(self, prop):
         """Base method to warn user that this property is not supported"""

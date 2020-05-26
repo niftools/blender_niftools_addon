@@ -117,7 +117,7 @@ class BSShaderPropertyProcessor(BSShader):
         # Textures
         self.texturehelper.import_bsshaderproperty_textureset(bs_shader_property, self._nodes_wrapper)
 
-        # todo [material] update for nodes
+        # TODO [shader] UV offset node support
         # if hasattr(bs_shader_property, 'texture_clamp_mode'):
         #     self.import_clamp(self.b_mat, bs_shader_property)
         #

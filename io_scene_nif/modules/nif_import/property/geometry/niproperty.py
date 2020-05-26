@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.modules.nif_import.animation.material import MaterialAnimation
