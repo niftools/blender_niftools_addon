@@ -48,8 +48,8 @@ Environment Variables
 
 **Windows**::
 
-    set /p BLENDER_ADDONS_DIR=<path_to_blender_addons>
-    set /p BLENDER_HOME="<path_to_blender_exe>"
+    set BLENDER_ADDONS_DIR=<path_to_blender_addons>
+    set BLENDER_HOME=<path_to_blender_exe>
 
 **Ubuntu**::
     set -X BLENDER_ADDONS_DIR=<path_to_blender_addons>
