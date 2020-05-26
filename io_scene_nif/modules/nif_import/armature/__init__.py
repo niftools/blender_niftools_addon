@@ -108,26 +108,11 @@ class Armature:
                     NifLog.debug(f"Found bind position data for {bonenode.name}")
                     bonelist.append((geom, bonenode, bonedata))
 
-        # the algorithm simply makes all transforms correct by changing
-        # each local bone matrix in such a way that the global matrix
-        # relative to the skeleton root matches the skinning information
-
-        # this algorithm is numerically most stable if bones are traversed
-        # in hierarchical order, so first sort the bones
-        sorted_bonelist = []
-        for node in n_armature.tree():
-            if not isinstance(node, NifFormat.NiNode):
-                continue
-            for geom, bonenode, bonedata in bonelist:
-                if node is bonenode:
-                    sorted_bonelist.append((geom, bonenode, bonedata))
-        bonelist = sorted_bonelist
-
-        # now reposition the bones
+        # get the bind pose from the skin data
+        # NiSkinData stores the inverse bind (=rest) pose for each bone, in armature space
         for geom, bonenode, bonedata in bonelist:
-            transform = (bonedata.get_transform().get_inverse(fast=False)
-                         * geom.get_transform(n_armature))
-            armature_space_bind_store[bonenode] = transform
+            n_bind = (bonedata.get_transform().get_inverse(fast=False) * geom.get_transform(n_armature))
+            armature_space_bind_store[bonenode] = n_bind
 
         NifLog.debug("Storing non-skeletal bone poses")
         for n_node, n_matrix in armature_space_pose_store.items():
@@ -170,7 +155,7 @@ class Armature:
 
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes and store the bones' long names.
-        if NifOp.props.animaction:
+        if NifOp.props.animation:
             self.transform_anim.create_action(b_armature_obj, armature_name + "-Anim")
 
         for bone_name, b_bone in b_armature_obj.data.bones.items():
