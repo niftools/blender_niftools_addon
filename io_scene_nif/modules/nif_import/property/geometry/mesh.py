@@ -105,7 +105,7 @@ class MeshPropertyProcessor:
 
         # run all processors
         for prop in props:
-            NifLog.debug(f"{type(prop)} property found {prop}")
+            NifLog.debug(f"{type(prop)} property found")
             self.process_property(prop)
 
         self.nodes_wrapper.connect_to_output(b_mesh.vertex_colors)
