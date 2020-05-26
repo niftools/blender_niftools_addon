@@ -77,7 +77,6 @@ class Armature:
         armature_space_pose_store = {}
         # check all bones and bone datas to see if a bind position exists
         bonelist = []
-        error = 0.0
         geoms = list(n_armature.get_skinned_geometries())
         for n_child in n_armature.children:
             self.store_pose_matrix(n_child, armature_space_pose_store, n_armature)
@@ -93,22 +92,20 @@ class Armature:
                 for othergeom, otherbonenode, otherbonedata in bonelist:
                     if bonenode is otherbonenode:
                         diff = ((otherbonedata.get_transform().get_inverse(fast=False)
-                                 *
-                                 othergeom.get_transform(n_armature))
+                                 * othergeom.get_transform(n_armature))
                                 -
                                 (bonedata.get_transform().get_inverse(fast=False)
-                                 *
-                                 geom.get_transform(n_armature)))
+                                 * geom.get_transform(n_armature)))
                         if diff.sup_norm() > 1e-3:
-                            NifLog.warn(
-                                "Geometries %s and %s do not share the same bind position: bone %s will be sent to a position matching only one of these" % (
-                                geom.name, othergeom.name, bonenode.name))
+                            NifLog.debug(
+                                f"Geometries {geom.name} and {othergeom.name} do not share the same bind position."
+                                f"bone {bonenode.name} will be sent to a position matching only one of these")
                         # break the loop
                         break
                 else:
                     # the loop did not break, so the bone was not yet added
                     # add it now
-                    NifLog.debug("Found bind position data for %s" % bonenode.name)
+                    NifLog.debug(f"Found bind position data for {bonenode.name}")
                     bonelist.append((geom, bonenode, bonedata))
 
         # the algorithm simply makes all transforms correct by changing
@@ -128,34 +125,16 @@ class Armature:
 
         # now reposition the bones
         for geom, bonenode, bonedata in bonelist:
-            # explanation:
-            # v * CHILD * PARENT * ...
-            # = v * CHILD * DIFF^-1 * DIFF * PARENT * ...
-            # and now choose DIFF such that DIFF * PARENT * ... = desired transform
-
-            # calculate desired transform relative to skeleton root
-            # transform is DIFF * PARENT
             transform = (bonedata.get_transform().get_inverse(fast=False)
                          * geom.get_transform(n_armature))
-            # calculate difference
-            diff = transform * bonenode.get_transform(n_armature).get_inverse(fast=False)
             armature_space_bind_store[bonenode] = transform
-            if not diff.is_identity():
-                NifLog.info("Sending %s to bind position" % bonenode.name)
-                # fix transform of this node
-                bonenode.set_transform(diff * bonenode.get_transform())
-                # fix transform of all its children
-                diff_inv = diff.get_inverse(fast=False)
-                for childnode in bonenode.children:
-                    if childnode:
-                        childnode.set_transform(childnode.get_transform() * diff_inv)
-            else:
-                NifLog.debug("%s is already in bind position" % bonenode.name)
 
         NifLog.debug("Storing non-skeletal bone poses")
         for n, b in armature_space_pose_store.items():
             if n not in armature_space_bind_store:
                 armature_space_bind_store[n] = b
+
+        # todo [armature] reposition non-skeletal bones to maintain their local orientation to their skeletal parents
 
         return armature_space_bind_store, armature_space_pose_store
 
