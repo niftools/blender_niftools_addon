@@ -103,8 +103,6 @@ class NifImport(NifCommon):
                 pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.send_detached_geoms_to_node_pos:
                 pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=NifData.data).recurse()
-            # if NifOp.props.send_bones_to_bind_position:
-            #     pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.apply_skin_deformation:
                 VertexGroup.apply_skin_deformation(NifData.data)
 
