@@ -130,11 +130,13 @@ class Armature:
             armature_space_bind_store[bonenode] = transform
 
         NifLog.debug("Storing non-skeletal bone poses")
-        for n, b in armature_space_pose_store.items():
-            if n not in armature_space_bind_store:
-                armature_space_bind_store[n] = b
+        for n_node, n_matrix in armature_space_pose_store.items():
+            if n_node not in armature_space_bind_store:
+                armature_space_bind_store[n_node] = n_matrix
 
         # todo [armature] reposition non-skeletal bones to maintain their local orientation to their skeletal parents
+        # get the relative transform of bone from pose (* inverted bind of parent pose)
+        # get object space transform by multiplying with bind pose of parent bone
 
         return armature_space_bind_store, armature_space_pose_store
 
@@ -168,7 +170,7 @@ class Armature:
 
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes and store the bones' long names.
-        if NifOp.props.animation:
+        if NifOp.props.animaction:
             self.transform_anim.create_action(b_armature_obj, armature_name + "-Anim")
 
         for bone_name, b_bone in b_armature_obj.data.bones.items():
