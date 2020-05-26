@@ -124,7 +124,7 @@ class Armature:
             # only process nodes
             if not isinstance(n_child_node, NifFormat.NiNode):
                 continue
-            if n_child_node not in armature_space_bind_store:
+            if n_child_node not in armature_space_bind_store and n_child_node in armature_space_pose_store:
                 NifLog.debug(f"Calculating bind pose for non-skeletal bone {n_child_node.name}")
                 # get matrices for n_node (the parent) - fallback to getter if it is not in the store
                 n_armature_pose = armature_space_pose_store.get(n_node, n_node.get_transform(n_armature))
