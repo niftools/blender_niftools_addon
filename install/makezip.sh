@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PYFFI_VERSION="2.2.4.dev4"
+PYFFI_VERSION="2.2.4.dev3"
 NAME="blender_nif_plugin"
 CUR_DIR=$(pwd)
 BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"

@@ -46,9 +46,8 @@ from io_scene_nif.modules.nif_export.geometry import mesh
 from io_scene_nif.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_nif.modules.nif_export.block_registry import block_store
 from io_scene_nif.modules.nif_export.property.object import ObjectProperty
-from io_scene_nif.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_nif.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_nif.utils import util_math, util_consts
+from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_math import NifError
 from io_scene_nif.utils.util_global import NifOp, NifData
 from io_scene_nif.utils.util_logging import NifLog
@@ -58,7 +57,6 @@ class Mesh:
 
     def __init__(self):
         self.texture_helper = NiTextureProp.get()
-        self.bss_helper = BSShaderProperty()
         self.object_property = ObjectProperty()
         self.morph_anim = MorphAnimation()
 
