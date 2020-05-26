@@ -138,27 +138,20 @@ class Object:
 
     def set_node_flags(self, b_obj, n_node):
         # default node flags
-        b_obj_type = b_obj.type
-        if b_obj_type in self.export_types:
-            if b_obj_type is 'EMPTY' and b_obj.niftools.flags != 0:
-                n_node.flags = b_obj.niftools.flags
-            if b_obj_type is 'MESH' and b_obj.niftools.flags != 0:
-                n_node.flags = b_obj.niftools.flags
-            elif b_obj_type is 'ARMATURE' and b_obj.niftools.flags != 0:
-                n_node.flags = b_obj.niftools.flags
-            elif b_obj_type is 'ARMATURE' and b_obj.niftools.flags == 0 and b_obj.parent is None:
-                n_node.flags = b_obj.niftools.flags
+        game = bpy.context.scene.niftools_scene.game
+        if b_obj.niftools.flags != 0:
+            n_node.flags = b_obj.niftools.flags
+        else:
+            if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                n_node.flags = 0x000E
+            elif game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
+                n_node.flags = 0x0010
+            elif game is 'EMPIRE_EARTH_II':
+                n_node.flags = 0x0002
+            elif game is 'DIVINITY_2':
+                n_node.flags = 0x0310
             else:
-                if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                    n_node.flags = 0x000E
-                elif bpy.context.scene.niftools_scene.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
-                    n_node.flags = 0x0010
-                elif bpy.context.scene.niftools_scene.game is 'EMPIRE_EARTH_II':
-                    n_node.flags = 0x0002
-                elif bpy.context.scene.niftools_scene.game is 'DIVINITY_2':
-                    n_node.flags = 0x0310
-                else:
-                    n_node.flags = 0x000C  # morrowind
+                n_node.flags = 0x000C  # morrowind
 
     def export_node(self, b_obj, n_parent):
         """Export a mesh/armature/empty object b_obj as child of n_parent.
@@ -171,58 +164,36 @@ class Object:
         if not b_obj:
             return None
 
-        b_obj_type = b_obj.type
-        b_obj_anim_data = b_obj.animation_data  # get animation data
-        b_obj_children = b_obj.children
-        
         b_action = self.object_anim.get_active_action(b_obj)
 
         # can we export this b_obj?
-        if b_obj_type not in self.export_types:
+        if b_obj.type not in self.export_types:
             return None
-        if b_obj_type == 'MESH' and b_obj.name.lower().startswith('bsbound'):
-            # add a bounding box
-            self.bs_helper.export_bounds(b_obj, n_parent, bsbound=True)
-            return None  # done; stop here
-
-        elif b_obj_type == 'MESH' and b_obj.name.lower().startswith("bounding box"):
-            # Morrowind bounding box
-            self.bs_helper.export_bounds(b_obj, n_parent, bsbound=False)
-            return None  # done; stop here
-
-        elif b_obj_type == 'MESH':
-            # -> mesh data.
-            # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
-            is_collision = b_obj.display_type == "BOUNDS"
-            has_children = len(b_obj_children) > 0
-            is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
-
-            # determine if object tracks camera
-            # nb normally, imported models will have tracking constraints on their parent empty
-            # but users may create track_to constraints directly on objects, so keep it for now
-            has_track = types.has_track(b_obj)
-
-            if is_collision:
-                self.export_collision(b_obj, n_parent)
-                return None  # done; stop here
-            elif b_action or has_children or is_multimaterial or has_track:
-                # create a ninode as parent of this mesh for the hierarchy to work out
-                node = types.create_ninode(b_obj)
+        if b_obj.type == 'MESH':
+            if self.export_collision(b_obj, n_parent):
+                return
             else:
-                # don't create intermediate ninode for this guy
-                return self.mesh_helper.export_tri_shapes(b_obj, n_parent, b_obj.name)
+                # -> mesh data.
+                is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
 
-            # set transform on trishapes rather than on NiNode for skinned meshes this fixes an issue with clothing slots
-            if b_obj.parent and b_obj.parent.type == 'ARMATURE':
-                if b_obj_anim_data:
+                # determine if object tracks camera
+                # nb normally, imported models will have tracking constraints on their parent empty
+                # but users may create track_to constraints directly on objects, so keep it for now
+                has_track = types.has_track(b_obj)
+
+                # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
+                if not (b_action or b_obj.children or is_multimaterial or has_track):
+                    return self.mesh_helper.export_tri_shapes(b_obj, n_parent, b_obj.name)
+
+                # set transform on trishapes rather than NiNodes for skinned meshes to fix an issue with clothing slots
+                if b_obj.parent and b_obj.parent.type == 'ARMATURE' and b_action:
                     # mesh with armature parent should not have animation!
-                    NifLog.warn("Mesh {0} is skinned but also has object animation. "
-                                "The nif format does not support this, ignoring object animation.".format(b_obj.name))
+                    NifLog.warn(f"Mesh {b_obj.name} is skinned but also has object animation. "
+                                f"The nif format does not support this, ignoring object animation.")
                     b_action = False
 
-        else:
-            # -> everything else (empty/armature) is a (more or less regular) node
-            node = types.create_ninode(b_obj)
+        # -> everything else (empty/armature) is a (more or less regular) node
+        node = types.create_ninode(b_obj)
 
         # make it child of its parent in the nif, if it has one
         if n_parent:
@@ -262,8 +233,18 @@ class Object:
             self.export_node(b_child, n_parent)
 
     def export_collision(self, b_obj, n_parent):
-        """Main function for adding collision object b_obj to a node."""
+        """Main function for adding collision object b_obj to a node.
+        Returns True if this object is exported as a collision"""
 
+        if b_obj.display_type != "BOUNDS":
+            return
+        if b_obj.name.lower().startswith('bsbound'):
+            # add a bounding box
+            self.bs_helper.export_bounds(b_obj, n_parent, bsbound=True)
+
+        elif b_obj.name.lower().startswith("bounding box"):
+            # Morrowind bounding box
+            self.bs_helper.export_bounds(b_obj, n_parent, bsbound=False)
         if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
             nodes = [n_parent]
@@ -291,3 +272,5 @@ class Object:
             self.bound_helper.export_nicollisiondata(b_obj, n_parent)
         else:
             NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(bpy.context.scene.niftools_scene.game, b_obj.name))
+
+        return True
