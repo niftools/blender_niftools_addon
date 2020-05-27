@@ -77,11 +77,12 @@ class Armature:
         armature_space_pose_store = {}
         # check all bones and bone datas to see if a bind position exists
         bonelist = []
-        geoms = list(n_armature.get_skinned_geometries())
+        # store the original pose matrix for all nodes
         for n_child in n_armature.children:
             self.store_pose_matrix(n_child, armature_space_pose_store, n_armature)
 
-        for geom in geoms:
+        # prioritize geometries that have most nodes in their skin instance
+        for geom in sorted(n_armature.get_skinned_geometries(), key=lambda g: g.skin_instance.num_bones, reverse=True):
             skininst = geom.skin_instance
             skindata = skininst.data
             for bonenode, bonedata in zip(skininst.bones, skindata.bone_list):
