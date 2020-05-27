@@ -403,8 +403,7 @@ class Mesh:
                     vert_added = [False for _ in range(len(vertlist))]
                     for b_bone_name in boneinfluences:
                         # find bone in exported blocks
-                        full_bone_name = block_store.get_full_name(b_obj_armature.data.bones[b_bone_name])
-                        bone_block = self.get_bone_block(full_bone_name)
+                        bone_block = self.get_bone_block(b_obj_armature.data.bones[b_bone_name])
 
                         # find vertex weights
                         vert_weights = {}
@@ -481,20 +480,12 @@ class Mesh:
             self.morph_anim.export_morph(b_mesh, trishape, vertmap)
         return trishape
 
-    def get_bone_block(self, bone_name):
-        """For a bone name, return the corresponding nif node from the blocks that have already been exported"""
-        bone_block = None
-        for block in block_store.block_to_obj:
-            if isinstance(block, NifFormat.NiNode):
-                if block.name.decode() == bone_name:
-                    if not bone_block:
-                        bone_block = block
-                    else:
-                        raise util_math.NifError("Multiple bones with name '{0}': probably you have multiple armatures. "
-                                                 "Please parent all meshes to a single armature and try again".format(bone_name))
-        if not bone_block:
-            raise util_math.NifError("Bone '{0}' not found.".format(bone))
-        return bone_block
+    def get_bone_block(self, b_bone):
+        """For a blender bone, return the corresponding nif node from the blocks that have already been exported"""
+        for n_block, b_obj in block_store.block_to_obj.items():
+            if isinstance(n_block, NifFormat.NiNode) and b_bone == b_obj:
+                return n_block
+        raise util_math.NifError(f"Bone '{b_bone.name}' not found.")
 
     def get_body_part_groups(self, b_obj, b_mesh):
         """Returns a set of vertices (no dupes) for each body part"""

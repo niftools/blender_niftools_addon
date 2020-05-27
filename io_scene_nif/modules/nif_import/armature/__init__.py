@@ -62,6 +62,85 @@ class Armature:
         # to get access to the nif bone in object mode
         self.name_to_block = {}
 
+    def store_pose_matrix(self, n_node, armature_space_pose_store, n_root):
+        # check that n_block is indeed a bone
+        if not self.is_bone(n_node):
+            return None
+        armature_space_pose_store[n_node] = n_node.get_transform(n_root)
+        # move down the hierarchy
+        for n_child in n_node.children:
+            self.store_pose_matrix(n_child, armature_space_pose_store, n_root)
+
+    def import_pose(self, n_armature):
+        """Ported and adapted from pyffi send_bones_to_bind_position"""
+        armature_space_bind_store = {}
+        armature_space_pose_store = {}
+        # check all bones and bone datas to see if a bind position exists
+        bonelist = []
+        # store the original pose matrix for all nodes
+        for n_child in n_armature.children:
+            self.store_pose_matrix(n_child, armature_space_pose_store, n_armature)
+
+        # prioritize geometries that have most nodes in their skin instance
+        for geom in sorted(n_armature.get_skinned_geometries(), key=lambda g: g.skin_instance.num_bones, reverse=True):
+            skininst = geom.skin_instance
+            skindata = skininst.data
+            for bonenode, bonedata in zip(skininst.bones, skindata.bone_list):
+                # bonenode can be None; see pyffi issue #3114079
+                if not bonenode:
+                    continue
+                # make sure all bone data of shared bones coincides
+                for othergeom, otherbonenode, otherbonedata in bonelist:
+                    if bonenode is otherbonenode:
+                        diff = ((otherbonedata.get_transform().get_inverse(fast=False)
+                                 * othergeom.get_transform(n_armature))
+                                -
+                                (bonedata.get_transform().get_inverse(fast=False)
+                                 * geom.get_transform(n_armature)))
+                        if diff.sup_norm() > 1e-3:
+                            NifLog.debug(
+                                f"Geometries {geom.name} and {othergeom.name} do not share the same bind position."
+                                f"bone {bonenode.name} will be sent to a position matching only one of these")
+                        # break the loop
+                        break
+                else:
+                    # the loop did not break, so the bone was not yet added
+                    # add it now
+                    NifLog.debug(f"Found bind position data for {bonenode.name}")
+                    bonelist.append((geom, bonenode, bonedata))
+
+        # get the bind pose from the skin data
+        # NiSkinData stores the inverse bind (=rest) pose for each bone, in armature space
+        for geom, bonenode, bonedata in bonelist:
+            n_bind = (bonedata.get_transform().get_inverse(fast=False) * geom.get_transform(n_armature))
+            armature_space_bind_store[bonenode] = n_bind
+
+        NifLog.debug("Storing non-skeletal bone poses")
+        self.fix_pose(n_armature, n_armature, armature_space_bind_store, armature_space_pose_store)
+        return armature_space_bind_store, armature_space_pose_store
+
+    def fix_pose(self, n_armature, n_node, armature_space_bind_store, armature_space_pose_store):
+        """reposition non-skeletal bones to maintain their local orientation to their skeletal parents"""
+        for n_child_node in n_node.children:
+            # only process nodes
+            if not isinstance(n_child_node, NifFormat.NiNode):
+                continue
+            if n_child_node not in armature_space_bind_store and n_child_node in armature_space_pose_store:
+                NifLog.debug(f"Calculating bind pose for non-skeletal bone {n_child_node.name}")
+                # get matrices for n_node (the parent) - fallback to getter if it is not in the store
+                n_armature_pose = armature_space_pose_store.get(n_node, n_node.get_transform(n_armature))
+                # get bind of parent node or pose if it has no bind pose
+                n_armature_bind = armature_space_bind_store.get(n_node, n_armature_pose)
+
+                # the child must have a pose, no need for a fallback
+                n_child_armature_pose = armature_space_pose_store[n_child_node]
+                # get the relative transform of n_child_node from pose * inverted parent pose
+                n_child_local_pose = n_child_armature_pose * n_armature_pose.get_inverse(fast=False)
+                # get object space transform by multiplying with bind of parent bone
+                armature_space_bind_store[n_child_node] = n_child_local_pose * n_armature_bind
+
+            self.fix_pose(n_armature, n_child_node, armature_space_bind_store, armature_space_pose_store)
+
     def import_armature(self, n_armature):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
@@ -81,10 +160,12 @@ class Armature:
         b_armature_obj = Object.create_b_obj(n_armature, b_armature_data)
         b_armature_obj.show_in_front = True
 
+        armature_space_bind_store, armature_space_pose_store = self.import_pose(n_armature)
+
         # make armature editable and create bones
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
         for n_child in n_armature.children:
-            self.import_bone(n_child, b_armature_data, n_armature)
+            self.import_bone_bind(n_child, armature_space_bind_store, b_armature_data, n_armature)
         self.fix_bone_lengths(b_armature_data)
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
@@ -100,9 +181,18 @@ class Armature:
             if NifOp.props.animation:
                 self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
+        # import pose
+        for b_name, n_block in self.name_to_block.items():
+            n_pose = armature_space_pose_store[n_block]
+            b_pose_bone = b_armature_obj.pose.bones[b_name]
+            n_bind = mathutils.Matrix(n_pose.as_list()).transposed()
+            b_pose_bone.matrix = util_math.nif_bind_to_blender_bind(n_bind)
+            # force update is required to ensure the transforms are set properly in blender
+            bpy.context.view_layer.update()
+
         return b_armature_obj
 
-    def import_bone(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
+    def import_bone_bind(self, n_block, n_bind_store, b_armature_data, n_armature, b_parent_bone=None):
         """Adds a bone to the armature in edit mode."""
         # check that n_block is indeed a bone
         if not self.is_bone(n_block):
@@ -114,12 +204,12 @@ class Armature:
         # store nif block for access from object mode
         self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = util_math.import_matrix(n_block, relative_to=n_armature)
+        n_bind = mathutils.Matrix(n_bind_store.get(n_block, NifFormat.Matrix44()).as_list()).transposed()
         # get transformation in blender's coordinate space
         b_bind = util_math.nif_bind_to_blender_bind(n_bind)
 
         # the following is a workaround because blender can no longer set matrices to bones directly
-        tail, roll = util_math.mat3_to_vec_roll(b_bind.to_3x3())
+        tail, roll = bpy.types.Bone.AxisRollFromMatrix(b_bind.to_3x3())
         b_edit_bone.head = b_bind.to_translation()
         b_edit_bone.tail = tail + b_edit_bone.head
         b_edit_bone.roll = roll
@@ -128,14 +218,14 @@ class Armature:
             b_edit_bone.parent = b_parent_bone
         # import and parent bone children
         for n_child in n_block.children:
-            self.import_bone(n_child, b_armature_data, n_armature, b_edit_bone)
+            self.import_bone_bind(n_child, n_bind_store, b_armature_data, n_armature, b_edit_bone)
 
     def guess_orientation(self, n_armature):
         """Analyze all bones' translations to see what the nif considers the 'forward' axis"""
         axis_indices = []
         ids = ["X", "Y", "Z", "-X", "-Y", "-Z"]
         for n_child in n_armature.children:
-            self.get_transform(n_child, axis_indices)
+            self.get_forward_axis(n_child, axis_indices)
         # the forward index is the most common one from the list
         forward_ind = max(set(axis_indices), key=axis_indices.count)
         # move the up index one coordinate to the right, account for end of list
@@ -143,7 +233,7 @@ class Armature:
         # return string identifiers
         return ids[forward_ind], ids[up_ind]
 
-    def get_transform(self, n_bone, axis_indices):
+    def get_forward_axis(self, n_bone, axis_indices):
         """Helper function to get the forward axis of a bone"""
         # check that n_block is indeed a bone
         if not self.is_bone(n_bone):
@@ -160,7 +250,7 @@ class Armature:
         axis_indices.append(max_coord_ind)
         # move down the hierarchy
         for n_child in n_bone.children:
-            self.get_transform(n_child, axis_indices)
+            self.get_forward_axis(n_child, axis_indices)
 
     @staticmethod
     def fix_bone_lengths(b_armature_data):

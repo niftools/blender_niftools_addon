@@ -103,8 +103,6 @@ class NifImport(NifCommon):
                 pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.send_detached_geoms_to_node_pos:
                 pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=NifData.data).recurse()
-            if NifOp.props.send_bones_to_bind_position:
-                pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.apply_skin_deformation:
                 VertexGroup.apply_skin_deformation(NifData.data)
 
@@ -234,7 +232,12 @@ class NifImport(NifCommon):
 
             elif self.armaturehelper.is_bone(n_block):
                 # bones have already been imported during import_armature
-                b_obj = b_armature.data.bones[block_store.import_name(n_block)]
+                n_name = block_store.import_name(n_block)
+                if n_name in b_armature.data.bones:
+                    b_obj = b_armature.data.bones[n_name]
+                else:
+                    # this is a fallback for a weird bug, when a node is child of a NiLodNode in a skeletal nif
+                    b_obj = self.objecthelper.create_b_obj(n_block, None, name=n_name)
                 b_obj.niftools.flags = n_block.flags
 
             else:

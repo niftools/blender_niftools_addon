@@ -108,8 +108,6 @@ class NodesWrapper:
         self.b_mat.use_backface_culling = True
         self.b_mat.use_nodes = True
         self.tree = self.b_mat.node_tree
-        # bpy.context.view_layer.update()
-        # self.tree.update()
         # clear default nodes
         for node in self.tree.nodes:
             self.tree.nodes.remove(node)

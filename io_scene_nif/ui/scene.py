@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from bpy.types import Panel
+from pyffi.formats.nif import NifFormat
 
 
 class ScenePanel(Panel):
@@ -54,11 +55,12 @@ class ScenePanel(Panel):
         return True
 
     def draw(self, context):
-        nif_sceme_props = context.scene.niftools_scene
+        nif_scene_props = context.scene.niftools_scene
 
         layout = self.layout
         row = layout.column()
-        row.prop(nif_sceme_props, "game")
-        row.prop(nif_sceme_props, "nif_version")
-        row.prop(nif_sceme_props, "user_version")
-        row.prop(nif_sceme_props, "user_version_2")
+        row.prop(nif_scene_props, "game")
+        row.prop(nif_scene_props, "nif_version")
+        row.prop(nif_scene_props, "user_version")
+        row.prop(nif_scene_props, "user_version_2")
+        layout.label(text=NifFormat.HeaderString.version_string(nif_scene_props.nif_version))

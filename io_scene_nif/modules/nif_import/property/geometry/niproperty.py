@@ -128,7 +128,8 @@ class NiPropertyProcessor:
 
     def process_niwireframe_property(self, prop):
         """Modifier based wireframe display"""
-        self.b_obj.modifiers.new("WIREFRAME", 'WIREFRAME')
+        b_mod = self.b_obj.modifiers.new("WIREFRAME", 'WIREFRAME')
+        b_mod.use_relative_offset = True
         NifLog.debug("NiWireframeProperty property processed")
 
     def process_nivertexcolor_property(self, prop):

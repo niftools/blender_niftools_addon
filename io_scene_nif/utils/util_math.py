@@ -100,61 +100,6 @@ def nif_bind_to_blender_bind(nif_armature_space_matrix):
     return correction_inv @ correction @ nif_armature_space_matrix @ correction_inv
 
 
-def vec_roll_to_mat3(vec, roll):
-    # port of the updated C function from armature.c
-    # https://developer.blender.org/T39470
-    # note that C accesses columns first, so all matrix indices are swapped compared to the C version
-
-    nor = vec.normalized()
-
-    # create a 3x3 matrix
-    b_matrix = mathutils.Matrix().to_3x3()
-
-    theta = 1.0 + nor[1]
-
-    if (theta > THETA_THRESHOLD_NEGY_CLOSE) or ((nor[0] or nor[2]) and theta > THETA_THRESHOLD_NEGY):
-
-        b_matrix[1][0] = -nor[0]
-        b_matrix[0][1] = nor[0]
-        b_matrix[1][1] = nor[1]
-        b_matrix[2][1] = nor[2]
-        b_matrix[1][2] = -nor[2]
-        if theta > THETA_THRESHOLD_NEGY_CLOSE:
-            # If nor is far enough from -Y, apply the general case.
-            b_matrix[0][0] = 1 - nor[0] * nor[0] / theta
-            b_matrix[2][2] = 1 - nor[2] * nor[2] / theta
-            b_matrix[0][2] = b_matrix[2][0] = -nor[0] * nor[2] / theta
-
-        else:
-            # If nor is too close to -Y, apply the special case.
-            theta = nor[0] * nor[0] + nor[2] * nor[2]
-            b_matrix[0][0] = (nor[0] + nor[2]) * (nor[0] - nor[2]) / -theta
-            b_matrix[2][2] = -b_matrix[0][0]
-            b_matrix[0][2] = b_matrix[2][0] = 2.0 * nor[0] * nor[2] / theta
-
-    else:
-        # If nor is -Y, simple symmetry by Z axis.
-        b_matrix = mathutils.Matrix().to_3x3()
-        b_matrix[0][0] = b_matrix[1][1] = -1.0
-
-    # Make Roll matrix
-    r_matrix = mathutils.Matrix.Rotation(roll, 3, nor)
-
-    # Combine and output result
-    mat = r_matrix @ b_matrix
-    return mat
-
-
-def mat3_to_vec_roll(mat):
-    # this hasn't changed
-    vec = mat.col[1]
-    vec_mat = vec_roll_to_mat3(mat.col[1], 0)
-    vec_mat_inv = vec_mat.inverted()
-    roll_mat = vec_mat_inv @ mat
-    roll = math.atan2(roll_mat[0][2], roll_mat[2][2])
-    return vec, roll
-
-
 def import_matrix(n_block, relative_to=None):
     """Retrieves a n_block's transform matrix as a Mathutil.Matrix."""
     return mathutils.Matrix(n_block.get_transform(relative_to).as_list()).transposed()
