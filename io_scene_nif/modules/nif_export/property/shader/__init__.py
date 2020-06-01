@@ -114,7 +114,7 @@ class BSShaderProperty:
         bsshader.emissive_multiple = b_mat.emit
 
         # gloss
-        bsshader.glossiness = b_mat.specular_hardness
+        bsshader.glossiness = b_mat.roughness
 
         # Specular color
         bsshader.specular_color.r = b_mat.specular_color.r

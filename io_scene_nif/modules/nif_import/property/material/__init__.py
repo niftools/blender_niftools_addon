@@ -94,11 +94,12 @@ class Material:
     @staticmethod
     def import_material_gloss(b_mat, glossiness):
         # b_mat.specular_hardness = glossiness
-        b_mat.specular_intensity = glossiness  # Blender multiplies specular color with this value
+        b_mat.roughness = glossiness  # Blender multiplies specular color with this value
 
     @staticmethod
     def import_material_alpha(b_mat, n_alpha):
         b_mat.niftools.emissive_alpha.v = n_alpha
+
 
 class NiMaterial(Material):
 
