@@ -121,9 +121,10 @@ class BSShaderProperty:
         bsshader.glossiness = b_mat.roughness
 
         # Specular color
-        bsshader.specular_color.r = b_mat.specular_color.r
-        bsshader.specular_color.g = b_mat.specular_color.g
-        bsshader.specular_color.b = b_mat.specular_color.b
+        s = b_mat.specular_color
+        bsshader.specular_color.r = s[0]
+        bsshader.specular_color.g = s[1]
+        bsshader.specular_color.b = s[2]
         bsshader.specular_strength = b_mat.specular_intensity
 
         # Alpha
