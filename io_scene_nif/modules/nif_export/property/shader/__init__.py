@@ -99,9 +99,11 @@ class BSShaderProperty:
         self.texturehelper.export_bs_lighting_shader_prop_textures(bsshader)
 
         # Diffuse color
-        bsshader.skin_tint_color.r = b_mat.diffuse_color.r
-        bsshader.skin_tint_color.g = b_mat.diffuse_color.g
-        bsshader.skin_tint_color.b = b_mat.diffuse_color.b
+        d = b_mat.diffuse_color
+        bsshader.skin_tint_color.r = d[0]
+        bsshader.skin_tint_color.g = d[1]
+        bsshader.skin_tint_color.b = d[2]
+        # TODO [shader] expose intensity value
         # b_mat.diffuse_intensity = 1.0
 
         bsshader.lighting_effect_1 = b_mat.niftools.lightingeffect1
