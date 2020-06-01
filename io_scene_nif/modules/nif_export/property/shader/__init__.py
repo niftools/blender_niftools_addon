@@ -73,8 +73,9 @@ class BSShaderProperty:
         self.texturehelper.export_bs_effect_shader_prop_textures(bsshader)
 
         # Alpha
-        if b_mat.use_transparency:
-            bsshader.alpha = (1 - b_mat.alpha)
+        # TODO [Shader] Alpha property
+        # if b_mat.use_transparency:
+        #     bsshader.alpha = (1 - b_mat.alpha)
 
         # clamp Mode
         bsshader.texture_clamp_mode = 65283
@@ -128,8 +129,9 @@ class BSShaderProperty:
         bsshader.specular_strength = b_mat.specular_intensity
 
         # Alpha
-        if b_mat.use_transparency:
-            bsshader.alpha = (1 - b_mat.alpha)
+        # TODO [Shader] Alpha property
+        # if b_mat.use_transparency:
+        #     bsshader.alpha = (1 - b_mat.alpha)
 
         # Shader Flags
         BSShaderProperty.export_shader_flags(b_mat, bsshader)

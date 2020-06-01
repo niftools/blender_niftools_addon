@@ -85,6 +85,7 @@ class BSShader(ABC):
                     texture_slot.image.use_clamp_x = True
                     texture_slot.image.use_clamp_y = True
 
+    # TODO [Shader] Alpha property
     @staticmethod
     def set_alpha_bsshader(b_mat, shader_property):
         NifLog.debug("Alpha prop detected")
