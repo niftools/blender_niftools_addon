@@ -110,10 +110,12 @@ class BSShaderProperty:
         bsshader.lighting_effect_2 = b_mat.niftools.lightingeffect2
 
         # Emissive
-        bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
-        bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
-        bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
-        bsshader.emissive_multiple = b_mat.emit
+        e = b_mat.niftools.emissive_color
+        bsshader.emissive_color.r = e[0]
+        bsshader.emissive_color.g = e[1]
+        bsshader.emissive_color.b = e[2]
+        # TODO [shader] Expose a emission multiplier value
+        # bsshader.emissive_multiple = b_mat.emit
 
         # gloss
         bsshader.glossiness = b_mat.roughness
