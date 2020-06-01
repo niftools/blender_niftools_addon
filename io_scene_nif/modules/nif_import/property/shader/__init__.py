@@ -50,6 +50,7 @@ class BSShader(ABC):
     def __init__(self):
         self.b_mesh = None
 
+    # TODO [texture] Implement clamp on image wrapping
     @staticmethod
     def import_uv_offset(b_mat, shader_prop):
         for texture_slot in b_mat.texture_slots:
@@ -57,6 +58,7 @@ class BSShader(ABC):
                 texture_slot.offset.x = shader_prop.uv_offset.u
                 texture_slot.offset.y = shader_prop.uv_offset.v
 
+    # TODO [texture] Implement clamp on image wrapping
     @staticmethod
     def import_uv_scale(b_mat, shader_prop):
         for texture_slot in b_mat.texture_slots:
@@ -64,23 +66,24 @@ class BSShader(ABC):
                 texture_slot.scale.x = shader_prop.uv_scale.u
                 texture_slot.scale.y = shader_prop.uv_scale.v
 
+    # TODO [texture] Implement clamp on image wrapping
     @staticmethod
     def import_clamp(b_mat, shader_prop):
         clamp = shader_prop.texture_clamp_mode
         for texture_slot in b_mat.texture_slots:
             if texture_slot:
                 if clamp == 3:
-                    texture_slot.texture.image.use_clamp_x = False
-                    texture_slot.texture.image.use_clamp_y = False
+                    texture_slot.image.use_clamp_x = False
+                    texture_slot.image.use_clamp_y = False
                 if clamp == 2:
-                    texture_slot.texture.image.use_clamp_x = False
-                    texture_slot.texture.image.use_clamp_y = True
+                    texture_slot.image.use_clamp_x = False
+                    texture_slot.image.use_clamp_y = True
                 if clamp == 1:
-                    texture_slot.texture.image.use_clamp_x = True
-                    texture_slot.texture.image.use_clamp_y = False
+                    texture_slot.image.use_clamp_x = True
+                    texture_slot.image.use_clamp_y = False
                 if clamp == 0:
-                    texture_slot.texture.image.use_clamp_x = True
-                    texture_slot.texture.image.use_clamp_y = True
+                    texture_slot.image.use_clamp_x = True
+                    texture_slot.image.use_clamp_y = True
 
     @staticmethod
     def set_alpha_bsshader(b_mat, shader_property):

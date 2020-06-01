@@ -96,16 +96,17 @@ class BSShaderTexture(TextureSlotManager):
 
         # Texture Clamping mode
         b_img = self.slots["Base"].image
-        if not b_img.use_clamp_x:
-            wrap_s = 2
-        else:
-            wrap_s = 0
-        if not b_img.use_clamp_y:
-            wrap_t = 1
-        else:
-            wrap_t = 0
-            
-        bsshader.texture_clamp_mode = (wrap_s + wrap_t)
+        # TODO [texture] Implement clamp on image wrapping
+        # if not b_img.use_clamp_x:
+        #     wrap_s = 2
+        # else:
+        #     wrap_s = 0
+        # if not b_img.use_clamp_y:
+        #     wrap_t = 1
+        # else:
+        #     wrap_t = 0
+        #
+        # bsshader.texture_clamp_mode = (wrap_s + wrap_t)
 
     def export_bs_shader_pp_lighting_prop_textures(self, bsshader):
         bsshader.texture_set = self._create_textureset()
