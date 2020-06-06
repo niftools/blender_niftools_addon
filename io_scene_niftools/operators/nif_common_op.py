@@ -44,6 +44,14 @@ import bpy
 class NifOperatorCommon:
     """Abstract base class for import and export user interface."""
 
+    error_level_map = (
+        ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
+        ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
+        ("WARNING", "Warning", "Only show warnings and errors.", 30),
+        ("ERROR", "Error", "Only show errors.", 40),
+        ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
+    )
+
     # filepath is created by ImportHelper/ExportHelper
 
     # Default file name extension.
@@ -55,27 +63,15 @@ class NifOperatorCommon:
 
     # Level of verbosity on the console.
     plugin_log_level: bpy.props.EnumProperty(
-        items=(
-            ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
-            ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
-            ("WARNING", "Warning", "Only show warnings and errors.", 30),
-            ("ERROR", "Error", "Only show errors.", 40),
-            ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
-        ),
-        name="Log Level",
+        items=error_level_map,
+        name="Plugin Log Level",
         description="Blender Niftools Addon log level of verbosity on the console.",
-        default="DEBUG")  # TODO [general] Dev config, revert for release
+        default="INFO")
 
     # Level of verbosity on the console.
     pyffi_log_level: bpy.props.EnumProperty(
-        items=(
-            ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
-            ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
-            ("WARNING", "Warning", "Only show warnings and errors.", 30),
-            ("ERROR", "Error", "Only show errors.", 40),
-            ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
-        ),
-        name="Log Level",
+        items=error_level_map,
+        name="Pyffi Log Level",
         description="Pyffi log level of verbosity on the console.",
         default="INFO")
 
