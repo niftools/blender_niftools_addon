@@ -54,24 +54,6 @@ from io_scene_niftools.modules.nif_import.property.texture.types.bsshadertexture
 class BSShaderLightingPropertyProcessor(BSShader):
 
     __instance = None
-    _b_mesh = None
-    _n_block = None
-
-    @property
-    def b_mesh(self):
-        return self._b_mesh
-
-    @b_mesh.setter
-    def b_mesh(self, value):
-        self._b_mesh = value
-
-    @property
-    def n_block(self):
-        return self._n_block
-
-    @n_block.setter
-    def n_block(self, value):
-        self._n_block = value
 
     def __init__(self):
         """ Virtually private constructor. """
@@ -94,12 +76,12 @@ class BSShaderLightingPropertyProcessor(BSShader):
 
     def import_bs_shader_pp_lighting_proprerty(self, bs_shader_prop):
         # Shader Flags
-        b_shader = self.b_mat.niftools_shader
+        b_shader = self._b_mat.niftools_shader
         b_shader.bs_shadertype = 'BSShaderPPLightingProperty'
 
         shader_type = NifFormat.BSShaderType._enumvalues.index(bs_shader_prop.shader_type)
         b_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[shader_type]
 
         flags = bs_shader_prop.shader_flags
-        self.import_flags(self.b_mat, flags)
+        self.import_flags(self._b_mat, flags)
         self.texturehelper.import_bsshaderproperty_textureset(bs_shader_prop, self._nodes_wrapper)
