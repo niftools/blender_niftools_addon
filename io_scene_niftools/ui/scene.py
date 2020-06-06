@@ -64,3 +64,8 @@ class ScenePanel(Panel):
         row.prop(nif_scene_props, "user_version")
         row.prop(nif_scene_props, "user_version_2")
         layout.label(text=NifFormat.HeaderString.version_string(nif_scene_props.nif_version))
+
+        row = layout.column()
+        row.separator()
+        row.prop(nif_scene_props, "scale_correction_import")
+        row.prop(nif_scene_props, "scale_correction_export")

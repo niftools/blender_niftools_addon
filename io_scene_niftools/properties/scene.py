@@ -88,6 +88,20 @@ class Scene(PropertyGroup):
         default='OBLIVION',
         update=update_version_from_game)
 
+    # Number of nif units per blender unit.
+    scale_correction_import: bpy.props.FloatProperty(
+        name="Scale Correction Import",
+        description="Changes the size of mesh to fit onto Blender's default grid.",
+        default=0.1,
+        min=0.01, max=100.0, precision=3)
+
+    # Number of blender units per nif unit.
+    scale_correction_export: bpy.props.FloatProperty(
+        name="Scale Correction Export",
+        description="Changes the size of mesh from Blender default to nif default.",
+        default=10.0,
+        min=0.01, max=100.0, precision=2)
+
     #: Map game enum to nif version.
     VERSION = {
         _game_to_enum(game): versions[-1]

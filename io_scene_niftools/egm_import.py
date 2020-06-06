@@ -61,7 +61,7 @@ class EgmImport(NifCommon):
         if egm_path:
             EGMData.init(EGMFile.load_egm(egm_path))
             # scale the data
-            EGMData.data.apply_scale(NifOp.props.scale_correction_import)
+            EGMData.data.apply_scale(bpy.context.scene.niftools_scene.scale_correction_import)
             # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
             # grab the active object
             b_obj = bpy.context.view_layer.objects.active
