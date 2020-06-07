@@ -42,13 +42,15 @@ from bpy.types import Panel
 from pyffi.formats.nif import NifFormat
 
 
-class ScenePanel(Panel):
-    bl_label = "Niftools Scene Panel"
-    bl_idname = "NIFTOOLS_PT_scene"
-
+class SceneButtonsPanel:
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+
+
+class ScenePanel(SceneButtonsPanel, Panel):
+    bl_label = "Niftools Scene Panel"
+    bl_idname = "NIFTOOLS_PT_scene"
 
     # noinspection PyUnusedLocal
     @classmethod
@@ -63,14 +65,10 @@ class ScenePanel(Panel):
         row.prop(nif_scene_props, "game")
 
 
-class SceneVersionInfoPanel(Panel):
+class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
     bl_label = "Nif Version Info"
     bl_idname = "NIFTOOLS_PT_scene_version_info"
     bl_parent_id = "NIFTOOLS_PT_scene"
-
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "scene"
 
     def draw(self, context):
         layout = self.layout
@@ -91,8 +89,10 @@ class SceneVersionInfoPanel(Panel):
         col.prop(nif_scene_props, "user_version_2")
 
 
-# class SCENE_PT_niftools_author_info(Panel):
+# class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):
 #     bl_label = "Nif Author Info"
+#     bl_idname = "NIFTOOLS_PT_scene_author_info"
+#     bl_parent_id = "NIFTOOLS_PT_scene"
 #
 #     def draw(self, context):
 #         layout = self.layout
@@ -103,11 +103,8 @@ class SceneVersionInfoPanel(Panel):
 #         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
 #
 #         col = flow.column()
-#         col.prop(nif_scene_props, "nif_version")
+#         col.prop(nif_scene_props, "nif_author_info")
 #
 #         col = flow.column()
-#         col.prop(nif_scene_props, "user_version")
+#         col.prop(nif_scene_props, "nif_author_info_2")
 #
-#         col = flow.column()
-#         col.prop(nif_scene_props, "user_version_2")
-
