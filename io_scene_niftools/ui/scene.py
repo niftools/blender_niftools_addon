@@ -38,12 +38,13 @@
 # ***** END LICENSE BLOCK *****
 
 from bpy.types import Panel
+
 from pyffi.formats.nif import NifFormat
 
 
 class ScenePanel(Panel):
     bl_label = "Niftools Scene Panel"
-    bl_idname = "NIFTOOLS_PT_ScenePanel"
+    bl_idname = "NIFTOOLS_PT_scene"
 
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
