@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Panel
 from bpy_extras.io_utils import ImportHelper
 
 from io_scene_niftools import nif_import
@@ -110,6 +110,16 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         name="Combine Vertices",
         description="Merge vertices that have identical location and normal values.",
         default=False)
+
+    # Number of nif units per blender unit.
+    scale_correction_import: bpy.props.FloatProperty(
+        name="Scale",
+        description="Changes the size of mesh to fit onto Blender's default grid.",
+        default=0.1,
+        min=0.01, max=100.0, precision=3)
+
+    def draw(self, context):
+        pass
 
     def execute(self, context):
         """Execute the import operators: first constructs a :class:`~io_scene_niftools.nif_import.NifImport` instance and then

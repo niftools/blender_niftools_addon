@@ -59,7 +59,8 @@ class NifOperatorCommon:
 
     # File name filter for file select dialog.
     filter_glob: bpy.props.StringProperty(
-        default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
+        default="*.nif;*.item;*.nifcache;*.jmi",
+        options={'HIDDEN'})
 
     # Level of verbosity on the console.
     plugin_log_level: bpy.props.EnumProperty(
