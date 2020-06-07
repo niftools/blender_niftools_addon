@@ -39,13 +39,18 @@
 
 
 import bpy
+from bpy.types import Panel
 
 
-class NIF_PT_import_include(bpy.types.Panel):
+class OperatorSetting:
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Include"
     bl_parent_id = "FILE_PT_operator"
+
+
+class OperatorImportIncludePanel(OperatorSetting, Panel):
+    bl_label = "Include"
+    bl_idname = "NIFTOOLS_PT_import_operator_include"
 
     @classmethod
     def poll(cls, context):
@@ -67,11 +72,9 @@ class NIF_PT_import_include(bpy.types.Panel):
         layout.prop(operator, "use_custom_normals")
 
 
-class NIF_PT_import_transform(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
+class OperatorImportTransformPanel(OperatorSetting, Panel):
     bl_label = "Transform"
-    bl_parent_id = "FILE_PT_operator"
+    bl_idname = "NIFTOOLS_PT_import_operator_transform"
 
     @classmethod
     def poll(cls, context):
@@ -91,11 +94,9 @@ class NIF_PT_import_transform(bpy.types.Panel):
         layout.prop(operator, "scale_correction_import")
 
 
-class NIF_PT_import_armature(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
+class OperatorImportArmaturePanel(OperatorSetting, Panel):
     bl_label = "Armature"
-    bl_parent_id = "FILE_PT_operator"
+    bl_idname = "NIFTOOLS_PT_import_operator_armature"
 
     @classmethod
     def poll(cls, context):
@@ -117,12 +118,11 @@ class NIF_PT_import_armature(bpy.types.Panel):
         layout.prop(operator, "apply_skin_deformation")
 
 
-class NIF_PT_import_animation(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Animation"
-    bl_parent_id = "FILE_PT_operator"
+class OperatorImportAnimationPanel(OperatorSetting, Panel):
     bl_options = {'DEFAULT_CLOSED'}
+
+    bl_label = "Animation"
+    bl_idname = "NIFTOOLS_PT_import_operator_animation"
 
     @classmethod
     def poll(cls, context):
@@ -144,35 +144,9 @@ class NIF_PT_import_animation(bpy.types.Panel):
         layout.use_property_decorate = False  # No animation
 
 
-class NIF_PT_export_include(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Include"
-    bl_parent_id = "FILE_PT_operator"
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_nif"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.prop(operator, "animation")
-
-
-class NIF_PT_export_transform(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
+class OperatorExportTransformPanel(OperatorSetting, Panel):
     bl_label = "Transform"
-    bl_parent_id = "FILE_PT_operator"
+    bl_idname = "NIFTOOLS_PT_export_operator_transform"
 
     @classmethod
     def poll(cls, context):
@@ -192,11 +166,9 @@ class NIF_PT_export_transform(bpy.types.Panel):
         layout.prop(operator, "scale_correction_export")
 
 
-class NIF_PT_export_armature(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
+class OperatorExportArmaturePanel(OperatorSetting, Panel):
     bl_label = "Armature"
-    bl_parent_id = "FILE_PT_operator"
+    bl_idname = "NIFTOOLS_PT_export_operator_armature"
 
     @classmethod
     def poll(cls, context):
@@ -220,11 +192,9 @@ class NIF_PT_export_armature(bpy.types.Panel):
         layout.prop(operator, "max_bones_per_vertex")
 
 
-class NIF_PT_export_animation(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
+class OperatorExportAnimationPanel(OperatorSetting, Panel):
     bl_label = "Animation"
-    bl_parent_id = "FILE_PT_operator"
+    bl_idname = "NIFTOOLS_PT_export_operator_animation"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -246,11 +216,9 @@ class NIF_PT_export_animation(bpy.types.Panel):
         layout.prop(operator, "bs_animation_node")
 
 
-class NIF_PT_export_optimise(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
+class OperatorExportOptimisePanel(OperatorSetting, Panel):
     bl_label = "Optimise"
-    bl_parent_id = "FILE_PT_operator"
+    bl_idname = "NIFTOOLS_PT_export_operator_optimise"
 
     @classmethod
     def poll(cls, context):
@@ -273,11 +241,9 @@ class NIF_PT_export_optimise(bpy.types.Panel):
         layout.prop(operator, "optimise_materials")
 
 
-class NIF_PT_common_dev_options(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
+class OperatorCommonDevPanel(OperatorSetting, Panel):
     bl_label = "Dev Options"
-    bl_parent_id = "FILE_PT_operator"
+    bl_idname = "NIFTOOLS_PT_common_operator_dev"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -286,7 +252,8 @@ class NIF_PT_common_dev_options(bpy.types.Panel):
         operator = sfile.active_operator
 
         return operator.bl_idname in ("IMPORT_SCENE_OT_nif",
-                                      "EXPORT_SCENE_OT_nif")  # "IMPORT_SCENE_OT_kf")
+                                      "EXPORT_SCENE_OT_nif") 
+        # "IMPORT_SCENE_OT_kf")
 
     def draw(self, context):
         layout = self.layout
