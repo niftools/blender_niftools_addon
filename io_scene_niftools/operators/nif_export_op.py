@@ -42,8 +42,8 @@ from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 from pyffi.formats.nif import NifFormat
 
-from io_scene_niftools import nif_export
-from .nif_common_op import NifOperatorCommon
+from io_scene_niftools.nif_export import NifExport
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonExportScale, CommonKF
 
 
 def _game_to_enum(game):
@@ -53,7 +53,7 @@ def _game_to_enum(game):
     return enum
 
 
-class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
+class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonExportScale, CommonKF):
     """Operator for saving a nif file."""
 
     # Name of function for calling the nif export operators.
@@ -137,13 +137,6 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
         description="Remove duplicate materials",
         default=True)
 
-    # Number of blender units per nif unit.
-    scale_correction_export: bpy.props.FloatProperty(
-        name="Scale",
-        description="Changes the size of mesh from Blender default to nif default.",
-        default=10.0,
-        min=0.01, max=100.0, precision=2)
-
     # Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
@@ -159,4 +152,4 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
         calls its :meth:`~io_scene_niftools.nif_export.NifExport.execute`
         method.
         """
-        return nif_export.NifExport(self, context).execute()
+        return NifExport(self, context).execute()
