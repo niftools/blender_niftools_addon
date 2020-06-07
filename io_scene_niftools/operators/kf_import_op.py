@@ -63,7 +63,8 @@ class KfImportOperator(Operator, ImportHelper, NifOperatorCommon):
 
     #: File name filter for file select dialog.
     filter_glob: bpy.props.StringProperty(
-        default="*.kf", options={'HIDDEN'})
+        default="*.kf",
+        options={'HIDDEN'})
 
     files: bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
 

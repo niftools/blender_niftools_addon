@@ -63,7 +63,8 @@ class EgmImportOperator(Operator, ImportHelper, NifOperatorCommon):
 
     #: File name filter for file select dialog.
     filter_glob: bpy.props.StringProperty(
-        default="*.egm", options={'HIDDEN'})
+        default="*.egm",
+        options={'HIDDEN'})
 
     def execute(self, context):
         """Execute the import operators: first constructs a
