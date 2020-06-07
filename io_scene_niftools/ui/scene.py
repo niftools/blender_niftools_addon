@@ -61,12 +61,53 @@ class ScenePanel(Panel):
         layout = self.layout
         row = layout.column()
         row.prop(nif_scene_props, "game")
-        row.prop(nif_scene_props, "nif_version")
-        row.prop(nif_scene_props, "user_version")
-        row.prop(nif_scene_props, "user_version_2")
+
+
+class SceneVersionInfoPanel(Panel):
+    bl_label = "Nif Version Info"
+    bl_idname = "NIFTOOLS_PT_scene_version_info"
+    bl_parent_id = "NIFTOOLS_PT_scene"
+
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+
+        nif_scene_props = context.scene.niftools_scene
         layout.label(text=NifFormat.HeaderString.version_string(nif_scene_props.nif_version))
 
-        row = layout.column()
-        row.separator()
-        row.prop(nif_scene_props, "scale_correction_import")
-        row.prop(nif_scene_props, "scale_correction_export")
+        flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
+
+        col = flow.column()
+        col.prop(nif_scene_props, "nif_version")
+
+        col = flow.column()
+        col.prop(nif_scene_props, "user_version")
+
+        col = flow.column()
+        col.prop(nif_scene_props, "user_version_2")
+
+
+# class SCENE_PT_niftools_author_info(Panel):
+#     bl_label = "Nif Author Info"
+#
+#     def draw(self, context):
+#         layout = self.layout
+#         layout.use_property_split = True
+#
+#         nif_scene_props = context.scene.niftools_scene
+#
+#         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
+#
+#         col = flow.column()
+#         col.prop(nif_scene_props, "nif_version")
+#
+#         col = flow.column()
+#         col.prop(nif_scene_props, "user_version")
+#
+#         col = flow.column()
+#         col.prop(nif_scene_props, "user_version_2")
+
