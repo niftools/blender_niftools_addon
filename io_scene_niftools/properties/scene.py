@@ -62,17 +62,20 @@ def update_version_from_game(self, context):
 class Scene(PropertyGroup):
 
     nif_version: IntProperty(
-        name='Nif Version',
+        name='Version',
+        description="The Gamebryo Engine version used",
         default=0
     )
 
     user_version: IntProperty(
         name='User Version',
+        description="Studio specific version, used to denote versioning from game to game",
         default=0
     )
 
     user_version_2: IntProperty(
         name='User Version 2',
+        description="Studio specific version, used to denote versioning from game to game",
         default=0
     )
 
@@ -87,20 +90,6 @@ class Scene(PropertyGroup):
         description="For which game to export.",
         default='OBLIVION',
         update=update_version_from_game)
-
-    # Number of nif units per blender unit.
-    scale_correction_import: bpy.props.FloatProperty(
-        name="Scale Correction Import",
-        description="Changes the size of mesh to fit onto Blender's default grid.",
-        default=0.1,
-        min=0.01, max=100.0, precision=3)
-
-    # Number of blender units per nif unit.
-    scale_correction_export: bpy.props.FloatProperty(
-        name="Scale Correction Export",
-        description="Changes the size of mesh from Blender default to nif default.",
-        default=10.0,
-        min=0.01, max=100.0, precision=2)
 
     #: Map game enum to nif version.
     VERSION = {
