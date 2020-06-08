@@ -73,8 +73,9 @@ class BSShaderProperty:
         self.texturehelper.export_bs_effect_shader_prop_textures(bsshader)
 
         # Alpha
-        if b_mat.use_transparency:
-            bsshader.alpha = (1 - b_mat.alpha)
+        # TODO [Shader] Alpha property
+        # if b_mat.use_transparency:
+        #     bsshader.alpha = (1 - b_mat.alpha)
 
         # clamp Mode
         bsshader.texture_clamp_mode = 65283
@@ -99,32 +100,38 @@ class BSShaderProperty:
         self.texturehelper.export_bs_lighting_shader_prop_textures(bsshader)
 
         # Diffuse color
-        bsshader.skin_tint_color.r = b_mat.diffuse_color.r
-        bsshader.skin_tint_color.g = b_mat.diffuse_color.g
-        bsshader.skin_tint_color.b = b_mat.diffuse_color.b
+        d = b_mat.diffuse_color
+        bsshader.skin_tint_color.r = d[0]
+        bsshader.skin_tint_color.g = d[1]
+        bsshader.skin_tint_color.b = d[2]
+        # TODO [shader] expose intensity value
         # b_mat.diffuse_intensity = 1.0
 
         bsshader.lighting_effect_1 = b_mat.niftools.lightingeffect1
         bsshader.lighting_effect_2 = b_mat.niftools.lightingeffect2
 
         # Emissive
-        bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
-        bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
-        bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
-        bsshader.emissive_multiple = b_mat.emit
+        e = b_mat.niftools.emissive_color
+        bsshader.emissive_color.r = e[0]
+        bsshader.emissive_color.g = e[1]
+        bsshader.emissive_color.b = e[2]
+        # TODO [shader] Expose a emission multiplier value
+        # bsshader.emissive_multiple = b_mat.emit
 
         # gloss
-        bsshader.glossiness = b_mat.specular_hardness
+        bsshader.glossiness = b_mat.roughness
 
         # Specular color
-        bsshader.specular_color.r = b_mat.specular_color.r
-        bsshader.specular_color.g = b_mat.specular_color.g
-        bsshader.specular_color.b = b_mat.specular_color.b
+        s = b_mat.specular_color
+        bsshader.specular_color.r = s[0]
+        bsshader.specular_color.g = s[1]
+        bsshader.specular_color.b = s[2]
         bsshader.specular_strength = b_mat.specular_intensity
 
         # Alpha
-        if b_mat.use_transparency:
-            bsshader.alpha = (1 - b_mat.alpha)
+        # TODO [Shader] Alpha property
+        # if b_mat.use_transparency:
+        #     bsshader.alpha = (1 - b_mat.alpha)
 
         # Shader Flags
         BSShaderProperty.export_shader_flags(b_mat, bsshader)

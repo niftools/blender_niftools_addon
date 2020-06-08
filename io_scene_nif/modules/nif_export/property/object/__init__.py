@@ -83,10 +83,9 @@ class ObjectProperty:
                 bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
                 block_store.register_block(bsshader)
-                num_props = n_block.num_properties
-                n_block.num_properties = num_props + 1
+                # TODO [pyffi] Add helper function to allow adding bs_property / general list addition
+                n_block.bs_properties[0] = bsshader
                 n_block.bs_properties.update_size()
-                n_block.bs_properties[num_props] = bsshader
 
             else:
                 if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
