@@ -21,6 +21,7 @@ Contributors
 * Arcimaestro
 * Arthmoor
 * Artorp
+* Candoran2
 * Deedes
 * Eli2
 * Entim
