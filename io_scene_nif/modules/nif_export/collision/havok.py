@@ -372,9 +372,9 @@ class BhkCollision(Collision):
             n_coltf.transform.set_rows(*hktf)
 
             # fix matrix for havok coordinate system
-            n_coltf.transform.m_41 /= self.HAVOK_SCALE
-            n_coltf.transform.m_42 /= self.HAVOK_SCALE
-            n_coltf.transform.m_43 /= self.HAVOK_SCALE
+            n_coltf.transform.m_14 /= self.HAVOK_SCALE
+            n_coltf.transform.m_24 /= self.HAVOK_SCALE
+            n_coltf.transform.m_34 /= self.HAVOK_SCALE
 
             if collision_shape == 'BOX':
                 n_colbox = block_store.create_block("bhkBoxShape", b_obj)
