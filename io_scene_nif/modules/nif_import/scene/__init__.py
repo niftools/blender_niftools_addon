@@ -38,10 +38,37 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-
+from pyffi.formats.nif import NifFormat
+from io_scene_nif.properties.scene import _game_to_enum
 
 def import_version_info(data):
     scene = bpy.context.scene.niftools_scene
     scene.nif_version = data._version_value_._value
     scene.user_version = data._user_version_value_._value
     scene.user_version_2 = data._user_version_2_value_._value
+    
+    #filter possible games by nif version
+    possible_games = set()
+    for game, versions in NifFormat.games.items():
+        if game != '?':
+            if scene.nif_version in versions:
+                possible_games.add(_game_to_enum(game))
+    #filter possible games by user version
+    for game in list(possible_games):
+        if game in scene.USER_VERSION:
+            if scene.USER_VERSION[game] != scene.user_version:
+                possible_games.remove(game)
+        else:
+            if scene.user_version != 0:
+                possible_games.remove(game)
+    #filter possible games by user version 2
+    for game in list(possible_games):
+        if game in scene.USER_VERSION_2:
+            if scene.USER_VERSION_2[game] != scene.user_version_2:
+                possible_games.remove(game)
+        else:
+            if scene.user_version != 0:
+                possible_games.remove(game)
+    #only set the game if it is unambiguous from which game it came
+    if len(possible_games) == 1:
+        scene.game = possible_games.pop()
