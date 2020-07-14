@@ -13,7 +13,7 @@ write ("Existing archive removed successfully")
 }
 
 Add-Type -assembly "system.io.compression.filesystem"
-[io.compression.zipfile]::CreateFromDirectory($source, $destination)
+[io.compression.zipfile]::CreateFromDirectory($source, $destination, 1, 1)
 If(Test-path $destination) {
     write("File successully written")
 }
