@@ -314,7 +314,7 @@ class TransformAnimation(Animation):
                     key.time = frame / self.fps
                     key.value = euler[i]
         elif quat_curve:
-            n_kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
+            n_kfd.rotation_type = NifFormat.KeyType.QUADRATIC_KEY
             n_kfd.num_rotation_keys = len(quat_curve)
             n_kfd.quaternion_keys.update_size()
             for key, (frame, quat) in zip(n_kfd.quaternion_keys, quat_curve):
