@@ -151,6 +151,8 @@ class Animation(ABC):
             else:
                 # newer versions need the interpolator blocks
                 controlled_block.interpolator = n_kfi
+                controlled_block.node_name = target_name
+                controlled_block.controller_type = "NiTransformController"
         else:
             raise util_math.NifError("Unsupported KeyframeController parent!")
         
