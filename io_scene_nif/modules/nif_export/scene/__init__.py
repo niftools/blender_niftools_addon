@@ -42,21 +42,6 @@ from io_scene_nif.utils.util_global import NifOp
 from io_scene_nif.utils.util_logging import NifLog
 from pyffi.formats.nif import NifFormat
 
-# TODO [scene] Use this as global import and export values and remove from operator
-USER_VERSION = {
-    'OBLIVION': 11,
-    'FALLOUT_3': 11,
-    'SKYRIM': 12,
-    'DIVINITY_2': 131072
-}
-
-USER_VERSION_2 = {
-    'OBLIVION': 11,
-    'FALLOUT_3': 34,
-    'SKYRIM': 83
-}
-
-
 def get_version_data():
     """ Returns NifFormat.Data of the correct version and user versions """
     b_scene = bpy.context.scene.niftools_scene
@@ -65,7 +50,7 @@ def get_version_data():
     NifLog.info("Writing NIF version 0x%08X" % version)
 
     # get user version and user version 2 for export
-    user_version = b_scene.user_version if b_scene.user_version else USER_VERSION.get(game, 0)
-    user_version_2 = b_scene.user_version_2 if b_scene.user_version_2 else USER_VERSION_2.get(game, 0)
+    user_version = b_scene.user_version if b_scene.user_version else b_scene.USER_VERSION.get(game, 0)
+    user_version_2 = b_scene.user_version_2 if b_scene.user_version_2 else b_scene.USER_VERSION_2.get(game, 0)
 
     return version, NifFormat.Data(version, user_version, user_version_2)

@@ -223,14 +223,15 @@ class Object:
         """Export all children of blender object b_parent as children of n_parent."""
         # loop over all obj's children
         for b_child in b_parent.children:
+            temp_parent = n_parent
             # special case: objects parented to armature bones - find the nif parent bone
             if b_parent.type == 'ARMATURE' and b_child.parent_bone != "":
                 parent_bone = b_parent.data.bones[b_child.parent_bone]
                 assert (parent_bone in block_store.block_to_obj.values())
-                for n_parent, obj in block_store.block_to_obj.items():
+                for temp_parent, obj in block_store.block_to_obj.items():
                     if obj == parent_bone:
                         break
-            self.export_node(b_child, n_parent)
+            self.export_node(b_child, temp_parent)
 
     def export_collision(self, b_obj, n_parent):
         """Main function for adding collision object b_obj to a node.

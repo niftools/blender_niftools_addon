@@ -32,6 +32,6 @@ echo.Removing old installation
 if exist "%BLENDER_ADDONS_DIR%\io_scene_nif" rmdir /s /q "%BLENDER_ADDONS_DIR%\io_scene_nif"
 
 :: copy files from repository to blender addons folder
-powershell -executionpolicy bypass -Command "%DIR%\unzip.ps1" -source '%DIR%\%ZIP_NAME%.zip' -destination '%BLENDER_ADDONS_DIR%\io_scene_nif'
+powershell -executionpolicy bypass -Command "%DIR%\unzip.ps1" -source '%DIR%\%ZIP_NAME%.zip' -destination '%BLENDER_ADDONS_DIR%'
 
 :end
