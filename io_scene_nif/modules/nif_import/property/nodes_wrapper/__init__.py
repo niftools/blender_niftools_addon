@@ -134,6 +134,10 @@ class NodesWrapper:
             if texture_type in ("Detail", "Reflect"):
                 rgb_mixer.inputs[0].default_value = 1
                 rgb_mixer.blend_type = "OVERLAY"
+            # these textures are multiplied with the base texture (currently only vertex color)
+            elif texture_type == "Vertex_Color":
+                rgb_mixer.inputs[0].default_value = 1
+                rgb_mixer.blend_type = "MULTIPLY"
             # these textures use their alpha channel as a mask over the input pass
             elif texture_type == "Decal":
                 self.tree.links.new(b_texture_node.outputs[1], rgb_mixer.inputs[0])
@@ -146,7 +150,7 @@ class NodesWrapper:
         # if ob.data.vertex_colors:
         self.vcol = self.tree.nodes.new('ShaderNodeVertexColor')
         self.vcol.layer_name = "RGBA"
-        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, self.vcol, texture_type="Detail")
+        self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, self.vcol, texture_type="Vertex_Color")
 
     def connect_to_output(self, has_vcol=False):
         if has_vcol:

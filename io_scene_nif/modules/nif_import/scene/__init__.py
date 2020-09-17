@@ -40,6 +40,7 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.properties.scene import _game_to_enum
+from io_scene_nif.utils.util_logging import NifLog
 
 def import_version_info(data):
     scene = bpy.context.scene.niftools_scene
@@ -62,7 +63,7 @@ def import_version_info(data):
                     continue
                 #same checks for user version 2
                 if game_enum in scene.USER_VERSION_2:
-                    if scene.USER_VERSION_2[game_enum] != scene.user_version:
+                    if scene.USER_VERSION_2[game_enum] != scene.user_version_2:
                         continue
                 elif scene.user_version_2 != 0:
                     continue
