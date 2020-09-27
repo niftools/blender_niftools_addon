@@ -236,6 +236,13 @@ class NodesWrapper:
 
     def link_normal_node(self, b_texture_node):
         b_texture_node.label = "Normal"
+        #set to non-color data
+        b_texture_node.image.colorspace_settings.name = 'Non-Color'
+        #create tangent normal map converter and link to it
+        tangent_converter = self.b_mat.node_tree.nodes.new("ShaderNodeNormalMap")
+        self.tree.links.new(b_texture_node.outputs[0], tangent_converter.inputs[1])
+        #link to the diffuse shader
+        self.tree.links.new(tangent_converter.outputs[0], self.diffuse_shader.inputs[2])
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = True  # causes artifacts otherwise.
         #
