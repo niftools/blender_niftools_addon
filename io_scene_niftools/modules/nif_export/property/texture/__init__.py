@@ -115,9 +115,12 @@ class TextureSlotManager:
         for b_texture_node in self.get_used_textslots(b_mat):
             NifLog.debug(f"Found node {b_texture_node.name} of type {b_texture_node.label}")
 
+            shown_label = b_texture_node.label
+            if shown_label == '':
+                shown_label = b_texture_node.image.name
             # go over all slots
             for slot_name in self.slots.keys():
-                if slot_name in b_texture_node.label:
+                if slot_name in shown_label:
                     # slot has already been populated
                     if self.slots[slot_name]:
                         raise NifError(f"Multiple {slot_name} textures in material '{b_mat.name}''.\n"
@@ -127,5 +130,5 @@ class TextureSlotManager:
                     break
             # unsupported texture type
             else:
-                raise NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}'."
-                               f"Delete it or change its label.")
+                raise NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}' with label '{shown_label}'."
+                                         f"Delete it or change its label.")
