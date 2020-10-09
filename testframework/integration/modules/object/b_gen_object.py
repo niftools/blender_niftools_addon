@@ -102,16 +102,16 @@ def b_check_transform(b_obj):
 
 
 def b_check_user_transforms(b_obj):
-    print(f"b_obj.location - {b_obj.location)}"
+    print(f"b_obj.location - {b_obj.location})"
     nose.tools.assert_equal(b_obj.location, b_translation_mat().to_translation())  # location
     
-    print(f"b_obj.scale - {b_obj.scale)}"
+    print(f"b_obj.scale - {b_obj.scale})"
     nose.tools.assert_equal((b_obj.scale - b_scale_mat().to_scale()) < E_VEC, True)  # uniform scale
     
     b_rot_eul = b_obj.rotation_euler
-    print(f"b_rot_eul - {b_rot_eul)}"
+    print(f"b_rot_eul - {b_rot_eul})"
     b_rot_axis = (degrees(b_rot_eul.x), degrees(b_rot_eul.y), degrees(b_rot_eul.z))
-    print(f"b_rot_eul(x,y,z) - {b_rot_axis)}"
+    print(f"b_rot_eul(x,y,z) - {b_rot_axis})"
     nose.tools.assert_equal((b_rot_eul.x - RAD_30) < EPSILON, True)  # x rotation
     nose.tools.assert_equal((b_rot_eul.y - RAD_60) < EPSILON, True)  # y rotation
     nose.tools.assert_equal((b_rot_eul.z - RAD_90) < EPSILON, True)  # z rotation
@@ -121,16 +121,16 @@ def b_check_matrix_local(b_obj):
     
     b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose()  # transforms   
     
-    print(f"b_loc_vec - {b_loc_vec)}"
+    print(f"b_loc_vec - {b_loc_vec})"
     nose.tools.assert_equal(b_loc_vec, b_translation_mat().to_translation())  # location
     
-    print(f"b_scale_vec - {b_scale_vec)}"
+    print(f"b_scale_vec - {b_scale_vec})"
     nose.tools.assert_equal((b_scale_vec - b_scale_mat().to_scale()) < E_VEC, True)  # uniform scale
     
     b_rot_eul = b_rot_quat.to_euler()
-    print(f"b_rot_eul - {b_rot_eul)}"
+    print(f"b_rot_eul - {b_rot_eul})"
     b_rot_axis = (degrees(b_rot_eul.x), degrees(b_rot_eul.y), degrees(b_rot_eul.z))
-    print(f"b_rot_eul(x,y,z) - {b_rot_axis)}"
+    print(f"b_rot_eul(x,y,z) - {b_rot_axis})"
     nose.tools.assert_equal((b_rot_eul.x - RAD_30) < EPSILON, True)  # x rotation
     nose.tools.assert_equal((b_rot_eul.y - RAD_60) < EPSILON, True)  # y rotation
     nose.tools.assert_equal((b_rot_eul.z - RAD_90) < EPSILON, True)  # z rotation
