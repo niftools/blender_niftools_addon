@@ -87,7 +87,7 @@ def main(arg):
         posetxt = Blender.Text.New(PREF_BUFFER.val)
     posetxt.clear()
     for bonename, bone in boneitems:
-        print(("saving pose of bone %s to %s" % (bonename, PREF_BUFFER.val)))
+        print(f"saving pose of bone {bonename:s} to {PREF_BUFFER.val:s}")
         matrix = bone.quat.toMatrix()
         matrix.resize4x4()
         matrix[3][0] = bone.loc[0]
@@ -101,7 +101,7 @@ def main(arg):
         posetxt.write("%s/%s\n" % (bonename, matrixtxt[1:]))
 
     # report finish and timing
-    print('Save bone pose finished in %.2f seconds' % (sys.time()-t))
+    print(f'Save bone pose finished in {(sys.time()-t):.2f} seconds'
     Window.WaitCursor(0)
     if is_editmode:
         Window.EditMode(1)

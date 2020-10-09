@@ -32,14 +32,14 @@ class TestNifInspector(unittest.TestCase):
     def _write_file(self):
         """Helper method to write a nif file"""
         path = self.output_dir + os.sep + self.output_filename + self.ext
-        print("Writing to: " + path)
+        print(f"Writing to: {path}")
         with open(path, 'wb') as stream:
             self.nif_file.write(stream)
          
     def _read_file(self):
         """Helper method to write a nif file"""
         path = self.input_dir + os.sep + self.input_filename + self.ext
-        print("Reading : " + path)
+        print(f"Reading : {path}")
         with open(path, 'rb') as stream:
             self.nif_file.read(stream)
         print(self.nif_file)

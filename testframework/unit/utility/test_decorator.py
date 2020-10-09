@@ -48,28 +48,28 @@ class Foo(object):
 
     @overload_method(any)
     def bah(self, a):
-        print('params - object: {}'.format(a))
+        print(f"params - object: {a}")
         return a
 
     @overload_method(str)
     def bah(self, bar: str) -> int:
-        print('params - string: {}'.format(bar))
+        print(f"params - string: {bar}")
         convert = int(bar)
-        print('return - int: {}'.format(convert))
+        print(f"return - int: {convert:d}")
         return convert
 
     @overload_method(float)
     def bah(self, bar: float) -> str:
-        print('params - float: {}'.format(bar))
+        print(f"params - float: {bar}")
         convert = str(int(bar))
-        print('return - str: {}'.format(convert))
+        print(f"return - str: {convert:.2f}")
         return convert
 
     @overload_method(float, int)
     def bah(self, s, t):
-        print('params - float, int: {}, {}'.format(s, t))
+        print(f"params - float, int: {s}, {t}")
         convert = int(s) + int(t)
-        print('return - int: {}'.format(convert))
+        print(f"return - int: {convert:d}")
         return convert
 
 
