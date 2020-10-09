@@ -62,7 +62,7 @@ class Foo(object):
     def bah(self, bar: float) -> str:
         print(f"params - float: {bar}")
         convert = str(int(bar))
-        print(f"return - str: {convert:.2f}")
+        print(f"return - str: {convert:s}")
         return convert
 
     @overload_method(float, int)

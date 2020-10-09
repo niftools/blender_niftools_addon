@@ -97,7 +97,7 @@ class TestMatrixOperations:
                 print(f"{row:s} : {col:s} ="
                       f"{converted_mat['row']['col']:s} : {self.blender_matrix['row']['col']:s}")
                 nose.tools.assert_true(converted_mat[row][col] - self.blender_matrix[row][col]
-                                       < NifFormat.EPSILON)
+                    < NifFormat.EPSILON)
 
     def test_matrix_decompose_srt(self):
         pass
