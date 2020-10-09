@@ -42,7 +42,7 @@ import logging
 
 class _MockOperator:
     def report(self, level, message):
-        print(f"{str(level)}: {message}")
+        print(f"{level:s}: {message}")
 
 
 class NifLog:
