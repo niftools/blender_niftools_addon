@@ -49,7 +49,7 @@ class EGMFile:
     @staticmethod
     def load_egm(file_path):
         """Loads an egm file from the given path"""
-        NifLog.info("Loading {0}".format(file_path))
+        NifLog.info(f"Loading {file_path}")
 
         egm_file = EgmFormat.Data()
 
@@ -59,7 +59,7 @@ class EGMFile:
             egm_file.inspect_quick(egm_stream)
             if egm_file.version >= 0:
                 # it is valid, so read the file
-                NifLog.info("EGM file version: {0}".format(egm_file.version, "x"))
+                NifLog.info(f"EGM file version: {egm_file.version:x}")
                 NifLog.info("Reading FaceGen egm file")
                 egm_file.read(egm_stream)
             elif egm_file.version == -1:

@@ -81,7 +81,7 @@ class NifExport(NifCommon):
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
-        NifLog.info("Exporting {0}".format(NifOp.props.filepath))
+        NifLog.info(f"Exporting {NifOp.props.filepath}")
 
         # TODO [animation[ Fix morrowind animation support
         '''
@@ -114,15 +114,15 @@ class NifExport(NifCommon):
                     if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                         for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE' and b_mod.use_bone_envelopes:
-                                raise util_math.NifError("'{0}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
-                                                         "If you don't have vertex groups, select the bones one by one press W to "
-                                                         "convert their envelopes to vertex weights, and turn off envelopes.".format(b_obj.name))
+                                raise util_math.NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                                         f"If you don't have vertex groups, select the bones one by one press W to "
+                                                         f"convert their envelopes to vertex weights, and turn off envelopes.")
 
                 # check for non-uniform transforms
                 scale = b_obj.matrix_local.to_scale()
                 if abs(scale.x - scale.y) > NifOp.props.epsilon or abs(scale.y - scale.z) > NifOp.props.epsilon:
-                    NifLog.warn("Non-uniform scaling not supported.\n"
-                                "Workaround: apply size and rotation (CTRL-A) on '{0}'." .format(b_obj.name))
+                    NifLog.warn(f"Non-uniform scaling not supported.\n"
+                                f"Workaround: apply size and rotation (CTRL-A) on '{b_obj.name}'.")
 
             b_armature = util_math.get_armature()
             # some scenes may not have an armature, so nothing to do here
@@ -155,7 +155,7 @@ class NifExport(NifCommon):
 
                 # write kf (and xkf if asked)
                 ext = ".kf"
-                NifLog.info("Writing {0} file".format(prefix + ext))
+                NifLog.info(f"Writing {prefix}{ext} file")
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
                 data.roots = [kf_root]
@@ -281,7 +281,7 @@ class NifExport(NifCommon):
 
             # apply scale
             if abs(NifOp.props.scale_correction_export) > NifOp.props.epsilon:
-                NifLog.info("Applying scale correction {0}".format(str(NifOp.props.scale_correction_export)))
+                NifLog.info(f"Applying scale correction {NifOp.props.scale_correction_export:s}")
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
                 toaster.scale = NifOp.props.scale_correction_export
@@ -310,11 +310,11 @@ class NifExport(NifCommon):
                 ext = ".nifcache"
             else:
                 ext = ".nif"
-            NifLog.info("Writing {0} file".format(ext))
+            NifLog.info(f"Writing {ext} file")
 
             # make sure we have the right file extension
             if fileext.lower() != ext:
-                NifLog.warn("Changing extension from {0} to {1} on output file".format(fileext, ext))
+                NifLog.warn(f"Changing extension from {fileext} to {ext} on output file")
             niffile = os.path.join(directory, prefix + filebase + ext)
 
             data.roots = [root_block]
@@ -334,7 +334,7 @@ class NifExport(NifCommon):
             # -----------------
             if EGMData.data:
                 ext = ".egm"
-                NifLog.info("Writing {0} file".format(ext))
+                NifLog.info(f"Writing {ext} file")
 
                 egmfile = os.path.join(directory, filebase + ext)
                 with open(egmfile, "wb") as stream:

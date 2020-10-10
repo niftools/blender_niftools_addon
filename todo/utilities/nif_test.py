@@ -110,7 +110,7 @@ class TestSuite:
         # run test
         if 'game' in config:
             # export the imported files
-            self.info("Exporting %s" % filename)
+            self.info(f"Exporting {filename}")
 
             finalconfig["EXPORT_FILE"] = filename
             result = NifExport(**finalconfig)
@@ -125,7 +125,7 @@ class TestSuite:
             # return test result
             return result
         else:
-            self.info("Importing %s" % filename)
+            self.info(f"Importing {filename}")
 
             # import file and return test result
             finalconfig["IMPORT_FILE"] =  filename
@@ -158,7 +158,7 @@ class TestSuite:
                             "femalerighthand.nif",
                             "femalelefthand.nif",
                             "../head/headfemale.nif"):
-            self.info("Merging body part %s" % bodypartnif)
+            self.info(f"Merging body part {bodypartnif}")
             bodypart = NifFormat.Data()
             with open(os.path.join(fo3_male, bodypartnif), "rb") as stream:
                 bodypart.read(stream)
@@ -199,8 +199,8 @@ class TestSuite:
             assert(isinstance(val2, float))
             assert(abs(val1 - val2) < 0.000001)
         else:
-            raise TypeError("don't know how to test equality of %s and %s"
-                            % (val1.__class__, val2.__class__))
+            raise TypeError(f"don't know how to test equality of "
+                            f"{val1.__class__} and {val2.__class__}")
 
     def run(self):
         """Run the test suite. Override."""

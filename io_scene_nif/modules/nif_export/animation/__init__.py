@@ -168,7 +168,7 @@ class Animation(ABC):
         elif b_ipol == "CONSTANT":
             return NifFormat.KeyType.CONST_KEY
 
-        NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
+        NifLog.warn(f"Unsupported interpolation mode ({b_ipol}) in blend, using quadratic/bezier.")
         return NifFormat.KeyType.QUADRATIC_KEY
     
     def add_dummy_markers(self, b_action):

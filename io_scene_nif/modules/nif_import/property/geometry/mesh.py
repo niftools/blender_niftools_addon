@@ -112,5 +112,5 @@ class MeshPropertyProcessor:
 
     def process_property(self, prop):
         """Base method to warn user that this property is not supported"""
-        NifLog.warn("Unknown property block found : {0}".format(str(prop.name)))
-        NifLog.warn("This type isn't currently supported: {0}".format(type(prop)))
+        NifLog.warn(f"Unknown property block found : {prop.name:s}")
+        NifLog.warn(f"This type isn't currently supported: {type(prop)}")

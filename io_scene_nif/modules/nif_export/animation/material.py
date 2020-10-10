@@ -152,7 +152,7 @@ class MaterialAnimation(Animation):
         n_uv_data = NifFormat.NiUVData()
         for fcu, n_uv_group in zip(fcurves, n_uv_data.uv_groups):
             if fcu:
-                NifLog.debug("Exporting {0} as NiUVData".format(fcu))
+                NifLog.debug(f"Exporting {fcu} as NiUVData")
                 n_uv_group.num_keys = len(fcu.keyframe_points)
                 n_uv_group.interpolation = NifFormat.KeyType.LINEAR_KEY
                 n_uv_group.keys.update_size()

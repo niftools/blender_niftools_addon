@@ -77,8 +77,8 @@ class TransformAnimation(Animation):
 
     def import_kf_root(self, kf_root, b_armature_obj, bind_data):
         """Base method to warn user that this root type is not supported"""
-        NifLog.warn("Unknown KF root block found : " + str(kf_root.name))
-        NifLog.warn("This type isn't currently supported: {}".format(type(kf_root)))
+        NifLog.warn(f"Unknown KF root block found : {kf_root.name:s}")
+        NifLog.warn(f"This type isn't currently supported: {type(kf_root)}")
 
     def import_sequence_stream_helper(self, kf_root, b_armature_obj, bind_data):
         NifLog.debug('Importing NiSequenceStreamHelper...')

@@ -291,7 +291,7 @@ class Armature:
                 skelroot = ni_block
             if skelroot not in self.dict_armatures:
                 self.dict_armatures[skelroot] = []
-            NifLog.info("Selecting node '%s' as skeleton root".format(skelroot.name))
+            NifLog.info(f"Selecting node '{skelroot.name}' as skeleton root")
             # add bones
             self.populate_bone_tree(skelroot)
             return  # done!
@@ -302,8 +302,8 @@ class Armature:
             skelroot = ni_block.find(block_name=b_armature_obj.name)
             if not skelroot:
                 skelroot = ni_block
-                # raise nif_utils.NifError("nif has no armature '%s'" % b_armature_obj.name)
-            NifLog.debug("Identified '{0}' as armature".format(skelroot.name))
+                # raise nif_utils.NifError(f"nif has no armature '{b_armature_obj.name}'")
+            NifLog.debug(f"Identified '{skelroot.name}' as armature")
             self.dict_armatures[skelroot] = []
             for bone_name in b_armature_obj.data.bones.keys():
                 # blender bone naming -> nif bone naming
@@ -312,7 +312,7 @@ class Armature:
                 bone_block = skelroot.find(block_name=nif_bone_name)
                 # add it to the name list if there is a bone with that name
                 if bone_block:
-                    NifLog.info("Identified nif block '{0}' with bone '{1}' in selected armature".format(nif_bone_name, bone_name))
+                    NifLog.info(f"Identified nif block '{nif_bone_name}' with bone '{bone_name}' in selected armature")
                     self.dict_armatures[skelroot].append(bone_block)
                     self.complete_bone_tree(bone_block, skelroot)
 
@@ -320,7 +320,7 @@ class Armature:
         if isinstance(ni_block, NifFormat.NiTriBasedGeom):
             # yes, we found one, get its skin instance
             if ni_block.is_skin():
-                NifLog.debug("Skin found on block '{0}'".format(ni_block.name))
+                NifLog.debug(f"Skin found on block '{ni_block.name}'")
                 # it has a skin instance, so get the skeleton root
                 # which is an armature only if it's not a skinning influence
                 # so mark the node to be imported as an armature
@@ -329,10 +329,10 @@ class Armature:
                 if NifOp.props.skeleton == "EVERYTHING":
                     if skelroot not in self.dict_armatures:
                         self.dict_armatures[skelroot] = []
-                        NifLog.debug("'{0}' is an armature".format(skelroot.name))
+                        NifLog.debug(f"'{skelroot.name}' is an armature")
                 elif NifOp.props.skeleton == "GEOMETRY_ONLY":
                     if skelroot not in self.dict_armatures:
-                        raise util_math.NifError("Nif structure incompatible with '{0}' as armature: node '{1}' has '{2}' as armature".format(b_armature_obj.name, ni_block.name, skelroot.name))
+                        raise util_math.NifError(f"Nif structure incompatible with '{b_armature_obj.name}' as armature: node '{ni_block.name}' has '{skelroot.name}' as armature")
 
                 for boneBlock in skininst.bones:
                     # boneBlock can be None; see pyffi issue #3114079
@@ -340,7 +340,7 @@ class Armature:
                         continue
                     if boneBlock not in self.dict_armatures[skelroot]:
                         self.dict_armatures[skelroot].append(boneBlock)
-                        NifLog.debug("'{0}' is a bone of armature '{1}'".format(boneBlock.name, skelroot.name))
+                        NifLog.debug(f"'{boneBlock.name}' is a bone of armature '{skelroot.name}'")
                     # now we "attach" the bone to the armature:
                     # we make sure all NiNodes from this bone all the way
                     # down to the armature NiNode are marked as bones
@@ -366,7 +366,7 @@ class Armature:
                 continue
             if bone not in self.dict_armatures[skelroot]:
                 self.dict_armatures[skelroot].append(bone)
-                NifLog.debug("'{0}' marked as extra bone of armature '{1}'".format(bone.name, skelroot.name))
+                NifLog.debug(f"'{bone.name}' marked as extra bone of armature '{skelroot.name}'")
 
     def complete_bone_tree(self, bone, skelroot):
         """Make sure that the complete hierarchy from bone up to skelroot is marked in dict_armatures."""
@@ -381,7 +381,7 @@ class Armature:
                 # neither is it marked as a bone: so mark the parent as a bone
                 self.dict_armatures[skelroot].append(boneparent)
                 # store the coordinates for realignement autodetection 
-                NifLog.debug("'{0}' is a bone of armature '{1}'".format(boneparent.name, skelroot.name))
+                NifLog.debug(f"'{boneparent.name}' is a bone of armature '{skelroot.name}'")
             # now the parent is marked as a bone
             # recursion: complete the bone tree,
             # this time starting from the parent bone

@@ -117,10 +117,10 @@ class TextureWriter:
 
         # warn if packed flag is enabled
         if b_texture_node.image.packed_file:
-            NifLog.warn("Packed image in texture '{0}' ignored, exporting as '{1}' instead.".format(b_texture_node.name, filename))
+            NifLog.warn(f"Packed image in texture '{b_texture_node.name}' ignored, exporting as '{filename}' instead.")
 
         # try and find a DDS alternative, force it if required
-        ddsfilename = "%s%s" % (filename[:-4], '.dds')
+        ddsfilename = f"{(filename[:-4])}.dds"
         if os.path.exists(ddsfilename) or NifOp.props.force_dds:
             filename = ddsfilename
 
@@ -136,7 +136,7 @@ class TextureWriter:
             if idx >= 0:
                 filename = filename[idx:]
             else:
-                NifLog.warn("{0} does not reside in a 'Textures' folder; texture path will be stripped and textures may not display in-game".format(filename))
+                NifLog.warn(f"{filename} does not reside in a 'Textures' folder; texture path will be stripped and textures may not display in-game")
                 filename = os.path.basename(filename)
         # for linux export: fix path separators
         return filename.replace('/', '\\')

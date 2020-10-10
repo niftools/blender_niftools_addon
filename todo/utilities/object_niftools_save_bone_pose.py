@@ -95,10 +95,12 @@ def main(arg):
         matrix[3][2] = bone.loc[2]
         matrixtxt = ''
         for row in matrix:
-            matrixtxt = '%s;%s,%s,%s,%s' % (matrixtxt,
-                                            row[0], row[1], row[2], row[3])
-        # matrixtxt[1:] discards the first semi-colon
-        posetxt.write("%s/%s\n" % (bonename, matrixtxt[1:]))
+            matrixtxt = f"{matrixtxt};{row['0']},{row['1']},{row['2']},{row['3']}"
+            # NOTE: f-strings don't appear to support slicing within the 
+            # NOTE: replacement field!
+            # matrixtxt[1:] discards the first semi-colon
+            matrixtxt_nosemi = matrixtxt[1:]
+        posetxt.write(f"{bonename}/{matrixtxt_nosemi}\n")
 
     # report finish and timing
     print(f'Save bone pose finished in {(sys.time()-t):.2f} seconds'

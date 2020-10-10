@@ -168,8 +168,8 @@ class TransformAnimation(Animation):
             # if variable_2:
             # controlledblock.set_variable_2(variable_2)
         else:
-            raise util_math.NifError("Keyframe export for '%s' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
-                                     " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported." % bpy.context.scene.niftools_scene.game)
+            raise util_math.NifError(f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
+                                     " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported.")
         return kf_root
 
     def export_transforms(self, parent_block, b_obj, b_action, bone=None):
@@ -357,7 +357,7 @@ class TransformAnimation(Animation):
         for key, marker in zip(n_text_extra.text_keys, b_action.pose_markers):
             f = marker.frame
             if (f < f0) or (f > f1):
-                NifLog.warn("Marker out of animated range ({0} not between [{1}, {2}])".format(f, f0, f1))
+                NifLog.warn(f"Marker out of animated range ({f} not between [{f0}, {f1}])")
 
             key.time = f / self.fps
             key.value = marker.name.replace('/', '\r\n')

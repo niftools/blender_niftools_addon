@@ -72,9 +72,9 @@ class ExportBlockRegistry:
         @param b_obj: The Blender object.
         @return: C{block}"""
         if b_obj is None:
-            NifLog.info("Exporting {0} block".format(block.__class__.__name__))
+            NifLog.info(f"Exporting {block.__class__.__name__} block")
         else:
-            NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
+            NifLog.info(f"Exporting {b_obj} as {block.__class__.__name__} block")
         self._block_to_obj[block] = b_obj
         return block
 
@@ -89,7 +89,7 @@ class ExportBlockRegistry:
         try:
             block = getattr(NifFormat, block_type)()
         except AttributeError:
-            raise util_math.NifError("'{0}': Unknown block type (this is probably a bug).".format(block_type))
+            raise util_math.NifError(f"'{block_type}': Unknown block type (this is probably a bug).")
         return self.register_block(block, b_obj)
 
     @staticmethod

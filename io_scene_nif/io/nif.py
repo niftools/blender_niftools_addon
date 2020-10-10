@@ -50,7 +50,7 @@ class NifFile:
     @staticmethod
     def load_nif(file_path):
         """Loads a nif from the given file path"""
-        NifLog.info("Importing {0}".format(file_path))
+        NifLog.info(f"Importing {file_path}")
 
         data = NifFormat.Data()
 
@@ -60,7 +60,7 @@ class NifFile:
             data.inspect_version_only(nif_stream)
             if data.version >= 0:
                 # it is valid, so read the file
-                NifLog.info("NIF file version: {0}".format(data.version, "x"))
+                NifLog.info(f"NIF file version: {data.version:x}")
                 NifLog.info("Reading file")
                 data.read(nif_stream)
             elif data.version == -1:

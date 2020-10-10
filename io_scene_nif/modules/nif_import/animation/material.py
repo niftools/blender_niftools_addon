@@ -83,7 +83,7 @@ class MaterialAnimation(Animation):
                     break
         else:
             return
-        NifLog.info("Importing material color controller for target color {0} into blender channel {0}".format(n_target_color, b_channel))
+        NifLog.info(f"Importing material color controller for target color {n_target_color} into blender channel {b_channel}")
 
         # import data as curves
         b_mat_action = self.create_action(b_material, "MaterialAction")

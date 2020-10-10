@@ -56,10 +56,10 @@ from io_scene_nif import properties, operators, ui
 
 from io_scene_nif.utils.util_logging import NifLog
 with open(os.path.join(current_dir, "VERSION.txt")) as version:
-    NifLog.info("Loading: Blender Nif Plugin: {}".format(version.read()))
+    NifLog.info(f"Loading: Blender Nif Plugin: {version.read()}")
 
 import pyffi
-NifLog.info("Loading: Pyffi: {}".format(pyffi.__version__))
+NifLog.info(f"Loading: Pyffi: {pyffi.__version__}"
 
 from io_scene_nif.utils import util_debug
 

@@ -91,7 +91,7 @@ def main(arg):
         if not priorityconstr:
             priorityconstr = bone.constraints.append(
                 Blender.Constraint.Type.NULL)
-        priorityconstr.name = "priority:%i" % PREF_PRIORITY.val
+        priorityconstr.name = f"priority: {PREF_PRIORITY.val:d}"
 
     print(f'Set bone priority finished in {(sys.time()-t):.2f} seconds')
     Window.WaitCursor(0)

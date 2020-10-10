@@ -62,7 +62,7 @@ class NiTextureProp:
         }
 
     def import_nitextureprop_textures(self, n_texture_desc, nodes_wrapper):
-        # NifLog.debug("Importing {0}".format(n_texture_desc))
+        # NifLog.debug(f"Importing {n_texture_desc}")
         # go over all valid texture slots
         for slot_name, _ in self.slots.items():
             # get the field name used by nif xml for this texture

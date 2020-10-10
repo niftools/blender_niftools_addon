@@ -83,12 +83,12 @@ class BhkCollision(Collision):
 
     def process_bhk(self, bhk_shape):
         """Base method to warn user that this property is not supported"""
-        NifLog.warn("Unsupported bhk shape {0}".format(bhk_shape.__class__.__name__))
-        NifLog.warn("This type isn't currently supported: {0}".format(type(bhk_shape)))
+        NifLog.warn(f"Unsupported bhk shape {bhk_shape.__class__.__name__}")
+        NifLog.warn(f"This type isn't currently supported: {type(bhk_shape)}")
         return []
 
     def import_bhk_shape(self, bhk_shape):
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
         return self.process_bhk(bhk_shape)
 
     def import_bhk_nitristrips_shape(self, bhk_shape):
@@ -99,7 +99,7 @@ class BhkCollision(Collision):
         return reduce(operator.add, (self.import_bhk_shape(subshape) for subshape in bhk_shape.sub_shapes))
 
     def import_bhk_mopp_bv_tree_shape(self, bhk_shape):
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
         return self.process_bhk(bhk_shape.shape)
 
     def import_bhk_simple_shape_phantom(self, bhkshape):
@@ -140,7 +140,7 @@ class BhkCollision(Collision):
 
     def import_bhk_ridgidbody_t(self, bhk_shape):
         """Imports a BhkRigidBody block and applies the transform to the collision objects"""
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
 
         # import shapes
         collision_objs = self.import_bhk_shape(bhk_shape.shape)
@@ -165,7 +165,7 @@ class BhkCollision(Collision):
 
     def import_bhk_ridgid_body(self, bhk_shape):
         """Imports a BhkRigidBody block and applies the transform to the collision objects"""
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
 
         # import shapes
         collision_objs = self.import_bhk_shape(bhk_shape.shape)
@@ -214,7 +214,7 @@ class BhkCollision(Collision):
 
     def import_bhkbox_shape(self, bhk_shape):
         """Import a BhkBox block as a simple Box collision object"""
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
 
         # create box
         r = bhk_shape.radius * self.HAVOK_SCALE
@@ -233,7 +233,7 @@ class BhkCollision(Collision):
 
     def import_bhksphere_shape(self, bhk_shape):
         """Import a BhkSphere block as a simple sphere collision object"""
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
 
         r = bhk_shape.radius * self.HAVOK_SCALE
         b_obj = Object.box_from_extents("sphere", -r, r, -r, r, -r, r)
@@ -242,7 +242,7 @@ class BhkCollision(Collision):
 
     def import_bhkcapsule_shape(self, bhk_shape):
         """Import a BhkCapsule block as a simple cylinder collision object"""
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
 
         radius = bhk_shape.radius * self.HAVOK_SCALE
         p_1 = bhk_shape.first_point
@@ -264,7 +264,7 @@ class BhkCollision(Collision):
 
     def import_bhkconvex_vertices_shape(self, bhk_shape):
         """Import a BhkConvexVertex block as a convex hull collision object"""
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
 
         # find vertices (and fix scale)
         scaled_verts = [(self.HAVOK_SCALE * n_vert.x, self.HAVOK_SCALE * n_vert.y, self.HAVOK_SCALE * n_vert.z)
@@ -278,7 +278,7 @@ class BhkCollision(Collision):
 
     def import_bhkpackednitristrips_shape(self, bhk_shape):
         """Import a BhkPackedNiTriStrips block as a Triangle-Mesh collision object"""
-        NifLog.debug("Importing {0}".format(bhk_shape.__class__.__name__))
+        NifLog.debug(f"Importing {bhk_shape.__class__.__name__}")
 
         # create mesh for each sub shape
         hk_objects = []
@@ -306,7 +306,8 @@ class BhkCollision(Collision):
                                   bhk_tri.v_3 - vertex_offset))
                 else:
                     continue
-
+            # TODO: I was scared to change this to an f-string. I'm not sure
+            # TODO: if that's applicable here.
             b_obj = Object.mesh_from_data('poly%i' % subshape_num, verts, faces)
             radius = min(vert.co.length for vert in b_obj.data.vertices)
             self.set_b_collider(b_obj, bounds_type="MESH", radius=radius, n_obj=subshape)

@@ -204,7 +204,7 @@ class Animation:
             if diff < lowest_diff:
                 lowest_diff = diff
                 fps = test_fps
-        NifLog.info("Animation estimated at %i frames per second." % fps)
+        NifLog.info(f"Animation estimated at {fps} frames per second.")
         animation.FPS = fps
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)

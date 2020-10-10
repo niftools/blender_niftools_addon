@@ -206,8 +206,8 @@ class VariaTestSuite(TestSuite):
                 pass
             else:
                 raise ValueError(
-                    "no texture loaded but wrong exception raised: "
-                    "%s" % e)
+                    f"no texture loaded but wrong exception raised: "
+                    f"{e}")
             raise ValueError(
                 "no texture loaded but no exception raised")
         # now set the image

@@ -73,12 +73,12 @@ class MaterialProp:
             for specialname in specialnames:
                 if name.lower() == specialname.lower() or name.lower().startswith(specialname.lower() + "."):
                     if name != specialname:
-                        NifLog.warn("Renaming material '{0}' to '{1}'".format(name, specialname))
+                        NifLog.warn(f"Renaming material '{name}' to '{specialname}'")
                     name = specialname
 
         # clear noname materials
         if name.lower().startswith("noname"):
-            NifLog.warn("Renaming material '{0}' to ''".format(name))
+            NifLog.warn(f"Renaming material '{name}' to ''")
             name = ""
 
         n_mat_prop.name = name
@@ -120,7 +120,7 @@ class MaterialProp:
             # check hash
             first_index = 1 if ignore_strings else 0
             if n_block.get_hash()[first_index:] == n_mat_prop.get_hash()[first_index:]:
-                NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(n_mat_prop.name, n_block.name))
+                NifLog.warn(f"Merging materials '{n_mat_prop.name}' and '{n_block.name}' (they are identical in nif)")
                 n_mat_prop = n_block
                 break
 

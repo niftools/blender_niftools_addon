@@ -49,7 +49,7 @@ class KFFile:
     @staticmethod
     def load_kf(file_path):
         """Loads a Kf file from the given path"""
-        NifLog.info("Loading {0}".format(file_path))
+        NifLog.info(f"Loading {file_path}")
 
         kf_file = NifFormat.Data()
 
@@ -59,7 +59,7 @@ class KFFile:
             kf_file.inspect_version_only(kf_stream)
             if kf_file.version >= 0:
                 # it is valid, so read the file
-                NifLog.info("KF file version: {0}".format(kf_file.version, "x"))
+                NifLog.info(f"KF file version: {kf_file.version:x}")
                 NifLog.info("Reading keyframe file")
                 kf_file.read(kf_stream)
             elif kf_file.version == -1:

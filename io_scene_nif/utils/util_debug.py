@@ -50,7 +50,7 @@ def start_debug(port=REMOTE_PORT):
     NifLog.debug("Setting up debugger")
     try:
         pydev_src = os.environ['PYDEVDEBUG']
-        NifLog.debug("Found: " + pydev_src)
+        NifLog.debug(f"Found: {pydev_src}")
         if sys.path.count(pydev_src) < 1:
             sys.path.append(pydev_src)
     except KeyError:

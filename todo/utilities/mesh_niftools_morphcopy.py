@@ -166,8 +166,7 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
         # report progress
         Window.DrawProgressBar(0.01
                                + 0.98 * (i/float(len(me_from.key.blocks) - 1)),
-                               'Copy "%s" -> "%s" '
-                               % (ob_from.name, ob_to.name))
+                               f'Copy "{ob_from.name}" -> "{ob_to.name}" ')
 
         # get deformation
         morph = [vec_new - vec_old
@@ -254,7 +253,7 @@ def main(arg):
     ]
     
     
-    if not Blender.Draw.PupBlock("Copy morphs for %i meshes" % len(obs), pup_block):
+    if not Blender.Draw.PupBlock(f"Copy morphs for {len(obs):d} meshes", pup_block):
         return
     
     PREF_SEL_ONLY = PREF_SEL_ONLY.val

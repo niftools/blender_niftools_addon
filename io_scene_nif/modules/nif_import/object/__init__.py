@@ -117,7 +117,7 @@ class Object:
                 # nb. matrix local is relative to the armature object, not the bone
                 b_child.matrix_local = mpi @ b_child.matrix_basis
         else:
-            raise RuntimeError("Unexpected object type %s" % b_obj.__class__)
+            raise RuntimeError(f"Unexpected object type {b_obj.__class__:s}")
 
     def create_mesh_object(self, n_block):
         ni_name = n_block.name.decode()

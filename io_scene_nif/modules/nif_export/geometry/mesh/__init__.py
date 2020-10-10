@@ -71,7 +71,7 @@ class Mesh:
         The parameter trishape_name passes on the name for meshes that
         should be exported as a single mesh.
         """
-        NifLog.info("Exporting {0}".format(b_obj))
+        NifLog.info(f"Exporting {b_obj}")
 
         assert (b_obj.type == 'MESH')
 
@@ -83,7 +83,7 @@ class Mesh:
         # so quickly catch this (rare!) case
         if not b_mesh.vertices:
             # do not export anything
-            NifLog.warn("{0} has no vertices, skipped.".format(b_obj))
+            NifLog.warn(f"{b_obj} has no vertices, skipped.")
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -135,7 +135,7 @@ class Mesh:
 
                 # multimaterial meshes: add material index (Morrowind's child naming convention)
                 if len(mesh_materials) > 1:
-                    trishape.name = trishape.name.decode() + ":%i" % materialIndex
+                    trishape.name = f"{trishape.name.decode()}: {materialIndex}"
                 else:
                     trishape.name = block_store.get_full_name(trishape)
 
@@ -208,7 +208,7 @@ class Mesh:
                 if mesh_uv_layers:
                     # if we have uv coordinates double check that we have uv data
                     if not b_mesh.uv_layer_stencil:
-                        NifLog.warn("No UV map for texture associated with poly {0} of selected mesh '{1}'.".format(str(poly.index), b_mesh.name))
+                        NifLog.warn(f"No UV map for texture associated with poly {poly.index:s} of selected mesh '{b_mesh.name}'.")
 
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [-1] * f_numverts
@@ -455,8 +455,7 @@ class Mesh:
                                 NifLog.warn("Using less than 24 bones per partition on Skyrim export."
                                             "Set it to 24 to get higher quality skin partitions.")
                         if lostweight > NifOp.props.epsilon:
-                            NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')".format(
-                                str(lostweight), b_obj.name, trishape.name))
+                            NifLog.warn(f"Lost {lostweight:s} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{trishape.name}')")
 
                     if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
                         partitions = skininst.partitions
@@ -498,7 +497,7 @@ class Mesh:
                     for b_groupname in b_vert.groups:
                         if b_groupname.group == vertex_group.index:
                             vertices_list.add(b_vert.index)
-                NifLog.debug("Found body part {0}".format(bodypartgroupname))
+                NifLog.debug(f"Found body part {bodypartgroupname}")
                 bodypartgroups.append(
                     [bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
         return bodypartgroups
@@ -514,7 +513,7 @@ class Mesh:
                     skininst.skeleton_root = block
                     break
         else:
-            raise util_math.NifError("Skeleton root '%s' not found." % n_root_name)
+            raise util_math.NifError(f"Skeleton root '{n_root_name}' not found.")
 
         # create skinning data and link it
         skindata = block_store.create_block("NiSkinData", b_obj)

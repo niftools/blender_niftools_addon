@@ -158,7 +158,7 @@ class TextureLoader:
 
                 # "ignore case" on linuxW
                 tex = bpy.path.resolve_ncase(tex)
-                NifLog.debug("Searching {0}".format(tex))
+                NifLog.debug(f"Searching {tex}")
                 if os.path.exists(tex):
                     return self.load_image(tex)
 

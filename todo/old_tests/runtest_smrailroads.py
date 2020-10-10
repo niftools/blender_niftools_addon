@@ -58,7 +58,7 @@ class SMRailroadsTestSuite(TestSuite):
                    for prop in block.properties)
 
     def hasIntegerExtra(self, trishape, name, value):
-        self.info("Has %s with value %i?" % (name, value))
+        self.info(f"Has {name} with value {value:d}?")
         for extra in trishape.get_extra_datas():
             if (isinstance(extra, NifFormat.NiIntegerExtraData)
                 and extra.name == name):
@@ -68,7 +68,7 @@ class SMRailroadsTestSuite(TestSuite):
         return False
 
     def has_shader_texture(self, texprop, name, shaderindex):
-        self.info("Has shader texture %s at index %i?" % (name, shaderindex))
+        self.info(f"Has shader texture {name} at index {shaderindex}?")
         shader_tex_desc = texprop.shader_textures[shaderindex]
         return shader_tex_desc.texture_data.source.file_name.lower() == name.lower()
 

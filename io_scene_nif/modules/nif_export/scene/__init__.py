@@ -47,7 +47,7 @@ def get_version_data():
     b_scene = bpy.context.scene.niftools_scene
     game = b_scene.game
     version = b_scene.nif_version
-    NifLog.info("Writing NIF version 0x%08X" % version)
+    NifLog.info(f"Writing NIF version 0x{version:08X}")
 
     # get user version and user version 2 for export
     user_version = b_scene.user_version if b_scene.user_version else b_scene.USER_VERSION.get(game, 0)
