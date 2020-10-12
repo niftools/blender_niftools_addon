@@ -118,8 +118,6 @@ class Constraint:
             return
 
             # add the constraint as a rigid body joint
-            # TODO: Are these three lines supposed to be commented out, too?
-            # TODO: They're unreachable.
             b_constr = b_hkobj.constraints.new('RIGID_BODY_JOINT')
             b_constr.name = b_hkobj.name
             b_constr.show_pivot = True

@@ -58,13 +58,9 @@ class TextKeyTestSuite(TestSuite):
             raise ValueError("number of text keys does not match")
         for textkey_import, textkey_export in zip(textkeys_import.text_keys, textkeys_export.text_keys):
             if abs(textkey_import.time - textkey_export.time) > 0.0001:
-                raise ValueError(f"key times do not match "
-                                f"({textkey_import.time:f} != "
-                                f"{textkey_export.time:f})")
+                raise ValueError(f"key times do not match ({textkey_import.time:f} != {textkey_export.time:f})")
             if textkey_import.value != textkey_export.value:
-                raise ValueError(f"key values do not match "
-                                 f"({textkey_import.value} != "
-                                 f"{textkey_export.value})")
+                raise ValueError(f"key values do not match ({textkey_import.value} != {textkey_export.value})")
 
 suite = TextKeyTestSuite("textkey")
 suite.run()

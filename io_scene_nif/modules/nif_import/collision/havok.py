@@ -306,9 +306,8 @@ class BhkCollision(Collision):
                                   bhk_tri.v_3 - vertex_offset))
                 else:
                     continue
-            # TODO: I was scared to change this to an f-string. I'm not sure
-            # TODO: if that's applicable here.
-            b_obj = Object.mesh_from_data('poly%i' % subshape_num, verts, faces)
+
+            b_obj = Object.mesh_from_data(f'poly{subshape_num:d}', verts, faces)
             radius = min(vert.co.length for vert in b_obj.data.vertices)
             self.set_b_collider(b_obj, bounds_type="MESH", radius=radius, n_obj=subshape)
 

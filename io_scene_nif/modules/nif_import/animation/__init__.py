@@ -89,15 +89,15 @@ class Animation:
     def create_fcurves(self, action, dtype, drange, flags=None, bonename=None, keyname=None):
         """ Create fcurves in action for desired conditions. """
         # armature pose bone animation
-        # TODO: This may be a candidate for conversion to f-strings. Not sure.
         if bonename:
             fcurves = [
-                action.fcurves.new(data_path='pose.bones["' + bonename + '"].' + dtype, index=i, action_group=bonename)
+                action.fcurves.new(data_path=f'pose.bones["{bonename}""].{dtype}', index=i, action_group=bonename)
                 for i in drange]
         # shapekey pose bone animation
-        # TODO: This may be a candidate for conversion to f-strings. Not sure.
         elif keyname:
-            fcurves = [action.fcurves.new(data_path='key_blocks["' + keyname + '"].' + dtype, index=0), ]
+            fcurves = [
+                action.fcurves.new(data_path=f'key_blocks["{keyname}"].{dtype}', index=0,)
+            ]
         else:
             # Object animation (non-skeletal) is lumped into the "LocRotScale" action_group
             if dtype in ("rotation_euler", "rotation_quaternion", "location", "scale"):
