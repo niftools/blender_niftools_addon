@@ -51,7 +51,7 @@ class BSShaderProperty:
         """Export a Bethesda shader property block."""
         if b_mat.niftools_shader.bs_shadertype == 'None':
             raise util_math.NifError(f"Export version expected shader. No shader applied to mesh '{b_mat}', these cannot be exported to NIF."
-                                     "Set shader before exporting.")
+                                     f"Set shader before exporting.")
 
         self.texturehelper.determine_texture_types(b_mat)
 
