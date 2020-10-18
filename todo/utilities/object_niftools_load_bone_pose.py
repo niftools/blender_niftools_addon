@@ -108,8 +108,7 @@ def main(arg):
             continue
         # reconstruct matrix from text
         bonename, matrixstr = matrixtxt.split('/')
-        print(("loading pose of bone %s from %s"
-              % (bonename, PREF_BUFFER.val)))
+        print(f"loading pose of bone {bonename:s} from {PREF_BUFFER.val:s}")
         try:
             matrix = mathutils.Matrix(
                 *[[float(f) for f in row.split(',')]
@@ -124,12 +123,12 @@ def main(arg):
                 bone.loc = matrix.translationPart()
                 break
         else:
-            print(("WARNING: bone %s not found in armature" % bonename))
+            print(f"WARNING: bone {bonename:s} not found in armature")
     # display the result
     obs[0].getPose().update()
 
     # report finish and timing
-    print('Load bone pose finished in %.2f seconds' % (sys.time()-t))
+    print(f'Load bone pose finished in {(sys.time()-t):.2f} seconds')
     Window.WaitCursor(0)
     if is_editmode:
         Window.EditMode(1)

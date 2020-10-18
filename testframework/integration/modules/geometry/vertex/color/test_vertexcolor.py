@@ -140,9 +140,9 @@ class TestBaseVertexColor(SingleNif):
         pass
         # TODO [geometry] vcol assertion
         # print("Sub Check: Comparing vertex color")
-        # print("n_vert:" + str(vertexcolor.r) + " base_vert:" + str(self.vertcol[index][0]))
+        # print(f"n_vert: {vertexcolor.r} base_vert: {self.vertcol['index']['0']:s}")
         # nose.tools.assert_equal(abs(vertexcolor.r - self.vertcol[index][0]) > 0.01, False)
-        # print("n_vert:" + str(vertexcolor.g) + " base_vert:" + str(self.vertcol[index][1]))
+        # print(f"n_vert: {vertexcolor.r} base_vert: {self.vertcol['index']['1']:s}")
         # nose.tools.assert_equal(abs(vertexcolor.g - self.vertcol[index][1]) > 0.01, False)
-        # print("n_vert:" + str(vertexcolor.b) + " base_vert:" + str(self.vertcol[index][2]))
+        # print(f"n_vert: {vertexcolor.r} base_vert: {self.vertcol['index']['2']:s}")
         # nose.tools.assert_equal(abs(vertexcolor.b - self.vertcol[index][2]) > 0.01, False)

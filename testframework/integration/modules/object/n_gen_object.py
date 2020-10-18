@@ -90,14 +90,14 @@ def n_check_transform(n_ninode):
 
 def n_check_translation(n_ninode):
     location = n_ninode.translation.as_tuple()
-    print("Translation - {0}".format(location))
+    print("Translation - {location}")
     
     nose.tools.assert_equal(location,(20.0, 20.0, 20.0))  # location
 
 
 def n_check_scale(n_ninode):
     scale = n_ninode.scale
-    print("Scale - {0}".format(scale))
+    print("Scale - {scale}")
     
     nose.tools.assert_equal(scale - 0.75 < NifFormat.EPSILON, True)  # scale
 
@@ -105,9 +105,9 @@ def n_check_scale(n_ninode):
 def n_check_rotation(n_ninode): 
     n_rot_eul = mathutils.Matrix(n_ninode.rotation.as_tuple()).transposed().to_euler()
     
-    print("n_rot_eul - {0}".format(n_rot_eul))
+    print("n_rot_eul - {n_rot_eul}")
     n_rot_axis = (degrees(n_rot_eul.x), degrees(n_rot_eul.y), degrees(n_rot_eul.z))
-    print("n_rot_eul(x,y,z) - {0}".format(n_rot_axis))
+    print("n_rot_eul(x,y,z) - {n_rot_axis}")
     nose.tools.assert_equal((n_rot_eul.x - radians(30.0)) < NifFormat.EPSILON, True)  # x rotation
     nose.tools.assert_equal((n_rot_eul.y - radians(60.0)) < NifFormat.EPSILON, True)  # y rotation
     nose.tools.assert_equal((n_rot_eul.z - radians(90.0)) < NifFormat.EPSILON, True)  # z rotation

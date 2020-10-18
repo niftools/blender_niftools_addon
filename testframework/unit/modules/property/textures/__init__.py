@@ -60,13 +60,13 @@ class TestTextureSlotManager:
 
     def test_no_material(self):
         self.used_textslots = self.texture_helper.get_used_textslots(None)
-        print("Used Slots: %s, items = %s" % (self.used_textslots, len(self.used_textslots)))
+        print(f"Used Slots: {self.used_textslots}, items = {len(self.used_textslots)}")
 
         nose.tools.assert_true(len(self.used_textslots) == 0)
 
     def test_empty_textureslots(self):
         self.used_textslots = self.texture_helper.get_used_textslots(self.b_mat)
-        print("Used Slots: %s, items = %s" % (self.used_textslots, len(self.used_textslots)))
+        print(f"Used Slots: {self.used_textslots}, items = {len(self.used_textslots)}")
 
         nose.tools.assert_true(len(self.used_textslots) == 0)
 
@@ -75,7 +75,7 @@ class TestTextureSlotManager:
         self.texture_slot0 = self.b_mat.texture_slots.add()
 
         self.used_textslots = self.texture_helper.get_used_textslots(self.b_mat)
-        print("Used Slots: %s, items = %s" % (self.used_textslots, len(self.used_textslots)))
+        print(f"Used Slots: {self.used_textslots}, items = {len(self.used_textslots)}")
 
         nose.tools.assert_true(len(self.used_textslots) == 1)
 
@@ -89,6 +89,6 @@ class TestTextureSlotManager:
 
         self.used_textslots = self.texture_helper.get_used_textslots(self.b_mat)
 
-        print("Used Slots: %s, items = %s" % (self.used_textslots, len(self.used_textslots)))
+        print(f"Used Slots: {self.used_textslots}, items = {len(self.used_textslots)}")
         nose.tools.assert_true(len(self.used_textslots) == 1)
 

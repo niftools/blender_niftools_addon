@@ -73,7 +73,7 @@ class Constraint:
             # rigid body joints
             if b_constr.type == 'RIGID_BODY_JOINT':
                 if bpy.context.scene.niftools_scene.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                    NifLog.warn("Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {0}.".format(b_constr))
+                    NifLog.warn(f"Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {b_constr}.")
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in block_store.block_to_obj.items():
@@ -82,7 +82,7 @@ class Constraint:
                         break
                 else:
                     # no collision body for this object
-                    raise util_math.NifError("Object {0} has a rigid body constraint, but is not exported as collision object".format(b_obj.name))
+                    raise util_math.NifError(f"Object {b_obj.name} has a rigid body constraint, but is not exported as collision object")
 
                 # yes there is a rigid body constraint
                 # is it of a type that is supported?
@@ -142,7 +142,7 @@ class Constraint:
                 # is there a target?
                 targetobj = b_constr.target
                 if not targetobj:
-                    NifLog.warn("Constraint {0} has no target, skipped".format(b_constr))
+                    NifLog.warn(f"Constraint {b_constr} has no target, skipped")
                     continue
                 # find target's bhkRigidBody
                 for otherbody, otherobj in block_store.block_to_obj.items():

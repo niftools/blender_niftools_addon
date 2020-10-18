@@ -128,7 +128,7 @@ class NifImport(NifCommon):
                                 root.remove_child(child)
 
                 # import this root block
-                NifLog.debug("Root block: {0}".format(root.get_global_display()))
+                NifLog.debug(f"Root block: {root.get_global_display()}")
                 self.import_root(root)
         finally:
             # clear progress bar
@@ -190,7 +190,7 @@ class NifImport(NifCommon):
             NifLog.warn('Skipped NiPhysXProp root')
 
         else:
-            NifLog.warn("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
+            NifLog.warn(f"Skipped unsupported root block type '{root_block.__class__}' (corrupted nif?).")
 
     def import_collision(self, n_node):
         """ Imports a NiNode's collision_object, if present"""
@@ -211,7 +211,7 @@ class NifImport(NifCommon):
         if not n_block:
             return None
 
-        NifLog.info("Importing data for block '{0}'".format(n_block.name.decode()))
+        NifLog.info(f"Importing data for block '{n_block.name.decode()}'")
         if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
             return self.objecthelper.import_geometry_object(b_armature, n_block)
 
@@ -224,9 +224,9 @@ class NifImport(NifCommon):
                 else:
                     n_name = block_store.import_name(n_block)
                     b_obj = util_math.get_armature()
-                    NifLog.info("Merging nif tree '{0}' with armature '{1}'".format(n_name, b_obj.name))
+                    NifLog.info(f"Merging nif tree '{n_name}' with armature '{b_obj.name}'")
                     if n_name != b_obj.name:
-                        NifLog.warn("Using Nif block '{0}' as armature '{1}' but names do not match".format(n_name, b_obj.name))
+                        NifLog.warn(f"Using Nif block '{n_name}' as armature '{b_obj.name}' but names do not match")
                 b_armature = b_obj
                 n_armature = n_block
 

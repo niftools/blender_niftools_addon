@@ -73,7 +73,7 @@ class Constraint:
 
         b_hkobj = collision.DICT_HAVOK_OBJECTS[hkbody][0]
 
-        NifLog.info("Importing constraints for %s" % b_hkobj.name)
+        NifLog.info(f"Importing constraints for b_hkobj.name")
 
         # now import all constraints
         for hkconstraint in hkbody.constraints:
@@ -107,11 +107,11 @@ class Constraint:
                     hkdescriptor = hkconstraint.limited_hinge
                     b_hkobj.rigid_body.enabled = False
                 else:
-                    NifLog.warn("Unknown malleable type ({0}), skipped".format(str(hkconstraint.type)))
+                    NifLog.warn(f"Unknown malleable type ({hkconstraint.type:s}), skipped")
                 # TODO [constraint][flag] Damping parameters not yet in Blender Python API
                 # TODO [constraint][flag] tau (force between bodies) not supported by Blender
             else:
-                NifLog.warn("Unknown constraint type ({0}), skipped".format(hkconstraint.__class__.__name__))
+                NifLog.warn(f"Unknown constraint type ({hkconstraint.__class__.__name__}), skipped")
                 continue
 
             # todo [constraints] the following is no longer possible, fixme
@@ -213,11 +213,11 @@ class Constraint:
                 if (mathutils.Vector.cross(axis_x, axis_y) - axis_z).length > 0.01:
                     # either not orthogonal, or negative orientation
                     if (mathutils.Vector.cross(-axis_x, axis_y) - axis_z).length > 0.01:
-                        NifLog.warn("Axes are not orthogonal in {0}; Arbitrary orientation has been chosen".format(hkdescriptor.__class__.__name__))
+                        NifLog.warn(f"Axes are not orthogonal in {hkdescriptor.__class__.__name__}; Arbitrary orientation has been chosen")
                         axis_z = mathutils.Vector.cross(axis_x, axis_y)
                     else:
                         # fix orientation
-                        NifLog.warn("X axis flipped in {0} to fix orientation".format(hkdescriptor.__class__.__name__))
+                        NifLog.warn(f"X axis flipped in {hkdescriptor.__class__.__name__} to fix orientation")
                         axis_x = -axis_x
                 # getting properties with no blender constraint equivalent and setting as obj properties
                 b_constr.limit_angle_max_x = hkdescriptor.max_angle

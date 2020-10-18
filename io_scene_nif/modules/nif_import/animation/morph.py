@@ -80,8 +80,8 @@ class MorphAnimation(Animation):
                     # get name for key
                     keyname = morphData.morphs[idxMorph].frame_name.decode()
                     if not keyname:
-                        keyname = 'Key %i' % idxMorph
-                    NifLog.info("Inserting key '{0}'".format(keyname))
+                        keyname = f'Key {idxMorph}'
+                    NifLog.info(f"Inserting key '{keyname}'")
                     # get vectors
                     morph_verts = morphData.morphs[idxMorph].vectors
                     self.morph_mesh(b_mesh, baseverts, morph_verts)
@@ -98,7 +98,7 @@ class MorphAnimation(Animation):
                             elif n_morphCtrl.interpolator_weights:
                                 morph_data = n_morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
                         except KeyError:
-                            NifLog.info("Unsupported interpolator '{0}'".format(type(n_morphCtrl.interpolator_weights[idxMorph].interpolator)))
+                            NifLog.info(f"Unsupported interpolator \"{type(n_morphCtrl.interpolator_weights['idxMorph'].interpolator)}\"")
                             continue
                         
                     # get the interpolation mode
@@ -119,8 +119,10 @@ class MorphAnimation(Animation):
         sk_basis = b_obj.shape_key_add(name="Basis")
         b_mesh.shape_keys.use_relative = False
 
-        morphs = ([(morph, "EGM SYM %i" % i) for i, morph in enumerate(sym_morphs)] +
-                  [(morph, "EGM ASYM %i" % i) for i, morph in enumerate(asym_morphs)])
+        # TODO: I'm not entirely sure that changing the morphs to f-strings won't
+        # TODO: break anything. They _shouldn't_.
+        morphs = ([(morph, f"EGM SYM {i}") for i, morph in enumerate(sym_morphs)] +
+                  [(morph, f"EGM ASYM {i}") for i, morph in enumerate(asym_morphs)])
 
         base_verts = [v.co for v in b_mesh.vertices]
         for morph_verts, key_name in morphs:

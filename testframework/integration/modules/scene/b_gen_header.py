@@ -73,18 +73,18 @@ def b_create_skyrim_info():
 
 def _b_check_version_info(nif_ver=0, user_ver=0, user_ver_2=0):
     scene = bpy.context.scene.niftools_scene
-    print("Expected - {0}, {1}, {2}".format(nif_ver, user_ver, user_ver_2))
+    print(f"Expected - {nif_ver}, {user_ver}, {user_ver_2}")
     
     nv = scene.nif_version
-    print("nif_version - {0}".format(nv))
+    print(f"nif_version - {nv}")
     nose.tools.assert_equal(nv, nif_ver)  
     
     uv = scene.user_version
-    print("user_version - {0}".format(uv))
+    print(f"user_version - {uv}")
     nose.tools.assert_equal(uv, user_ver) 
     
     uv2 = scene.user_version_2
-    print("user_version_2 - {0}".format(uv2))
+    print(f"user_version_2 - {uv2}")
     nose.tools.assert_equal(uv2, user_ver_2) 
     
     nose.tools.assert_equal(scene.user_version, user_ver)  

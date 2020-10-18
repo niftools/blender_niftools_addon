@@ -179,7 +179,7 @@ def main(arg):
                 return
             hull_convex(ob, me, selected_only, precision = PREF_PRECISION.val)
 
-    print('Hull finished in %.2f seconds' % (sys.time()-t))
+    print(f"Hull finished in {(sys.time()-t):.2f} seconds")
     Window.WaitCursor(0)
     if is_editmode: Window.EditMode(1)
     

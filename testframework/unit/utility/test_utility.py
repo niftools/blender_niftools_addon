@@ -55,13 +55,13 @@ class TestMatrixOperations:
 
     @classmethod
     def setup_class(cls):
-        print("Class setup: " + str(cls))
+        print(f"Class setup: {cls:s}")
 
         cls.reinitialise()
 
     @classmethod
     def teardown_class(cls):
-        print("Class Teardown: " + str(cls))
+        print(f"Class Teardown: {cls:s}")
 
         del cls.niBlock
         del cls.nif_matrix
@@ -94,10 +94,10 @@ class TestMatrixOperations:
         print("Comparing Matrices:")
         for row in range(0, 4):
             for col in range(0, 4):
-                print(str(row) + ":" + str(col) + " = " +
-                      str(converted_mat[row][col]) + " : " + str(self.blender_matrix[row][col]))
+                print(f"{row:s} : {col:s} ="
+                      f"{converted_mat['row']['col']:s} : {self.blender_matrix['row']['col']:s}")
                 nose.tools.assert_true(converted_mat[row][col] - self.blender_matrix[row][col]
-                                       < NifFormat.EPSILON)
+                    < NifFormat.EPSILON)
 
     def test_matrix_decompose_srt(self):
         pass
@@ -188,14 +188,14 @@ class TestFindBlockProperties:
 
     @classmethod
     def setup_class(cls):
-        print("Class setup: " + str(cls))
+        print(f"Class setup: {cls:s}")
         cls.ni_mat_prop = NifFormat.NiMaterialProperty()
         cls.ni_mat_prop1 = NifFormat.NiMaterialProperty()
         cls.ni_texture_prop = NifFormat.NiTexturingProperty()
 
     @classmethod
     def teardown_class(cls):
-        print("Class teardown: " + str(cls))
+        print(f"Class teardown: {cls:s}")
         del cls.ni_mat_prop
         del cls.ni_mat_prop1
         del cls.ni_texture_prop

@@ -69,7 +69,7 @@ class BhkCollision(Collision):
 
         rigid_body = b_obj.rigid_body
         if not rigid_body:
-            NifLog.warn("'{0}' has no rigid body, skipping rigid body export".format(b_obj.name))
+            NifLog.warn(f"'{0b_obj.name}' has no rigid body, skipping rigid body export")
             return
 
         # is it packed
@@ -318,7 +318,7 @@ class BhkCollision(Collision):
 
         # find bounding box data
         if not b_obj.data.vertices:
-            NifLog.warn("Skipping collision object {0} without vertices.".format(b_obj))
+            NifLog.warn(f"Skipping collision object {b_obj} without vertices.")
             return None
 
         box_extends = self.calculate_box_extents(b_obj)
@@ -492,7 +492,7 @@ class BhkCollision(Collision):
             return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist)
 
         else:
-            raise util_math.NifError('Cannot export collision type %s to collision shape list'.format(collision_shape))
+            raise util_math.NifError(f'Cannot export collision type {collision_shape} to collision shape list')
 
     def export_collision_packed(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add object ob as packed collision object to collision body

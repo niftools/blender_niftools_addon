@@ -77,7 +77,7 @@ class BlockRegistry:
         """Save original name as object property, for export"""
         if b_obj.name != n_name:
             b_obj.niftools.longname = n_name
-            NifLog.debug("Stored long name for {0}".format(b_obj.name))
+            NifLog.debug(f"Stored long name for {b_obj.name}")
 
     @staticmethod
     def import_name(n_block):
@@ -89,7 +89,7 @@ class BlockRegistry:
         if n_block is None:
             return ""
 
-        NifLog.debug("Importing name for {0} block from {1}".format(n_block.__class__.__name__, n_block.name))
+        NifLog.debug(f"Importing name for {n_block.__class__.__name__} block from {n_block.name}")
 
         n_name = n_block.name.decode()
 

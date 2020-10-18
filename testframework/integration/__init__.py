@@ -241,9 +241,9 @@ class SingleNif(Base):
     def _b_select_all():
         """Select all objects, and return their names."""
         b_obj_names = []
-        print("Objects in scene - {0}".format(len(bpy.data.objects)))
+        print(f"Objects in scene - {len(bpy.data.objects)}")
         for b_obj in bpy.data.objects:
-            print("Scene Object - " + b_obj.name)
+            print(f"Scene Object - {b_obj.name}")
             b_obj.select_set(True)
             b_obj_names.append(b_obj.name)
         return b_obj_names
@@ -303,7 +303,7 @@ class SingleNif(Base):
 
     def n_export(self, n_filepath):
         """Export selected blender object to nif file."""
-        print("Export Options {0}, {1}".format(n_filepath, self.n_game))
+        print(f"Export Options {n_filepath}, {self.n_game}")
         bpy.ops.export_scene.nif(filepath=n_filepath, log_level='DEBUG', game=self.n_game)
 
     def test_ordered_user_tests(self):

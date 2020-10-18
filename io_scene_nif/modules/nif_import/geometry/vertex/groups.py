@@ -92,7 +92,7 @@ class VertexGroup:
 
         for i, s in enumerate(sum_weights):
             if abs(s - 1.0) > 0.01:
-                print("Vertex %i has weights not summing to one: %i" % (i, sum_weights[i]))
+                print(f"Vertex {i:d} has weights not summing to one: {sum_weights['i']:d}")
 
         return vertices
 

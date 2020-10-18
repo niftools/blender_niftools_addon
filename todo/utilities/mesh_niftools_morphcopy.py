@@ -166,8 +166,7 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
         # report progress
         Window.DrawProgressBar(0.01
                                + 0.98 * (i/float(len(me_from.key.blocks) - 1)),
-                               'Copy "%s" -> "%s" '
-                               % (ob_from.name, ob_to.name))
+                               f'Copy "{ob_from.name}" -> "{ob_to.name}" ')
 
         # get deformation
         morph = [vec_new - vec_old
@@ -254,7 +253,7 @@ def main(arg):
     ]
     
     
-    if not Blender.Draw.PupBlock("Copy morphs for %i meshes" % len(obs), pup_block):
+    if not Blender.Draw.PupBlock(f"Copy morphs for {len(obs):d} meshes", pup_block):
         return
     
     PREF_SEL_ONLY = PREF_SEL_ONLY.val
@@ -306,8 +305,7 @@ def main(arg):
                     ob = scn.objects.active
                     me = ob.getData(mesh=1)
                     # morphs will be the same
-                    print(('\tGenerating higher %ix quality weights.'
-                          % PREF_QUALITY))
+                    print(f'\tGenerating higher {PREF_QUALITY}x quality weights.')
                     subdivMesh(me, PREF_QUALITY)
                     scn.unlink(ob)
                 from_data= (ob, me, worldspace_verts_zsort(me, ob), morph_key)
@@ -328,8 +326,7 @@ def main(arg):
         return
     
     # Now do the copy.
-    print(('\tCopying from "%s" to %i other mesh(es).'
-          % (from_data[0].name, len(sel))))
+    print(f'\tCopying from "{from_data["0"].name}" to {len(sel)} other mesh(es).')
     for data in sel:
         copy_morphs(from_data, data, PREF_SEL_ONLY, PREF_NO_XCROSS)
     
@@ -337,7 +334,7 @@ def main(arg):
     if PREF_QUALITY:
         from_data[1].vertices= None
     
-    print(('Morph copy finished in %.2f seconds' % (sys.time()-t)))
+    print(f'Morph copy finished in {(sys.time()-t):.2f} seconds')
     Window.DrawProgressBar(1.0, '')
     Window.WaitCursor(0)
     if is_editmode:

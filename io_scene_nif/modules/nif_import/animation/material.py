@@ -83,7 +83,7 @@ class MaterialAnimation(Animation):
                     break
         else:
             return
-        NifLog.info("Importing material color controller for target color {0} into blender channel {0}".format(n_target_color, b_channel))
+        NifLog.info(f"Importing material color controller for target color {n_target_color} into blender channel {b_channel}")
 
         # import data as curves
         b_mat_action = self.create_action(b_material, "MaterialAction")
@@ -111,7 +111,7 @@ class MaterialAnimation(Animation):
                 # so we have to repeat the import for each used tex slot
                 for i, texture_slot in enumerate(b_material.texture_slots):
                     if texture_slot:
-                        fcurves = self.create_fcurves(b_mat_action, "texture_slots[" + str(i) + "]." + data_path, (array_ind,), n_ctrl.flags)
+                        fcurves = self.create_fcurves(b_mat_action, f'texture_slots["{i:s}"].{data_path}', (array_ind),), n_ctrl.flags)
                         for key in n_uvgroup.keys:
                             if "offset" in data_path:
                                 self.add_key(fcurves, key.time, (-key.value,), interp)

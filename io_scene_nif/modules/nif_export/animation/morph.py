@@ -76,7 +76,7 @@ class MorphAnimation(Animation):
                 morph = EGMData.data.add_asym_morph()
             else:
                 continue
-            NifLog.info("Exporting morph {0} to egm".format(key_block.name))
+            NifLog.info(f"Exporting morph {key_block.name} to egm")
             relative_vertices = []
 
             # note: key_blocks[0] is base b_key
@@ -116,7 +116,7 @@ class MorphAnimation(Animation):
             # export morphed vertices
             n_morph = morph_data.morphs[key_block_num]
             n_morph.frame_name = key_block.name
-            NifLog.info("Exporting n_morph {0}: vertices".format(key_block.name))
+            NifLog.info(f"Exporting n_morph {key_block.name}: vertices")
             n_morph.arg = morph_data.num_vertices
             n_morph.vectors.update_size()
             for b_v_index, (n_v_indices, b_vert) in enumerate(list(zip(vertmap, key_block.data))):
@@ -149,12 +149,13 @@ class MorphAnimation(Animation):
                 continue
             
             # find fcurve that animates this shapekey's influence
+            # TODO: Does this need f-strings, too?
             b_dtype = 'key_blocks["{}"].value'.format(key_block.name)
             fcurves = [fcu for fcu in b_shape_action.fcurves if b_dtype in fcu.data_path]
             if not fcurves:
                 continue
             fcu = fcurves[0]
-            NifLog.info("Exporting n_morph {0}: fcu".format(key_block.name))
+            NifLog.info(f"Exporting n_morph {key_block.name}: fcu")
             interpol.data = block_store.create_block("NiFloatData", fcu)
             n_floatdata = interpol.data.data
             # note: we set data on n_morph for older nifs and on floatdata for newer nifs

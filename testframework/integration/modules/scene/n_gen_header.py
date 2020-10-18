@@ -70,18 +70,18 @@ def n_create_header_skyrim(n_data):
 
 
 def n_check_version_info(n_data, nif_ver=0x0, user_ver=0x0, user_ver_2=0x0):
-    print("Expected - {0}, {1}, {2}".format(nif_ver, user_ver, user_ver_2))
+    print(f"Expected - {nif_ver}, {user_ver}, {user_ver_2}")
     
     nv = n_data.version
-    print("nif_version - {0}".format(nv))
+    print(f"nif_version - {nv}")
     nose.tools.assert_equal(nv, nif_ver)  
     
     uv = n_data.user_version
-    print("user_version - {0}".format(uv))
+    print(f"user_version - {uv}")
     nose.tools.assert_equal(uv, user_ver) 
     
     uv2 = n_data.user_version_2
-    print("user_version_2 - {0}".format(uv2))
+    print(f"user_version_2 - {uv2}")
     nose.tools.assert_equal(uv2, user_ver_2) 
 
 

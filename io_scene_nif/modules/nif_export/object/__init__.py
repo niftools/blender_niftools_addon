@@ -272,6 +272,6 @@ class Object:
         elif bpy.context.scene.niftools_scene.game in ('ZOO_TYCOON_2',):
             self.bound_helper.export_nicollisiondata(b_obj, n_parent)
         else:
-            NifLog.warn("Collisions not supported for game '{0}', skipped collision object '{1}'".format(bpy.context.scene.niftools_scene.game, b_obj.name))
+            NifLog.warn(f"Collisions not supported for game '{bpy.context.scene.niftools_scene.game}', skipped collision object '{b_obj.name}'")
 
         return True
