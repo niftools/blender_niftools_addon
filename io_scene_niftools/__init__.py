@@ -44,7 +44,10 @@ import sys
 import bpy
 import bpy.props
 
-# Python dependencies are bundled inside the io_scene_niftools/dependencies folder
+# updater ops import, all setup in this file
+from .utils.updater import addon_updater_ops
+
+# Python dependencies are bundled inside the io_scene_nif/dependencies folder
 current_dir = os.path.dirname(__file__)
 _dependencies_path = os.path.join(current_dir, "dependencies")
 if _dependencies_path not in sys.path:
@@ -169,16 +172,23 @@ classes = (
     ui.scene.ScenePanel,
 
     ui.shader.ShaderPanel,
+
+    ui.update.UpdaterPreferences,
     )
 
 
 def register():
+    # addon updater code and configurations in case of broken version, try to register the updater first
+    # so that users can revert back to a working version
+    addon_updater_ops.register(bl_info)
+
     _init_loggers()
     operators.register()
     properties.register()
     ui.register()
     from bpy.utils import register_class
     for cls in classes:
+        addon_updater_ops.make_annotations(cls)  # to avoid blender 2.8 warnings
         register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -201,6 +211,9 @@ def register():
 
 
 def unregister():
+    # addon updater unregister
+    addon_updater_ops.unregister()
+
     # no idea how to do this... oh well, let's not lose any sleep over it uninit_loggers()
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
