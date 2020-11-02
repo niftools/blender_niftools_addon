@@ -10,7 +10,7 @@ set SPHINX_BUILD="%BLENDER_HOME%/blender.exe" --background --factory-startup --p
 set SPHINX_API_BUILD="%BLENDER_HOME%/blender.exe" --background --factory-startup --python blender-sphinx-api-build.py --
 set BUILD_DIR=_build
 
-set CODE_API=../io_scene_nif/
+set CODE_API=../io_scene_niftools/
 set CODE_DIR=development/api/submodules
 set CODE_OPTS=%CODE_DIR% %CODE_API%
 

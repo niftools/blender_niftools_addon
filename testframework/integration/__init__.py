@@ -77,13 +77,13 @@ def clear_bpy_data():
 
 def setup():
     """Enables the nif scripts addon, so all tests can use it."""
-    bpy.ops.wm.addon_enable(module="io_scene_nif")
+    bpy.ops.wm.addon_enable(module="io_scene_niftools")
     clear_bpy_data()
 
 
 def teardown():
     """Disables the nif scripts addon."""
-    bpy.ops.wm.addon_disable(module="io_scene_nif")
+    bpy.ops.wm.addon_disable(module="io_scene_niftools")
 
 
 class Base(ABC):

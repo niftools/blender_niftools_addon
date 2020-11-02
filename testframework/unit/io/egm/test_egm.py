@@ -42,7 +42,7 @@ import os
 import nose
 from nose.tools import nottest, raises
 
-from io_scene_nif.io.egm import EGMFile
+from io_scene_niftools.io.egm import EGMFile
 
 
 class TestEGMIO:

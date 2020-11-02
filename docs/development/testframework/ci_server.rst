@@ -53,7 +53,7 @@ Unit Test ::
 	--with-xunit 
 	--xunit-file=reports\unit.xml 
 	--cover-xml 
-	--cover-package=io_scene_nif unit
+	--cover-package=io_scene_niftools unit
 	
 Integration Test ::
 
@@ -61,7 +61,7 @@ Integration Test ::
 	> testframework\blender-nosetests.bat 
 	--with-xunit 
 	--xunit-file=testframework\reports\integration_test.xml 
-	--cover-package=io_scene_nif 
+	--cover-package=io_scene_niftools
 	--cover-xml-file=testframework\reports\integration_test_coverage.xml 
 	testframework\integration
 	

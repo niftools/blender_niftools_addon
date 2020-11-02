@@ -43,7 +43,7 @@ import nose
 
 import os
 
-from io_scene_nif.io.kf import KFFile
+from io_scene_niftools.io.kf import KFFile
 
 
 class TestKFIO:

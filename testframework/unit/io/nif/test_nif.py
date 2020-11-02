@@ -42,7 +42,7 @@ import nose
 
 import os
 
-from io_scene_nif.io.nif import NifFile
+from io_scene_niftools.io.nif import NifFile
 
 
 class TestNifIO:

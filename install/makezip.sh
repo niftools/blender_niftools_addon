@@ -5,13 +5,13 @@ NAME="blender_niftools_addon"
 CUR_DIR=$(pwd)
 BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 ROOT="${BUILD_DIR}"/..
-ADDON_IN="${ROOT}"/io_scene_nif/
+ADDON_IN="${ROOT}"/io_scene_niftools/
 HASH=$(git rev-parse --short HEAD)
 VERSION=$(cat "${ADDON_IN}/VERSION.txt")
 DATE=$(date +%F)
 ZIP_NAME="${NAME}-${VERSION}-${DATE}-${HASH}.zip"
 TEMP="${BUILD_DIR}"/temp
-ADDON_OUT="${TEMP}"/io_scene_nif
+ADDON_OUT="${TEMP}"/io_scene_niftools
 DEPS_OUT="${ADDON_OUT}"/dependencies
 
 echo "Creating Blender Niftools Addon addon zip"
@@ -26,7 +26,7 @@ fi
 
 mkdir "${TEMP}"
 
-echo "Copying io_scene_nif directory"
+echo "Copying io_scene_niftools directory"
 cp -r "${ADDON_IN}" "${ADDON_OUT}"
 
 echo "Creating dependencies folder ${DEPS_OUT:-${BUILD_DIR}/dependencies}"
@@ -41,5 +41,5 @@ cp "${ROOT}"/README.rst "${ADDON_OUT}"
 
 echo "Creating zip ${ZIP_NAME}"
 cd "${TEMP}" || exit 1
-zip -9rq "${TEMP}/${ZIP_NAME}" ./io_scene_nif -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
+zip -9rq "${TEMP}/${ZIP_NAME}" ./io_scene_niftools -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
 cd "${CUR_DIR}" || exit 1

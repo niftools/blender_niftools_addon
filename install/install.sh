@@ -3,7 +3,7 @@
 BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 TEMP="${BUILD_DIR}"/temp
 ROOT="${BUILD_DIR}"/..
-VERSION=$(cat "${ROOT}/io_scene_nif/VERSION.txt")
+VERSION=$(cat "${ROOT}/io_scene_niftools/VERSION.txt")
 NAME="blender_niftools_addon"
 HASH=$(git rev-parse --short HEAD)
 DATE=$(date +%F)
@@ -18,10 +18,10 @@ else
     echo "Using ${BLENDER_ADDONS_DIR} as installation directory"
 fi
 
-NIFTOOLS_ADDON_DIR="${BLENDER_ADDONS_DIR}"/io_scene_nif/
+NIFTOOLS_ADDON_DIR="${BLENDER_ADDONS_DIR}"/io_scene_niftools/
 if [[ -d "${NIFTOOLS_ADDON_DIR}" ]]; then
   echo "Installing to: ${NIFTOOLS_ADDON_DIR}"
-  echo "Removing old io_scene_nif directory ${NIFTOOLS_ADDON_DIR}"
+  echo "Removing old io_scene_niftools directory ${NIFTOOLS_ADDON_DIR}"
   rm -rf "${NIFTOOLS_ADDON_DIR}"
 else
   echo "Niftools addon directory does not exist"

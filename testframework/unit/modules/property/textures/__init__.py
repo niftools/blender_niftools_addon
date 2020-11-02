@@ -41,7 +41,7 @@ import nose
 
 import bpy
 
-from io_scene_nif.modules.nif_export.property.texture import TextureSlotManager
+from io_scene_niftools.modules.nif_export.property.texture import TextureSlotManager
 
 
 class TestTextureSlotManager:
