@@ -39,4 +39,4 @@
 
 
 def register():
-    from . import armature, collision, geometry, material, object, shader, scene, update
+    from . import armature, collision, geometry, material, object, shader, scene

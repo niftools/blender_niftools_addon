@@ -45,7 +45,7 @@ import bpy
 import bpy.props
 
 # updater ops import, all setup in this file
-from .utils.updater import addon_updater_ops
+from . import addon_updater_ops
 
 # Python dependencies are bundled inside the io_scene_nif/dependencies folder
 current_dir = os.path.dirname(__file__)
@@ -72,7 +72,7 @@ bl_info = {
     "description": "Import and export files in the NetImmerse/Gamebryo formats (.nif, .kf, .egm)",
     "author": "Niftools team",
     "blender": (2, 81, 0),
-    "version": (2, 6, 0),  # can't read from VERSION, blender wants it hardcoded
+    "version": (0, 0, 1),  # can't read from VERSION, blender wants it hardcoded
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "Partially functional port from 2.49 series still in progress",
@@ -173,7 +173,7 @@ classes = (
 
     ui.shader.ShaderPanel,
 
-    ui.update.UpdaterPreferences,
+    update.UpdaterPreferences,
     )
 
 
@@ -188,7 +188,7 @@ def register():
     ui.register()
     from bpy.utils import register_class
     for cls in classes:
-        addon_updater_ops.make_annotations(cls)  # to avoid blender 2.8 warnings
+        # addon_updater_ops.make_annotations(cls)  # to avoid blender 2.8 warnings
         register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
