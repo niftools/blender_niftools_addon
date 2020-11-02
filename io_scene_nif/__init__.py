@@ -65,8 +65,8 @@ from io_scene_nif.utils import util_debug
 
 # Blender addon info.
 bl_info = {
-    "name": "NetImmerse/Gamebryo nif format",
-    "description": "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
+    "name": "NetImmerse/Gamebryo format support",
+    "description": "Import and export files in the NetImmerse/Gamebryo format (.nif, .kf)",
     "author": "NifTools Team",
     "blender": (2, 81, 0),
     "version": (2, 6, 0),  # can't read from VERSION, blender wants it hardcoded
