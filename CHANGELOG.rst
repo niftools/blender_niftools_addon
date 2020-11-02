@@ -1,11 +1,12 @@
-Version v0.1.0
+Version v0.0.1
 ============================
 
 - Rename plugin to use new naming scheme
+- Add in updated templates
 
 
+Note::
 The following are older version, using the old naming scheme
-
 
 Version 2.6.0.adev4
 ===============
