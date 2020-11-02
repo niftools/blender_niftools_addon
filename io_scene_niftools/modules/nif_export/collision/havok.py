@@ -69,7 +69,7 @@ class BhkCollision(Collision):
 
         rigid_body = b_obj.rigid_body
         if not rigid_body:
-            NifLog.warn(f"'{0b_obj.name}' has no rigid body, skipping rigid body export")
+            NifLog.warn(f"'{b_obj.name}' has no rigid body, skipping rigid body export")
             return
 
         # is it packed

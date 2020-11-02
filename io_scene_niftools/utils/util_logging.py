@@ -41,8 +41,9 @@ import logging
 
 
 class _MockOperator:
+    """A default implementation of the report function in the case where the operator has not been initialised."""
     def report(self, level, message):
-        print(f"{level:s}: {message}")
+        print(f"{level}: {message}")
 
 
 class NifLog:

@@ -51,7 +51,6 @@ from io_scene_niftools.modules.nif_export.geometry.mesh import Mesh
 from io_scene_niftools.modules.nif_export.property.object import ObjectDataProperty
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp
 from io_scene_niftools.utils.util_logging import NifLog
 
 # dictionary of names, to map NIF blocks to correct Blender names
