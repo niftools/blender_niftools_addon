@@ -19,11 +19,11 @@ Optional Plug-ins
 
 Project Name ::
 	
-	blender_nif_plugin
+	blender_niftools_addon
 
 Git Repository ::
 	
-	git://github.com/niftools/blender_nif_plugin.git
+	git://github.com/niftools/blender_niftools_addon.git
 
 Branches ::
 	
@@ -69,8 +69,8 @@ Integration Test ::
 Nightly ::
 
 	> cd install
-	> ren *.zip blender_nif_plugin_%BUILD_NUMBER%_%BUILD_ID%.zip
-	> xcopy /K /F  "*.zip" "%build_folder%\blender_nif_plugin\nightly\"
+	> ren *.zip blender_niftools_addon_%BUILD_NUMBER%_%BUILD_ID%.zip
+	> xcopy /K /F  "*.zip" "%build_folder%\blender_niftools_addon\nightly\"
 	
 
 	

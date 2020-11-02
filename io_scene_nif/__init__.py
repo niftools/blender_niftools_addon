@@ -1,4 +1,4 @@
-"""Blender Plug-in for Nif import and export."""
+"""Blender Niftools Addon for Nif import and export."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -74,7 +74,7 @@ bl_info = {
     "location": "File > Import-Export",
     "warning": "partially functional, port from 2.49 series still in progress",
     "wiki_url": "https://blender-nif-plugin.readthedocs.io/",
-    "tracker_url": "https://github.com/niftools/blender_nif_plugin/issues",
+    "tracker_url": "https://github.com/niftools/blender_niftools_addon/issues",
     "support": "COMMUNITY",
     "category": "Import-Export"
 }

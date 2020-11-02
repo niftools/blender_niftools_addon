@@ -32,7 +32,7 @@ Run the following in a buildenv (Windows) or terminal (Fedora)::
 
   make html
 
-from within the ``blender_nif_plugin/docs`` folder.
+from within the ``blender_niftools_addon/docs`` folder.
 The generated API documentation
 will correspond to the currently installed plugin
 (*not* your checked out version!)

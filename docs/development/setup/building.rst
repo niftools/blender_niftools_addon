@@ -32,7 +32,7 @@ Build Zip
 ---------
 To build the plugin from a git checkout, run the following ::
 
-    cd ./blender_nif_plugin/install
+    cd ./blender_niftools_addon/install
     makezip.bat
 
 Install
@@ -40,10 +40,10 @@ Install
 
 To install the plugin from a git checkout, run the following ::
 
-    cd ./blender_nif_plugin/install
+    cd ./blender_niftools_addon/install
     install.bat
 
 or from a terminal (Linux | Ubuntu)::
 
-    cd ./blender_nif_plugin/install
+    cd ./blender_niftools_addon/install
     sh ./install.sh

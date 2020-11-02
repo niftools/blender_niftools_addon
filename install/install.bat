@@ -6,7 +6,7 @@ set "DIR=%~dps0"
 :: remove trailing backslash
 if "%DIR:~-1%" == "\" set "DIR=%DIR:~0,-1%"
 for %%I in ("%DIR%\..") do set "ROOT=%%~fI"
-set "NAME=blender_nif_plugin"
+set "NAME=blender_niftools_addon"
 set /p VERSION=<%ROOT%\io_scene_nif\VERSION.txt
 for /f %%i in ('git rev-parse --short HEAD') do set HASH=%%i
 for /f %%i in ('echo %date%') do set DATE=%%i

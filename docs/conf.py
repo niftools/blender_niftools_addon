@@ -118,7 +118,7 @@ html_theme_options = {
     'about': 'http://niftools.org/about',
     'forums': 'https://forum.niftools.org',
     'badges': False,
-    'github': 'niftools/blender_nif_plugin'
+    'github': 'niftools/blender_niftools_addon'
 }
 
 # Add any paths that contain custom themes here, relative to this directory.

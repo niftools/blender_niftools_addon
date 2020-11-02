@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PYFFI_VERSION="2.2.4.dev3"
-NAME="blender_nif_plugin"
+NAME="blender_niftools_addon"
 CUR_DIR=$(pwd)
 BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 ROOT="${BUILD_DIR}"/..

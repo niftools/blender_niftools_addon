@@ -7,7 +7,7 @@ if "%DIR:~-1%" == "\" (
 )
 
 for %%I in ("%DIR%\..") do set "ROOT=%%~fI"
-set "NAME=blender_nif_plugin"
+set "NAME=blender_niftools_addon"
 set /p VERSION=<%ROOT%\io_scene_nif\VERSION.txt
 :: Abuse for loop to execute and store command output
 for /f %%i in ('git rev-parse --short HEAD') do set HASH=%%i

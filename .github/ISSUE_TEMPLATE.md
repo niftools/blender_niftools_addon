@@ -61,7 +61,7 @@ Fill out the template below to the best of your ability, including .blend files,
 [Attach input or output files, samples of what the expected output should be and reproducing the issue]
 
 ## Similar Known Issues
-[Reference any known issues - https://github.com/niftools/blender_nif_plugin/issues]
+[Reference any known issues - https://github.com/niftools/blender_niftools_addon/issues]
 
 ## Additional Information
 [Anything else you feel is relevant]

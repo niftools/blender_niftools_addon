@@ -51,12 +51,12 @@ Install
 
 To install the plugin from a git checkout, run the following ::
 
-   cd blender_nif_plugin/install
+   cd blender_niftools_addon/install
    install.bat
 
 or from a terminal (Linux | Ubuntu)::
 
-    ./blender_nif_plugin/install
+    ./blender_niftools_addon/install
     sh ./install.sh
 
 Running Tests
@@ -70,9 +70,9 @@ or from a terminal (Linux | Ubuntu)::
 
     sh ./blender-nosetests.sh
 
-from within the ``blender_nif_plugin/testframework/`` folder.
+from within the ``blender_niftools_addon/testframework/`` folder.
 
-Each test resides as a python file in the ``blender_nif_plugin/testframework/test/`` folder.
+Each test resides as a python file in the ``blender_niftools_addon/testframework/test/`` folder.
 To run a particular test only, specify the file as an argument; for instance::
 
     blender-nosetests.bat test/geometry/trishape/test_geometry.py
