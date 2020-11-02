@@ -37,15 +37,11 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import os
 import bpy
 
-import pyffi.spells.nif.fix
-
-from io_scene_nif.io.egm import EGMFile
+from io_scene_nif.file_io.egm import EGMFile
 from io_scene_nif.modules.nif_import.animation.morph import MorphAnimation
 from io_scene_nif.nif_common import NifCommon
-from io_scene_nif.utils import util_math
 from io_scene_nif.utils.util_global import NifOp, EGMData
 
 

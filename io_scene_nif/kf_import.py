@@ -41,7 +41,7 @@ import os
 
 import pyffi.spells.nif.fix
 
-from io_scene_nif.io.kf import KFFile
+from io_scene_nif.file_io.kf import KFFile
 from io_scene_nif.modules.nif_export import armature
 from io_scene_nif.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_nif.nif_common import NifCommon
