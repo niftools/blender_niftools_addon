@@ -1,4 +1,4 @@
-@niftools/blender-nif-plugin-reviewer 
+@niftools/blender-niftools-addon-reviewer 
 
 # Overview
 [Overview of the content of the pull request]

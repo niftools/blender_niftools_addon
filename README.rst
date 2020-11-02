@@ -15,7 +15,7 @@ Download
 Documentation
 -------------
 
-* For full Online documentation, visit `https://blender-niftools-addon.readthedocs.io <https://blender-nif-plugin.readthedocs.io>`_
+* For full Online documentation, visit `https://blender-niftools-addon.readthedocs.io <https://blender-niftools-addon.readthedocs.io>`_
 * For a list of changes between versions, see `Changelog <CHANGELOG.rst>`_
 * See `How to Contribute <CONTRIBUTING.rst>`_ for a list of contribution rules.
 

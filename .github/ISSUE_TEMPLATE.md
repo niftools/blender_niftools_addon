@@ -1,4 +1,4 @@
-@niftools/blender-nif-plugin-reviewer -
+@niftools/blender-niftools-addon-reviewer -
 
 Before creating a new issue, ensure that
  - [ ] Read the user documentation.

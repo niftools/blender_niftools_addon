@@ -9,7 +9,7 @@ Code Contribution Process
 Contributions should always be made through GitHub's Pull Request (PR) feature, branched from latest `develop` branch.
 This repo comes with a template for Pull Requests and should be fully completed.
 
-Once the PR is submitted, the @niftools/blender-nif-plugin-review team is automatically notified and will start a discussion process.
+Once the PR is submitted, the @niftools/blender-niftools-addon-review team is automatically notified and will start a discussion process.
 This can include ensuring the commit is beneficial to the project as a whole, is appropriately scoped, discuss any issues regarding the design, and ensuring all requirements are met. 
 This is an iterative process; additional commits can be appended at any time based on PR discussion to the source branch and will be automatically included in the PR.
 
@@ -18,7 +18,7 @@ There are three conditions any contribution to the codebase should respect:
  - Tests to prove the implementation works and regression is still green
  - Appropriate documentation updates
 
-Merging of the PR is at the discretion of the @niftools/blender-nif-plugin-merge team.
+Merging of the PR is at the discretion of the @niftools/blender-niftools-addon-merge team.
 These are not exclusive conditions for a contribution to be accepted but generally enforced as close as possible to ensure quality.
 
 Code

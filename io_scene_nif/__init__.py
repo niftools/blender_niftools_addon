@@ -73,7 +73,7 @@ bl_info = {
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "partially functional, port from 2.49 series still in progress",
-    "wiki_url": "https://blender-nif-plugin.readthedocs.io/",
+    "wiki_url": "https://blender-niftools-addon.readthedocs.io/",
     "tracker_url": "https://github.com/niftools/blender_niftools_addon/issues",
     "support": "COMMUNITY",
     "category": "Import-Export"
