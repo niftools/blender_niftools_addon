@@ -29,7 +29,7 @@ PyCharm will automatically recognise this as a Git repo.
 Debugging
 -----------------
 
-The Blender Nif plugin code comes with built-in pydev hook to allow connection by a Remote Python Debug Server.
+The Blender Niftools Addon code comes with built-in pydev hook to allow connection by a Remote Python Debug Server.
 This allows run-time debugging; watching the script execute, evaluate variables, function call stack etc.
 
 Debugger

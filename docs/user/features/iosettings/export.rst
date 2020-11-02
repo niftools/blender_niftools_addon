@@ -16,7 +16,7 @@ Scale correction
 This value is used to globally re-scale the Blender system of measurement units to the Nif Format units.
 
 * The ratio of a Nif Units (NU) to Blender Units (BU) is 1Bu:0.1Nu. or each NU is about 10x larger than a BU.
-* The Blender Nif Plugin applies a default correction of 10
+* The Blender Niftools Addon applies a default correction of 10
 * The default setting ensures the imported model fits into the view Blender viewport.
 
 

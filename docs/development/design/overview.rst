@@ -3,7 +3,7 @@ Development Overview
 
 .. _development-design-overview:
 
-This section outlines various principles which govern how we develop the Blender Nif Plugin and why.
+This section outlines various principles which govern how we develop the Blender Niftools Addon and why.
 
 Development Methodology
 -----------------------

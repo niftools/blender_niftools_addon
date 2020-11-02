@@ -17,8 +17,8 @@ Fill out the template below to the best of your ability, including .blend files,
 [Provide a general introduction to the issue and why it is relevant to this repository]
 
 ## Version Information
-### Blender Nif Plugin Version Info
-[Provide version information for the Blender Nif Plugin the issue occurs with, available in Blender in the Add-On section]
+### Blender Niftools Addon Version Info
+[Provide version information for the Blender Niftools Addon the issue occurs with, available in Blender in the Add-On section]
 
 ### Blender Version Info
 [Provide information on which version of Blender the issue is seen]

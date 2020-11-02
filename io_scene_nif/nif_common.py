@@ -63,7 +63,7 @@ class NifCommon:
         from . import bl_info
         niftools_ver = (".".join(str(i) for i in bl_info["version"]))
 
-        NifLog.info(f"Executing - Niftools : Blender Nif Plugin v{niftools_ver}"
+        NifLog.info(f"Executing - Niftools : Blender Niftools Addon v{niftools_ver}"
                     f"(running on Blender {bpy.app.version_string}, "
                     f"PyFFI {pyffi.__version__})")
 

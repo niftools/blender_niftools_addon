@@ -3,7 +3,7 @@ Plugin Development Setup
 
 .. _development-setup:
 
-The following documentation is targeted towards anyone who is interested in building the latest version of Blender Nif Plugin.
+The following documentation is targeted towards anyone who is interested in building the latest version of Blender Niftools Addon.
 This will guide those new through the process of setting up the requirements to build the plugin.
 
 For those interested in developing the Plugin; fixing bugs, adding new features, tests or improving documentation.

@@ -10,7 +10,7 @@ Download
 --------
 
 * Release downloadable from - `https://github.com/niftools/blender_niftools_addon/releases <https://github.com/niftools/blender_niftools_addon/releases>`_
-* Currently there are no stable releases of Blender Nif Plugin 2.6.x series, the only developer builds
+* Currently there are no stable releases of Blender Niftools Addon 2.6.x series, the only developer builds
 
 Documentation
 -------------
@@ -27,7 +27,7 @@ Support
 Issues
 ------
 
-* Report all bugs and issues via Blender Nif Plugin repository's `Issue tracker <http://github.com/niftools/blender_niftools_addon/issues>`_
+* Report all bugs and issues via Blender Niftools Addon repository's `Issue tracker <http://github.com/niftools/blender_niftools_addon/issues>`_
 
 Fork
 ----

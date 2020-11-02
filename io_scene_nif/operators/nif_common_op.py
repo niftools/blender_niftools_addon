@@ -63,7 +63,7 @@ class NifOperatorCommon:
             ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
         ),
         name="Log Level",
-        description="Blender Nif Plugin log level of verbosity on the console.",
+        description="Blender Niftools Addon log level of verbosity on the console.",
         default="DEBUG")  # TODO [general] Dev config, revert for release
 
     # Level of verbosity on the console.

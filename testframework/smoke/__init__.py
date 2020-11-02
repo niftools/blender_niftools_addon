@@ -1,4 +1,4 @@
-"""Module for regression testing that the blender nif plugin installs and enables correctly"""
+"""Module for regression testing that the Blender Niftools Addon installs and enables correctly"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

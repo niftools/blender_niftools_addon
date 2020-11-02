@@ -1,4 +1,4 @@
-"""Module for unit testing that the blender nif plugin modules"""
+"""Module for unit testing that the Blender Niftools Addon modules"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

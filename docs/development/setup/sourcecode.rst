@@ -61,7 +61,7 @@ Follow the instructions at `Github's SSH Page <https://help.github.com/articles/
 Create a Github Fork
 --------------------
 
-If you intend to work on the Blender nif plugin, first, you should
+If you intend to work on the Blender Niftools Addon, first, you should
 clone the code on GitHub.
 
 #. If you do not have one yet, `create a GitHub account <https://github.com/signup/free>`_.
@@ -70,7 +70,7 @@ clone the code on GitHub.
 
 #. `Log in <https://github.com/login>`_ on GitHub.
 
-#. Visit the `Blender Nif Plugin mothership repository <https://github.com/niftools/blender_niftools_addon>`_.
+#. Visit the `Blender Niftools Addon mothership repository <https://github.com/niftools/blender_niftools_addon>`_.
 
 #. Click **Fork** (top right corner).
 

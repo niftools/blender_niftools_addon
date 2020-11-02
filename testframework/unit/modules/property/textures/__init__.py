@@ -1,4 +1,4 @@
-"""Module for unit testing that the blender nif plugin armature modules"""
+"""Module for unit testing that the Blender Niftools Addon armature modules"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

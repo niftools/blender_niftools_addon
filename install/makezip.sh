@@ -14,7 +14,7 @@ TEMP="${BUILD_DIR}"/temp
 PLUGIN_OUT="${TEMP}"/io_scene_nif
 DEPS_OUT="${PLUGIN_OUT}"/dependencies
 
-echo "Creating Blender Nif Plugin addon zip"
+echo "Creating Blender Niftools Addon addon zip"
 
 echo "Checking for temp folder: ${TEMP}"
 if [[ -d "${TEMP}" ]]; then

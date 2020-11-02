@@ -3,7 +3,7 @@ Documentation
 *************
 .. _developement-docs:
 
-Documentation of the Blender Nif Plugin is of equal importance to having a clean, functional code base and automated tests.
+Documentation of the Blender Niftools Addon is of equal importance to having a clean, functional code base and automated tests.
 The plugin is intended to be used by content creators. The main causes for inability to use it correctly are.
 - Functional bugs
 - Design and usability issues

@@ -1,6 +1,6 @@
 
 
-"""Module for unit testing that the blender nif plugin nif io modules"""
+"""Module for unit testing that the Blender Niftools Addon nif io modules"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

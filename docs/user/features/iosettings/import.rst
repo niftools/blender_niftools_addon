@@ -18,7 +18,7 @@ When importing large-scale nif models, such as structures, a user can edit this 
 
 * The Unit of measurement in Blender is the Blender Unit (BU). The default value is 1 BU = 1 meter but can be remapped to any measurement system.
 * The ratio of a Nif Units (NU) to Blender Units (BU) is 1Nu:10Bu, so we need reduce the nif by a factor of 10.
-* The Blender Nif Plugin applies a default correction of 0.1
+* The Blender Niftools Addon applies a default correction of 0.1
 
 Override Scene Information
 --------------------------

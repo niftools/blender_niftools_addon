@@ -20,9 +20,9 @@ See - https://wiki.blender.org/wiki/Building_Blender
 The repo comes with scripts which will package up the plugin for use
 
 
-Building the Blender Nif Plugin
+Building the Blender Niftools Addon
 ===============================
-The Blender Nif Plugin is a python project which can be manually put into the Blender add-ons directory.
+The Blender Niftools Addon is a python project which can be manually put into the Blender add-ons directory.
 The repo provides a set of scripts which allows creating of a zip file which can be loaded into Blender Addon Manager.
 
 .. note::

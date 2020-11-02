@@ -1,4 +1,4 @@
-"""Module for unit testing that the blender nif plugin egm io modules"""
+"""Module for unit testing that the Blender Niftools Addon egm io modules"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

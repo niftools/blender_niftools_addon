@@ -1,4 +1,4 @@
-"""Blender Nif Plugin Main Export operators, function called through Export Menu"""
+"""Blender Niftools Addon Main Export operators, function called through Export Menu"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 

@@ -14,7 +14,7 @@ Download the recommended version of `Blender <http://www.blender.org/download/ge
 for your platform (32-bit or 64-bit; if unsure, pick the 32-bit version)
 and follow the instructions.
 
-* Ensure that the version of Blender being installed is supported by the Blender Nif Plugin.
+* Ensure that the version of Blender being installed is supported by the Blender Niftools Addon.
 
 Fedora
 ^^^^^^
@@ -27,7 +27,7 @@ For Fedora 16 and up, Blender 2.7x is available via yum::
 Install and Register the Addon
 ------------------------------
 
-#. Download the `blender nif plugin .zip release
+#. Download the `Blender Niftools Addon .zip release
    <https://github.com/niftools/blender_niftools_addon/releases>`_.
 
 #. Start Blender.
@@ -36,7 +36,7 @@ Install and Register the Addon
 
 #. Click **Install Addon...** (bottom).
 
-#. Select the blender nif plugin .zip file downloaded earlier.
+#. Select the Blender Niftools Addon .zip file downloaded earlier.
 
 #. Under **Categories** (left), select **Import-Export**.
 

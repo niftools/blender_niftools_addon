@@ -6,9 +6,9 @@ If you're looking for support for any Niftools project there are a lot of option
 * [Twitter - @niftools](https://twitter.com/niftools)
 * [Discord channel](https://discordapp.com/invite/ZFjdN4x)
 
-# Blender Nif Plugin Support
+# Blender Niftools Addon Support
 ----------------------------
-* Blender Nif Plugin support available via our [forum](https://forum.niftools.org/)
+* Blender Niftools Addon support available via our [forum](https://forum.niftools.org/)
 * Discord - #software sub-channel
-* Blender Nif Plugin Documentation - [Blender Nif Plugin Documentation](https://blender-nif-plugin.readthedocs.io)
-* For a list of changes between versions, see [Blender Nif Plugin Changelog](../CHANGELOG.rst)
+* Blender Niftools Addon Documentation - [Blender Niftools Addon Documentation](https://blender-nif-plugin.readthedocs.io)
+* For a list of changes between versions, see [Blender Niftools Addon Changelog](../CHANGELOG.rst)
