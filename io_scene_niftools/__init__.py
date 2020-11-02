@@ -55,7 +55,7 @@ if _dependencies_path not in sys.path:
 del _dependencies_path
 
 import io_scene_niftools
-from io_scene_niftools import properties, operators, ui
+from io_scene_niftools import properties, operators, ui, update
 
 from io_scene_niftools.utils.util_logging import NifLog
 with open(os.path.join(current_dir, "VERSION.txt")) as version:
