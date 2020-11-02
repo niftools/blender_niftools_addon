@@ -111,7 +111,7 @@ class MaterialAnimation(Animation):
                 # so we have to repeat the import for each used tex slot
                 for i, texture_slot in enumerate(b_material.texture_slots):
                     if texture_slot:
-                        fcurves = self.create_fcurves(b_mat_action, f"texture_slots[{i:s}]." + data_path, (array_ind,), n_ctrl.flags)
+                        fcurves = self.create_fcurves(b_mat_action, f"texture_slots[{i}]." + data_path, (array_ind,), n_ctrl.flags)
                         for key in n_uvgroup.keys:
                             if "offset" in data_path:
                                 self.add_key(fcurves, key.time, (-key.value,), interp)
