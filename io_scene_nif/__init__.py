@@ -66,13 +66,13 @@ from io_scene_nif.utils import util_debug
 # Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo format support",
-    "description": "Import and export files in the NetImmerse/Gamebryo format (.nif, .kf)",
-    "author": "NifTools Team",
+    "description": "Import and export files in the NetImmerse/Gamebryo formats (.nif, .kf, .egm)",
+    "author": "Niftools team",
     "blender": (2, 81, 0),
     "version": (2, 6, 0),  # can't read from VERSION, blender wants it hardcoded
     "api": 39257,
     "location": "File > Import-Export",
-    "warning": "partially functional, port from 2.49 series still in progress",
+    "warning": "Partially functional port from 2.49 series still in progress",
     "wiki_url": "https://blender-niftools-addon.readthedocs.io/",
     "tracker_url": "https://github.com/niftools/blender_niftools_addon/issues",
     "support": "COMMUNITY",
