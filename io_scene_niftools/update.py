@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from io_scene_nif import addon_updater_ops
+from io_scene_niftools import addon_updater_ops
 
 
 # @addon_updater_ops.make_annotations
@@ -100,5 +100,3 @@ class UpdaterPreferences(bpy.types.AddonPreferences):
     # col = mainrow.column()
     # col.scale_y = 2
     # col.operator("wm.url_open","Open webpage ").url=addon_updater_ops.updater.website
-
-
