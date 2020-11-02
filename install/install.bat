@@ -14,7 +14,7 @@ set "ZIP_NAME=%NAME%-%VERSION%-%DATE%-%HASH%"
 
 if "%BLENDER_ADDONS_DIR%" == "" if not exist "%BLENDER_ADDONS_DIR%" (
 echo. "Update BLENDER_ADDONS_DIR to the folder where the blender addons reside, such as:"
-echo. "set BLENDER_ADDONS_DIR=%APPDATA%\Blender Foundation\Blender\2.79\scripts\addons"
+echo. "set BLENDER_ADDONS_DIR=%APPDATA%\Blender Foundation\Blender\2.90\scripts\addons"
 echo.
 pause
 goto end

@@ -5,14 +5,14 @@ NAME="blender_niftools_addon"
 CUR_DIR=$(pwd)
 BUILD_DIR="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 ROOT="${BUILD_DIR}"/..
-PLUGIN_IN="${ROOT}"/io_scene_nif/
+ADDON_IN="${ROOT}"/io_scene_nif/
 HASH=$(git rev-parse --short HEAD)
-VERSION=$(cat "${PLUGIN_IN}/VERSION.txt")
+VERSION=$(cat "${ADDON_IN}/VERSION.txt")
 DATE=$(date +%F)
 ZIP_NAME="${NAME}-${VERSION}-${DATE}-${HASH}.zip"
 TEMP="${BUILD_DIR}"/temp
-PLUGIN_OUT="${TEMP}"/io_scene_nif
-DEPS_OUT="${PLUGIN_OUT}"/dependencies
+ADDON_OUT="${TEMP}"/io_scene_nif
+DEPS_OUT="${ADDON_OUT}"/dependencies
 
 echo "Creating Blender Niftools Addon addon zip"
 
@@ -27,17 +27,17 @@ fi
 mkdir "${TEMP}"
 
 echo "Copying io_scene_nif directory"
-cp -r "${PLUGIN_IN}" "${PLUGIN_OUT}"
+cp -r "${ADDON_IN}" "${ADDON_OUT}"
 
 echo "Creating dependencies folder ${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 #python -m pip install -i https://test.pypi.org/simple/ PyFFI==2.2.4.dev5 --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 python -m pip install "PyFFI==${PYFFI_VERSION}" --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 
 echo "Copying loose files"
-cp "${ROOT}"/AUTHORS.rst "${PLUGIN_OUT}"
-cp "${ROOT}"/CHANGELOG.rst "${PLUGIN_OUT}"
-cp "${ROOT}"/LICENSE.rst "${PLUGIN_OUT}"
-cp "${ROOT}"/README.rst "${PLUGIN_OUT}"
+cp "${ROOT}"/AUTHORS.rst "${ADDON_OUT}"
+cp "${ROOT}"/CHANGELOG.rst "${ADDON_OUT}"
+cp "${ROOT}"/LICENSE.rst "${ADDON_OUT}"
+cp "${ROOT}"/README.rst "${ADDON_OUT}"
 
 echo "Creating zip ${ZIP_NAME}"
 cd "${TEMP}" || exit 1

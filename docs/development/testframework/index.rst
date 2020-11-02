@@ -49,7 +49,7 @@ or from a terminal (Linux | Ubuntu)::
 Install
 -------
 
-To install the plugin from a git checkout, run the following ::
+To install the addon from a git checkout, run the following ::
 
    cd blender_niftools_addon/install
    install.bat
@@ -86,7 +86,7 @@ For more details, run::
 
     blender-nosetests.bat --help
 
-* The tests will run on the currently installed plugin (*not* your checked out version!) so usually ensure you re-install after making edits to add-on files.
+* The tests will run on the currently installed addon (*not* your checked out version!) so usually ensure you re-install after making edits to add-on files.
 * Beware that the output can be rather verbose, so you may have to scroll quite a bit to see the relevant backtrace.
 
 Also, see the

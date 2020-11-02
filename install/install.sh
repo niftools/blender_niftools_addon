@@ -24,12 +24,12 @@ if [[ -d "${NIFTOOLS_ADDON_DIR}" ]]; then
   echo "Removing old io_scene_nif directory ${NIFTOOLS_ADDON_DIR}"
   rm -rf "${NIFTOOLS_ADDON_DIR}"
 else
-  echo "Plugin directory does not exist"
+  echo "Niftools addon directory does not exist"
   echo "Directory: ${NIFTOOLS_ADDON_DIR}"
 fi
 
 # create zip
-echo "Creating plugin zip file"
+echo "Creating addon zip file"
 sh "${BUILD_DIR}"/makezip.sh || exit 1
 
 # copy files from repository to blender addons folder
