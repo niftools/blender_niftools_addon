@@ -17,7 +17,7 @@ See - https://wiki.blender.org/wiki/Building_Blender
 
 .. _development-setup-buildplugin:
 
-The repo comes with scripts which will package up the plugin for use
+The repo comes with scripts which will package up the addon for use
 
 
 Building the Blender Niftools Addon
@@ -30,7 +30,7 @@ The repo provides a set of scripts which allows creating of a zip file which can
 
 Build Zip
 ---------
-To build the plugin from a git checkout, run the following ::
+To build the addon from a git checkout, run the following ::
 
     cd ./blender_niftools_addon/install
     makezip.bat
@@ -38,7 +38,7 @@ To build the plugin from a git checkout, run the following ::
 Install
 -------
 
-To install the plugin from a git checkout, run the following ::
+To install the addon from a git checkout, run the following ::
 
     cd ./blender_niftools_addon/install
     install.bat

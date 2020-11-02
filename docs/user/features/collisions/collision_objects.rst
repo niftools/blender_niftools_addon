@@ -12,7 +12,7 @@ Collision Object Mapping
 ========================
 
 * The following section describes the most appropriate primitive object to represent the desired collision object type.
-* The suggested shapes are the same objects generated through import by the plugin.
+* The suggested shapes are the same objects generated through import by the addon.
 * Upon export, a collision object is created from data pulled from the Collision object.
 * Start by choosing a shape adequate to your model and follow the steps below the appropriate section.
 

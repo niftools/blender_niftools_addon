@@ -11,7 +11,7 @@ Welcome to Blender Niftools Addon documentation!
    Documentation is incomplete and is still a work in progress.
 
 The Blender Niftools Addon is a Blender addon that adds support for import and export NIF files.
-The Nif Plugin allows the user to create custom content for a variety of games which use the nif format.
+The addon allows the user to create custom content for a variety of games which use the nif format.
 
 Features:
  - Native support for reading & writing of .nif files.

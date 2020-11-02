@@ -78,7 +78,7 @@ if "%1" == "html" (
 
 if "%1" == "gencodeapi" (
 	echo.
-	echo.Generating auto-docs for plugin source api
+	echo.Generating auto-docs from addon source api
 	echo.
 	%SPHINX_API_BUILD% -o %CODE_OPTS%
 	if errorlevel 1 exit /b 1

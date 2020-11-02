@@ -18,14 +18,14 @@ else
     echo "Using ${BLENDER_ADDONS_DIR} as installation directory"
 fi
 
-PLUGIN_DIR="${BLENDER_ADDONS_DIR}"/io_scene_nif/
-if [[ -d "${PLUGIN_DIR}" ]]; then
-  echo "Installing to: ${PLUGIN_DIR}"
-  echo "Removing old io_scene_nif directory ${PLUGIN_DIR}"
-  rm -rf "${PLUGIN_DIR}"
+NIFTOOLS_ADDON_DIR="${BLENDER_ADDONS_DIR}"/io_scene_nif/
+if [[ -d "${NIFTOOLS_ADDON_DIR}" ]]; then
+  echo "Installing to: ${NIFTOOLS_ADDON_DIR}"
+  echo "Removing old io_scene_nif directory ${NIFTOOLS_ADDON_DIR}"
+  rm -rf "${NIFTOOLS_ADDON_DIR}"
 else
   echo "Plugin directory does not exist"
-  echo "Directory: ${PLUGIN_DIR}"
+  echo "Directory: ${NIFTOOLS_ADDON_DIR}"
 fi
 
 # create zip
@@ -33,5 +33,5 @@ echo "Creating plugin zip file"
 sh "${BUILD_DIR}"/makezip.sh || exit 1
 
 # copy files from repository to blender addons folder
-echo "Unzipping to ${PLUGIN_DIR}"
+echo "Unzipping to ${NIFTOOLS_ADDON_DIR}"
 unzip -q "${TEMP}/${ZIP_NAME}" -d "${BLENDER_ADDONS_DIR}"

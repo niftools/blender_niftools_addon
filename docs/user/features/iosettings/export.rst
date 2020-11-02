@@ -6,7 +6,7 @@ This section explains the import and export settings.
 
 .. warning::
    Only a subset of these settings is currently supported even though they have been documented. 
-   This is due to the fact that they are ported directly from the old plugin and as such, will functionally remain the same.
+   This is due to the fact that they are ported directly from the old addon and as such, will functionally remain the same.
 
 
 Scale correction
@@ -24,7 +24,7 @@ Game
 ----
 .. _user-features-iosettings-export-game:
 
-A list of supported games which the plugin will export working nif files.
+A list of supported games which the addon will export working nif files.
 
 
 Process

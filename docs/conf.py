@@ -187,7 +187,7 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'BlenderNIFPlugindoc'
+htmlhelp_basename = 'BlenderNiftoolsAddondoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -206,7 +206,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'BlenderNIFPlugin.tex', 'Blender Niftools Addon Documentation',
+  ('index', 'BlenderNiftoolsAddon.tex', 'Blender Niftools Addon Documentation',
    'Amorilia, neomonkeus', 'manual'),
 ]
 
@@ -236,7 +236,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'blendernifplugin', 'Blender Niftools Addon Documentation',
+    ('index', 'BlenderNiftoolsAddon', 'Blender Niftools Addon Documentation',
      ['Amorilia, neomonkeus'], 1)
 ]
 
@@ -250,8 +250,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'BlenderNIFPlugin', 'Blender Niftools Addon Documentation', 'Amorilia, Neomonkeus',
-   'BlenderNIFPlugin', 'Blender Import/Export utility for the NetImmersion File Formant.', 'Miscellaneous'),
+  ('index', 'BlenderNiftoolsAddon', 'Blender Niftools Addon Documentation', 'Amorilia, neomonkeus',
+   'BlenderNiftoolsAddon', 'Blender Import/Export utility for the NetImmersion File Formant.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.

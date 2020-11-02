@@ -19,7 +19,7 @@ Log Level
 
 .. warning::
    Only a subset of these settings is currently supported even though they have been documented. 
-   This is due to the fact that they are ported directly from the old plugin and as such, will functionally remain the same.
+   This is due to the fact that they are ported directly from the old addon and as such, will functionally remain the same.
 
 .. toctree::
    :maxdepth: 2

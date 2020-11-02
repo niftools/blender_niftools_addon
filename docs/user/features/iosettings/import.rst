@@ -6,7 +6,7 @@ This section explains the import and export settings.
 
 .. warning::
    Only a subset of these settings are currently used or fully supported even though they have been documented here. 
-   This is due to the fact that they are ported directly from the old plugin and as such, will functionally remain the same.
+   This is due to the fact that they are ported directly from the old addon and as such, will functionally remain the same.
 
 Scale correction
 ----------------
@@ -33,7 +33,7 @@ Keyframe File
 .. _user-features-iosettings-import-keyframe:
 
 Keyframe File ( .kf ) is an animation file using keyframe markers
-A more complex animation file introduced with Skyrim ( .hkx ) is a havok based animation file, not supported by the plugin.
+A more complex animation file introduced with Skyrim ( .hkx ) is a havok based animation file, not supported by the addon.
 
 
 EGM File

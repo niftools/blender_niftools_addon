@@ -4,7 +4,7 @@ User Interface
 
 The Blender Niftools Addon both integrates and expands Blender's UI.
 This section of the document outlines which sections of the default options are used.
-It also describes any custom UI that is added by the plugin.
+It also describes any custom UI that is added by the addon.
 
 Import and Export Operators
 ---------------------------
