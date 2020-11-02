@@ -1,4 +1,4 @@
-"""Blender Niftools Addon for Nif import and export."""
+"""Blender Niftools Addon for import and export."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
