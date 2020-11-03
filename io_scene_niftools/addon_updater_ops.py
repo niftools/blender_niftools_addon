@@ -837,8 +837,8 @@ def check_for_update_nonthreaded(self, context):
 def show_reload_popup():
     """For use in register only, to show popup after re-enabling the addon
 
-	Must be enabled by developer
-	"""
+    Must be enabled by developer
+    """
     if updater.invalid_updater:
         return
     saved_state = updater.json
@@ -883,10 +883,10 @@ def show_reload_popup():
 def update_notice_box_ui(self, context):
     """ Panel - Update Available for placement at end/beginning of panel
 
-	After a check for update has occurred, this function will draw a box
-	saying an update is ready, and give a button for: update now, open website,
-	or ignore popup. Ideal to be placed at the end / beginning of a panel
-	"""
+    After a check for update has occurred, this function will draw a box
+    saying an update is ready, and give a button for: update now, open website,
+    or ignore popup. Ideal to be placed at the end / beginning of a panel
+    """
 
     if updater.invalid_updater:
         return
@@ -940,10 +940,10 @@ def update_notice_box_ui(self, context):
 def update_settings_ui(self, context, element=None):
     """Preferences - for drawing with full width inside user preferences
 
-	Create a function that can be run inside user preferences panel for prefs UI
-	Place inside UI draw using: addon_updater_ops.updaterSettingsUI(self, context)
-	or by: addon_updater_ops.updaterSettingsUI(context)
-	"""
+    Create a function that can be run inside user preferences panel for prefs UI
+    Place inside UI draw using: addon_updater_ops.updaterSettingsUI(self, context)
+    or by: addon_updater_ops.updaterSettingsUI(context)
+    """
 
     # element is a UI element, such as layout, a row, column, or box
     if element is None:
@@ -1112,8 +1112,8 @@ def update_settings_ui(self, context, element=None):
 def update_settings_ui_condensed(self, context, element=None):
     """Preferences - Condensed drawing within preferences
 
-	Alternate draw for user preferences or other places, does not draw a box
-	"""
+    Alternate draw for user preferences or other places, does not draw a box
+    """
 
     # element is a UI element, such as layout, a row, column, or box
     if element is None:
@@ -1236,13 +1236,13 @@ def update_settings_ui_condensed(self, context, element=None):
 def skip_tag_function(self, tag):
     """A global function for tag skipping
 
-	A way to filter which tags are displayed,
-	e.g. to limit downgrading too far
-	input is a tag text, e.g. "v1.2.3"
-	output is True for skipping this tag number,
-	False if the tag is allowed (default for all)
-	Note: here, "self" is the acting updater shared class instance
-	"""
+    A way to filter which tags are displayed,
+    e.g. to limit downgrading too far
+    input is a tag text, e.g. "v1.2.3"
+    output is True for skipping this tag number,
+    False if the tag is allowed (default for all)
+    Note: here, "self" is the acting updater shared class instance
+    """
 
     # in case of error importing updater
     if self.invalid_updater:
@@ -1257,7 +1257,8 @@ def skip_tag_function(self, tag):
 
     if self.include_branches:
         for branch in self.include_branch_list:
-            if tag["name"].lower() == branch: return False
+            if tag["name"].lower() == branch:
+                return False
 
     # function converting string to tuple, ignoring e.g. leading 'v'
     tupled = self.version_tuple_from_text(tag["name"])
@@ -1281,9 +1282,9 @@ def skip_tag_function(self, tag):
 def select_link_function(self, tag):
     """Only customize if trying to leverage "attachments" in *GitHub* releases
 
-	A way to select from one or multiple attached downloadable files from the
-	server, instead of downloading the default release/tag source code
-	"""
+    A way to select from one or multiple attached downloadable files from the
+    server, instead of downloading the default release/tag source code
+    """
 
     # -- Default, universal case (and is the only option for GitLab/Bitbucket)
     link = tag["zipball_url"]
