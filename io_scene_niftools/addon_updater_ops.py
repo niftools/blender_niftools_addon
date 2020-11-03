@@ -246,12 +246,11 @@ class AddonUpdaterCheckNow(bpy.types.Operator):
                     __package__))
             return {'CANCELLED'}
 
-        updater.set_check_interval(
-            enable=settings.auto_check_update,
-            months=settings.updater_interval_months,
-            days=settings.updater_interval_days,
-            hours=settings.updater_interval_hours,
-            minutes=settings.updater_interval_minutes)  # optional, if auto_check_update
+        updater.set_check_interval(enabled=settings.auto_check_update,
+                                   months=settings.updater_interval_months,
+                                   days=settings.updater_interval_days,
+                                   hours=settings.updater_interval_hours,
+                                   minutes=settings.updater_interval_minutes)  # optional, if auto_check_update
 
         # input is an optional callback function
         # this function should take a bool input, if true: update ready
@@ -789,7 +788,7 @@ def check_for_update_background():
     settings = get_user_preferences(bpy.context)
     if not settings:
         return
-    updater.set_check_interval(enable=settings.auto_check_update,
+    updater.set_check_interval(enabled=settings.auto_check_update,
                                months=settings.updater_intrval_months,
                                days=settings.updater_intrval_days,
                                hours=settings.updater_intrval_hours,
@@ -819,7 +818,7 @@ def check_for_update_nonthreaded(self, context):
             print("Could not get {} preferences, update check skipped".format(
                 __package__))
         return
-    updater.set_check_interval(enable=settings.auto_check_update,
+    updater.set_check_interval(enabled=settings.auto_check_update,
                                months=settings.updater_intrval_months,
                                days=settings.updater_intrval_days,
                                hours=settings.updater_intrval_hours,
@@ -1049,7 +1048,7 @@ def update_settings_ui(self, context, element=None):
         split.operator(AddonUpdaterCheckNow.bl_idname,
                        text="", icon="FILE_REFRESH")
 
-    elif updater.update_read and not updater.manual_only:
+    elif updater.update_ready and not updater.manual_only:
         sub_col = col.row(align=True)
         sub_col.scale_y = 1
         split = sub_col.split(align=True)
