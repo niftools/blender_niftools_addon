@@ -1345,11 +1345,11 @@ def register(bl_info):
     updater.private_token = None  # "tokenstring"
 
     # choose your own username, must match website (not needed for GitLab)
-    updater.user = "niftools"
+    updater.user = "neomonkeus"
 
     # choose your own repository, must match git name for GitHUb and Bitbucket,
     # for GitLab use project ID (numbers only)
-    updater.repo = "blender_niftools_addon"
+    updater.repo = "blender_nif_plugin"
 
     # updater.addon = # define at top of module, MUST be done first
 
