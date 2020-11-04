@@ -1714,17 +1714,15 @@ class GitlabEngine:
 
     def form_branch_list_url(self, updater):
         # does not validate branch name.
-        return "{}{}".format(
-            self.form_repo_url(updater), "/repository/branches")
+        return "{}{}".format(self.form_repo_url(updater), "/repository/branches")
 
     def form_branch_url(self, branch, updater):
         # Could clash with tag names and if it does, it will
         # download TAG zip instead of branch zip to get
         # direct path, would need.
-        return "{}{}{}".format(
-            self.form_repo_url(updater),
-            "/repository/archive.zip?sha=",
-            branch)
+        return "{}{}{}".format(self.form_repo_url(updater),
+                               "/repository/archive.zip?sha=",
+                               branch)
 
     def get_zip_url(self, sha, updater):
         return "{base}/repository/archive.zip?sha={sha}".format(

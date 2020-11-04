@@ -177,18 +177,10 @@ classes = (
     )
 
 
-def select_zip_file(self, tag):
-    """Select the latest build artifact binary"""
-
-    link = [asset for asset in tag["assets"] if 'blender' in asset][0]
-    return link
-
-
 def register():
     # addon updater code and configurations in case of broken version, try to register the updater first
     # so that users can revert back to a working version
-    addon_updater_ops.register(bl_info)
-    addon_updater_ops.select_link_function = select_zip_file
+    configure_autoupdater()
 
     _init_loggers()
     operators.register()
@@ -217,7 +209,22 @@ def register():
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
     bpy.types.Material.niftools_shader = bpy.props.PointerProperty(type=properties.shader.ShaderProps)
 
-    print("Silly v0.0.2")
+
+def select_zip_file(self, tag):
+    """Select the latest build artifact binary"""
+    if "assets" in tag and "browser_download_url" in tag["assets"][0]:
+        link = tag["assets"][0]["browser_download_url"]
+    return link
+
+
+def configure_autoupdater():
+    addon_updater_ops.register(bl_info)
+    addon_updater_ops.select_link_function = select_zip_file
+    addon_updater_ops.use_releases = True
+    addon_updater_ops.remove_pre_update_patterns = ["*.py", "*.pyc", "*.xml", "*.exe", "*.rst", "VERSION", "*.xsd"]
+    addon_updater_ops.user = "niftools"
+    addon_updater_ops.repo = "blender_niftools_addon"
+    addon_updater_ops.website = "https://github.com/niftools/blender-niftools-addon/"
 
 
 def unregister():
