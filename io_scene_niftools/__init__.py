@@ -212,6 +212,7 @@ def register():
 
 def select_zip_file(self, tag):
     """Select the latest build artifact binary"""
+    print("looking for releases")
     if "assets" in tag and "browser_download_url" in tag["assets"][0]:
         link = tag["assets"][0]["browser_download_url"]
     return link
@@ -219,12 +220,12 @@ def select_zip_file(self, tag):
 
 def configure_autoupdater():
     addon_updater_ops.register(bl_info)
-    addon_updater_ops.select_link_function = select_zip_file
-    addon_updater_ops.use_releases = True
-    addon_updater_ops.remove_pre_update_patterns = ["*.py", "*.pyc", "*.xml", "*.exe", "*.rst", "VERSION", "*.xsd"]
-    addon_updater_ops.user = "niftools"
-    addon_updater_ops.repo = "blender_niftools_addon"
-    addon_updater_ops.website = "https://github.com/niftools/blender-niftools-addon/"
+    addon_updater_ops.updater.select_link = select_zip_file
+    addon_updater_ops.updater.use_releases = True
+    addon_updater_ops.updater.remove_pre_update_patterns = ["*.py", "*.pyc", "*.xml", "*.exe", "*.rst", "VERSION", "*.xsd"]
+    addon_updater_ops.updater.user = "niftools"
+    addon_updater_ops.updater.repo = "blender_niftools_addon"
+    addon_updater_ops.updater.website = "https://github.com/niftools/blender-niftools-addon/"
 
 
 def unregister():
