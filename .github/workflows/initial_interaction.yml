@@ -1,0 +1,27 @@
+name: Initial Interaction
+
+on: [pull_request, issues]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message:
+            "Thank you for creating your first issue for the Blender Niftools Addon.
+            Please ensure that you have completed all sections of the template as best you can.
+            This really helps us, and in the process will help you.
+
+            - If sections are removed, then the issue will be marked as invalid until it is filled in correctly.
+            - If an issue is marked as invalid for more than a week it will automatically be closed out.
+            "
+
+
+          pr-message:
+            "Thanks for your first contribution to the Blender Niftools Addon repo.
+            Please ensure that you have filled in the PR template as best you can.
+
+            Members of the @niftools-blender-addon-reviewers team will review it shortly
+            "
