@@ -16,4 +16,5 @@ jobs:
 
       - name: Build Addon
         run: |
+          python --version
           ./install/makezip.sh
