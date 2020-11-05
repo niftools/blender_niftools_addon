@@ -13,3 +13,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Build Addon
+        run: |
+          ./install/makezip.sh
