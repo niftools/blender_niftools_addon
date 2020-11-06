@@ -23,7 +23,6 @@ jobs:
         id: build_addon
         run: |
           ./install/makezip.sh
-          $(ls ./install/temp)
           ZIP_NAME=$(ls ./install/temp | grep zip)
           echo "##[set-output name=zip_name;]$ZIP_NAME"
 
