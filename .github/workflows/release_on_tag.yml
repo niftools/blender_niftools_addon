@@ -3,12 +3,12 @@ on:
     # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-    branches: [ feature/automate_reply ]
 
 name: Create Release
 
 jobs:
   build:
+    if: github.event.base_ref == 'refs/heads/feature/automate_reply'
     name: Create Release
     runs-on: ubuntu-latest
     steps:
