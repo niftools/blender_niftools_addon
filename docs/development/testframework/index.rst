@@ -15,6 +15,7 @@ It aims to unify the various levels of testing that should be performed to relea
 
 For an overview of each level see the :ref: `design section <development-testframework-design>`
 
+-------------
 Prerequisites
 -------------
 
@@ -22,6 +23,7 @@ The following environmental variables need to be set
 We decided not to auto-detect as devs may have many versions installed.
 Also allows switching between versions to run against.
 
+~~~~~~~~~~~~
 BLENDER_HOME
 ~~~~~~~~~~~~
 
@@ -33,6 +35,7 @@ or from a terminal (Linux | Ubuntu)::
 
     BLENDER_HOME=~/.blender/
 
+~~~~~~~~~~~~~~~~~
 BLENDER_ADDONS_DIR
 ~~~~~~~~~~~~~~~~~~
 
@@ -46,6 +49,7 @@ or from a terminal (Linux | Ubuntu)::
 
     BLENDER_ADDONS_DIR=~/.blender/2.79/scripts/addons
 
+-------
 Install
 -------
 
@@ -59,6 +63,7 @@ or from a terminal (Linux | Ubuntu)::
     ./blender_niftools_addon/install
     sh ./install.sh
 
+------------
 Running Tests
 -------------
 
@@ -99,7 +104,8 @@ Also, see the
    api/index
    ci_server
 
-Indices and tables
+-----------------
+Indices and Tables
 ------------------
 
 * :ref:`genindex`
