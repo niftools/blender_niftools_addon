@@ -57,7 +57,7 @@ class CommonDevOperator:
         items=error_level_map,
         name="Plugin Log Level",
         description="Blender Nif Plugin log level of verbosity on the console.",
-        default="DEBUG")  # TODO [general] Dev config, revert for release
+        default="INFO")
 
     # Level of verbosity on the console.
     pyffi_log_level: bpy.props.EnumProperty(
