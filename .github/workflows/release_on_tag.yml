@@ -47,5 +47,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./install/temp/
-          asset_name: ${{ steps.build_addon.outputs.zip_name }}
+          asset_name: "*.zip"
           asset_content_type: application/zip
