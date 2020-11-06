@@ -44,7 +44,10 @@ import sys
 import bpy
 import bpy.props
 
-# Python dependencies are bundled inside the io_scene_niftools/dependencies folder
+# updater ops import, all setup in this file
+from . import addon_updater_ops
+
+# Python dependencies are bundled inside the io_scene_nif/dependencies folder
 current_dir = os.path.dirname(__file__)
 _dependencies_path = os.path.join(current_dir, "dependencies")
 if _dependencies_path not in sys.path:
@@ -52,11 +55,11 @@ if _dependencies_path not in sys.path:
 del _dependencies_path
 
 import io_scene_niftools
-from io_scene_niftools import properties, operators, ui
+from io_scene_niftools import properties, operators, ui, update
 
 from io_scene_niftools.utils.util_logging import NifLog
 with open(os.path.join(current_dir, "VERSION.txt")) as version:
-    NifLog.info(f"Loading: Blender Niftools Addon: {version.read():s}")
+    NifLog.info(f"Loading: Blender Niftools Addon: {version.read()}")
 
 import pyffi
 NifLog.info(f"Loading: Pyffi: {pyffi.__version__}")
@@ -69,7 +72,7 @@ bl_info = {
     "description": "Import and export files in the NetImmerse/Gamebryo formats (.nif, .kf, .egm)",
     "author": "Niftools team",
     "blender": (2, 81, 0),
-    "version": (2, 6, 0),  # can't read from VERSION, blender wants it hardcoded
+    "version": (0, 0, 1),  # can't read from VERSION, blender wants it hardcoded
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "Partially functional port from 2.49 series still in progress",
@@ -169,16 +172,23 @@ classes = (
     ui.scene.ScenePanel,
 
     ui.shader.ShaderPanel,
+
+    update.UpdaterPreferences,
     )
 
 
 def register():
+    # addon updater code and configurations in case of broken version, try to register the updater first
+    # so that users can revert back to a working version
+    configure_autoupdater()
+
     _init_loggers()
     operators.register()
     properties.register()
     ui.register()
     from bpy.utils import register_class
     for cls in classes:
+        # addon_updater_ops.make_annotations(cls)  # to avoid blender 2.8 warnings
         register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -200,7 +210,28 @@ def register():
     bpy.types.Material.niftools_shader = bpy.props.PointerProperty(type=properties.shader.ShaderProps)
 
 
+def select_zip_file(self, tag):
+    """Select the latest build artifact binary"""
+    print("looking for releases")
+    if "assets" in tag and "browser_download_url" in tag["assets"][0]:
+        link = tag["assets"][0]["browser_download_url"]
+    return link
+
+
+def configure_autoupdater():
+    addon_updater_ops.register(bl_info)
+    addon_updater_ops.updater.select_link = select_zip_file
+    addon_updater_ops.updater.use_releases = True
+    addon_updater_ops.updater.remove_pre_update_patterns = ["*.py", "*.pyc", "*.xml", "*.exe", "*.rst", "VERSION", "*.xsd"]
+    addon_updater_ops.updater.user = "niftools"
+    addon_updater_ops.updater.repo = "blender_niftools_addon"
+    addon_updater_ops.updater.website = "https://github.com/niftools/blender-niftools-addon/"
+
+
 def unregister():
+    # addon updater unregister
+    addon_updater_ops.unregister()
+
     # no idea how to do this... oh well, let's not lose any sleep over it uninit_loggers()
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
