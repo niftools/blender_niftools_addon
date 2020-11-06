@@ -1,26 +1,25 @@
 @niftools/blender-niftools-addon-reviewer 
 
 # Overview
-[Overview of the content of the pull request]
+**[Overview of the content of the pull request]**
 
 ##  Detailed Description
-[List of functional updates]
+**[List of functional updates]**
 
 ## Fixes Known Issues
-[Ordered list of issues fixed by this PR]
+**[Ordered list of issues fixed by this PR]**
 
 ## Documentation
-[Overview of updates to documentation]
+**[Overview of updates to documentation]**
 
 ## Testing
-[Overview of testing required to ensure functionality is correctly implemented]
+**[Overview of testing required to ensure functionality is correctly implemented]**
 
 ### Manual
-[Order steps to manually verify updates are working correctly]
+**[Set of steps to manually verify updates are working correctly]**
 
 ### Automated
-[List of tests run, updated or added to avoid future regressions]
+**[List of tests run, updated or added to avoid future regressions]**
 
 ## Additional Information
-[Anything else you deem relevant]
-
+**[Anything else you deem relevant]**
