@@ -38,7 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: "Blender Niftools Addon - ${{ github.ref }}"
+          release_name: "Blender Niftools Addon - ${{ steps.get_tag.outputs.tag_name }}"
           body:
             "Please use the following link to download the latest release - [${{ steps.build_addon.outputs.zip_name }}](https://github.com/niftools/blender_niftools_addon/releases/download/${{ steps.get_tag.outputs.tag_name }}/${{ steps.build_addon.outputs.zip_name }})
 
