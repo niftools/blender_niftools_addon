@@ -22,3 +22,27 @@ jobs:
       - name: Build Addon
         run: |
           ./install/makezip.sh
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1.1.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: "Blender Niftools Addon - ${{ github.ref }}"
+          body:
+            "
+            Add interesting stuff here
+            [Full Changelog](https://github.com/niftools/blender_niftools_addon/blob/${{ github.ref }}/CHANGELOG.rst)
+            "
+
+      - name: Attach add-on zip
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./install/temp/
+          asset_name: blender_niftools_addon.*${{ github.ref }}.*.zip
+          asset_content_type: application/zip
