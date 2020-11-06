@@ -1,5 +1,6 @@
+==================================
 Continuous Integration Build Server
-===================================
+==================================
 
 .. _development-testframework-ci_server:
 
@@ -73,9 +74,9 @@ Nightly ::
 	
 
 	
-
+*****************
 Post Build Actions
-******************
+*****************
 
 Publish Cobertura Coverage reports ::
 
