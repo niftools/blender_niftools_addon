@@ -1,3 +1,4 @@
+===================================
 Interactive Development Environment
 ===================================
 
@@ -7,6 +8,7 @@ Developers are open to use their own IDE of preference, but the repo is configur
 This IDE allows us to maintain a unified workflow for general file manipulation, repo management,
 python scripting, and hooks into Blender's debugging server.
 
+---------------
 Install PyCharm
 ---------------
 
@@ -26,12 +28,14 @@ When starting pycharm, Open the workspace folder.
 If you followed the instructions, you should have cloned the code into ``/home/<username>/workspace``
 PyCharm will automatically recognise this as a Git repo.
 
+---------
 Debugging
------------------
+---------
 
 The Blender Niftools Addon code comes with built-in pydev hook to allow connection by a Remote Python Debug Server.
 This allows run-time debugging; watching the script execute, evaluate variables, function call stack etc.
 
+********
 Debugger
 ********
 

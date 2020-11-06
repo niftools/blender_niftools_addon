@@ -1,6 +1,6 @@
+============================
 Building Blender from Source
 ============================
-
 .. _development-setup-buildblender:
 
 As a developer, there are a number of advantages that come from building from source.
@@ -19,15 +19,16 @@ See - https://wiki.blender.org/wiki/Building_Blender
 
 The repo comes with scripts which will package up the addon for use
 
-
+==================================
 Building the Blender Niftools Addon
-===============================
+==================================
 The Blender Niftools Addon is a python project which can be manually put into the Blender add-ons directory.
 The repo provides a set of scripts which allows creating of a zip file which can be loaded into Blender Addon Manager.
 
 .. note::
     Ensure that you have installed the prerequisite dependencies using install_deps scripts
 
+---------
 Build Zip
 ---------
 To build the addon from a git checkout, run the following ::
@@ -35,9 +36,9 @@ To build the addon from a git checkout, run the following ::
     cd ./blender_niftools_addon/install
     makezip.bat
 
+-------
 Install
 -------
-
 To install the addon from a git checkout, run the following ::
 
     cd ./blender_niftools_addon/install

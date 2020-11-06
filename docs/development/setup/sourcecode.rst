@@ -1,3 +1,4 @@
+===========================
 Downloading the Source Code
 ===========================
 
@@ -8,6 +9,7 @@ We use git as to manage and version our source control.
 It is hosted on GitHub, a popular git hosting platform. 
 
 
+-----------
 Install Git
 -----------
 
@@ -26,6 +28,7 @@ Download `git bash <https://git-scm.com/downloads>`_ installer and follow the in
 
    sudo apt-get install git
 
+`````````
 Auto CLRF
 `````````
 
@@ -48,6 +51,7 @@ Auto CLRF
   will have consistent line endings
   according to your operating system.
 
+--------------
 Setup SSH Keys
 --------------
 
@@ -58,6 +62,7 @@ Follow the instructions at `Github's SSH Page <https://help.github.com/articles/
    * If you run into errors while starting the ssh-agent or adding the keys to the ssh-agent try running "eval `ssh-agent -s`".
 
 
+--------------------
 Create a Github Fork
 --------------------
 
@@ -77,6 +82,7 @@ clone the code on GitHub.
 Be sure to read the remaining `GitHub help pages <http://help.github.com/>`_, particularly the beginner's guides.
 
 
+-------------------
 Get the Source Code
 -------------------
 
