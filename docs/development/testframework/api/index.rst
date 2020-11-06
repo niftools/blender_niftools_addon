@@ -15,7 +15,7 @@ Contents:
    submodules/modules
    
 ------------------
-Indices and tables
+Indices and Tables
 ------------------
 
 * :ref:`genindex`
