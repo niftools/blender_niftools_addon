@@ -20,8 +20,11 @@ jobs:
           python-version: 3.8
 
       - name: Build Addon
+        id: build_addon
         run: |
           ./install/makezip.sh
+          ZIP_NAME=$(ls ./install/temp | grep zip)
+          echo "##[set-output name=zip_name;]$ZIP_NAME"
 
       - name: Create Release
         id: create_release
@@ -32,8 +35,8 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: "Blender Niftools Addon - ${{ github.ref }}"
           body:
-            "
-            Add interesting stuff here
+            "Please use the following link to download the latest release - [${{ steps.build_addon.outputs.zip_name }}](https://github.com/niftools/blender_niftools_addon/blob/${{ github.ref }}/${{ steps.build_addon.outputs.zip_name }})
+
             [Full Changelog](https://github.com/niftools/blender_niftools_addon/blob/${{ github.ref }}/CHANGELOG.rst)
             "
 
@@ -44,5 +47,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./install/temp/
-          asset_name: blender_niftools_addon.*${{ github.ref }}.*.zip
+          asset_name: ${{ steps.build_addon.outputs.zip_name }}
           asset_content_type: application/zip
