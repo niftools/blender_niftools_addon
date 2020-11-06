@@ -1,6 +1,7 @@
 on:
   push:
     # Sequence of patterns matched against refs/tags
+    branches: [ master ]
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
@@ -11,10 +12,6 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - name: Get Tag
-        id: get_tag
-        run: echo ::set-output name=tag_name::${GITHUB_REF#refs/tags/}
-
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -39,9 +36,9 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: "Blender Niftools Addon - ${{ github.ref }}"
           body:
-            "Please use the following link to download the latest release - [${{ steps.build_addon.outputs.zip_name }}](https://github.com/niftools/blender_niftools_addon/releases/download/${{ steps.get_tag.outputs.tag_name }}/${{ steps.build_addon.outputs.zip_name }})
+            "Please use the following link to download the latest release - [${{ steps.build_addon.outputs.zip_name }}](https://github.com/niftools/blender_niftools_addon/releases/download/${{ github.event.release.tag_name }}/${{ steps.build_addon.outputs.zip_name }})
 
-            [Full Changelog](https://github.com/niftools/blender_niftools_addon/blob/${{ steps.get_tag.outputs.tag_name }}/CHANGELOG.rst)
+            [Full Changelog](https://github.com/niftools/blender_niftools_addon/blob/${{ github.event.release.tag_name }}/CHANGELOG.rst)
             "
 
       - name: Attach add-on zip
