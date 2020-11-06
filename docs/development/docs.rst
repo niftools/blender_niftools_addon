@@ -12,7 +12,7 @@ The addon is intended to be used by content creators. The main causes for inabil
 The first two issues can be fixed on a priority basis unless things are documented to reflect there are known issues or the workflow is outlined correctly
 users will be able to use the addon correctly. This results in poor user experience and more work for developers as they will have to respond to support requests.
 
-
+==========
 Convention
 ==========
 .. _developement-docs-convention:
