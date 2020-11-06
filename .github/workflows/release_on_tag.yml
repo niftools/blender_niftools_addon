@@ -35,7 +35,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: "Blender Niftools Addon - ${{ github.ref }}"
           body:
-            "Please use the following link to download the latest release - [${{ steps.build_addon.outputs.zip_name }}](https://github.com/niftools/blender_niftools_addon/releases/${{ github.ref }}/${{ steps.build_addon.outputs.zip_name }})
+            "Please use the following link to download the latest release - [${{ steps.build_addon.outputs.zip_name }}](https://github.com/niftools/blender_niftools_addon/releases/download/${{ github.ref }}/${{ steps.build_addon.outputs.zip_name }})
 
             [Full Changelog](https://github.com/niftools/blender_niftools_addon/blob/${{ github.ref }}/CHANGELOG.rst)
             "
