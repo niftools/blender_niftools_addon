@@ -1,3 +1,4 @@
+===============
 Export Settings
 ===============
 .. _user-features-iosettings-export:
@@ -9,6 +10,7 @@ This section explains the import and export settings.
    This is due to the fact that they are ported directly from the old addon and as such, will functionally remain the same.
 
 
+----------------
 Scale correction
 ----------------
 .. _user-features-iosettings-export-scale:
@@ -20,6 +22,7 @@ This value is used to globally re-scale the Blender system of measurement units 
 * The default setting ensures the imported model fits into the view Blender viewport.
 
 
+----
 Game
 ----
 .. _user-features-iosettings-export-game:
@@ -27,6 +30,7 @@ Game
 A list of supported games which the addon will export working nif files.
 
 
+-------
 Process
 -------
 .. _user-features-iosettings-export-process:
@@ -40,42 +44,49 @@ Export options include
 * Animation only (kf) - Only animation to a single kf.
 
 
+-------------------------
 Smooth Inter-Object Seams
 -------------------------
 .. _user-features-iosettings-export-smoothseams:
 
 This option combines the normals data for all vertices containing the same XYZ location data along an edge and uses the same normal tangent and bi-tangent values for all affected vertices.
 
+---------------------
 Use NiBSAnimationNode
 ---------------------
 .. _iosettings-bsanimationnode:
 
 NiBSAnimationNode is specific to "The Elder Scrolls - Morrowind" and should only be used when exporting animated items for that game.
 
+------------
 Flatten Skin
 ------------
 .. _user-features-iosettings-export-flattenskin:
 
 This option does something to the thing, no really it does, but I can't tell you because it's a sekret.
 
+----------------
 Pad & Sort Bones
 ----------------
 .. _iosettings-padnsort:
 
 Adjusts the number of bones in a given partition to match the total number of bones used for the dismember instance.
 
+-------------------
 Max Partition Bones
 -------------------
 .. _iosettings-maxpartitionbones:
 
 The maximum number of bones that a single dismember partition can use before starting a new partition.
 
+----------------
 Max Vertex Bones
 ----------------
 .. _iosettings-maxvertexbones:
 
 The maximum number of bone weight values that can be applied to a single vertex.
 
+---------
 Force DDS
 ---------
 .. _user-features-iosettings-export-forcedds:

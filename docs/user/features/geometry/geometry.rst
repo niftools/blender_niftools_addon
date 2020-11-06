@@ -1,3 +1,4 @@
+=============
 Mesh Geometry
 =============
 .. _geometry-mesh:
@@ -27,6 +28,7 @@ Mesh Geometry
   
 .. _geometry-doubleside:
 
+-----------------
 Double-Sided Mesh
 -----------------
 
@@ -67,6 +69,7 @@ UV Unwrapping/Mapping
 
 .. _geometry-vertexcolor:
 
+--------------------
 Vertex Color & Alpha
 --------------------
 

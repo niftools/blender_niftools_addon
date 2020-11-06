@@ -1,3 +1,4 @@
+------------------
 Collision Settings
 ------------------
 .. _collisonsettings:
@@ -7,6 +8,7 @@ A lot of these setting are Havok specific; where possible we have mapped them to
 
 .. _collisonsettings-enable:
 
+==============================
 Enabling Rigid Body Collisions
 ==============================
 
@@ -21,13 +23,15 @@ First, we enable Rigid Body Collision for the selected collision Object:
 
 .. _collisionsettings-rigidbody:
 
+================
 Rigid Body Panel
-==============================
+================
 
 .. _collisionsettings-havok:
 
 The Rigid Body Panel is contains the properties to define how the object will react in the physics simulation.
 
+~~~~~~~~~~~~~~~~
 Settings Section
 ~~~~~~~~~~~~~~~~
 
@@ -36,6 +40,7 @@ In the **Setting** section
     In the **mass** property is used to give the collision object a weight
 
 
+~~~~~~~~~~~~~~~~~
 Collision Section
 ~~~~~~~~~~~~~~~~~
 
@@ -70,6 +75,7 @@ In the **collision** section
 | `Triangle Mesh Collision`_ | :class:`~pyffi.formats.nif.NifFormat.bhkMoppBvTreeShape`     |
 +----------------------------+--------------------------------------------------------------+
 
+~~~~~~~~~~~~~~~~~~~~~~~~
 Surface Response Section
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -79,6 +85,7 @@ In the **Surface Response** section the following are mapped to nif properties
 
 - restitution : How "bouncy" the body is, i.e. how much energy it has after colliding. Less than 1.0 loses energy, greater than 1.0 gains energy.
 
+~~~~~~~~~~~~~~~~~~~
 Sensitivity Section
 ~~~~~~~~~~~~~~~~~~~
 
@@ -86,8 +93,9 @@ In the **Surface Response** section, enable the collsion margin.
 
 - margin : This is an area around the mesh that allows for quick but less accurate collision detection.
 
+~~~~~~~~~~~~~~~~
 Dynamics Section
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 In the **Surface Response** section, the following are mapped to nif properties
 
@@ -100,6 +108,7 @@ Enable the **Deactivation** checkbox to access the following settings
 - Deactivate Linear velocity : Linear velocity
 - Deactivate Angular Velocity : Angular velocity
 
+========================
 Custom Niftools Settings
 ========================
 

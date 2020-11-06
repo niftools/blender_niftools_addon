@@ -1,3 +1,4 @@
+=================
 Collision Systems
 =================
 .. _collison-system:
@@ -12,6 +13,7 @@ The following section deals with the various collision systems that the Blender 
 
 .. _collison-workflow:
 
+--------
 Workflow
 --------
 

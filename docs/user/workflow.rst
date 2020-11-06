@@ -1,3 +1,4 @@
+========
 Workflow
 ========
 
@@ -14,6 +15,7 @@ This section will explain the general workflow used to import/export .nif files 
 
 .. _user-workflow-import:
 
+------
 Import
 ------
 
@@ -22,6 +24,7 @@ These settings are explained at :ref:`I/O Settings Section <user-features-iosett
 
 .. _user-workflow-export:
 
+------
 Export
 ------
 
@@ -44,6 +47,7 @@ The following section deals the various model components, required to export to 
 
 .. _workflow-advmesh:
 
+-----------------
 Advanced Modeling
 -----------------
 

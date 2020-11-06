@@ -1,3 +1,4 @@
+==============
 User Interface
 ==============
 .. _user-ui:
@@ -6,6 +7,7 @@ The Blender Niftools Addon both integrates and expands Blender's UI.
 This section of the document outlines which sections of the default options are used.
 It also describes any custom UI that is added by the addon.
 
+---------------------------
 Import and Export Operators
 ---------------------------
 .. _user-ui-operators:
@@ -16,6 +18,7 @@ Selecting **NetImmerse/Gamebryo(.nif)** option will open the Main UI window.
 
 For a detailed breakdown of all the settings see :ref:`io-settings <user-features-iosettings>`
 
+----------
 UI Logging
 ----------
 .. _user-ui-logging:

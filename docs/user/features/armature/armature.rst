@@ -1,7 +1,9 @@
+=========
 Armatures
 =========
 .. _armature-armatures:
 
+==============
 Armature Bones
 ==============
 
@@ -9,6 +11,7 @@ Armature Bones
 
 .. _armature-flags:
 
+----------
 Bone Flags
 ----------
 
@@ -19,6 +22,7 @@ Bone Flags
 
 .. _armature-dismemberflags:
 
+---------------
 Dismember Flags
 ---------------
 
@@ -26,6 +30,7 @@ Dismember Flags
 
 .. _armature-invmarker:
 
+----------------
 Inventory Marker
 ----------------
 

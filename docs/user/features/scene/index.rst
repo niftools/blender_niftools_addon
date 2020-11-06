@@ -1,3 +1,4 @@
+-----
 Scene
 -----
 .. _user-features-scene:
@@ -8,6 +9,7 @@ Changing the setting also alters what is displayed by the UI.
 
 The setting can be viewed in the Niftools Scene Panel. This is visible in the Scene Tab of the Properties Editor View.
 
+===========
 Nif Version
 ===========
 

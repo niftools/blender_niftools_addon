@@ -1,15 +1,18 @@
+==========================
 Import and Export Settings
 ==========================
 .. _user-features-iosettings:
 
 This section explains the import and export settings.
 
+***************
 Common Settings
 ***************
 .. _user-features-iosettings-common:
 
 There are some common settings shared between the import and export operators.
 
+---------
 Log Level
 ---------
 .. _user-features-iosettings-loglevel:

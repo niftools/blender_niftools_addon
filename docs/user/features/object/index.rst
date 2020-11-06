@@ -1,3 +1,4 @@
+===============
 Object Settings
 ===============
 .. _user-feature-object:
@@ -8,6 +9,7 @@ This section will take you through the base settings required for your model.
 .. May break up the common by type; armature, mesh, common etc?
 
 
+---
 BSX
 ---
 .. _user-feature-object-bsx:
@@ -31,6 +33,7 @@ BSX
    
 .. _user-feature-object-mesh-bsinvmarker:
 
+-------------------
 BS Inventory Marker
 -------------------
 
@@ -61,6 +64,7 @@ BS Inventory Marker
 
 .. _object-mesh-upb:
 
+---
 UPB
 ---
 
@@ -81,6 +85,7 @@ Niftools uses the following values as default for this item.:
    * Display_Proxy = <None>
 
 
+--------
 Settings
 --------
 .. _user-feature-object-settings:
@@ -98,8 +103,9 @@ First, we complete the object panel:
 .. Extra Data and InvMarkers I have no idea how to fill them in. Help?
 
 
+----------
 Node Types
----
+----------
 
 Blender empties can represent various NIF node types, and are selected according to the following criteria:
 
@@ -107,5 +113,4 @@ Blender empties can represent various NIF node types, and are selected according
    * Add a custom property to create a 'NiLODNode'. Set Near extent and far extent as properties on the Lod controller's children.
    * Select the root node type from the dropdown menu.
 
-   
    

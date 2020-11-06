@@ -1,3 +1,4 @@
+========
 Features
 ========
 .. _user-features:
