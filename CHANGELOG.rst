@@ -1,3 +1,133 @@
+Version v0.0.1
+============================
+
+- Rename plugin to use new naming scheme
+- Add in updated templates
+
+
+Note::
+The following are older version, using the old naming scheme
+
+Version 2.6.0.adev4
+===============
+## Feature
+
+#361 Feature: import pose
+#353 Automatically select suitable axis orientation
+#11 Billboard Support
+#15 Vertex Alpha Prop Support
+#25 NiAlphaProperty detection for Textures
+#288 Material Export: Alpha
+#346 Port/collision game radius
+#342 Update documentation for 2.8 + mat sys improvements
+#337 Refactor/blender 2.8 ui registration
+#335 Merge/version string
+#329 Port to 2.8+
+#324 Addon enabled in Blender 2.82.7, Option to Import and Export .NIF Files not appearing under File
+#310 Fix Morph Anims (NiGeomMorpherController)
+#311 Anim stuff
+#282 Documentation Improvement
+#287 Animation Import Support
+#289 New bone system (no extra matrices) & animation support
+#299 Format UI & Operator Modules
+#257 - allow exporting of object while ignoring non-uv textures
+- Unable to export an object with non-uv textures without either deleting the textures or first creating a UV-map for them.
+- Updated NifError to NifLog.warn, because nothing here should prevent you from exporting your object so long as the user is aware of what is happening.
+- The messages themselves were updated to be more helpful.
+
+## Bug Fix
+
+#378 Bug fixes to zip generation, BSEffecShaderProperty export, and meshes parented to armature. Also game set on import.
+#377 Update transform.py
+#376 Update __init__.py
+#369 Fix to bhkBoxShape and bhkSphereShape translation export and documentation update
+#368 Fix to bhkBoxShape and bhkSphereShape translation export
+#365 Bug/export disable clamp mode
+#276 Error when exporting material with texture without UV
+#350 Cannot import Skeleton to Fallout New Vegas
+#363 Fix/bss shader node setup
+#357 Messed up skeleton weights & some vertices not loaded
+#362 Fix/bss shader reference
+#359 Fixes to BSLightingShaderProperty
+#354 ReferenceError: StructRNA of type Image has been removed
+#349 Collision fixes and stuff
+#172 Mesh Export : Unweighted vertices
+#328 ValueError: deepcopy: classes BSFadeNode and NiTriShape unrelated
+#331 Cannot Export Skyrim Skeleton
+#243 Assertion Error : f_numverts == 3 or 4
+#255 Ngon Fixes
+#341 Merge #340 to 2.8 Bug BSEffectShaderProperty shader controller
+#347 Merge/bs effect shader missing texture fix
+#344 Incorrect import of greyscale texture for BSEffectShaderProperty
+#343 Error when exporting BSEffectShaderProperty without textures
+#339 Error importing BSEffectShader without Controller.
+#336 Merge/bug fix collision bhk mopp list processing
+#333 Fix collision import processing for bhkMoppBVTreeShape & bhkListShape
+#330 Export Zoo Tycoon 2 Error
+#244 UI : Property not found: ShaderProps.slsf_1_greyscale_to_palettecolor
+#321 Fallout 3/new vegas materials import
+#320 can't import / export Skyrim nifs
+#325 Refactor Collision Export
+#242 Export : UV offset not found
+#260 Shaders : texprop.shader_textures[1] index error
+#312 Fix collision / havok materials & pyffi dev compatibility
+#308 Refactor/animation Bug Error
+#283 Fixed CONTRIBUTING.rst grammar mistake
+#264 - import and export Morrowind collision nodes properly
+-  name of the node be RootCollisionNode to properly export it, but the importer called it instead just "collision"
+
+#256 - check that selected objects can be exported
+- UnboundLocalError: local variable 'root_object' referenced before assignment
+
+#252 armature and version export
+Refactored code fails on armature export
+Value for version not assigned, fails export
+- AttributeError: 'NifExport' object has no attribute 'version'
+
+#242 Export : UV offset not found
+#251
+- TypeError: load_nif() missing 1 required positional argument: 'file_path'
+- AttributeError: 'NifExport' object has no attribute 'set_object_matrix'
+
+#275 - Fix Addon Documentation and Bug Tracker links
+ - #274 Links in the addon direct to the wrong urls
+
+#265 Submodules not getting included by makezip.bat
+
+## Internal
+
+#355 Fixes to the installation bat files
+#152 Material code improvements
+#332 Change the version string
+#322 Refactor/shader code
+#319 Refactor/split import export modules
+#318 Refactor/object mesh heirarchy
+#316 Refactor/texture property
+#315 Refactor mesh code from nif_import
+#313 Refactor Object & Mesh property handling
+#307 Several fixes for refactor/object_type
+#306 Refactor/object type Improvement Restructure
+#305 Refactor/block registry Improvement
+#304 Refactor/pep pass Improvement
+#303 Refactor/utils Improvement
+#301 Refactoring / fixes for pyffi/nifxml upgrades
+#303 Refactor/utils
+#298 Refactor/build system
+#295 Formatting Animation & Armature modules.
+#296 Refactor/formatting collision modules
+#297 Update testframework with pep8 updates and new module structure
+#278 Remove external dependencies needed to build
+- Remove the reliance on buildenv
+- Remove need to install zip on windows
+
+#277 Migrated modules from root folder
+#273 Template updates
+#267 Hosted docs
+#270 Change submodule and sourceforge links
+- #208 Pyffi submodule
+- #217 Document update
+
+
 Version 2.6.0a3 (3 Jan 2015)
 ============================
 

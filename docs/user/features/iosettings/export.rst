@@ -6,7 +6,7 @@ This section explains the import and export settings.
 
 .. warning::
    Only a subset of these settings is currently supported even though they have been documented. 
-   This is due to the fact that they are ported directly from the old plugin and as such, will functionally remain the same.
+   This is due to the fact that they are ported directly from the old addon and as such, will functionally remain the same.
 
 
 Scale correction
@@ -16,7 +16,7 @@ Scale correction
 This value is used to globally re-scale the Blender system of measurement units to the Nif Format units.
 
 * The ratio of a Nif Units (NU) to Blender Units (BU) is 1Bu:0.1Nu. or each NU is about 10x larger than a BU.
-* The Blender Nif Plugin applies a default correction of 10
+* The Blender Niftools Addon applies a default correction of 10
 * The default setting ensures the imported model fits into the view Blender viewport.
 
 
@@ -24,7 +24,7 @@ Game
 ----
 .. _user-features-iosettings-export-game:
 
-A list of supported games which the plugin will export working nif files.
+A list of supported games which the addon will export working nif files.
 
 
 Process

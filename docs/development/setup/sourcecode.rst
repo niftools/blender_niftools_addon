@@ -61,7 +61,7 @@ Follow the instructions at `Github's SSH Page <https://help.github.com/articles/
 Create a Github Fork
 --------------------
 
-If you intend to work on the Blender nif plugin, first, you should
+If you intend to work on the Blender Niftools Addon, first, you should
 clone the code on GitHub.
 
 #. If you do not have one yet, `create a GitHub account <https://github.com/signup/free>`_.
@@ -70,7 +70,7 @@ clone the code on GitHub.
 
 #. `Log in <https://github.com/login>`_ on GitHub.
 
-#. Visit the `Blender Nif Plugin mothership repository <https://github.com/niftools/blender_nif_plugin>`_.
+#. Visit the `Blender Niftools Addon mothership repository <https://github.com/niftools/blender_niftools_addon>`_.
 
 #. Click **Fork** (top right corner).
 
@@ -83,8 +83,8 @@ Get the Source Code
 To get the code, run in a terminal (linux) or in git bash (windows)::
 
    cd ~/workspace
-   git clone --recursive git@github.com:<username>/blender_nif_plugin.git
-   cd blender_nif_plugin
+   git clone --recursive git@github.com:<username>/blender_niftools_addon.git
+   cd blender_niftools_addon
 
 We use submodules to maintain external dependencies.
 This allows us to update to a version of the dependency independently of the corresponding project's release cycle.
@@ -105,4 +105,4 @@ Run::
 
 Optional remote tracking of other developers::
 
-   git remote add <developer> git://github.com/<developer>/blender_nif_plugin.git
+   git remote add <developer> git://github.com/<developer>/blender_niftools_addon.git

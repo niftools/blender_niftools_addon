@@ -44,7 +44,7 @@ from nose.tools import nottest
 import mathutils
 import math
 
-from io_scene_nif.utils import util_math
+from io_scene_niftools.utils import util_math
 
 from pyffi.formats.nif import NifFormat
 

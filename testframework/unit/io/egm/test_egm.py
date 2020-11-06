@@ -1,4 +1,4 @@
-"""Module for unit testing that the blender nif plugin egm io modules"""
+"""Module for unit testing that the Blender Niftools Addon egm io modules"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -42,7 +42,7 @@ import os
 import nose
 from nose.tools import nottest, raises
 
-from io_scene_nif.io.egm import EGMFile
+from io_scene_niftools.io.egm import EGMFile
 
 
 class TestEGMIO:

@@ -3,7 +3,7 @@ Development Overview
 
 .. _development-design-overview:
 
-This section outlines various principles which govern how we develop the Blender Nif Plugin and why.
+This section outlines various principles which govern how we develop the Blender Niftools Addon and why.
 
 Development Methodology
 -----------------------
@@ -105,7 +105,7 @@ The Test Framework has several purposes
  * Standardise testing through the use of the template pattern.
  * Provide functionality testing as features are ported to the newer API.
  * Act as a regression suite so that future changes to the API will be detected.
- * Provide a list of supported plugin features by testing features and asserting that they are known to be working.
+ * Provide a list of supported addon features by testing features and asserting that they are known to be working.
  * Provide documentation of features by recreating user interaction.
 
 Feature Tests Creation
@@ -116,7 +116,7 @@ Supporting features is detailed workflow is detailed in the :ref:`Test Framework
 Documentation
 -------------
 
-Documentation forms the final core principle of development. Without documentation that enable users to understand how to use the plugin, there is 
+Documentation forms the final core principle of development. Without documentation that enable users to understand how to use the addon, there is
 not much point in development.  
 
    

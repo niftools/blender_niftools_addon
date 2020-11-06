@@ -1,4 +1,4 @@
-"""Module for regression testing that the blender nif plugin installs and enables correctly"""
+"""Module for regression testing that the Blender Niftools Addon installs and enables correctly"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -45,7 +45,7 @@ import addon_utils
 
 class TestSmokeTests:
 
-    nif_module_name = "io_scene_nif"
+    nif_module_name = "io_scene_niftools"
 
     def test_ordered_test(self):
         if self.is_enabled():
@@ -59,9 +59,9 @@ class TestSmokeTests:
         nose.tools.assert_true(self.is_enabled())
         print("Addon enabled successfully")
         try:
-            import io_scene_nif
+            import io_scene_niftools
         except ImportError:
-            print("Failed to import io_scene_nif module")
+            print("Failed to import io_scene_niftools module")
             assert False
         try:
             import pyffi

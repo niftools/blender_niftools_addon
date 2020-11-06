@@ -10,7 +10,7 @@ Features
    
    Split this up into separate files mimicking test framework structure.
 
-All the features of our Blender plugin are described here.
+All the features of our Blender Niftools addon are described here.
 
 If in need of a guide to make sure your model is complete please visit the :ref:`workflow page <user-workflow>`.
 

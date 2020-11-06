@@ -17,12 +17,12 @@ See - https://wiki.blender.org/wiki/Building_Blender
 
 .. _development-setup-buildplugin:
 
-The repo comes with scripts which will package up the plugin for use
+The repo comes with scripts which will package up the addon for use
 
 
-Building the Blender Nif Plugin
+Building the Blender Niftools Addon
 ===============================
-The Blender Nif Plugin is a python project which can be manually put into the Blender add-ons directory.
+The Blender Niftools Addon is a python project which can be manually put into the Blender add-ons directory.
 The repo provides a set of scripts which allows creating of a zip file which can be loaded into Blender Addon Manager.
 
 .. note::
@@ -30,20 +30,20 @@ The repo provides a set of scripts which allows creating of a zip file which can
 
 Build Zip
 ---------
-To build the plugin from a git checkout, run the following ::
+To build the addon from a git checkout, run the following ::
 
-    cd ./blender_nif_plugin/install
+    cd ./blender_niftools_addon/install
     makezip.bat
 
 Install
 -------
 
-To install the plugin from a git checkout, run the following ::
+To install the addon from a git checkout, run the following ::
 
-    cd ./blender_nif_plugin/install
+    cd ./blender_niftools_addon/install
     install.bat
 
 or from a terminal (Linux | Ubuntu)::
 
-    cd ./blender_nif_plugin/install
+    cd ./blender_niftools_addon/install
     sh ./install.sh

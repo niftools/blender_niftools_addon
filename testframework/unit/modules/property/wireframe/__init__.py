@@ -1,4 +1,4 @@
-"""Module for unit testing that the blender nif plugin wireframe properties"""
+"""Module for unit testing that the Blender Niftools Addon wireframe properties"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

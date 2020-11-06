@@ -1,4 +1,4 @@
-"""Module for unit testing that the blender nif plugin kf io modules"""
+"""Module for unit testing that the Blender Niftools Addon kf io modules"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

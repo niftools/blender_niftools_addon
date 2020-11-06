@@ -1,4 +1,4 @@
-"""Module for unit testing that the blender nif plugin collision modules"""
+"""Module for unit testing that the Blender Niftools Addon collision modules"""
 
 # ***** BEGIN LICENSE BLOCK *****
 #

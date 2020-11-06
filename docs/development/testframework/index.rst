@@ -4,7 +4,7 @@ Test Framework
 
 .. _development-testframework:
 
-The test framework is a series of tools to automate the verification process of the Blender Nif Plugin
+The test framework is a series of tools to automate the verification process of the Blender Niftools Addon
 It aims to unify the various levels of testing that should be performed to release the plugin
 
  * Unit
@@ -49,14 +49,14 @@ or from a terminal (Linux | Ubuntu)::
 Install
 -------
 
-To install the plugin from a git checkout, run the following ::
+To install the addon from a git checkout, run the following ::
 
-   cd blender_nif_plugin/install
+   cd blender_niftools_addon/install
    install.bat
 
 or from a terminal (Linux | Ubuntu)::
 
-    ./blender_nif_plugin/install
+    ./blender_niftools_addon/install
     sh ./install.sh
 
 Running Tests
@@ -70,9 +70,9 @@ or from a terminal (Linux | Ubuntu)::
 
     sh ./blender-nosetests.sh
 
-from within the ``blender_nif_plugin/testframework/`` folder.
+from within the ``blender_niftools_addon/testframework/`` folder.
 
-Each test resides as a python file in the ``blender_nif_plugin/testframework/test/`` folder.
+Each test resides as a python file in the ``blender_niftools_addon/testframework/test/`` folder.
 To run a particular test only, specify the file as an argument; for instance::
 
     blender-nosetests.bat test/geometry/trishape/test_geometry.py
@@ -86,7 +86,7 @@ For more details, run::
 
     blender-nosetests.bat --help
 
-* The tests will run on the currently installed plugin (*not* your checked out version!) so usually ensure you re-install after making edits to add-on files.
+* The tests will run on the currently installed addon (*not* your checked out version!) so usually ensure you re-install after making edits to add-on files.
 * Beware that the output can be rather verbose, so you may have to scroll quite a bit to see the relevant backtrace.
 
 Also, see the

@@ -1,17 +1,17 @@
-.. Blender NIF plugin documentation master file, created by
+.. Blender Niftools Addon documentation master file, created by
    sphinx-quickstart on Sat Jul 23 19:47:06 2011.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Blender NIF Plugin documentation!
+Welcome to Blender Niftools Addon documentation!
 ============================================
 
 .. warning::
 
    Documentation is incomplete and is still a work in progress.
 
-The Blender Nif Plugin is a Blender addon that adds support for import and export NIF files.
-The Nif Plugin allows the user to create custom content for a variety of games which use the nif format.
+The Blender Niftools Addon is a Blender addon that adds support for import and export NIF files.
+The addon allows the user to create custom content for a variety of games which use the nif format.
 
 Features:
  - Native support for reading & writing of .nif files.

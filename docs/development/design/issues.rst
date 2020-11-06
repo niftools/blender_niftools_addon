@@ -4,7 +4,7 @@ Development Issues
 .. _development-design-issues:
 
 This document lists a few non-trivial issues that we have come across while porting 
-the plugin from the Blender 2.4x API to the 2.6x+ API.
+the addon from the Blender 2.4x API to the 2.6x+ API.
 
 Matrices
 --------
@@ -185,9 +185,9 @@ Following this convention makes the operator more user-friendly for
 other scripts, such as testing frameworks, who might want to catch the
 exception and/or inspect error reports.
 
-The :class:`io_scene_nif.import_export_nif.NifImportExport` class has
+The :class:`io_scene_niftools.import_export_nif.NifImportExport` class has
 a dedicated
-:meth:`~io_scene_nif.import_export_nif.NifImportExport.error` method
+:meth:`~io_scene_niftools.import_export_nif.NifImportExport.error` method
 for precisely this purpose.
 
 The list of reports of the last operator execution can be inspected

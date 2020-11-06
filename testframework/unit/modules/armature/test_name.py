@@ -39,7 +39,7 @@
 
 import nose
 
-from io_scene_nif.modules.nif_export import armature
+from io_scene_niftools.modules.nif_export import armature
 
 B_NPC_L = "NPC XXX [XXX].L"
 B_NPC_R = "NPC XXX [XXX].R"
