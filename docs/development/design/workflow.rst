@@ -1,3 +1,4 @@
+========
 Workflow
 ========
 
@@ -5,6 +6,7 @@ Workflow
 
 The aim of this section is to describe the desired workflow for a developer
 
+----------------
 Porting Strategy
 ----------------
 
@@ -25,6 +27,7 @@ scripts---the code will be refactored and cleaned up, possibly moving
 some bits out to separate addons (hull script, morph copy, etc.). The
 refactor is reserved for the 1.x.x series.
 
+----------------------
 Generate Documentation
 ----------------------
 

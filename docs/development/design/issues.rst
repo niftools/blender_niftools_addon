@@ -1,3 +1,4 @@
+==================
 Development Issues
 ==================
 
@@ -6,6 +7,7 @@ Development Issues
 This document lists a few non-trivial issues that we have come across while porting 
 the addon from the Blender 2.4x API to the 2.6x+ API.
 
+--------
 Matrices
 --------
 
@@ -42,12 +44,14 @@ Access                  Repr                      Access              Repr
 Matrix multiplication
 For a given matrices A B C where A * B * C -> D the equivalent D' in the alternate handed system is C' * B' * A' 
 
+-------
 Objects
 -------
 
 * Vertex groups are accessible via
   :attr:`bpy.types.Object.vertex_groups`, instead of via  :class:`bpy.types.Mesh`.
 
+----------------------
 Meshes: Index Mapping
 ----------------------
 
@@ -64,6 +68,7 @@ Meshes: Index Mapping
   
   This index mapping is also used by attributes such a vertex colour, vertex weight, vertex UV
 
+------
 Meshes
 ------
 
@@ -108,12 +113,14 @@ Meshes
 
 .. _dev-design-error-reporting:
 
+---------
 Animation
 ---------
 
 * Ipo's are gone. They are replaced by
   :attr:`bpy.types.Object.animation_data` (see :class:`bpy.types.AnimData`).
 
+---------
 Collision
 ---------
 
@@ -128,6 +135,7 @@ Collision
     This also ensures that collision settings imported from nifs
     will work with Blender's game engine.
 
+----
 Bone
 ----
 
@@ -142,6 +150,7 @@ Bone
  - EditBones are accessed through :class:`int` indexed rather :class:`str` index b_armatureData.edit_bones[b_child_bone.name].parent = b_armatureData.edit_bones[b_bone.name]
 
 
+-----------------
 Strings and Bytes
 -----------------
 
@@ -152,6 +161,7 @@ to :class:`str` whenever interfacing directly with the nif data.
 
    Add an encoding import/export option.
 
+---------------
 Error Reporting
 ---------------
 
@@ -193,6 +203,7 @@ for precisely this purpose.
 The list of reports of the last operator execution can be inspected
 using :func:`bpy.ops.ui.reports_to_textblock`.
 
+---------------------
 Blender API Mysteries
 ---------------------
 
@@ -206,6 +217,7 @@ Blender API Mysteries
 
 * How do you get the set of all vertices in a :class:`bpy.types.VertexGroup`?
 
+------
 Solved
 ------
 
