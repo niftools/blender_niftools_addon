@@ -1,8 +1,10 @@
+======================
 Integration Test Design
 =======================
 
 .. _development-testframework-design-integration:
 
+-------------
 Test Template
 -------------
 
@@ -31,7 +33,7 @@ These methods are intended to be delegate function, calling external methods in 
    
    * We move all the code to external modules for code reuse code to avoid importing other tests, avoiding tests to be re-run unnecessarily.
        
-
+-------------------
 Test Implementation
 -------------------
    
@@ -75,11 +77,13 @@ Each test can be comprised of multiple required features and a lego block-buildi
 
 That's it!
 
+---------------
 Execution Order
 ---------------
 
 The tests will run like this:
-   
+
+***********
 User Export
 ***********
 
@@ -87,7 +91,8 @@ User Export
 #. :meth:`b_check_data` to check it before export
 #. Export the nif to ```test/nif/../../x_feature_export_pycode.nif``
 #. :meth:`n_check_data` to check exported nif.
-   
+
+***********
 User Import
 ***********
 
@@ -95,7 +100,8 @@ User Import
 #. :meth:`b_check_data` tests the imported scene.
    
 If the above tests run, then we are in pretty good shape as we can verify import and export work in isolation 
-  
+
+********************************
 Python generated Import / Export
 ********************************
 
