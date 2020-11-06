@@ -1,6 +1,7 @@
 ===============
 Object Settings
 ===============
+
 .. _user-feature-object:
 
 This section will take you through the base settings required for your model.
