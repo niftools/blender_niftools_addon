@@ -37,12 +37,11 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper
 
 from io_scene_niftools import egm_import
-from .common_op import CommonDevOperator, CommonEGM, CommonImportScale
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonEGM, CommonImportScale
 
 
 class EgmImportOperator(Operator, ImportHelper, CommonImportScale, CommonEGM, CommonDevOperator):
