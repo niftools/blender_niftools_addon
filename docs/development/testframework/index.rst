@@ -35,7 +35,7 @@ or from a terminal (Linux | Ubuntu)::
 
     BLENDER_HOME=~/.blender/
 
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 BLENDER_ADDONS_DIR
 ~~~~~~~~~~~~~~~~~~
 
@@ -63,7 +63,7 @@ or from a terminal (Linux | Ubuntu)::
     ./blender_niftools_addon/install
     sh ./install.sh
 
-------------
+-------------
 Running Tests
 -------------
 
@@ -104,7 +104,7 @@ Also, see the
    api/index
    ci_server
 
------------------
+------------------
 Indices and Tables
 ------------------
 

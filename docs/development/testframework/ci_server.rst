@@ -74,9 +74,9 @@ Nightly ::
 	
 
 	
-*****************
+******************
 Post Build Actions
-*****************
+******************
 
 Publish Cobertura Coverage reports ::
 

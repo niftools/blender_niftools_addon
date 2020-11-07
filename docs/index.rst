@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to Blender Niftools Addon documentation!
-==============================================
+================================================
 
 .. warning::
 

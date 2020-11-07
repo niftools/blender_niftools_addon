@@ -19,9 +19,9 @@ See - https://wiki.blender.org/wiki/Building_Blender
 
 The repo comes with scripts which will package up the addon for use
 
-==================================
+===================================
 Building the Blender Niftools Addon
-==================================
+===================================
 The Blender Niftools Addon is a python project which can be manually put into the Blender add-ons directory.
 The repo provides a set of scripts which allows creating of a zip file which can be loaded into Blender Addon Manager.
 

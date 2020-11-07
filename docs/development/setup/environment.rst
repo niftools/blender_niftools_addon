@@ -73,9 +73,9 @@ Install Blender
 See :ref:`user docs <user-getblender>`.
 Alternatively, you can build Blender from source :ref:`Building Blender from Source <development-setup-buildblender>`
 
----------------------------
+----------------------------
 Install Develop Dependencies
----------------------------
+----------------------------
 
 The script will install developer dependencies in the install directory.
 This enables debug support, nose documentation.
