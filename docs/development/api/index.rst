@@ -1,4 +1,3 @@
-=================
 API Documentation
 =================
 
@@ -15,7 +14,6 @@ Contents:
    submodules/modules
    
    
---------------
 User Interface
 --------------
 
@@ -26,7 +24,6 @@ User Interface
 
 
 
-------------------
 Indices and tables
 ------------------
 
