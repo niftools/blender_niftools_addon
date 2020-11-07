@@ -36,22 +36,23 @@ Install and Register the Addon
 
 #. Start Blender.
 
-#. Go to: **File > User Preferences > Add-Ons**.
+#. Go to: **Edit** > **Preferences** > **Add-Ons**.
 
-#. Click **Install Addon...** (bottom).
+#. Click **Install Addon...** (top-right).
 
-#. Select the Blender Niftools Addon .zip file downloaded earlier.
+#. Select the Blender Niftools Addon .zip file downloaded earlier. Click
+   **Install Add-On**
 
-#. Under **Categories** (left), select **Import-Export**.
+#. In the search bar of the Preferences window, type "nif"
 
-#. Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif format**.
-   You may have to scroll down a bit first.
+#. Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif
+   format**. You may have to scroll down a bit first.
 
-#. Close the **Blender User Preferences** window.
+   If you want to enable Niftools each time you start Blender, click the
+   hamburger stack overflow menut (bottom-left) and select **Save
+   Preferences**.
 
-#. The nif importer and exporter should now show under
-   **File > Import** and **File > Export**.
+#. Close the **Blender Preferences** window.
 
-#. Do: **File > Save User Settings** (unless you enjoy enabling the
-   addon every time when Blender starts :-) ).
-
+#. The NifTools importer and exporters should now be available under **File**
+   > **Import** and **File** > **Export**.
