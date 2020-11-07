@@ -1,4 +1,3 @@
-=============
 Mesh Geometry
 =============
 .. _geometry-mesh:
@@ -28,7 +27,6 @@ Mesh Geometry
   
 .. _geometry-doubleside:
 
------------------
 Double-Sided Mesh
 -----------------
 
@@ -59,7 +57,7 @@ UV Unwrapping/Mapping
 **Example:**
 #. :ref:`Create a mesh-object <geometry-mesh>`.
 #. In **Edit Mode**, select the faces you want to unwrap.
-#. Press U``, select **Unwrap > Smart UV Project** or an unwrapping algorithm of your choice.
+#. Press `U`, select **Unwrap > Smart UV Project** or an unwrapping algorithm of your choice.
 
 **Notes:**
 
@@ -69,7 +67,6 @@ UV Unwrapping/Mapping
 
 .. _geometry-vertexcolor:
 
---------------------
 Vertex Color & Alpha
 --------------------
 

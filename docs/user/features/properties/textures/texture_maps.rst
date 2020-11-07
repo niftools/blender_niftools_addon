@@ -1,4 +1,3 @@
-------------
 Texture Maps
 ------------
 
@@ -8,7 +7,6 @@ Texture Maps
 * The following sections describe the function of each Map
 * Map properties are usually set via the **Influence** section of the **Texture Tab**.
 
------------
 Diffuse Map
 -----------
 
@@ -17,7 +15,6 @@ The information in a diffuse map is used as the base colour
 #. Under **Type**, set the type to **Image or Movie**.
 #. Under **Influence**,  in the **Diffuse Section**, enable **Color**.
 
---------
 Bump Map
 --------
 
@@ -28,7 +25,6 @@ Bump Map
 #. Under **Influence**,  in the **Geometry Section**, enable **Normal**.
 #. Under **Influence**,  in the **Diffuse Section**, disable **Color**.
 
---------
 Glow Map
 --------
 
@@ -38,7 +34,6 @@ A texture that receives no lighting, but the pixels are shown at full intensity.
 #. Under **Influence**,  in the **Shading Section**, enable **Emit**.
 #. Under **Influence**,  in the **Diffuse Section**, disable **Color**.
 
-----------
 Normal Map
 ----------
 
@@ -54,9 +49,8 @@ Normal Map
 #. Under **Influence**,  in the **Diffuse Section**, disable **Color**.
 #. Under **Image Sampling**, enable **Normal** 
 
---------
 Gloss Map
---------
+----------
 
 A texture which determines areas of the whole surface are more glossy and which areas are less glossy
 

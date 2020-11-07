@@ -1,7 +1,6 @@
 
 .. _properties-niproperty:
 
-==========
 NiProperty
 ==========
 
@@ -10,7 +9,6 @@ The following is an overview of what the addon will export Blender settings are 
 
 .. _properties-nimaterial:
 
-------------------
 NiMaterialProperty
 ------------------
 
@@ -20,7 +18,6 @@ The following section is for nifs which use :class:`~pyffi.formats.nif.NifFormat
 
 .. _properties-nispecular:
 
-------------------
 NiSpecularProperty
 ------------------
 
@@ -28,7 +25,6 @@ NiSpecularProperty
 
 .. _properties-nialpha:
 
----------------
 NiAlphaProperty
 ---------------
 
@@ -37,7 +33,6 @@ NiAlphaProperty
    
 .. _properties-niwireframe:
 
--------------------
 NiWireFrameProperty
 -------------------
 
@@ -45,7 +40,6 @@ NiWireFrameProperty
 
 .. _properties-stencil:
 
------------------
 NiStencilProperty
 -----------------
 

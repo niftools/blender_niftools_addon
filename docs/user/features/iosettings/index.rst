@@ -1,4 +1,3 @@
-==========================
 Import and Export Settings
 ==========================
 .. _user-features-iosettings:
@@ -12,7 +11,6 @@ Common Settings
 
 There are some common settings shared between the import and export operators.
 
----------
 Log Level
 ---------
 .. _user-features-iosettings-loglevel:

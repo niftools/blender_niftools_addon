@@ -1,6 +1,5 @@
 .. _shader:
 
-======
 Shader
 ======
 
@@ -18,7 +17,6 @@ There are three different kinds of shader nodes:
 
 .. _shader-pplight:
 
-------------------------------
 BS Shader PP Lighting Property
 ------------------------------
 
@@ -123,7 +121,6 @@ This shader node is used for things.
 
 .. _shader-light:
 
----------------------------
 BS Lighting Shader Property
 ---------------------------
 
@@ -329,7 +326,6 @@ This shader node is used for things.
 
 .. _shader-effect:
 
--------------------------
 BS Effect Shader Property
 -------------------------
 

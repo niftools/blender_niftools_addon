@@ -1,4 +1,3 @@
-----------------
 Collision Object
 ----------------
 .. _collisionobject:
@@ -9,7 +8,6 @@ The following section deals with creating an object which will physically repres
 
 .. _collisionobject-mapping:
 
-========================
 Collision Object Mapping
 ========================
 
@@ -18,7 +16,6 @@ Collision Object Mapping
 * Upon export, a collision object is created from data pulled from the Collision object.
 * Start by choosing a shape adequate to your model and follow the steps below the appropriate section.
 
-~~~~~~~~~~~
 NiCollision
 ~~~~~~~~~~~
 - Morrowind:
@@ -35,7 +32,6 @@ The following type use the collision bound type and the name to decide what to m
 | `Bounding Box`_            | BoundingBox       |
 +----------------------------+-------------------+
 
-~~~~~~~~
 BhkShape
 ~~~~~~~~
 - Oblivion, Fallout 3, and Fallout NV; 
@@ -56,7 +52,6 @@ BhkShape
 
 .. _collisionobject-bbox:
 
-^^^^^^^^^^^^
 Bounding Box
 ^^^^^^^^^^^^
 
@@ -75,7 +70,6 @@ Visualisation
 #. Select `BOX` from the **shape** dropdown.
 
 
-^^^^^^^^^^^^^^
 Mesh Collision
 ^^^^^^^^^^^^^^
 
@@ -105,7 +99,6 @@ Visualisation
 
 .. _collisionobject-havok:
 
-===============
 Havok Collision
 ===============
 
@@ -120,7 +113,6 @@ This is used by the havok system for collision detection.
 
 .. _collisionobject-notes:
 
-~~~~~
 Notes
 ~~~~~
 
@@ -128,7 +120,6 @@ Notes
 
 .. _collisionobject-havokbox:
 
-^^^^^^^^^^^^^
 Box Collision
 ^^^^^^^^^^^^^
 
@@ -144,7 +135,6 @@ Box Collision
 
 .. _collisionobject-havoksphere:
 
-^^^^^^^^^^^^^^^^
 Sphere Collision
 ^^^^^^^^^^^^^^^^
 
@@ -160,7 +150,6 @@ Sphere Collision
 
 .. _collisionobject-havokcapsule:
 
-^^^^^^^^^^^^^^^^^
 Capsule Collision
 ^^^^^^^^^^^^^^^^^
 
@@ -192,7 +181,6 @@ Capsule Collision
 
 .. _collision-convex-hull:
 
-^^^^^^^^^^^^^^^^^^^^^
 Convex Hull Collision
 ^^^^^^^^^^^^^^^^^^^^^
 

@@ -1,4 +1,3 @@
-===============
 Object Settings
 ===============
 
@@ -10,7 +9,6 @@ This section will take you through the base settings required for your model.
 .. May break up the common by type; armature, mesh, common etc?
 
 
----
 BSX
 ---
 .. _user-feature-object-bsx:
@@ -34,7 +32,6 @@ BSX
    
 .. _user-feature-object-mesh-bsinvmarker:
 
--------------------
 BS Inventory Marker
 -------------------
 
@@ -65,7 +62,6 @@ BS Inventory Marker
 
 .. _object-mesh-upb:
 
----
 UPB
 ---
 
@@ -86,7 +82,6 @@ Niftools uses the following values as default for this item.:
    * Display_Proxy = <None>
 
 
---------
 Settings
 --------
 .. _user-feature-object-settings:
@@ -104,7 +99,6 @@ First, we complete the object panel:
 .. Extra Data and InvMarkers I have no idea how to fill them in. Help?
 
 
-----------
 Node Types
 ----------
 

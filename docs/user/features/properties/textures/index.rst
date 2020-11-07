@@ -1,4 +1,3 @@
-========
 Textures
 ========
 .. _textures:
@@ -7,7 +6,6 @@ Textures
 | A map refer to an image which has specific properties which will influence the renderer.
 | Textures/Maps allow us to alter how the geometry is rendered, such as adding additional detail, affecting light, etc.
 
-~~~~~
 Notes
 ~~~~~
 
@@ -15,7 +13,6 @@ Notes
 * GLSL mode is enabled on import/export but should be enabled manually otherwise to give correct viewport preview.
 * Relative paths for textures are often used, eg. /Texture/../.. which should be adjusted so Blender can render in the viewport.
 
-~~~~~~~~~~~~
 Requirements
 ~~~~~~~~~~~~
 
@@ -26,7 +23,6 @@ Adding textures requires the following:
 #. That Mesh-object requires :ref:`a Material <properties-material>`.
 
 
------------------------
 Creating a Texture Slot
 -----------------------
 
@@ -50,7 +46,6 @@ The UV layer that was :ref:`created previously<geometry-uv>` needs to be selecte
 
 * In the **Texture** tab, under **Mapping > Layer**, click on the empty field, and select ``UVTex``.
 
-~~~~~~~~~~~~
 Texture Maps
 ~~~~~~~~~~~~
 

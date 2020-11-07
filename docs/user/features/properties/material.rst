@@ -1,7 +1,6 @@
 
 .. _properties-material:
 
--------------------------
 Material Based Properties
 -------------------------
 
@@ -11,7 +10,6 @@ Material Based Properties
 * A Mesh which contains multiple -materials will be exported as multiple :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
 * Giving the Material an appropriate name helps distinguish materials and encourages reuse, eg. Metal, Glass, plastic etc.
 
-~~~~~~~
 Example
 ~~~~~~~
 
@@ -25,7 +23,6 @@ Example
 
 .. _properties-material-settings:
 
-==========================
 Blender Materials Settings
 ==========================
 
@@ -33,7 +30,6 @@ The following section describes which Blender Material setting we actively use.
 Depending on the nif version you are exporting to, they will be mapped to different Nif block types or block attributes.
 
 
-~~~~~~~
 Ambient
 ~~~~~~~
 
@@ -44,7 +40,6 @@ This is a global scene value; even if you use several materials they all share t
 * The diffuse colour dynamically calculated, so the value is not actually used.
 * If you have found a nif that actually uses these values please contact the devs and we can enable per material ambient.
 
-~~~~~~~
 Diffuse
 ~~~~~~~
 
@@ -53,7 +48,6 @@ Diffuse
 * Blender defaults is 0.800, which is off-white.
 * See notes above why this value is defaulted on export.
 
-~~~~~~~~
 Emissive
 ~~~~~~~~
 
@@ -68,7 +62,6 @@ This value sets how much light the material emits.
    todo::
    add a preview button
 
-~~~~~
 Gloss
 ~~~~~
 
@@ -79,7 +72,6 @@ This value sets how diffuse the specular highlight across the material.
 
 * This value is used to set how intense the specular highlight should be.
 
-~~~~~~~~
 Specular
 ~~~~~~~~
 
@@ -89,7 +81,6 @@ The Specular value creates the bright highlights that one would see on a glossy 
 #. Set **Intensity** to whatever value you prefer. 
 
 
-~~~~~
 Alpha
 ~~~~~
 The alpha component of the material is how much you can see through the material.
