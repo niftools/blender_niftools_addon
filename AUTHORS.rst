@@ -1,4 +1,3 @@
-------------------
 Current developers
 ------------------
 
@@ -6,7 +5,6 @@ Current developers
 * Hendrix
 
 
------------------
 Former developers
 -----------------
 
@@ -15,7 +13,6 @@ Former developers
 * Ghostwalker71
 * m4444x
 
-------------
 Contributors
 ------------
 

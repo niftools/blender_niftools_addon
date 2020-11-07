@@ -1,10 +1,8 @@
-======================
 Contributions Overview
 ======================
 
 The project is always looking for people to contribute to the project. The following rules are guidelines for the various forms of contributions. 
 
--------------------------
 Code Contribution Process
 -------------------------
 
@@ -23,7 +21,6 @@ There are three conditions any contribution to the codebase should respect:
 Merging of the PR is at the discretion of the @niftools/blender-niftools-addon-merge team.
 These are not exclusive conditions for a contribution to be accepted but generally enforced as close as possible to ensure quality.
 
-~~~~
 Code
 ~~~~
 
@@ -33,7 +30,6 @@ The general rule of thumb is to see what has gone before, but if your way is bet
  * Comments should help break down complex behaviour. If the behaviour is too complex, group the code into logical chunks, or extract to functions to make it easier to understand the code.
  * Docstrings to describe the intention, not implementation. Self-describing code is good and may provide functionality, but useless if it doesn't do what is actually needed.
 
-~~~~~~~
 Testing
 ~~~~~~~
 
@@ -44,7 +40,6 @@ Our template includes sections relating to ensure appropriate testing has been c
 When possible, for every API additions add either unit or integration tests.
 The template requires documenting any tests changes in the Pull Request. Expect questions about any test updates or deletions.
 
-~~~~~~~~~~~~~
 Documentation
 ~~~~~~~~~~~~~
 
@@ -52,7 +47,6 @@ Documentation is used by both users and developers and is published.
  * Any updates that add, remove or modify behaviour require corresponding updates to ensure that user can use the functionality
  * Supporting developer documentation should be updated with relevant changes, design decisions, etc. 
 
----------------------
 Reviewer Contribution
 ---------------------
 
@@ -60,11 +54,12 @@ The review group is to ensure that contributions are openly discussed, people ca
  * If you are interested in joining the review group to give your input on contributions, talk to the @niftools/core team to be added as a reviewer.
  * You will automatically receive notifications for any PR related to this repo.
 
----------------
 Release process
 ---------------
 
 When all issues in a milestone are complete, a release branch is created from the `dev` branch, tagged, log updates and PR done towards `master`.  
  * The project uses the Python versioning scheme - https://www.python.org/dev/peps/pep-0440/#public-version-identifiers
- * A release will always include an accompanying version change, but the reverse is not true: the version can change without a release.
-After being merged, a release will be officially released using the GitHub release system.
+ * A release will always include an accompanying version change, but the
+   reverse is not true: the version can change without a release.
+   After being merged, a release will be officially released using the GitHub
+   release system.

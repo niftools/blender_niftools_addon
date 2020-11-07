@@ -1,4 +1,3 @@
-============================
 Version v0.0.1
 ============================
 
@@ -9,7 +8,6 @@ Version v0.0.1
 Note::
 The following are older version, using the old naming scheme
 
-===================
 Version 2.6.0.adev4
 ===================
 ## Feature
@@ -130,7 +128,6 @@ Value for version not assigned, fails export
 - #217 Document update
 
 
-============================
 Version 2.6.0a3 (3 Jan 2015)
 ============================
 
@@ -171,7 +168,6 @@ Version 2.6.0a3 (3 Jan 2015)
    - Developer documentation, API auto-doc and workflow
    
 
-=============================
 Version 2.6.0a0 (20 Nov 2011)
 =============================
 
@@ -185,7 +181,6 @@ Version 2.6.0a0 (20 Nov 2011)
 
 * Upgraded to nose for testing.
 
-===========================
 Version 2.5.8 (30 Oct 2011)
 ===========================
 
@@ -199,7 +194,6 @@ Version 2.5.8 (30 Oct 2011)
   yet installed (this avoids confusion with Blender 2.5x+ being the default
   on the official download page).
 
-=============================
 Version 2.5.7 (26 March 2011)
 =============================
 
@@ -215,7 +209,6 @@ Version 2.5.7 (26 March 2011)
 * fixed BSBound import and export scale (see issue #3208935, reported and
   fix contributed by neomonkeus)
 
-===============================
 Version 2.5.6 (4 February 2011)
 ===============================
 
@@ -234,7 +227,6 @@ Version 2.5.6 (4 February 2011)
 
 * improved support for Divinity 2 nifs (reported by pertinen)
 
-============================
 Version 2.5.5 (18 July 2010)
 ============================
 
@@ -244,7 +236,6 @@ Version 2.5.5 (18 July 2010)
 
 * fixed NiCollisionData import (reported by LordOfDragons)
 
-===========================
 Version 2.5.4 (28 Mar 2010)
 ===========================
 
@@ -260,7 +251,6 @@ Version 2.5.4 (28 Mar 2010)
   morphs; this fixes for instance bow exports (reported and fix suggested by
   LHammonds, based on Nicoroshi and Windy's bow tutorials)
 
-===========================
 Version 2.5.3 (19 Mar 2010)
 ===========================
 
@@ -285,7 +275,6 @@ Version 2.5.3 (19 Mar 2010)
 * added an option to use NiBSAnimationNode when exporting animated branches for
   Morrowind (suggested and tested by TheDaywalker)
 
-===========================
 Version 2.5.2 (20 Feb 2010)
 ===========================
 
@@ -337,7 +326,6 @@ Version 2.5.2 (20 Feb 2010)
 * fixed bhkCapsuleShape import with identical points (reported by
   ghostwalker71)
 
-===========================
 Version 2.5.1 (10 Jan 2010)
 ===========================
 
@@ -384,7 +372,6 @@ Version 2.5.1 (10 Jan 2010)
 
 * added support for Atlantica and Howling Sword import and export
 
-===========================
 Version 2.5.0 (22 Nov 2009)
 ===========================
 
@@ -431,7 +418,6 @@ Version 2.5.0 (22 Nov 2009)
 
 * fixed texture path bug (reported by elitewolverine)
 
-============================
 Version 2.4.12 (23 Oct 2009)
 ============================
 
@@ -454,7 +440,6 @@ Version 2.4.12 (23 Oct 2009)
 
 * updated readme with detailed install instructions
 
-============================
 Version 2.4.11 (28 Sep 2009)
 ============================
 
@@ -467,7 +452,6 @@ Version 2.4.11 (28 Sep 2009)
 * fix for collision export with very small mass (contributed by
   PacificMorrowind, see issue #2860536)
 
-============================
 Version 2.4.10 (22 Jul 2009)
 ============================
 
@@ -478,7 +462,6 @@ Version 2.4.10 (22 Jul 2009)
 
 * use Blender's texture dir on import (contributed by puf_the_majic_dragon)
 
-===========================
 Version 2.4.9 (20 Jun 2009)
 ===========================
 
@@ -497,13 +480,11 @@ Version 2.4.9 (20 Jun 2009)
   (for instance Morrowind atronach_frost.nif, where Bone01 is parented to
   Weapon, which groups the geometry Tri Weapon)
 
-==========================
 Version 2.4.8 (3 Jun 2009)
 ==========================
 
 * fixed bug in hull script (reported by Drag0ntamer, fixed by Alphax)
 
-==========================
 Version 2.4.7 (4 May 2009)
 ==========================
 
@@ -538,14 +519,12 @@ Version 2.4.7 (4 May 2009)
 * realign bone tail only is now the import default (slightly better visual
   representation of bones in complex armatures such as civ4 leaderheads)
 
-===========================
 Version 2.4.6 (23 Apr 2009)
 ===========================
 
 * import and export of Morrowind NiUVController/NiUVData i.e. moving textures
   (with help from Axel, TheDaywalker, and Alphax)
 
-===========================
 Version 2.4.5 (21 Apr 2009)
 ===========================
 
@@ -572,7 +551,6 @@ Version 2.4.5 (21 Apr 2009)
 
   - glow texture import and export (reported and tested by mushin)
 
-==========================
 Version 2.4.4 (2 Apr 2009)
 ==========================
 
@@ -584,7 +562,6 @@ Version 2.4.4 (2 Apr 2009)
 
 * fixed Fallout 3 import of packed shapes (such as mopps)
 
-==========================
 Version 2.4.3 (7 Mar 2009)
 ==========================
 
@@ -598,7 +575,6 @@ Version 2.4.3 (7 Mar 2009)
 * text keys imported also if they are not defined on the scene root (reported
   by figurework)
 
-===========================
 Version 2.4.2 (15 Feb 2009)
 ===========================
 
@@ -615,7 +591,6 @@ Version 2.4.2 (15 Feb 2009)
 * meshes without vertices are skipped; so they no longer give a mysterious error
   messages (reported by malo)
 
-==========================
 Version 2.4.1 (2 Feb 2009)
 ==========================
 
@@ -649,7 +624,6 @@ Version 2.4.1 (2 Feb 2009)
 
 * minor cleanups in the code
 
-===========================
 Version 2.4.0 (25 Jan 2009)
 ===========================
 
@@ -679,7 +653,6 @@ Version 2.4.0 (25 Jan 2009)
 
 * fixed RuntimeError when importing mesh without faces
 
-============================
 Version 2.3.13 (18 Nov 2008)
 ============================
 
@@ -700,7 +673,6 @@ Version 2.3.13 (18 Nov 2008)
 
 * Fallout 3 import (very experimental)
 
-============================
 Version 2.3.12 (24 Oct 2008)
 ============================
 
@@ -708,21 +680,18 @@ Version 2.3.12 (24 Oct 2008)
 
 * added an option to disable material optimization (prevents "merging")
 
-============================
 Version 2.3.11 (19 Oct 2008)
 ============================
 
 * fix for fresh skeleton import into blends imported with the older script
   versions (again reported by periplaneta)
 
-============================
 Version 2.3.10 (18 Oct 2008)
 ============================
 
 * fix for skin exports from blends imported with older script versions
   (reported by periplaneta)
 
-===========================
 Version 2.3.9 (12 Oct 2008)
 ===========================
 
@@ -742,7 +711,6 @@ Version 2.3.9 (12 Oct 2008)
 
 * epydoc documentation can now be generated and is included with the installation
 
-===========================
 Version 2.3.8 (27 Sep 2008)
 ===========================
 
@@ -757,13 +725,11 @@ Version 2.3.8 (27 Sep 2008)
 * new export dialogue options to determine Oblivion weapon location as
   NiStringExtraData Prn value (issue #1966134)
 
-===========================
 Version 2.3.7 (25 Aug 2008)
 ===========================
 
 * fixed export of cylinder radius on scaled objects
 
-===========================
 Version 2.3.6 (19 Aug 2008)
 ===========================
 
@@ -780,13 +746,11 @@ Version 2.3.6 (19 Aug 2008)
 
 * fixed scale keys import and export
 
-===========================
 Version 2.3.5 (25 Jul 2008)
 ===========================
 
 * quick bug fix if you had multiple materials in your mopp
 
-===========================
 Version 2.3.4 (24 Jul 2008)
 ===========================
 
@@ -810,13 +774,11 @@ Version 2.3.4 (24 Jul 2008)
 * fix for nif imports with more than 16 materials per mesh (the materials
   will not be merged in that case)
 
-============================
 Version 2.3.3 (May 27, 2008)
 ============================
 
 * updated installer to make sure PyFFI 0.10.9 is installed
 
-============================
 Version 2.3.2 (May 27, 2008)
 ============================
 
@@ -831,7 +793,6 @@ Version 2.3.2 (May 27, 2008)
 
 * exporter no longer creates a NiTextKeyExtraData block on skeleton exports
 
-============================
 Version 2.3.1 (Apr 13, 2008)
 ============================
 
@@ -856,7 +817,6 @@ Version 2.3.1 (Apr 13, 2008)
 
 * many other minor enhancements
 
-============================
 Version 2.3.0 (Mar 30, 2008)
 ============================
 
@@ -883,20 +843,17 @@ Version 2.3.0 (Mar 30, 2008)
 
 * install.bat for quick windows installation
 
-=============================
 Version 2.2.11 (Mar 21, 2008)
 =============================
 
 * Export: NiVertexColorProperty and NiZBufferProperty blocks for
   Sid Meier's Railroads
 
-=============================
 Version 2.2.10 (Feb 26, 2008)
 =============================
 
 * Export: fix for a bug in reflection map export
 
-============================
 Version 2.2.9 (Feb 22, 2008)
 ============================
 
@@ -904,7 +861,6 @@ Version 2.2.9 (Feb 22, 2008)
 
 * Import: re-enabled embedded texture support (they are saved to DDS)
 
-============================
 Version 2.2.8 (Feb 11, 2008)
 ============================
 
@@ -913,7 +869,6 @@ Version 2.2.8 (Feb 11, 2008)
 
 * Export: fixed NiGeomMorpherController target
 
-============================
 Version 2.2.7 (Jan 11, 2008)
 ============================
 
@@ -925,19 +880,16 @@ Version 2.2.7 (Jan 11, 2008)
 * Import: fixed misaligned collision boxes (sometimes you still have to switch
   to edit mode and back to align them correctly, seems to be a Blender bug)
 
-===========================
 Version 2.2.6 (Jan 8, 2008)
 ===========================
 
 * Installer: fixed required PyFFI version
 
-============================
 Version 2.2.5 (Dec 18, 2007)
 ============================
 
 * Export: fixed bug in UV map export with smooth objects
 
-============================
 Version 2.2.4 (Dec 10, 2007)
 ============================
 
@@ -945,7 +897,6 @@ Version 2.2.4 (Dec 10, 2007)
 
 * Import: also import collisions of non-grouping NiNodes
 
-===========================
 Version 2.2.3 (Dec 8, 2007)
 ===========================
 
@@ -962,7 +913,6 @@ Version 2.2.3 (Dec 8, 2007)
 * Import: removed broken pixel data decompression code, so recent nif versions
   with embedded textures can import (e.g. the copetech nifs)
 
-===========================
 Version 2.2.2 (Dec 2, 2007)
 ===========================
 
@@ -977,7 +927,6 @@ Version 2.2.2 (Dec 2, 2007)
 
 * Import: various small code improvements
 
-============================
 Version 2.2.1 (Nov 27, 2007)
 ============================
 
@@ -989,7 +938,6 @@ Version 2.2.1 (Nov 27, 2007)
 
 * fixed a bug in the uninstaller (it would not remove the weightsquash script)
 
-============================
 Version 2.2.0 (Nov 19, 2007)
 ============================
 
@@ -1007,7 +955,6 @@ Version 2.2.0 (Nov 19, 2007)
 * the hull script will only hull selected vertices when you run the script
   in edit mode
 
-============================
 Version 2.1.20 (Nov 3, 2007)
 ============================
 
@@ -1019,19 +966,16 @@ Version 2.1.20 (Nov 3, 2007)
 
 * Test: added babelfish and Oblivion full body import/export tests
 
-=============================
 Version 2.1.19 (Oct 26, 2007)
 =============================
 
 * Import/Export: emulate apply mode via Blender's texture blending mode
 
-=============================
 Version 2.1.18 (Oct 25, 2007)
 =============================
 
 * Export: recycle material, alpha, specular, and texturing properties
 
-=============================
 Version 2.1.17 (Oct 23, 2007)
 =============================
 
@@ -1053,7 +997,6 @@ Version 2.1.17 (Oct 23, 2007)
 * Export: check Blender objects on non-uniform scaling before export so you do
   not need to wait too long before the scripts complain about it
 
-=============================
 Version 2.1.16 (Oct 21, 2007)
 =============================
 
@@ -1071,7 +1014,6 @@ Version 2.1.16 (Oct 21, 2007)
 
 * Import: improved Morrowind skeleton import (for example via base_anim files)
 
-=============================
 Version 2.1.15 (Oct 19, 2007)
 =============================
 
@@ -1103,7 +1045,6 @@ Version 2.1.15 (Oct 19, 2007)
 
 * Export: improved flatten skin so it works better in some cases
 
-=============================
 Version 2.1.14 (Oct 14, 2007)
 =============================
 
@@ -1122,7 +1063,6 @@ Version 2.1.14 (Oct 14, 2007)
   and export script now also use exactly the same system to run the
   config gui.
 
-=============================
 Version 2.1.13 (Oct 13, 2007)
 =============================
 
@@ -1137,7 +1077,6 @@ Version 2.1.13 (Oct 13, 2007)
 * Import: automatically remove duplicate vertices after joining Morrowind
   collision geometries
 
-=============================
 Version 2.1.12 (Oct 11, 2007)
 =============================
 
@@ -1148,7 +1087,6 @@ Version 2.1.12 (Oct 11, 2007)
 * Export: automatically set Blender collision type, draw type, and draw mode on
   old style (RootCollisionNode named mesh) Morrowind collision export
 
-============================
 Version 2.1.11 (Oct 3, 2007)
 ============================
 
@@ -1169,7 +1107,6 @@ Version 2.1.11 (Oct 3, 2007)
 
 * Config: check Blender version and raise an exception if Blender is outdated
 
-=============================
 Version 2.1.10 (Sep 27, 2007)
 =============================
 
@@ -1188,7 +1125,6 @@ Version 2.1.10 (Sep 27, 2007)
   option to recalculate the normals on seams between objects on export (for
   better bodies the result is a seamless body on re-export)
 
-============================
 Version 2.1.9 (Sep 21, 2007)
 ============================
 
@@ -1196,7 +1132,6 @@ Version 2.1.9 (Sep 21, 2007)
 
 * updated hull script for quickly creating bounding spheres
 
-============================
 Version 2.1.8 (Sep 17, 2007)
 ============================
 
@@ -1209,7 +1144,6 @@ Version 2.1.8 (Sep 17, 2007)
 
 * new script for quickly creating bounding boxes 
 
-===========================
 Version 2.1.7 (Sep 9, 2007)
 ===========================
 
@@ -1231,7 +1165,6 @@ Version 2.1.7 (Sep 9, 2007)
 * Import/Export: support for Morrowind collision shapes using a polyhedron
   bounds shape
 
-===========================
 Version 2.1.6 (Sep 5, 2007)
 ===========================
 
@@ -1241,7 +1174,6 @@ Version 2.1.6 (Sep 5, 2007)
 
 * Export: make 'Bip01' root node also the root of nif tree
 
-===========================
 Version 2.1.5 (Sep 2, 2007)
 ===========================
 
@@ -1255,7 +1187,6 @@ Version 2.1.5 (Sep 2, 2007)
   property is present; this will ensure that NiAlphaProperty is written back on
   export
 
-============================
 Version 2.1.4 (Aug 29, 2007)
 ============================
 
@@ -1263,7 +1194,6 @@ Version 2.1.4 (Aug 29, 2007)
 
 * Export: NiVertexColorProperty and NiZBufferProperty blocks for CivIV
 
-============================
 Version 2.1.3 (Aug 19, 2007)
 ============================
 
@@ -1274,7 +1204,6 @@ Version 2.1.3 (Aug 19, 2007)
   before export helps if the skin partitioning algorithm complains about losing
   weights
 
-============================
 Version 2.1.2 (Aug 17, 2007)
 ============================
 
@@ -1284,7 +1213,6 @@ Version 2.1.2 (Aug 17, 2007)
 
 * Import/Export: Python profiler support (read Defaults.py for details)
 
-============================
 Version 2.1.1 (Aug 14, 2007)
 ============================
 
@@ -1301,7 +1229,6 @@ Version 2.1.1 (Aug 14, 2007)
 * Import: reverted to 2.0.5 bone import system if the bone alignment is turned
   off, looks much better for Oblivion imports
 
-==========================
 Version 2.1 (Aug 12, 2007)
 ==========================
 
@@ -1324,7 +1251,6 @@ Version 2.1 (Aug 12, 2007)
 
 * Export: fixed a few other minor bugs
 
-===========================
 Version 2.0.7 (Aug 8, 2007)
 ===========================
 
@@ -1346,7 +1272,6 @@ Version 2.0.7 (Aug 8, 2007)
 
 * Export: fixed skin bounds calculation
 
-===========================
 Version 2.0.6 (Aug 6, 2007)
 ===========================
 
@@ -1358,7 +1283,6 @@ Version 2.0.6 (Aug 6, 2007)
 
 * Export: new options to control the export of skin partition
 
-============================
 Version 2.0.5 (Jul 30, 2007)
 ============================
 
@@ -1374,13 +1298,11 @@ Version 2.0.5 (Jul 30, 2007)
 
 * Export: fixed getTransform on Zoo Tycoon 2 creatures
 
-============================
 Version 2.0.4 (Jul 23, 2007)
 ============================
 
 * Import: fixed a few skin import transform errors (Morrowind better bodies, Oblivion armour)
 
-============================
 Version 2.0.3 (Jul 22, 2007)
 ============================
 
@@ -1390,20 +1312,17 @@ Version 2.0.3 (Jul 22, 2007)
 
 * Export: support for 20.3.0.3 and 20.3.0.6 (experimental)
 
-============================
 Version 2.0.2 (Jul 16, 2007)
 ============================
 
 * Import/Export: fix for config problem if nifscripts.cfg did not exist yet
 
-============================
 Version 2.0.1 (Jul 14, 2007)
 ============================
 * Import: fix in transform of some skinned meshes
 
 * Import/Export: simple local install script in .zip for Linux
 
-==========================
 Version 2.0 (Jul 12, 2007)
 ==========================
 
@@ -1419,7 +1338,6 @@ Version 2.0 (Jul 12, 2007)
 
 * Export: flattening skin hierarchy for Oblivion
 
-============================
 Version 1.5.7 (Jul 13, 2006)
 ============================
 
@@ -1429,7 +1347,6 @@ Version 1.5.7 (Jul 13, 2006)
 
 * Export: fixed export of meshes parented to other meshes.
 
-============================
 Version 1.5.6 (Jun 19, 2006)
 ============================
 
@@ -1437,7 +1354,6 @@ Version 1.5.6 (Jun 19, 2006)
 
 * Export: fixed export of zero-weighted vertexes.
 
-============================
 Version 1.5.5 (Jun 15, 2006)
 ============================
 
@@ -1445,13 +1361,11 @@ Version 1.5.5 (Jun 15, 2006)
 
 * Export: fixed export of meshes with no parents. 
 
-============================
 Version 1.5.4 (Jun 12, 2006)
 ============================
 
 * Export: fixed a bug in apply_scale_tree
 
-============================
 Version 1.5.3 (Jun 10, 2006)
 ============================
 
@@ -1466,7 +1380,6 @@ Version 1.5.3 (Jun 10, 2006)
 
 * Import/Export: bone names are restored
 
-============================
 Version 1.5.2 (Apr 19, 2006)
 ============================
 
@@ -1486,7 +1399,6 @@ Version 1.5.2 (Apr 19, 2006)
 
 * Import/Export: correction on 1.5.1 ChangeLog, you'll still need the Bip01 spell, but we're getting closer
 
-============================
 Version 1.5.1 (Apr 13, 2006)
 ============================
 
@@ -1500,7 +1412,6 @@ Version 1.5.1 (Apr 13, 2006)
 
 * Import: initial attempt to use the original NIF bone matrices if auto-align is turned off
 
-==========================
 Version 1.5 (Mar 21, 2006)
 ==========================
 
@@ -1520,7 +1431,6 @@ Version 1.5 (Mar 21, 2006)
 
 * Export: writes a dummy node on final bones to retain bone length when re-imported
 
-==========================
 Version 1.4 (Feb 12, 2006)
 ==========================
 
@@ -1536,7 +1446,6 @@ Version 1.4 (Feb 12, 2006)
 
 * Import: better bone length estimation, automatic alignment
 
-==========================
 Version 1.3 (Jan 21, 2006)
 ==========================
 
@@ -1554,7 +1463,6 @@ Version 1.3 (Jan 21, 2006)
 
 * Export: Embedded textures reestablished.
 
-==========================
 Version 1.2 (Dec 23, 2005)
 ==========================
 
@@ -1570,7 +1478,6 @@ Version 1.2 (Dec 23, 2005)
 
 * Export: packed texture feature has been temporarily dropped; this functionality is being transferred to Niflib
 
-==========================
 Version 1.1 (Oct 31, 2005)
 ==========================
 
@@ -1612,7 +1519,6 @@ Version 1.1 (Oct 31, 2005)
 
 * Import: Solved problem with textures embedded in NIF file; textures will not load but the script will still load the meshes.
 
-==========================
 Version 1.0 (Oct 12, 2005)
 ==========================
 
