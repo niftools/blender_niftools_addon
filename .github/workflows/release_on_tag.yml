@@ -1,0 +1,56 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Release
+
+jobs:
+  build:
+    if: github.event.base_ref == 'refs/heads/master'
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Tag
+        id: get_tag
+        run: echo ::set-output name=tag_name::${GITHUB_REF#refs/tags/}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Build Addon
+        id: build_addon
+        run: |
+          ./install/makezip.sh
+          ZIP_NAME=$(ls ./install/temp | grep zip)
+          echo "##[set-output name=zip_name;]$ZIP_NAME"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1.1.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: "Blender Niftools Addon - ${{ steps.get_tag.outputs.tag_name }}"
+          body:
+            "Please use the following link to download the latest release - [${{ steps.build_addon.outputs.zip_name }}](https://github.com/niftools/blender_niftools_addon/releases/download/${{ steps.get_tag.outputs.tag_name }}/${{ steps.build_addon.outputs.zip_name }})
+
+            [Full Changelog](https://github.com/niftools/blender_niftools_addon/blob/${{ steps.get_tag.outputs.tag_name }}/CHANGELOG.rst)
+            "
+
+      - name: Attach add-on zip
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./install/temp/${{ steps.build_addon.outputs.zip_name }}
+          asset_name: ${{ steps.build_addon.outputs.zip_name }}
+          asset_content_type: application/zip
