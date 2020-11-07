@@ -1,35 +1,38 @@
-============
 Installation
 ============
 
-.. raw:: html
-  
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/2RvLZvX_rsI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-
 .. _user-getblender:
 
----------------
 Install Blender
 ---------------
 
-Download the recommended version of `Blender <http://www.blender.org/download/get-blender/>`_
-for your platform (32-bit or 64-bit; if unsure, pick the 32-bit version)
-and follow the instructions.
-
-* Ensure that the version of Blender being installed is supported by the Blender Niftools Addon.
-
-^^^^^^
 Fedora
 ^^^^^^
 
-For Fedora 16 and up, Blender 2.7x is available via yum::
+Blender 2.8.x is available via yum or dnf (depending on your Fedora
+release)
+::bash
+sudo yum install blender -y  (or)
+sudo dnf install bledner -y
 
-  sudo yum install blender
+Debian and its Derivatives (Ubuntu, etc.)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Blender is available from apt
+::bash
+sudo apt-get install blender
 
-------------------------------
+Windows and MacOS
+^^^^^^^^^^^^^^^^^
+
+Builds for Windows and MacOS (and non-Fedora Linux distributions) at
+`https://blender.org/downloads`. Be sure to get 2.83 LTS or newer. NifTools
+is not compatible with older versions.
+
 Install and Register the Addon
 ------------------------------
+
+.. TODO: Gif!
 
 #. Download the `Blender Niftools Addon .zip release
    <https://github.com/niftools/blender_niftools_addon/releases>`_.
