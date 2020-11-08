@@ -31,14 +31,16 @@ refactor is reserved for the 1.x.x series.
 Generate Documentation
 ----------------------
 
-Run the following in a buildenv (Windows) or terminal (Fedora)::
+Run the following in a buildenv (Windows) or terminal (Fedora)
+
+.. code-block:: shell
 
   make html
 
 from within the ``blender_niftools_addon/docs`` folder.
-The generated API documentation
-will correspond to the currently installed addon
-(*not* your checked out version!)
-so usually you would install it first.
+The generated API documentation will correspond to the currently installed
+addon (*not* your checked out version!) so usually you would install it
+first.
 
-To view the docs, open ``docs/_build/html/index.html``.
+To view the docs, open ``docs/_build/html/index.html`` in a web browser of your
+choice.
