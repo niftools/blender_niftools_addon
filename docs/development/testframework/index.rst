@@ -102,12 +102,11 @@ test only, specify the file as an argument; for instance
 
     blender-nosetests.[bat|sh] test/geometry/trishape/test_geometry.py
 
-Actually, all command line arguments of ``nosetests`` apply. For example, to
-abort on first failure
+Actually, all command line arguments of ``nosetests`` apply. For example, to abort on first failure
 
 .. code-block:: shell
 
-    blender-nosetests.[bat|sh] -x
+    blender-nosetests.bat -x
 
 For more details, run
 
