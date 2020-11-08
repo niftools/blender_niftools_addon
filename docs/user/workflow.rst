@@ -27,7 +27,7 @@ You now can import the nif directly into Blender! These settings are explained a
 Export
 ------
 
-The following section deals the various model components, required to export 3D objects to the ``.nif`` format.
+The following section covers various model components, each required to export 3D objects to the ``.nif`` format.
 
 +-----------------------------------+------------------------------------------------------------------------------+
 |              Section              |                                 Description                                  |
