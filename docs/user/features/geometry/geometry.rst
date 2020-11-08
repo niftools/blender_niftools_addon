@@ -40,7 +40,7 @@ Double-Sided Mesh
 
 Sometimes you want to allow the mesh to ignore the normal and render both sides, eg a cloak.
 
-- In the **Properties** Editor, in the **Material Properties**
+- In the **Properties** Editor, in the **Material Properties** Tab
 - Enable/Disable **Backface Culling**, see notes for more detail.
 
 Double Sided Mesh 

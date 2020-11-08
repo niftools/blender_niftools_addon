@@ -62,43 +62,38 @@ m41 m42 m43 m44   X    Y    Z           30 31 32 33                   W
 Matrix Multiplication
 ~~~~~~~~~~~~~~~~~~~~~
 
-For a given matrix ``[A B C]`` where ``A * B * C -> D``, the equivalent 
-``D'`` in the alternate handed system is ``C' * B' * A'``.
+For a given matrix ``[A B C]`` where ``A * B * C -> D``, the equivalent ``D'`` in the alternate handed system is ``C'
+* B' * A'``.
 
 -------
 Objects
 -------
 
-* Vertex groups are accessible via  
-  :attr:`bpy.types.Object.vertex_groups`, instead of via :class:`bpy.types.Mesh`
+* Vertex groups are accessible via :attr:`bpy.types.Object.vertex_groups`, instead of via :class:`bpy.types.Mesh`
 
 ---------------------
 Meshes: Index Mapping
 ---------------------
 
 .. warning::
- :attr:`bpy.types.MeshFace.vertices` does not return a list of the type
- :class:`bpy.types.MeshVertex`. Rather :class:`int`\ s are returned which
- are index values mapping :attr:`bpy.types.MeshFace.vertices` to
+ :attr:`bpy.types.MeshFace.vertices` does not return a list of the type :class:`bpy.types.MeshVertex`. Rather
+ :class:`int`\ s are returned which are index values mapping :attr:`bpy.types.MeshFace.vertices` to
  :attr:`bpy.types.Mesh.vertices`
 
-If you need to map actual vertex coordinates of a :class:`bpy.types.MeshFace`,
-use:
+If you need to map actual vertex coordinates of a :class:`bpy.types.MeshFace`, use:
 
 .. code-block:: python
 
  (b_mesh.vertices[b_vertex_index].co for b_vertex_index in b_face.vertices)
 
-This index mapping is also used by attributes such a vertex color, vertex
-weight, vertex UV
+This index mapping is also used by attributes such a vertex color, vertex weight, vertex UV
 
 ------
 Meshes
 ------
 
-* Beware of the **eeekadoodle dance**: if face indices end with a zero
-  index, then you have to move that zero index to the front before feeding the
-  faces to Blender. For example (assuming every face is a triangle):
+* Beware of the **eeekadoodle dance**: if face indices end with a zero index, then you have to move that zero index to
+  the front before feeding the faces to Blender. For example (assuming every face is a triangle):
 
 .. code-block:: python
 
@@ -106,10 +101,9 @@ Meshes
        for face in faces]
 
 
-* It appears that we have to use :meth:`bpy.types.bpy_prop_collection.add`
-  (undocumented) and :meth:`bpy.types.bpy_prop_collection.foreach_set` on
-  :attr:`bpy.types.Mesh.vertices` and :attr:`bpy.types.Mesh.faces` to import
-  vertices and faces.
+* It appears that we have to use :meth:`bpy.types.bpy_prop_collection.add` (undocumented) and
+  :meth:`bpy.types.bpy_prop_collection.foreach_set` on :attr:`bpy.types.Mesh.vertices` and
+  :attr:`bpy.types.Mesh.faces` to import vertices and faces.
 
 .. code-block:: python
 
