@@ -4,14 +4,20 @@ Addon Development Setup
 
 .. _development-setup:
 
-The following documentation is targeted towards anyone who is interested in building the latest version of Blender Niftools Addon.
-This will guide those new through the process of setting up the requirements to build the addon.
+The following documentation is targeted towards anyone who is interested in
+building the latest version of Blender Niftools Addon. 
 
-For those interested in developing the addon; fixing bugs, adding new features, tests or improving documentation.
+This will guide those new through the process of setting up the requirements
+to build the addon.
+
+For those interested in developing the addon; fixing bugs, adding new
+features, tests or improving documentation.
 
 .. :note
-   If you haven't already, you should read the :ref: `design section <development-design>` , especially the workflow to understand how we use git to work collaboratively.
-
+   If you haven't already, you should read the :ref: `design section
+   <development-design>` , especially the workflow to understand how we use
+   git to work collaboratively.
+   
 Contents:
 
 .. toctree::

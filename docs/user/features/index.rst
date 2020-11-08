@@ -12,10 +12,12 @@ Features
 
 All the features of our Blender Niftools addon are described here.
 
-If in need of a guide to make sure your model is complete please visit the :ref:`workflow page <user-workflow>`.
+If in need of a guide to make sure your model is complete please visit the
+:ref:`workflow page <user-workflow>`.
 
 .. warning::
-   Please note that some are still being ported from Blender 2.49b and are marked appropriately.
+   Please note that some are still being ported from Blender 2.49b and are
+   marked appropriately.
 
 .. toctree::
    :maxdepth: 1

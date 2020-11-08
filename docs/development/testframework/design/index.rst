@@ -5,8 +5,8 @@ TestFramework Design Documentation
 .. _developer-testframework-design:
 
 This section provides a high-level overview of the design of the Blender Niftools Addon.
-It is geared towards anyone interested in delving into developing the Blender Nif Plug-in or knowing more about the development process.
-
+It is geared towards anyone interested in delving into developing the Blender
+Nif Plug-in or knowing more about the development process.
 
 Contents:
 
