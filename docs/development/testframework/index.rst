@@ -4,9 +4,8 @@ Test Framework
 
 .. _development-testframework:
 
-The test framework is a series of tools to automate the verification process
-of the Blender Niftools Addon that aims to unify the various levels of testing
-that should be performed to release the plugin:
+The test framework is a series of tools to automate the verification process of the Blender Niftools Addon that aims
+to unify the various levels of testing that should be performed to release the plugin:
 
 * Unit
 * Functional
@@ -21,11 +20,10 @@ For an overview of each level see the :ref:`design section
 Prerequisites
 -------------
 
-The following environmental variables **must** set.
+The following environmental variables **must** be set.
 
-We decided not to auto-detect file paths as devs may have many versions
-installed. This also allows switching between versions of Blender to run
-tests against.
+We decided not to auto-detect file paths as devs may have many versions installed. This also allows switching between
+versions of Blender to run tests against.
 
 ~~~~~~~~~~~~
 BLENDER_HOME
@@ -97,8 +95,7 @@ or from a terminal (Linux):
 
 from within the ``blender_niftools_addon/testframework/`` folder.
 
-Each test resides as a python file in the
-``blender_niftools_addon/testframework/test/`` folder. To run a particular
+Each test resides as a python file in the ``blender_niftools_addon/testframework/test/`` folder. To run a particular
 test only, specify the file as an argument; for instance
 
 .. code-block:: shell
@@ -118,12 +115,10 @@ For more details, run
 
     blender-nosetests.[bat|sh] --help
 
-* The tests will run on the currently installed addon (*not* your checked out
-  version!) so usually ensure you re-install after making edits to add-on
-  files.
-* Beware that the output can be rather verbose, so you may have to scroll quite
-  a bit to see the relevant backtrace.
+* The tests will run on the currently installed addon (*not* your checked out version!) so usually ensure you
+  re-install after making edits to add-on files.
 
+* Beware that the output can be rather verbose, so you may have to scroll quite a bit to see the relevant backtrace.
 Also, see the
 `nose manual <http://readthedocs.org/docs/nose/en/latest/usage.html#options>`_.
 

@@ -3,20 +3,16 @@ Textures
 .. _textures:
 
 A texture refers to a generic image.
-A map refer to an image which has specific properties which will influence
-the renderer.
-Textures/Maps allow us to alter how the geometry is rendered, such as adding
-additional detail, affecting light, etc.
+A map refer to an image which has specific properties which will influence the renderer.
+Textures/Maps allow us to alter how the geometry is rendered, such as adding additional detail, affecting light, etc.
 
 Notes
 ~~~~~
 
-* The nif format only supports UV mapped textures, so only those will be
-  exported.
-* GLSL mode is enabled on import/export but should be enabled manually
-  otherwise to give correct viewport preview.
-* Relative paths for textures are often used, eg. /Texture/../.. which should
-  be adjusted so Blender can render in the viewport.
+* The nif format only supports UV mapped textures, so only those will be exported.
+* GLSL mode is enabled on import/export but should be enabled manually otherwise to give correct viewport preview.
+* Relative paths for textures are often used, eg. ``/Texture/../..`` which should be adjusted so Blender can render in
+  the viewport.
 
 Requirements
 ~~~~~~~~~~~~
@@ -37,8 +33,7 @@ Create a Texture slot to hold a texture.
 
 A texture slot has a default texture, we set type of image we will use:
 
-* Under **Type**, select **Image or Movie**or **Enviromental**, see
-  :ref:`texture maps<texture_maps>`
+* Under **Type**, select **Image or Movie**or **Enviromental**, see :ref:`texture maps<texture_maps>`
 
 We load an image to use as our texture.
 
@@ -48,11 +43,10 @@ Set the texture to use the UV coordinates.
 
 * Under **Mapping** > **Coordinates**, select **UV**.
 
-The UV layer that was :ref:`created previously<geometry-uv>` needs to be
-selected for this texture.
+The UV layer that was :ref:`created previously<geometry-uv>` needs to be selected for this texture.
 
 * In the **Texture** tab, under **Mapping** > **Layer**, click on the empty
-* field, and select ``UVTex``.
+  field, and select ``UVTex``.
 
 Texture Maps
 ~~~~~~~~~~~~

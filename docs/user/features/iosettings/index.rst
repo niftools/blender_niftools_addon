@@ -11,21 +11,19 @@ Common Settings
 
 There are some common settings shared between the import and export operators.
 
+.. warning::
+   Only a subset of these settings is currently supported even though they have been documented.
+   This is due to the fact that they are ported directly from the old addon and as such, will functionally remain the
+   same.
+
 Log Level
 ---------
 .. _user-features-iosettings-loglevel:
 
-* The level at which a log entry is generated to the console window. This is
-  used mainly used for debugging and error checking.
+* The level at which a log entry is generated to the console window. This is used mainly used for debugging and error
+  checking.
 * As a user you will only need to alter this setting if you experience an issue
-  during the import it and a developer asks for more detailed logs that are
-  produced with the default logging level.
-
-.. warning::
-   Only a subset of these settings is currently supported even though they
-   have been documented.
-   This is due to the fact that they are ported directly from the old addon
-   and as such, will functionally remain the same.
+  during the import it and a developer asks for more detailed logs that are produced with the default logging level.
 
 .. toctree::
    :maxdepth: 2

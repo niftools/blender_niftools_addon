@@ -200,17 +200,14 @@ Generally, we use :class:`str` everywhere, and convert :class:`bytes` to
 Error Reporting
 ---------------
 
-With the older Blender 2.4x series, scripts could report fatal errors simply
-by raising an exception. The current Blender series has the problem that
-*exceptions are not passed down to the caller of the operator*. Apparently,
-this is because of the way the user interface is implemented. 
+With the older Blender 2.4x series, scripts could report fatal errors simply by raising an exception. The current
+Blender series has the problem that *exceptions are not passed down to the caller of the operator*. Apparently,
+this is because of the way the user interface is implemented.
 
-From a user perspective, this makes no difference, however, for testing code,
-this means that **any raised exceptions cannot be caught by the testing
-framework**!
+From a user perspective, this makes no difference, however, for testing code, this means that **any raised exceptions
+cannot be caught by the testing framework**!
 
-The way Blender solves this problem goes via the
-:meth:`bpy.types.Operator.report` method. So, in your
+The way Blender solves this problem goes via the :meth:`bpy.types.Operator.report` method. So, in your
 :meth:`bpy.types.Operator.execute` methods, write:
 
 .. code-block:: python
@@ -226,33 +223,26 @@ instead of:
   if something == is_wrong:
     raise RuntimeError('Something is wrong')
 
-When the operator finishes, Blender will check for any error reports, and if
-it finds any, it will raise an exception, which will be passed back to the
-caller. This means that we can no longer raise *specific* exceptions, but in
-practice, this is not really a problem.
+When the operator finishes, Blender will check for any error reports, and if it finds any, it will raise an
+exception, which will be passed back to the caller. This means that we can no longer raise *specific* exceptions, but
+in practice, this is not really a problem.
 
-Following this convention makes the operator more user-friendly for other
-scripts, such as testing frameworks, who might want to catch the exception
-and/or inspect error reports.
+Following this convention makes the operator more user-friendly for other scripts, such as testing frameworks, who
+might want to catch the exception and/or inspect error reports.
 
-The :class:`io_scene_niftools.import_export_nif.NifImportExport` class has
-a dedicated
-:meth:`~io_scene_niftools.import_export_nif.NifImportExport.error` method
-for precisely this purpose.
+The :class:`io_scene_niftools.import_export_nif.NifImportExport` class has a dedicated
+:meth:`~io_scene_niftools.import_export_nif.NifImportExport.error` method for precisely this purpose.
 
-The list of reports of the last operator execution can be inspected using
-:func:`bpy.ops.ui.reports_to_textblock`.
+The list of reports of the last operator execution can be inspected using :func:`bpy.ops.ui.reports_to_textblock`.
 
 ---------------------
 Blender API Mysteries
 ---------------------
 
-* What is the difference between ``'CAPSULE'`` and ``'CYLINDER'``
-  :attr:`bpy.types.Object.display_bounds_type` (and similar for 
-  :attr:`bpy.types.GameObjectSettings.collision_bounds_type`)?
+* What is the difference between ``'CAPSULE'`` and ``'CYLINDER'`` :attr:`bpy.types.Object.display_bounds_type` (and 
+  similar for :attr:`bpy.types.GameObjectSettings.collision_bounds_type`)?
   
-  - We are using ``'CYLINDER'`` at the moment because ``'CAPSULE'`` is lacking
-    visualization.
+  - We are using ``'CYLINDER'`` at the moment because ``'CAPSULE'`` is lacking visualization.
 
 * How do you get the set of all vertices in a :class:`bpy.types.VertexGroup`?
 
@@ -260,8 +250,7 @@ Blender API Mysteries
 Solved
 ------
 
-* What is the difference between :attr:`bpy.types.MeshFace.vertices`
-  and :attr:`bpy.types.MeshFace.vertices_raw`?
+* What is the difference between :attr:`bpy.types.MeshFace.vertices` and :attr:`bpy.types.MeshFace.vertices_raw`?
  
   - vertices is a collection, accessible in the form ``vertices.co[0] -> 7``
   - vertices_raw returns a list of ``values -> (7,2,0)``

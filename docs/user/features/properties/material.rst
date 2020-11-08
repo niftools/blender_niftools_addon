@@ -4,22 +4,20 @@
 Material Based Properties
 -------------------------
 
-* The following section goes through those Blender material settings and how
-  they relate to corresponding nif blocks or attributes.
+* The following section goes through those Blender material settings and how they relate to corresponding nif blocks or
+  attributes.
 * Unless otherwise stated your mesh needs to have a material.
-* The nif format only supports a single material per
-  :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
+* The nif format only supports a single material per :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
 * A Mesh which contains multiple -materials will be exported as multiple
   :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
-* Giving the Material an appropriate name helps distinguish materials and
-  encourages reuse, eg. Metal, Glass, plastic etc.
+* Giving the Material an appropriate name helps distinguish materials and encourages reuse, eg. Metal, Glass, plastic
+  etc.
 
 Example
 ~~~~~~~
 
 #. :ref:`Create a mesh-object <geometry-mesh>` as explained before.
-#. In the **Properties** panel, in the **Material** tab click **New** to create
-   a new material.
+#. In the **Properties** panel, in the **Material** tab click **New** to create a new material.
 #. Assign the Material an appropriate name.
 
 * :ref:`See material settings <properties-material-settings>` to see what material settings we use.
@@ -30,14 +28,13 @@ Blender Materials Settings
 ==========================
 
 The following section describes which Blender Material setting we actively use.
-Depending on the nif version you are exporting to, they will be mapped to
-different Nif block types or block attributes.
+Depending on the nif version you are exporting to, they will be mapped to different Nif block types or block
+attributes.
 
 Ambient
 ~~~~~~~
 
-This is a global scene value; even if you use several materials they all
-share the same value.
+This is a global scene value; even if you use several materials they all share the same value.
 
 #. In the **World Tab** -> **Ambient Color**.
 
@@ -80,8 +77,7 @@ This value sets how diffuse the specular highlight across the material.
 Specular
 ~~~~~~~~
 
-The Specular value creates the bright highlights that one would see on a
-glossy surface.
+The Specular value creates the bright highlights that one would see on a glossy surface.
 
 #. In the **Specular** panel, use the colour widget to set the highlight colour.
 #. Set **Intensity** to whatever value you prefer. 
@@ -89,8 +85,7 @@ glossy surface.
 
 Alpha
 ~~~~~
-The alpha component of the material is how much you can see through the
-material.
+The alpha component of the material is how much you can see through the material.
 
 #. In the **Transparency** panel, **Enable Transparency**
 #. Ensure **Z Transparency** is selected. (It should be by default).

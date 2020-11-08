@@ -3,15 +3,14 @@ Building Blender from Source
 =============================
 .. _development-setup-buildblender:
 
-As a developer, there are a number of advantages that come from building from
-source:
+As a developer, there are a number of advantages that come from building from source:
 * Avoid having to wait for bug fixes from full releases
 * Building the latest version to test compatibility early
 * Testing new features and how we can integrate with them
 * Blender can be built as a python module, which can improve IDE integration.
 
-The Blender code repo is also managed by git, allowing ease of integration into our workflow.
-There are some additional prerequisite utilities that need to be installed first.
+The Blender code repo is also managed by git, allowing ease of integration into our workflow. There are some
+additional prerequisite utilities that need to be installed first.
 
 See - https://wiki.blender.org/wiki/Building_Blender
 
@@ -23,9 +22,8 @@ The repo comes with scripts which will package up the addon for use
 Building the Blender Niftools Addon
 ===================================
 
-The Blender Niftools Addon is a python project which can be manually put into
-the Blender add-ons directory. The repo provides a set of scripts which
-allows creating of a zip file which can be loaded into Blender Addon Manager.
+The Blender Niftools Addon is a python project which can be manually put into the Blender add-ons directory. The repo
+provides a set of scripts which allows creating of a zip file which can be loaded into Blender Addon Manager.
 
 .. note::
     Ensure that you have installed the prerequisite dependencies using install_deps scripts
@@ -34,8 +32,7 @@ allows creating of a zip file which can be loaded into Blender Addon Manager.
 Build Zip
 ---------
 
-To build the addon from a git checkout, run the following in the Command
-Prompt (Windows:
+To build the addon from a git checkout, run the following in the Command Prompt (Windows):
 
 .. code-block:: shell
 
@@ -53,8 +50,7 @@ or from a Bash terminal (Linux):
 Install
 -------
 
-To install the addon from a git checkout, run the following in the Command
-Prompt (Windows):
+To install the addon from a git checkout, run the following in the Command Prompt (Windows):
 
 .. code-block:: shell
 
