@@ -4,129 +4,235 @@ Version v0.0.1
 - Rename plugin to use new naming scheme
 - Add in updated templates
 
-
-Note::
-The following are older version, using the old naming scheme
+.. note::
+The following are older versions, using the old naming scheme
 
 Version 2.6.0.adev4
 ===================
-## Feature
 
-#361 Feature: import pose
-#353 Automatically select suitable axis orientation
-#11 Billboard Support
-#15 Vertex Alpha Prop Support
-#25 NiAlphaProperty detection for Textures
-#288 Material Export: Alpha
-#346 Port/collision game radius
-#342 Update documentation for 2.8 + mat sys improvements
-#337 Refactor/blender 2.8 ui registration
-#335 Merge/version string
-#329 Port to 2.8+
-#324 Addon enabled in Blender 2.82.7, Option to Import and Export .NIF Files not appearing under File
-#310 Fix Morph Anims (NiGeomMorpherController)
-#311 Anim stuff
-#282 Documentation Improvement
-#287 Animation Import Support
-#289 New bone system (no extra matrices) & animation support
-#299 Format UI & Operator Modules
-#257 - allow exporting of object while ignoring non-uv textures
-- Unable to export an object with non-uv textures without either deleting the textures or first creating a UV-map for them.
-- Updated NifError to NifLog.warn, because nothing here should prevent you from exporting your object so long as the user is aware of what is happening.
-- The messages themselves were updated to be more helpful.
+Features
+--------
 
-## Bug Fix
++--------+--------------------------------------------------------------------+
+| Ticket |                            Description                             |
++========+====================================================================+
+| 361    | Feature: Import Pose                                               |
++--------+--------------------------------------------------------------------+
+| 353    | Automatically select suitable axis orientation                     |
++--------+--------------------------------------------------------------------+
+| 11     | Billboard support                                                  |
++--------+--------------------------------------------------------------------+
+| 15     | Vertex Alpha prop support                                          |
++--------+--------------------------------------------------------------------+
+| 25     | `` NiAlphaProperty`` detection for textures                        |
++--------+--------------------------------------------------------------------+
+| 288    | material export: alpha                                             |
++--------+--------------------------------------------------------------------+
+| 346    | Port/collision game radius                                         |
++--------+--------------------------------------------------------------------+
+| 342    | Update documentation for 2.8 + mat sys improvements                |
++--------+--------------------------------------------------------------------+
+| 337    | Refactor/blender 2.8 ui registration                               |
++--------+--------------------------------------------------------------------+
+| 335    | Merge/version string                                               |
++--------+--------------------------------------------------------------------+
+| 329    | Port to 2.8+                                                       |
++--------+--------------------------------------------------------------------+
+| 324    | Addon enabled in Blender 2.82.7, Option to Import and Export .NIF  |
+|        | Files not appearing under ``File``                                 |
++--------+--------------------------------------------------------------------+
+| 310    | Fix Morph Anims (NiGeomMorpherController)                          |
++--------+--------------------------------------------------------------------+
+| 311    | Anim stuff                                                         |
++--------+--------------------------------------------------------------------+
+| 282    | Documentation Improvement                                          |
++--------+--------------------------------------------------------------------+
+| 287    | Animation Import Support                                           |
++--------+--------------------------------------------------------------------+
+| 289    | New bone system (no extra matrices) & animation support            |
++--------+--------------------------------------------------------------------+
+| 299    | Format UI & Operator Modules                                       |
++--------+--------------------------------------------------------------------+
+| 257    | - allow exporting of object while ignoring non-uv textures         |
+|        | - Unable to export an object with non-uv textures without either   |
+|        | deleting the textures or first creating a UV-map for them.         |
+|        | - Updated NifError to NifLog.warn: nothing here should prevent you |
+|        | from exporting objects so long as the user is aware of what is     |
+|        | happening.                                                         |
+|        | - The messages themselves were updated to be more helpful.         |
++--------+--------------------------------------------------------------------+
 
-#378 Bug fixes to zip generation, BSEffecShaderProperty export, and meshes parented to armature. Also game set on import.
-#377 Update transform.py
-#376 Update __init__.py
-#369 Fix to bhkBoxShape and bhkSphereShape translation export and documentation update
-#368 Fix to bhkBoxShape and bhkSphereShape translation export
-#365 Bug/export disable clamp mode
-#276 Error when exporting material with texture without UV
-#350 Cannot import Skeleton to Fallout New Vegas
-#363 Fix/bss shader node setup
-#357 Messed up skeleton weights & some vertices not loaded
-#362 Fix/bss shader reference
-#359 Fixes to BSLightingShaderProperty
-#354 ReferenceError: StructRNA of type Image has been removed
-#349 Collision fixes and stuff
-#172 Mesh Export : Unweighted vertices
-#328 ValueError: deepcopy: classes BSFadeNode and NiTriShape unrelated
-#331 Cannot Export Skyrim Skeleton
-#243 Assertion Error : f_numverts == 3 or 4
-#255 Ngon Fixes
-#341 Merge #340 to 2.8 Bug BSEffectShaderProperty shader controller
-#347 Merge/bs effect shader missing texture fix
-#344 Incorrect import of greyscale texture for BSEffectShaderProperty
-#343 Error when exporting BSEffectShaderProperty without textures
-#339 Error importing BSEffectShader without Controller.
-#336 Merge/bug fix collision bhk mopp list processing
-#333 Fix collision import processing for bhkMoppBVTreeShape & bhkListShape
-#330 Export Zoo Tycoon 2 Error
-#244 UI : Property not found: ShaderProps.slsf_1_greyscale_to_palettecolor
-#321 Fallout 3/new vegas materials import
-#320 can't import / export Skyrim nifs
-#325 Refactor Collision Export
-#242 Export : UV offset not found
-#260 Shaders : texprop.shader_textures[1] index error
-#312 Fix collision / havok materials & pyffi dev compatibility
-#308 Refactor/animation Bug Error
-#283 Fixed CONTRIBUTING.rst grammar mistake
-#264 - import and export Morrowind collision nodes properly
--  name of the node be RootCollisionNode to properly export it, but the importer called it instead just "collision"
+ Bug Fixes
+ ---------
 
-#256 - check that selected objects can be exported
-- UnboundLocalError: local variable 'root_object' referenced before assignment
++--------+---------------------------------------------------------------------+
+| Ticket |                             Description                             |
++========+=====================================================================+
+| 378    | Bug fixes to zip generation, BSEffecShaderProperty export, and      |
+|        | meshes parented to armature. Also game set on import.               |
++--------+---------------------------------------------------------------------+
+| 377    | Update transform.py                                                 |
++--------+---------------------------------------------------------------------+
+| 376    | Update __init__.py                                                  |
++--------+---------------------------------------------------------------------+
+| 369    | Fix to bhkBoxShape and bhkSphereShape translation export and        |
+|        | documentation update                                                |
++--------+---------------------------------------------------------------------+
+| 368    | Fix to bhkBoxShape and bhkSphereShape translation                   |
++--------+---------------------------------------------------------------------+
+| 365    | Bug/export disable clamp mode                                       |
++--------+---------------------------------------------------------------------+
+| 276    | Error when exporting material with texture without UV               |
++--------+---------------------------------------------------------------------+
+| 350    | Cannot import Skeleton to Fallout New Vegas                         |
++--------+---------------------------------------------------------------------+
+| 363    | Fix/bss shader node setup                                           |
++--------+---------------------------------------------------------------------+
+| 357    | Messed up skeleton weights & some vertices not loaded               |
++--------+---------------------------------------------------------------------+
+| 362    | Fix/bss shader reference                                            |
++--------+---------------------------------------------------------------------+
+| 359    | Fixes to BSLightingShaderProperty                                   |
++--------+---------------------------------------------------------------------+
+| 354    | ReferenceError: StructRNA of type Image has been removed            |
++--------+---------------------------------------------------------------------+
+| 349    | Collision fixes and stuff                                           |
++--------+---------------------------------------------------------------------+
+| 172    | Mesh Export : Unweighted vertices                                   |
++--------+---------------------------------------------------------------------+
+| 328    | ValueError: deepcopy: classes BSFadeNode and NiTriShape unrelated   |
++--------+---------------------------------------------------------------------+
+| 331    | Cannot Export Skyrim Skeleton                                       |
++--------+---------------------------------------------------------------------+
+| 243    | Assertion Error : f_numverts == 3 or 4                              |
++--------+---------------------------------------------------------------------+
+| 255    | Ngon Fixes                                                          |
++--------+---------------------------------------------------------------------+
+| 341    | Merge #340 to 2.8 Bug BSEffectShaderProperty shader controller      |
++--------+---------------------------------------------------------------------+
+| 347    | Merge/bs effect shader missing texture fix                          |
++--------+---------------------------------------------------------------------+
+| 344    | Incorrect import of greyscale texture for BSEffectShaderProperty    |
++--------+---------------------------------------------------------------------+
+| 343    | Error when exporting BSEffectShaderProperty without textures        |
++--------+---------------------------------------------------------------------+
+| 339    | Error importing BSEffectShader without Controller.                  |
++--------+---------------------------------------------------------------------+
+| 336    | Merge/bug fix collision bhk mopp list processing                    |
++--------+---------------------------------------------------------------------+
+| 333    | Fix collision import processing for bhkMoppBVTreeShape &            |
+|        | bhkListShape                                                        |
++--------+---------------------------------------------------------------------+
+| 330    | Export Zoo Tycoon 2 Error                                           |
++--------+---------------------------------------------------------------------+
+| 244    | UI : Property not found:                                            |
+|        | ShaderProps.slsf_1_greyscale_to_palettecolor                        |
++--------+---------------------------------------------------------------------+
+| 321    | Fallout 3/new vegas materials import                                |
++--------+---------------------------------------------------------------------+
+| 320    | can't import / export Skyrim nifs                                   |
++--------+---------------------------------------------------------------------+
+| 325    | Refactor Collision Export                                           |
++--------+---------------------------------------------------------------------+
+| 242    | Export : UV offset not found                                        |
++--------+---------------------------------------------------------------------+
+| 260    | Shaders : texprop.shader_textures[1] index error                    |
++--------+---------------------------------------------------------------------+
+| 312    | Fix collision / havok materials & pyffi dev compatibility           |
++--------+---------------------------------------------------------------------+
+| 308    | Refactor/animation Bug Error                                        |
++--------+---------------------------------------------------------------------+
+| 283    | Fixed CONTRIBUTING.rst grammar mistake                              |
++--------+---------------------------------------------------------------------+
+| 264    | - import and export Morrowind collision nodes properly              |
+|        | - name of the node be RootCollisionNode to properly export it,      |
+|        | but the importer called it instead just "collision"                 |
++--------+---------------------------------------------------------------------+
+| 256    | - check that selected objects can be exported                       |
+|        | - UnboundLocalError: local variable 'root_object' referenced before |
+|        | assignment                                                          |
++--------+---------------------------------------------------------------------+
+| 252    | armature and version export                                         |
+|        | Refactored code fails on armature export                            |
+|        | Value for version not assigned, fails export                        |
+|        | - AttributeError: 'NifExport' object has no attribute 'version'     |
++--------+---------------------------------------------------------------------+
+| 242    | Export : UV offset not found                                        |
++--------+---------------------------------------------------------------------+
+| 251    | - TypeError: load_nif() missing 1 required positional               |
+|        | argument: 'file_path'                                               |
+|        | - AttributeError: 'NifExport' object has no attribute               |
+|        | 'set_object_matrix'                                                 |
++--------+---------------------------------------------------------------------+
+| 275    | Fix Addon Documentation and Bug Tracker links                       |
++--------+---------------------------------------------------------------------+
+| 274    | Links in the addon direct to the wrong urls                         |
++--------+---------------------------------------------------------------------+
+| 265    | Submodules not getting included by makezip.bat                      |
++--------+---------------------------------------------------------------------+
 
-#252 armature and version export
-Refactored code fails on armature export
-Value for version not assigned, fails export
-- AttributeError: 'NifExport' object has no attribute 'version'
+Internal
+--------
 
-#242 Export : UV offset not found
-#251
-- TypeError: load_nif() missing 1 required positional argument: 'file_path'
-- AttributeError: 'NifExport' object has no attribute 'set_object_matrix'
-
-#275 - Fix Addon Documentation and Bug Tracker links
- - #274 Links in the addon direct to the wrong urls
-
-#265 Submodules not getting included by makezip.bat
-
-## Internal
-
-#355 Fixes to the installation bat files
-#152 Material code improvements
-#332 Change the version string
-#322 Refactor/shader code
-#319 Refactor/split import export modules
-#318 Refactor/object mesh heirarchy
-#316 Refactor/texture property
-#315 Refactor mesh code from nif_import
-#313 Refactor Object & Mesh property handling
-#307 Several fixes for refactor/object_type
-#306 Refactor/object type Improvement Restructure
-#305 Refactor/block registry Improvement
-#304 Refactor/pep pass Improvement
-#303 Refactor/utils Improvement
-#301 Refactoring / fixes for pyffi/nifxml upgrades
-#303 Refactor/utils
-#298 Refactor/build system
-#295 Formatting Animation & Armature modules.
-#296 Refactor/formatting collision modules
-#297 Update testframework with pep8 updates and new module structure
-#278 Remove external dependencies needed to build
-- Remove the reliance on buildenv
-- Remove need to install zip on windows
-
-#277 Migrated modules from root folder
-#273 Template updates
-#267 Hosted docs
-#270 Change submodule and sourceforge links
-- #208 Pyffi submodule
-- #217 Document update
-
++--------+-----------------------------------------------------------------+
+| Ticket |                           Description                           |
++========+=================================================================+
+| 355    | Fixes to the installation bat files                             |
++--------+-----------------------------------------------------------------+
+| 152    | Material code improvements                                      |
++--------+-----------------------------------------------------------------+
+| 332    | Change the version string                                       |
++--------+-----------------------------------------------------------------+
+| 322    | Refactor/shader code                                            |
++--------+-----------------------------------------------------------------+
+| 319    | Refactor/split import export modules                            |
++--------+-----------------------------------------------------------------+
+| 318    | Refactor/object mesh heirarchy                                  |
++--------+-----------------------------------------------------------------+
+| 316    | Refactor/texture property                                       |
++--------+-----------------------------------------------------------------+
+| 315    | Refactor mesh code from nif_import                              |
++--------+-----------------------------------------------------------------+
+| 313    | Refactor Object & Mesh property handling                        |
++--------+-----------------------------------------------------------------+
+| 307    | Several fixes for refactor/object_type                          |
++--------+-----------------------------------------------------------------+
+| 306    | Refactor/object type Improvement Restructure                    |
++--------+-----------------------------------------------------------------+
+| 305    | Refactor/block registry Improvement                             |
++--------+-----------------------------------------------------------------+
+| 304    | Refactor/pep pass Improvement                                   |
++--------+-----------------------------------------------------------------+
+| 303    | Refactor/utils Improvement                                      |
++--------+-----------------------------------------------------------------+
+| 301    | Refactoring / fixes for pyffi/nifxml upgrades                   |
++--------+-----------------------------------------------------------------+
+| 303    | Refactor/utils                                                  |
++--------+-----------------------------------------------------------------+
+| 298    | Refactor/build system                                           |
++--------+-----------------------------------------------------------------+
+| 295    | Formatting Animation & Armature modules.                        |
++--------+-----------------------------------------------------------------+
+| 296    | Refactor/formatting collision modules                           |
++--------+-----------------------------------------------------------------+
+| 297    | Update testframework with pep8 updates and new module structure |
++--------+-----------------------------------------------------------------+
+| 278    | Remove external dependencies needed to build                    |
+|        | - Remove the reliance on buildenv                               |
+|        | - Remove need to install zip on windows                         |
++--------+-----------------------------------------------------------------+
+| 277    | Migrated modules from root folder                               |
++--------+-----------------------------------------------------------------+
+| 273    | Template updates                                                |
++--------+-----------------------------------------------------------------+
+| 267    | Hosted docs                                                     |
++--------+-----------------------------------------------------------------+
+| 270    | Change submodule and sourceforge links                          |
++--------+-----------------------------------------------------------------+
+| 208    | Pyffi submodule                                                 |
++--------+-----------------------------------------------------------------+
+| 217    | Document update                                                 |
++--------+-----------------------------------------------------------------+
 
 Version 2.6.0a3 (3 Jan 2015)
 ============================
@@ -137,16 +243,18 @@ Version 2.6.0a3 (3 Jan 2015)
 
 * Additional material properties support (alpha, specular, stencil, wire).
 
-* Add support for NiTexturingProperty (diffuse, bump, normal map, specular and glow).
+* Add support for NiTexturingProperty (diffuse, bump, normal map, specular and
+  glow).
 
-* Fix crash when combine shapes are enabled (reported and fix contributed by Aaron1178)
+* Fix crash when combine shapes are enabled (reported and fix contributed by
+  Aaron1178)
 
-* Fix issue with material texture blend type importing (reported and fix contributed by mgm101).
+* Fix issue with material texture blend type importing (reported and fix
+  contributed by mgm101).
 
 * Added experimental vertex color support.
 
 * Collision support:
-
   - Basic BhkShapes Cube, Sphere, Cylinder.
   - Convex Vertex, NiPacked, NiTriStrips Shapes.
   - Bound Box support.
@@ -158,7 +266,6 @@ Version 2.6.0a3 (3 Jan 2015)
 * Distribute zip that can be used with Blender's built-in installer.
 
 * Extensive work on the testing framework:
-
   - Tests created based on new features.
   - Re-organised tests into per feature, generated test nifs.
   - Inheritance based checks now functioning.
@@ -172,7 +279,6 @@ Version 2.6.0a0 (20 Nov 2011)
 =============================
 
 * Initial port to Blender 2.60a:
-
   - geometry (NiTriShape)
   - materials (NiMaterialProperty)
   - UV textures (NiTexturingProperty)
@@ -307,15 +413,10 @@ Version 2.5.2 (20 Feb 2010)
   and test files provided by Alphax)
 
 * fixes/improvements to animation import and export
-
   - full support for import/export of animation priority
-
   - autoset target name to bip02 if the armature has such a bone
-
   - new option to manually set the target name on export
-
   - new option to bulk set the animation priority
-
   - skip NiBSplineInterpolators on import; not fully supported and
     if not skipping was causing a fatal error
 
@@ -336,25 +437,16 @@ Version 2.5.1 (10 Jan 2010)
 * Morrowind bounding box import and export
 
 * import and export, via object properties per object, of havok object
-
   - material
-
   - collision layer
-
   - motion quality
-
   - motion system
-
   - mass
-
   - col filter
 
 * import and export, via object properties per object, of havok constraint
-
   - min angle
-
   - max angle
-
   - friction
 
 * object rotation animation import bugfix (reported by Arcimaestro Anteres,
@@ -421,22 +513,22 @@ Version 2.5.0 (22 Nov 2009)
 Version 2.4.12 (23 Oct 2009)
 ============================
 
-* warn and ignore object animation on skinned meshes, instead of
-  raising a mysterious exception (reported by vfb)
+* warn and ignore object animation on skinned meshes, instead of raising a 
+  mysterious exception (reported by vfb)
 
 * added Zoo Tycoon 2 .kf export
 
 * added dialogue requesting animation sequence name for .kf export
   (contributed by PacificMorrowind)
 
-* added preset for Oblivion OL_ANIM_STATIC objects (see issue #2118370
-  reported by apwsoft; fix discovered by PacificMorrowind)
+* added preset for Oblivion OL_ANIM_STATIC objects (see issue #2118370 eported
+  by apwsoft; fix discovered by PacificMorrowind)
 
 * export XYZ rotations for object animations instead of converting to
   quaternions (reported by Artorp)
 
-* set the bhkCollosionObject flag to 41 instead of the default 1 for
-  animated (OL_ANIM_STATIC) objects (reported by Artorp)
+* set the bhkCollosionObject flag to 41 instead of the default 1 for aimated
+  (OL_ANIM_STATIC) objects (reported by Artorp)
 
 * updated readme with detailed install instructions
 
@@ -449,7 +541,7 @@ Version 2.4.11 (28 Sep 2009)
 
 * bug fix in case (corrupt) root block has no name attribute
 
-* fix for collision export with very small mass (contributed by
+* fix for collision export with very small mass (contributed by 
   PacificMorrowind, see issue #2860536)
 
 Version 2.4.10 (22 Jul 2009)
@@ -472,9 +564,9 @@ Version 2.4.9 (20 Jun 2009)
   mode is mapped onto the Blender IPO curve extrapolation mode (reported by
   arcimaestro, see issue #2792951)
 
-* test and fix for animation buffer out of range exception - the exporter will now
-  only warn about it but continue with export anyway (reported by arcimaestro,
-  see issue #2792952)
+* test and fix for animation buffer out of range exception - the exporter will
+  now only warn about it but continue with export anyway (reported by 
+  rcimaestro, see issue #2792952)
 
 * fixed bug when importing extra bones which were parented on a grouping bone
   (for instance Morrowind atronach_frost.nif, where Bone01 is parented to
@@ -533,22 +625,16 @@ Version 2.4.5 (21 Apr 2009)
 * warn on packed textures instead of raising an error (reported by augbunny)
 
 * Morrowind:
-
   - rebirth of the 'nif + xnif + xkf' option for Morrowind (reported by axel)
-
   - improved import of nifs that have multiple skeleton roots (such as the
     official skin meshes, and various creatures such as the ice raider)
-
   - new import option to merge skeleton roots (enable!)
-
   - new import option to send detached geometries to node position (enable!)
 
 * Fallout 3:
-
   - now imports and exports the emitMulti value in the shader emit
     slider (up to a factor 10 to accommodate the range) and stores the emissive
     colour as Blender's diffuse colour (reported and tested by mushin)
-
   - glow texture import and export (reported and tested by mushin)
 
 Version 2.4.4 (2 Apr 2009)
@@ -566,10 +652,8 @@ Version 2.4.3 (7 Mar 2009)
 ==========================
 
 * further fixes for Fallout 3
-
-  - new options in the export dialogue for shader flags and shader type (thanks to
-    malo and nezroy)
-
+  - new options in the export dialogue for shader flags and shader type
+    (thanks to malo and nezroy)
   - new option to disable dismember body part export (sickleyield)
 
 * text keys imported also if they are not defined on the scene root (reported
@@ -598,27 +682,18 @@ Version 2.4.1 (2 Feb 2009)
   engine
 
 * NiSourceTexture improvements:
-
   - pixel layout exports as "6" (DEFAULT) for versions 10.0.1.0 and higher
-
   - use mipmaps exports as "1" (YES)
 
 * Sid Meier's Railroads:
-
   - new regression test
-
   - fixed import and export of specular colour
-
   - fixed alpha flags export
-
   - automatic integer extra data export for shader texture indices
-
   - automatic export of RRT_Engine_Env_map.dds and RRT_Cube_Light_map_128.dds
     shader texture slots
-
   - import of extra shader textures, using extra integer data to find the right
     texture slot
-
   - bump (i.e. normal), gloss (i.e. spec), and reflection (i.e. emsk) are
     exported into the extra shader slots instead of in the regular slots
 
@@ -633,12 +708,10 @@ Version 2.4.0 (25 Jan 2009)
   functional yet)
 
 * improved self-validating bind position algorithm
-
   - geometries are transformed first to a common bind pose (if it exists, a
     warning is issued if no common bind pose is found) - some misaligned
     geometry pieces will now be aligned correctly with the armature, this is
     most notably with Morrowind imports
-
   - bone nodes are transformed to bind position in two phases, to reduce
     rounding errors - some bones that were not sent to the bind pose with the
     older algorithm will now be correct
@@ -689,19 +762,17 @@ Version 2.3.11 (19 Oct 2008)
 Version 2.3.10 (18 Oct 2008)
 ============================
 
-* fix for skin exports from blends imported with older script versions
-  (reported by periplaneta)
+* fix for skin exports from blends imported with older script versions reported
+   by periplaneta)
 
 Version 2.3.9 (12 Oct 2008)
 ===========================
 
-* improved installer to point to Python 2.5.2 instead of Python 2.6
+* improved installer to point to Python 2.5.2 instead of Python 2.6 
   if Python installation is not found
 
 * improved the test suite
-
   - allow comparison between imported and exported nif data
-
   - exported skinning data is now tested against imported skinning data
 
 * added common base class for importer and exporter, for code sharing
@@ -709,7 +780,8 @@ Version 2.3.9 (12 Oct 2008)
 * fixed bone correction application which would fail under certain
   circumstances
 
-* epydoc documentation can now be generated and is included with the installation
+* epydoc documentation can now be generated and is included with the
+  installation
 
 Version 2.3.8 (27 Sep 2008)
 ===========================
@@ -765,14 +837,15 @@ Version 2.3.4 (24 Jul 2008)
 * updated for PyFFI 1.0.0, which includes the new mopp generator based on
   havok's recently released SDK
 
-* removed mopp option from export config dialogue (they are now always generated)
+* removed mopp option from export config dialogue (they are now always
+  generated)
 
 * preserve the "skin", "dynalpha", ... material names
 
 * fixed material merge bug
 
-* fix for nif imports with more than 16 materials per mesh (the materials
-  will not be merged in that case)
+* fix for nif imports with more than 16 materials per mesh (the materialswill
+  not be merged in that case)
 
 Version 2.3.3 (May 27, 2008)
 ============================
@@ -784,8 +857,8 @@ Version 2.3.2 (May 27, 2008)
 
 * B-spline animations are now also imported
 
-* new scripts to save and load current pose of bones to a text buffer
-  (this is useful when changing existing animations and starting/ending pose
+* new scripts to save and load current pose of bones to a text buffer this is
+  useful when changing existing animations and starting/ending pose
   must be copied over from an existing animation)
 
 * transform controller and interpolator also exported on the Bip01 node on
@@ -821,23 +894,15 @@ Version 2.3.0 (Mar 30, 2008)
 ============================
 
 * Import/Export: experimental support for Oblivion animation
-
   - added keyframe file selection to import dialogue
-
   - kf file is merged with nif tree on import
-
   - includes text keys import from kf file
-
   - length 1 animations are exported as interpolators without further
     transform data, and interpolators without further transform data are
     imported as length 1 animations
-
   - bone priorities via NULL bone constraint name ("priority:xx")
-
   - fixed Euler rotation animation import (contributed by ahkmos)
-
   - bspline data is skipped on import
-
   - only tested on character animations (skeletonbeast.nif + any of the
     character/_male keyframe animations that don't contain bsplines)
 
@@ -1183,9 +1248,9 @@ Version 2.1.5 (Sep 2, 2007)
 
 * Import: shared texture folder detection for CivIV
 
-* Import: assume stub has the alpha channel if the texture was not found and alpha
-  property is present; this will ensure that NiAlphaProperty is written back on
-  export
+* Import: assume stub has the alpha channel if the texture was not found and
+  alpha property is present; this will ensure that NiAlphaProperty is written 
+  back on export
 
 Version 2.1.4 (Aug 29, 2007)
 ============================
@@ -1200,9 +1265,9 @@ Version 2.1.3 (Aug 19, 2007)
 * Installer: also check in HKCU for registry keys of Python and PyFFI (fixes
   rare installation issue, see bug #1775859 on the SF tracker)
 
-* new script for reducing the number of influences per vertex, running this script
-  before export helps if the skin partitioning algorithm complains about losing
-  weights
+* new script for reducing the number of influences per vertex, running this
+  script before export helps if the skin partitioning algorithm complains about 
+  losing weights
 
 Version 2.1.2 (Aug 17, 2007)
 ============================
@@ -1233,19 +1298,15 @@ Version 2.1 (Aug 12, 2007)
 ==========================
 
 * Export: added support for Oblivion collisions
-
   - bhkBoxShape (from Blender 'Box' bounding shape)
-
   - bhkSphereShape (from Blender 'Sphere' bounding shape)
-
   - bhkCapsuleShape (from Blender 'Cylinder' bounding shape)
-
-  - bhkPackedNiTriStripsShape (from Blender 'Static TriangleMesh' bounding shape)
-
-  - bhkConvexVerticesShape (from Blender 'Convex Hull Polytope' bounding shape);
-    Note that many of the settings are not well understood, so you probably still
-    have to tweak the collision settings in nifskope. But at least the collision
-    geometries should be properly exported.
+  - bhkPackedNiTriStripsShape (from Blender 'Static TriangleMesh' bounding
+    shape )
+  - bhkConvexVerticesShape (from Blender 'Convex Hull Polytope' bounding
+    shape); Note that many of the settings are not well understood, so you
+    probably still have to tweak the collision settings in nifskope. But at
+    least the collision geometries should be properly exported.
 
 * Export: fixed another bind position transform bug (reported by Corvus)
 
@@ -1266,9 +1327,12 @@ Version 2.0.7 (Aug 8, 2007)
 
 * Export: fixed issue with non-uniform scaling on Freedom Force vs. 3rd Reich nifs
 
-* Export: fixed issue with skin partition creation on older nif versions (such as Freedom Force vs. 3rd Reich nifs)
+* Export: fixed issue with skin partition creation on older nif versions (such
+  as Freedom Force vs. 3rd Reich nifs)
 
-* Export: fixed problem with meshes sharing the same vcol lighting enabled material but not all having vertex weights (such as the Oblivion steel cuirass); the exporter now issues a warning rather than throwing an exception
+* Export: fixed problem with meshes sharing the same vcol lighting enabled
+  material but not all having vertex weights (such as the Oblivion steel
+  cuirass); the exporter now issues a warning rather than throwing an exception
 
 * Export: fixed skin bounds calculation
 
@@ -1301,14 +1365,16 @@ Version 2.0.5 (Jul 30, 2007)
 Version 2.0.4 (Jul 23, 2007)
 ============================
 
-* Import: fixed a few skin import transform errors (Morrowind better bodies, Oblivion armour)
+* Import: fixed a few skin import transform errors (Morrowind better bodies,
+  Oblivion armour)
 
 Version 2.0.3 (Jul 22, 2007)
 ============================
 
 * Export: fixed skin export in case some bones did not influence any vertices
 
-* Export: fixed transform error in skinned meshes such as better bodies and Oblivion skeleton
+* Export: fixed transform error in skinned meshes such as better bodies and
+  Oblivion skeleton
 
 * Export: support for 20.3.0.3 and 20.3.0.6 (experimental)
 
@@ -1383,11 +1449,13 @@ Version 1.5.3 (Jun 10, 2006)
 Version 1.5.2 (Apr 19, 2006)
 ============================
 
-* Export: new option APPLY_SCALE (on by default) which resolves TESCS selection box issue and a 1.5 incompatibility problem
+* Export: new option APPLY_SCALE (on by default) which resolves TESCS selection
+  box issue and a 1.5 incompatibility problem
 
 * Import/Export: full Python installation no longer needed
 
-* Export: keyframe data realigned as well (should allow us, in theory, to re-export base animation files)
+* Export: keyframe data realigned as well (should allow us, in theory, to
+  re-export base animation files)
 
 * Export: transform fix on dummy tail NiNodes
 
@@ -1397,20 +1465,23 @@ Version 1.5.2 (Apr 19, 2006)
 
 * Import: realignment is now always automatic
 
-* Import/Export: correction on 1.5.1 ChangeLog, you'll still need the Bip01 spell, but we're getting closer
+* Import/Export: correction on 1.5.1 ChangeLog, you'll still need the Bip01
+  spell, but we're getting closer
 
 Version 1.5.1 (Apr 13, 2006)
 ============================
 
 * Export: a 20.0.0.4 bug is fixed
 
-* Import/Export: restoring bone matrices, no longer need for NifSkope's Bip01 spell
+* Import/Export: restoring bone matrices, no longer need for NifSkope's Bip01
+  spell
 
 * Import: animated nodes that aren't bones have their animation imported too
 
 * Import/Export: scaling fix
 
-* Import: initial attempt to use the original NIF bone matrices if auto-align is turned off
+* Import: initial attempt to use the original NIF bone matrices if auto-align
+  is turned off
 
 Version 1.5 (Mar 21, 2006)
 ==========================
@@ -1429,7 +1500,8 @@ Version 1.5 (Mar 21, 2006)
 
 * Export: large model fix (now supports up to 65535 faces/vertices per mesh
 
-* Export: writes a dummy node on final bones to retain bone length when re-imported
+* Export: writes a dummy node on final bones to retain bone length when
+  re-imported
 
 Version 1.4 (Feb 12, 2006)
 ==========================
@@ -1451,7 +1523,8 @@ Version 1.3 (Jan 21, 2006)
 
 * Import/Export: Vertex key animation support (geometry morphing).
 
-* Export: Bugfix in bone animation export (transformations sometimes wouldn't show up correctly before).
+* Export: Bugfix in bone animation export (transformations sometimes wouldn't
+  show up correctly before).
 
 * Import: Improved bone length calculation.
 
@@ -1459,7 +1532,8 @@ Version 1.3 (Jan 21, 2006)
 
 * Export: Skinning bugfix for multi-material meshes.
 
-* Export: Vertex weight calculation optimized, and no more annoying console messages!
+* Export: Vertex weight calculation optimized, and no more annoying console
+  messages!
 
 * Export: Embedded textures reestablished.
 
@@ -1468,28 +1542,35 @@ Version 1.2 (Dec 23, 2005)
 
 * Import/Export: updated for Blender 2.40
 
-* Export: now uses Niflib, which implies that it runs much faster, the code is much cleaner, and multiple NIF version support is in the making
+* Export: now uses Niflib, which implies that it runs much faster, the code is
+  much cleaner, and multiple NIF version support is in the making
 
-* Export: replaced old crappy config file system with Blender's native Script Config Editor system
+* Export: replaced old crappy config file system with Blender's native Script
+  Config Editor system
 
 * Export: new feature - texture flipping
 
-* Export: new feature - export of bones, armatures, and vertex weights (finally!!!)
+* Export: new feature - export of bones, armatures, and vertex weights
+  (finally!!!)
 
-* Export: packed texture feature has been temporarily dropped; this functionality is being transferred to Niflib
+* Export: packed texture feature has been temporarily dropped; this
+  functionality is being transferred to Niflib
 
 Version 1.1 (Oct 31, 2005)
 ==========================
 
 * Export: Fixed bug pointed out by Sabregirl, on mesh_mat_shininess.
 
-* Export: Applied m4444x's patches to the exporter (texture flipping), changed names, included exporter readme file.
+* Export: Applied m4444x's patches to the exporter (texture flipping), changed
+  names, included exporter readme file.
 
 * Import/Export: Changed the licensing to BSD.
 
-* Import: Added support for texturing in the editor 3D view. Now the textures will show up in textured mode if loaded.
+* Import: Added support for texturing in the editor 3D view. Now the textures
+  will show up in textured mode if loaded.
 
-* Import: NiMorph Controllers that m4444x coded. Haven't tested it, but it doesn't break the previous functionality, so it should be fine
+* Import: NiMorph Controllers that m4444x coded. Haven't tested it, but it
+  doesn't break the previous functionality, so it should be fine
 
 * Export: Added an option for stripping the texture's file path
 
@@ -1501,13 +1582,16 @@ Version 1.1 (Oct 31, 2005)
 
 * Import: Small fix in the import of vertex colours.
 
-* Import: Autodetect Morrowind style texture path; if you load a NIF from ...\meshes\... then the importer will look in ...\textures\* for the NIF textures.
+* Import: Autodetect Morrowind style texture path; if you load a NIF from
+  ...\meshes\... then the importer will look in ...\textures\* for the NIF
+  textures.
 
 * Export: Fixed animation group export.
 
 * Import: Multiple texture folders.
 
-* Import/Export: number of vertices and number of faces is unsigned short: fix in importer, and added range check in the exporter.
+* Import/Export: number of vertices and number of faces is unsigned short: fix
+  in importer, and added range check in the exporter.
 
 * Import/Export: Added glow mapping.
 
@@ -1517,10 +1601,12 @@ Version 1.1 (Oct 31, 2005)
 
 * Import/Export: Now we have a GUI for setting various options.
 
-* Import: Solved problem with textures embedded in NIF file; textures will not load but the script will still load the meshes.
+* Import: Solved problem with textures embedded in NIF file; textures will not
+  load but the script will still load the meshes.
 
 Version 1.0 (Oct 12, 2005)
 ==========================
 
-* Initial bundled release of the importer v1.0.6 and exporter v0.8 on SourceForge.
+* Initial bundled release of the importer v1.0.6 and exporter v0.8 on
+  SourceForge.
 
