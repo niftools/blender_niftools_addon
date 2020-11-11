@@ -19,6 +19,9 @@ We are following the following strategy for porting the addon:
 #. Do the next release.
 #. Listen to feedback from users, and go back to step 1.
 
+.. TODO: Update the string below once everything settles down from the new version transition
+.. TODO: and make it reflect the latest development direction!
+
 The 0.x series is designated as purely experimental.
 
 Once enough features have and pass their regression test---i.e. as soon as the new addon can be considered on par
