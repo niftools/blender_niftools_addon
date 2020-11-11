@@ -5,9 +5,9 @@ Export Settings
 This section explains the import and export settings.
 
 .. warning::
-   Only a subset of these settings is currently supported even though they have been documented. 
-   This is due to the fact that they are ported directly from the old addon and as such, will functionally remain the same.
-
+   Only a subset of these settings is currently supported even though they have been documented.
+   This is due to the fact that they are ported directly from the old addon and as such, will functionally remain the
+   same.
 
 Scale correction
 ----------------
@@ -26,7 +26,6 @@ Game
 
 A list of supported games which the addon will export working nif files.
 
-
 Process
 -------
 .. _user-features-iosettings-export-process:
@@ -39,18 +38,19 @@ Export options include
 * Geometry only (nif) - Only geometry to a single nif.
 * Animation only (kf) - Only animation to a single kf.
 
-
 Smooth Inter-Object Seams
 -------------------------
 .. _user-features-iosettings-export-smoothseams:
 
-This option combines the normals data for all vertices containing the same XYZ location data along an edge and uses the same normal tangent and bi-tangent values for all affected vertices.
+This option combines the normals data for all vertices containing the same XYZ location data along an edge and uses
+the same normal tangent and bi-tangent values for all affected vertices.
 
 Use NiBSAnimationNode
 ---------------------
 .. _iosettings-bsanimationnode:
 
-NiBSAnimationNode is specific to "The Elder Scrolls - Morrowind" and should only be used when exporting animated items for that game.
+NiBSAnimationNode is specific to "The Elder Scrolls - Morrowind" and should only be used when exporting animated
+items for that game.
 
 Flatten Skin
 ------------
@@ -81,4 +81,3 @@ Force DDS
 .. _user-features-iosettings-export-forcedds:
 
 Changes the suffix for the texture file path in the nif to use .dds
-

@@ -13,15 +13,16 @@ NiMaterialProperty
 ------------------
 
 The following section is for nifs which use :class:`~pyffi.formats.nif.NifFormat.NiMaterialProperty`.
-* Every :class:`~bpy.types.Material` is exported to a :class:`~pyffi.formats.nif.NifFormat.NiMaterialProperty`.
 
+* Every :class:`~bpy.types.Material` is exported to a :class:`~pyffi.formats.nif.NifFormat.NiMaterialProperty`.
 
 .. _properties-nispecular:
 
 NiSpecularProperty
 ------------------
 
-* Setting the **Intensity** to **0** will disable specularity; a :class:`~pyffi.formats.nif.NifFormat.NiSpecularProperty` will not be exported.
+* Setting the **Intensity** to ``0`` will disable specularity; a
+  :class:`~pyffi.formats.nif.NifFormat.NiSpecularProperty` will not be exported.
 
 .. _properties-nialpha:
 
@@ -29,7 +30,6 @@ NiAlphaProperty
 ---------------
 
 * An :class:`~pyffi.formats.nif.NifFormat.NiAlphaProperty` is exported for Materials or Texture have Alpha value.
-   
    
 .. _properties-niwireframe:
 
@@ -45,15 +45,12 @@ NiStencilProperty
 
 The NiStencilProperty ignores the face normal and renders both sides of the mesh.
 
-#. In the **Object Tab -> Double-Sided**, enable/disable.
+#. In the **Object Tab** > **Double-Sided**, enable or disable as appropriate
 
-* This will export a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`
+This will export a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`
 
-
-
-.. 
-   todo::
+.. todo::
    
-   Document these bad boys once implemented
+   Document these bad boys once implemented:
    
-   NiVertexColorProperty 
+   - NiVertexColorProperty 

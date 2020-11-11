@@ -9,10 +9,11 @@ User Documentation
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   install
-   workflow
-   ui/index
-   features/index
-   support
+    install
+    workflow
+    ui/index
+    features/index
+    support
+    additional/index

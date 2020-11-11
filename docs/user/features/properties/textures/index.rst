@@ -2,16 +2,17 @@ Textures
 ========
 .. _textures:
 
-| A texture refers to a generic image.
-| A map refer to an image which has specific properties which will influence the renderer.
-| Textures/Maps allow us to alter how the geometry is rendered, such as adding additional detail, affecting light, etc.
+A texture refers to a generic image.
+A map refer to an image which has specific properties which will influence the renderer.
+Textures/Maps allow us to alter how the geometry is rendered, such as adding additional detail, affecting light, etc.
 
 Notes
 ~~~~~
 
 * The nif format only supports UV mapped textures, so only those will be exported.
 * GLSL mode is enabled on import/export but should be enabled manually otherwise to give correct viewport preview.
-* Relative paths for textures are often used, eg. /Texture/../.. which should be adjusted so Blender can render in the viewport.
+* Relative paths for textures are often used, eg. ``/Texture/../..`` which should be adjusted so Blender can render in
+  the viewport.
 
 Requirements
 ~~~~~~~~~~~~
@@ -40,11 +41,12 @@ We load an image to use as our texture.
 
 Set the texture to use the UV coordinates.
 
-* Under **Mapping > Coordinates**, select **UV**.
+* Under **Mapping** > **Coordinates**, select **UV**.
 
 The UV layer that was :ref:`created previously<geometry-uv>` needs to be selected for this texture.
 
-* In the **Texture** tab, under **Mapping > Layer**, click on the empty field, and select ``UVTex``.
+* In the **Texture** tab, under **Mapping** > **Layer**, click on the empty
+  field, and select ``UVTex``.
 
 Texture Maps
 ~~~~~~~~~~~~
@@ -56,6 +58,3 @@ Each Texture Map affects different properties of how the geometry is rendered
    
    texture_maps
    
-
- 
-

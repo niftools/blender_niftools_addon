@@ -1,12 +1,14 @@
+===================================
 Interactive Development Environment
 ===================================
 
 .. _development-design-setup-ide:
 
-Developers are open to use their own IDE of preference, but the repo is configured towards Jetbrains IDEs such PyCharm or IntelliJ Ultimate.
-This IDE allows us to maintain a unified workflow for general file manipulation, repo management,
-python scripting, and hooks into Blender's debugging server.
+Developers are open to use their own IDE of preference, but the repo is configured towards Jetbrains IDEs such
+PyCharm or IntelliJ Ultimate. This IDE allows us to maintain a unified workflow for general file manipulation, repo
+management, python scripting, and hooks into Blender's debugging server.
 
+---------------
 Install PyCharm
 ---------------
 
@@ -14,45 +16,60 @@ Install PyCharm
 
 #. Download `PyCharm <https://www.jetbrains.com/pycharm/download>`_
 
-**Fedora**, simply run::
+**Fedora**
+
+.. code-block:: shell
 
     sudo yum install eclipse eclipse-egit eclipse-pydev
 
-**Ubuntu**, simply run::
+**Ubuntu**
+
+.. code-block:: shell
 
     sudo snap install [pycharm-professional|pycharm-community] --classic
 
-When starting pycharm, Open the workspace folder.
-If you followed the instructions, you should have cloned the code into ``/home/<username>/workspace``
-PyCharm will automatically recognise this as a Git repo.
+When starting pycharm, Open the ``workspace`` folder. If you followed the instructions, you should have cloned the
+code into ``/home/<username>/workspace`` PyCharm will automatically recognise this as a Git repo.
 
+---------
 Debugging
------------------
+---------
 
 The Blender Niftools Addon code comes with built-in pydev hook to allow connection by a Remote Python Debug Server.
 This allows run-time debugging; watching the script execute, evaluate variables, function call stack etc.
 
+********
 Debugger
 ********
 
-The following ENV variable is used to pick up the location of `pydevd` which is installed via the install_deps.sh script.
-    export PYDEVDEBUG="${BLENDER_ADDONS_DIR}"
+The following ENV variable is used to pick up the location of `pydevd` which is installed via the install_deps.sh
+script.
 
-In the IDE, create a new configuration of type `Python Debug Server`, update the port as per the util_debug.py settings.
-This can then be launched and should wait for the debug thread to call back into the server.::
+.. code-block:: shell
 
-    Starting debug server at port 1234
-    Use the following code to connect to the debugger:
-    import pydevd_pycharm
-    pydevd_pycharm.settrace('localhost', port=1234, stdoutToServer=True, stderrToServer=True)
-    Waiting for process connection...
-    Connected to pydev debugger (build 201.6668.115)
+  export PYDEVDEBUG="${BLENDER_ADDONS_DIR}"
 
-Launching `Blender` via Terminal, it will suspend once it hits the trace call executes ::
+In the IDE, create a new configuration of type `Python Debug Server`, update the port as per the util_debug.py
+settings. This can then be launched and should wait for the debug thread to call back into the server.
 
-    settrace('localhost', port=port, stdoutToServer=True, stderrToServer=True, suspend=True)
+.. code-block:: python
 
-The debugger may as you to provide a source path so that it can map the code being executed to the code in the IDE.
-This allows you to put breakpoints in your code directly.
+  Starting debug server at port 1234
+  Use the following code to connect to the debugger:
+  import pydevd_pycharm
+  pydevd_pycharm.settrace('localhost', port=1234, stdoutToServer=True, 
+    stderrToServer=True)
+  Waiting for process connection...
+  Connected to pydev debugger (build 201.6668.115)
 
-Happy coding & debugging.
+Launching `Blender` via Terminal, it will suspend once it hits the trace call executes
+
+.. code-block:: python
+
+  settrace('localhost', port=port, stdoutToServer=True, stderrToServer=True, 
+    suspend=True)
+
+It may help to provide the debugger with a source path so it can map the code being executed to the code in your IDE.
+This will allow you to put breakpoints in your code directly.
+
+Happy coding & debugging!

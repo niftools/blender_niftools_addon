@@ -1,53 +1,61 @@
 Installation
 ============
 
-.. raw:: html
-  
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/2RvLZvX_rsI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-
 .. _user-getblender:
 
 Install Blender
 ---------------
 
-Download the recommended version of `Blender <http://www.blender.org/download/get-blender/>`_
-for your platform (32-bit or 64-bit; if unsure, pick the 32-bit version)
-and follow the instructions.
-
-* Ensure that the version of Blender being installed is supported by the Blender Niftools Addon.
-
 Fedora
 ^^^^^^
 
-For Fedora 16 and up, Blender 2.7x is available via yum::
+Blender 2.8.x is available via yum or dnf (depending on your Fedora release)
 
-  sudo yum install blender
+.. code-block:: shell
 
+   sudo [yum|dnf] install blender -y
+
+Debian and its Derivatives (Ubuntu, etc.)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Blender is available from apt
+
+.. code-block:: shell
+
+   sudo apt-get install blender
+
+Windows and MacOS
+^^^^^^^^^^^^^^^^^
+
+Builds for Windows and MacOS (and non-Fedora Linux distributions) can be found at `<https://blender.org/downloads>`_.
+**Be sure to get 2.83 LTS or newer**, NifTools is not compatible with older versions of Blender.
+
+Unsure if your operating system is 32-bit (i386) or 64-bit (x86_64)? Choose the 32-bit version of Blender to be safe.
 
 Install and Register the Addon
 ------------------------------
 
-#. Download the `Blender Niftools Addon .zip release
+#. Download the latest `Blender Niftools Addon .zip release
    <https://github.com/niftools/blender_niftools_addon/releases>`_.
-
 #. Start Blender.
+#. In the menu bar, go to **Edit** > **Preferences** > **Add-Ons**.
+#. Click **Install Addon...** (top-right in the Add-Ons diaglog).
+#. Select the Blender Niftools Addon .zip file downloaded earlier. Click **Install Add-On**.
+#. If **Import-Export: NetImmerse/Gambryo nif format** doesn't automatically
+   appear in the search bar of the Preferences window, type "nif", and press enter.
+#. Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif format**. (You may have to scroll down to find 
+   it.)
 
-#. Go to: **File > User Preferences > Add-Ons**.
+   If you want to enable Niftools each time you start Blender, click the hamburger stack overflow menu (bottom-left)
+   and select **Save Preferences**.
+#. Close the **Blender Preferences** window.
+#. The NifTools importer and exporters should now be available under **File**
+   > **Import** and **File** > **Export**. If you saved your user preferences, the importers and exports should be
+   available on every launch of Blender!
 
-#. Click **Install Addon...** (bottom).
-
-#. Select the Blender Niftools Addon .zip file downloaded earlier.
-
-#. Under **Categories** (left), select **Import-Export**.
-
-#. Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif format**.
-   You may have to scroll down a bit first.
-
-#. Close the **Blender User Preferences** window.
-
-#. The nif importer and exporter should now show under
-   **File > Import** and **File > Export**.
-
-#. Do: **File > Save User Settings** (unless you enjoy enabling the
-   addon every time when Blender starts :-) ).
-
+.. image:: /_static/images/NifTools_Install.gif
+    :target: /_static/images/NifTools_Install.gif
+    :width: 800px
+    :height: 600px
+    :align: center
+    :alt: This is a graphic representation of the "Install and Register the Addon" steps above.
