@@ -52,7 +52,7 @@ script.
 In the IDE, create a new configuration of type `Python Debug Server`, update the port as per the util_debug.py
 settings. This can then be launched and should wait for the debug thread to call back into the server.
 
-.. code-block:: shell
+.. code-block:: python
 
   Starting debug server at port 1234
   Use the following code to connect to the debugger:
