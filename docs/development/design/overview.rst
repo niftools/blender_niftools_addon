@@ -11,7 +11,7 @@ Development Methodology
 -------------------------
 A development methodology describes the principles we want as part of the development process.
 
-For the 2.6.x series of development, we decided to develop a Feature-Oriented, Test Driven Development (TDD)
+For the latest series of development, we decided to develop a Feature-Oriented, Test Driven Development (TDD)
 methodology to suit both current and future needs.
 
 Test-driven development in a nutshell means:
