@@ -281,7 +281,7 @@ class NifExport(NifCommon):
 
             # apply scale
             if abs(NifOp.props.scale_correction_export) > NifOp.props.epsilon:
-                NifLog.info(f"Applying scale correction {NifOp.props.scale_correction_export:s}")
+                NifLog.info(f"Applying scale correction {NifOp.props.scale_correction_export}")
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
                 toaster.scale = NifOp.props.scale_correction_export

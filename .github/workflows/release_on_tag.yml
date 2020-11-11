@@ -8,7 +8,7 @@ name: Create Release
 
 jobs:
   build:
-    if: github.event.base_ref == 'refs/heads/feature/automate_reply'
+    if: github.event.base_ref == 'refs/heads/master'
     name: Create Release
     runs-on: ubuntu-latest
     steps:

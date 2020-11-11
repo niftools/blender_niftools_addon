@@ -23,54 +23,56 @@ The issue will get closed off immediately as invalid if
 Fill out the template below to the best of your ability, including .blend files, nifs, logs; help us to help you.
 
 # Issue Overview
-[Provide a general introduction to the issue and why it is relevant to this repository]
+**[Provide a general introduction to the issue and why it is relevant to this repository]**
+
 
 ## Version Information
+
 ### Blender Niftools Addon Version Info
-[Provide version information for the Blender Niftools Addon the issue occurs with, available in Blender in the Add-On section]
+**[Provide version information for the Blender Niftools Addon the issue occurs with, available in Blender in the Add-On section]**
 
 ### Blender Version Info
-[Provide information on which version of Blender the issue is seen]
+**[Provide information on which version of Blender the issue is seen]**
 
 ### Platform information
-[Provide a brief overview of what OS your running on]
+**[Provide a brief overview of what OS your running on]**
 
 ## Context
-[Provide more detailed information to the issue itself and why it is relevant]
+**[Provide more detailed information to the issue itself and why it is relevant]**
 
 ## Steps to Reproduce
-[Ordered list of the steps required for recreating the issue, including settings]
+**[Ordered list of the steps required for recreating the issue, including settings]**
  #. 
 
 ## Expected Result
-[Describe what you expected to have resulted from this process]
+**[Describe what you expected to have resulted from this process]**
 
 ## Actual Result
-[Describe what you currently experience from this process, and thereby explain the bug]
+**[Describe what you currently experience from this process, and thereby explain the bug]**
 
 ## Possible Fix
-[Optional, suggest fixes, improvement or reasons for the bug might have occurred]
+**[Optional, suggest fixes, improvement or reasons for the bug might have occurred]**
 
 ## Screenshot
-[If relevant, include a screenshot]
+**[If relevant, include a screenshot]**
 
 ## Logs and Files
-[Provide logs file generated during the error as well as the blend and nif files are related to the issue]
+**[Provide logs file generated during the error as well as the blend and nif files are related to the issue]**
 
 ### Info Bar Output
-[Output from the Info View, available at top of Blender viewport, drag to expand]
+**[Output from the Info View, available at top of Blender viewport, drag to expand]**
 
 ### Console Output
-[Set the logging level to 'Debug' and attach the output of the console. Enable via Window -> Toggle Console]
+**[Set the logging level to 'Debug' and attach the output of the console. Enable via Window -> Toggle Console]**
 
 ### Blend File
-[Attach the blend file if the issue is reproducible]
+**[Attach the blend file if the issue is reproducible]**
 
 ### Nif File
-[Attach input or output files, samples of what the expected output should be and reproducing the issue]
+**[Attach input or output files, samples of what the expected output should be and reproducing the issue]**
 
 ## Similar Known Issues
-[Reference any known issues - https://github.com/niftools/blender_niftools_addon/issues]
+**[Reference any known issues - https://github.com/niftools/blender_niftools_addon/issues]**
 
 ## Additional Information
-[Anything else you feel is relevant]
+**[Anything else you feel is relevant]**
