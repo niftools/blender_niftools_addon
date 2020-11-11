@@ -5,7 +5,7 @@ Test Framework
 .. _development-testframework:
 
 The test framework is a series of tools to automate the verification process of the Blender Niftools Addon that aims
-to unify the various levels of testing that should be performed to release the plugin:
+to unify the various levels of testing that should be performed to release the addon:
 
 * Unit
 * Functional
@@ -45,7 +45,7 @@ or from a terminal (Linux):
 BLENDER_ADDONS_DIR
 ~~~~~~~~~~~~~~~~~~
 
-Installs the plugin and its dependencies.
+Installs the Blender Nif addon and its dependencies.
 
 Set the location of corresponding Blender addons folder:
 

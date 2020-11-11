@@ -1,7 +1,7 @@
 .. _support:
 
 ===============================
-NifTools Blender Plugin Support
+Blender Niftools Addon Support
 ===============================
 
 .. 

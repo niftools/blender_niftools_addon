@@ -20,7 +20,7 @@ User Interface
 
 .. note::
 
-  See :ref:`user_install` for detailed instructions to install the plugin.
+  See :ref:`user_install` for detailed instructions to install the addon.
 
 * This triggers the :func:`~io_scene_niftools.register` function, which adds
   the :class:`~io_scene_niftools.ui.NifImportUI` and :class:`~io_scene_niftools.ui.NifExportUI` operators to the
