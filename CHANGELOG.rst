@@ -1,8 +1,17 @@
+Version v0.0.3
+============================
+- #389 Docs - Updating Sphinx Documentation
+
+Version v0.0.2
+============================
+- #390 Bug - Fixes bug where logging scale correction on export would cause execution to fail
+
 Version v0.0.1
 ============================
 
 - Rename plugin to use new naming scheme
 - Add in updated templates
+- Add in auto-updater to allow addon to fetch releases and upgrade from within user preferences
 
 .. note::
 The following are older versions, using the old naming scheme
