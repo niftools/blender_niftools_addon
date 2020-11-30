@@ -38,16 +38,19 @@
 # ***** END LICENSE BLOCK *****
 
 from bpy.types import Panel
+
 from pyffi.formats.nif import NifFormat
 
 
-class ScenePanel(Panel):
-    bl_label = "Niftools Scene Panel"
-    bl_idname = "NIFTOOLS_PT_ScenePanel"
-
+class SceneButtonsPanel:
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
+
+
+class ScenePanel(SceneButtonsPanel, Panel):
+    bl_label = "Niftools Scene Panel"
+    bl_idname = "NIFTOOLS_PT_scene"
 
     # noinspection PyUnusedLocal
     @classmethod
@@ -60,7 +63,48 @@ class ScenePanel(Panel):
         layout = self.layout
         row = layout.column()
         row.prop(nif_scene_props, "game")
-        row.prop(nif_scene_props, "nif_version")
-        row.prop(nif_scene_props, "user_version")
-        row.prop(nif_scene_props, "user_version_2")
+
+
+class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
+    bl_label = "Nif Version Info"
+    bl_idname = "NIFTOOLS_PT_scene_version_info"
+    bl_parent_id = "NIFTOOLS_PT_scene"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+
+        nif_scene_props = context.scene.niftools_scene
         layout.label(text=NifFormat.HeaderString.version_string(nif_scene_props.nif_version))
+
+        flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
+
+        col = flow.column()
+        col.prop(nif_scene_props, "nif_version")
+
+        col = flow.column()
+        col.prop(nif_scene_props, "user_version")
+
+        col = flow.column()
+        col.prop(nif_scene_props, "user_version_2")
+
+
+# class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):
+#     bl_label = "Nif Author Info"
+#     bl_idname = "NIFTOOLS_PT_scene_author_info"
+#     bl_parent_id = "NIFTOOLS_PT_scene"
+#
+#     def draw(self, context):
+#         layout = self.layout
+#         layout.use_property_split = True
+#
+#         nif_scene_props = context.scene.niftools_scene
+#
+#         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
+#
+#         col = flow.column()
+#         col.prop(nif_scene_props, "nif_author_info")
+#
+#         col = flow.column()
+#         col.prop(nif_scene_props, "nif_author_info_2")
+#

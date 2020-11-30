@@ -62,26 +62,6 @@ class BSShaderPropertyProcessor(BSShader):
     """
 
     __instance = None
-    _b_mesh = None
-    _n_block = None
-    b_mat = None
-    _nodes_wrapper = None
-
-    @property
-    def b_mesh(self):
-        return self._b_mesh
-
-    @b_mesh.setter
-    def b_mesh(self, value):
-        self._b_mesh = value
-
-    @property
-    def n_block(self):
-        return self._n_block
-
-    @n_block.setter
-    def n_block(self, value):
-        self._n_block = value
 
     def __init__(self):
         """ Virtually private constructor. """
@@ -106,7 +86,7 @@ class BSShaderPropertyProcessor(BSShader):
     def import_bs_lighting_shader_property(self, bs_shader_property):
 
         # Shader Flags
-        b_shader = self.b_mat.niftools_shader
+        b_shader = self._b_mat.niftools_shader
         b_shader.bs_shadertype = 'BSLightingShaderProperty'
 
         shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(bs_shader_property.skyrim_shader_type)
@@ -129,10 +109,10 @@ class BSShaderPropertyProcessor(BSShader):
 
         # Diffuse color
         if bs_shader_property.skin_tint_color:
-            Material.import_material_diffuse(self.b_mat, bs_shader_property.skin_tint_color)
+            Material.import_material_diffuse(self._b_mat, bs_shader_property.skin_tint_color)
 
-        if (self.b_mat.diffuse_color[0] + self.b_mat.diffuse_color[1] + self.b_mat.diffuse_color[2]) == 0:
-            Material.import_material_diffuse(self.b_mat, bs_shader_property.hair_tint_color)
+        if (self._b_mat.diffuse_color[0] + self._b_mat.diffuse_color[1] + self._b_mat.diffuse_color[2]) == 0:
+            Material.import_material_diffuse(self._b_mat, bs_shader_property.hair_tint_color)
 
         # TODO [material][b_shader][property] Handle nialphaproperty node lookup
         # # Alpha
@@ -140,25 +120,25 @@ class BSShaderPropertyProcessor(BSShader):
         #     self.b_mat = self.set_alpha_bsshader(self.b_mat, bs_shader_property)
 
         # Emissive color
-        Material.import_material_emissive(self.b_mat, bs_shader_property.emissive_color)
+        Material.import_material_emissive(self._b_mat, bs_shader_property.emissive_color)
         # todo [shader] create custom float property, or use as factor in mix shader?
         # self.b_mat.emit = bs_shader_property.emissive_multiple
 
         # gloss
-        Material.import_material_gloss(self.b_mat, bs_shader_property.glossiness)
+        Material.import_material_gloss(self._b_mat, bs_shader_property.glossiness)
 
         # Specular color
-        Material.import_material_specular(self.b_mat, bs_shader_property.specular_color)
-        self.b_mat.specular_intensity = bs_shader_property.specular_strength
+        Material.import_material_specular(self._b_mat, bs_shader_property.specular_color)
+        self._b_mat.specular_intensity = bs_shader_property.specular_strength
 
         # lighting effect
-        self.b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
-        self.b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
+        self._b_mat.niftools.lightingeffect1 = bs_shader_property.lighting_effect_1
+        self._b_mat.niftools.lightingeffect2 = bs_shader_property.lighting_effect_2
 
     def import_bs_effect_shader_property(self, bs_effect_shader_property):
         # update material material name
 
-        shader = self.b_mat.niftools_shader
+        shader = self._b_mat.niftools_shader
         shader.bs_shadertype = 'BSEffectShaderProperty'
         shader.bslsp_shaderobjtype = 'Default'
         self.import_shader_flags(bs_effect_shader_property)
@@ -179,19 +159,19 @@ class BSShaderPropertyProcessor(BSShader):
 
         # Emissive
         if bs_effect_shader_property.emissive_color:
-            Material.import_material_emissive(self.b_mat, bs_effect_shader_property.emissive_color)
+            Material.import_material_emissive(self._b_mat, bs_effect_shader_property.emissive_color)
             # TODO [property][shader][alpha] Map this to actual alpha when component is available
-            Material.import_material_alpha(self.b_mat, bs_effect_shader_property.emissive_color.a)
+            Material.import_material_alpha(self._b_mat, bs_effect_shader_property.emissive_color.a)
             # todo [shader] create custom float property, or use as factor in mix shader?
             # self.b_mat.emit = bs_effect_shader_property.emissive_multiple
 
         # TODO [animation][shader] Move out to a dedicated controller processor
         if bs_effect_shader_property.controller:
-            self.b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
+            self._b_mat.niftools_alpha.textureflag = bs_effect_shader_property.controller.flags
 
     def import_shader_flags(self, b_prop):
         flags_1 = b_prop.shader_flags_1
-        self.import_flags(self.b_mat, flags_1)
+        self.import_flags(self._b_mat, flags_1)
 
         flag_2 = b_prop.shader_flags_2
-        self.import_flags(self.b_mat, flag_2)
+        self.import_flags(self._b_mat, flag_2)

@@ -72,7 +72,6 @@ class NodesWrapper:
         self.diffuse_texture = None
         self.vcol = None
 
-
     def set_uv_map(self, b_texture_node, uv_index=0, reflective=False):
         """Attaches a vector node describing the desired coordinate transforms to the texture node's UV input."""
         if reflective:

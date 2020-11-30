@@ -70,7 +70,6 @@ class NifExport(NifCommon):
 
         # Helper systems
         self.transform_anim = TransformAnimation()
-        # self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint()
         self.objecthelper = Object()
         self.exportable_objects = []

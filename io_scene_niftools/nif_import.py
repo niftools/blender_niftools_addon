@@ -141,7 +141,6 @@ class NifImport(NifCommon):
         if NifOp.props.override_scene_info:
             scene.import_version_info(NifData.data)
 
-
     def import_root(self, root_block):
         """Main import function."""
         # check that this is not a kf file

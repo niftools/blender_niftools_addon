@@ -67,11 +67,14 @@ class MeshPropertyProcessor:
 
     def process_property_list(self, n_block, b_obj):
         b_mesh = b_obj.data
+
         # get all valid properties that are attached to n_block
         props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
+
         # we need no material if we have no properties
         if not props:
             return
+
         # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
         for prop in props:
             if prop.name:
@@ -92,16 +95,17 @@ class MeshPropertyProcessor:
         # do initial settings for the material here
         self.nodes_wrapper.b_mat = b_mat
         self.nodes_wrapper.clear_default_nodes()
+
         # link the material to the mesh
         b_mesh.materials.append(b_mat)
 
         # set the vars on every processor
         for processor in self.processors:
-            processor.b_mesh = b_mesh
             processor.n_block = n_block
-            processor.b_mat = b_mat
             processor.b_obj = b_obj
-            processor._nodes_wrapper = self.nodes_wrapper
+            processor.b_mesh = b_mesh
+            processor.b_mat = b_mat
+            processor.nodes_wrapper = self.nodes_wrapper
 
         # run all processors
         for prop in props:
