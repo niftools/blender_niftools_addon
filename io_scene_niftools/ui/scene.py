@@ -88,6 +88,9 @@ class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
         col = flow.column()
         col.prop(nif_scene_props, "user_version_2")
 
+        col = flow.column()
+        col.prop(nif_scene_props, "scale_correction")
+
 
 # class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):
 #     bl_label = "Nif Author Info"

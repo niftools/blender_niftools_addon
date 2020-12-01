@@ -43,6 +43,8 @@ from bpy.props import PointerProperty, IntProperty
 from bpy.types import PropertyGroup
 from pyffi.formats.nif import NifFormat
 
+from io_scene_niftools.operators.common_op import CommonScale
+
 
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
@@ -59,7 +61,7 @@ def update_version_from_game(self, context):
     self.user_version_2 = self.USER_VERSION_2.get(self.game, 0)
 
 
-class Scene(PropertyGroup):
+class Scene(PropertyGroup, CommonScale):
 
     nif_version: IntProperty(
         name='Version',
