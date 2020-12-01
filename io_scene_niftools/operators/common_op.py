@@ -84,21 +84,12 @@ class CommonDevOperator:
         options={'HIDDEN'})
 
 
-class CommonImportScale:
+class CommonScale:
     # Number of nif units per blender unit.
-    scale_correction_import: bpy.props.FloatProperty(
-        name="Scale Correction Import",
+    scale_correction: bpy.props.FloatProperty(
+        name="Scale Correction",
         description="Changes size of mesh to fit onto Blender's default grid.",
         default=0.1,
-        min=0.001, max=100.0, precision=2)
-
-
-class CommonExportScale:
-    # Number of blender units per nif unit.
-    scale_correction_export: bpy.props.FloatProperty(
-        name="Scale Correction Export",
-        description="Changes size of mesh from Blender default to nif default.",
-        default=10.0,
         min=0.001, max=100.0, precision=2)
 
 
