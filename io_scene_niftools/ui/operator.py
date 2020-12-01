@@ -91,7 +91,7 @@ class OperatorImportTransformPanel(OperatorSetting, Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, "scale_correction_import")
+        layout.prop(operator, "scale_correction")
 
 
 class OperatorImportArmaturePanel(OperatorSetting, Panel):
@@ -163,7 +163,7 @@ class OperatorExportTransformPanel(OperatorSetting, Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, "scale_correction_export")
+        layout.prop(operator, "scale_correction")
 
 
 class OperatorExportArmaturePanel(OperatorSetting, Panel):

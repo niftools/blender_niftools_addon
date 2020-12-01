@@ -76,7 +76,7 @@ class KfImport(NifCommon):
 
             # use pyffi toaster to scale the tree
             toaster = pyffi.spells.nif.NifToaster()
-            toaster.scale = NifOp.props.scale_correction_import
+            toaster.scale = NifOp.props.scale_correction
             pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
 
             # calculate and set frames per second

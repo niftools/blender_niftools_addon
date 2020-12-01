@@ -108,7 +108,7 @@ class NifImport(NifCommon):
 
             # scale tree
             toaster = pyffi.spells.nif.NifToaster()
-            toaster.scale = NifOp.props.scale_correction_import
+            toaster.scale = NifOp.props.scale_correction
             pyffi.spells.nif.fix.SpellScale(data=NifData.data, toaster=toaster).recurse()
 
             # import all root blocks

@@ -42,10 +42,10 @@ from bpy.types import Operator, Panel
 from bpy_extras.io_utils import ImportHelper
 
 from io_scene_niftools.nif_import import NifImport
-from io_scene_niftools.operators.common_op import CommonDevOperator, CommonImportScale, CommonNif
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonNif
 
 
-class NifImportOperator(Operator, ImportHelper, CommonImportScale, CommonDevOperator, CommonNif):
+class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, CommonNif):
     """Operator for loading a nif file."""
 
     # Name of function for calling the nif export operators.
