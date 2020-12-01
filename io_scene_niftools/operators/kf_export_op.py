@@ -43,7 +43,7 @@ from bpy_extras.io_utils import ExportHelper
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.kf_export import KfExport
-from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonKF
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonKf
 
 
 def _game_to_enum(game):
@@ -53,7 +53,7 @@ def _game_to_enum(game):
     return enum
 
 
-class KfExportOperator(Operator, ExportHelper, CommonDevOperator, CommonScale, CommonKF):
+class KfExportOperator(Operator, ExportHelper, CommonDevOperator, CommonScale, CommonKf):
     """Operator for saving a kf file."""
 
     # Name of function for calling the kf export operators.

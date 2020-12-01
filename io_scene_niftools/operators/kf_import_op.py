@@ -42,10 +42,10 @@ from bpy.types import Operator, PropertyGroup
 from bpy_extras.io_utils import ImportHelper
 
 from io_scene_niftools.kf_import import KfImport
-from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonKF
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonKf
 
 
-class KfImportOperator(Operator, ImportHelper, CommonDevOperator, CommonScale, CommonKF):
+class KfImportOperator(Operator, ImportHelper, CommonDevOperator, CommonScale, CommonKf):
     """Operator for loading a kf file."""
 
     # Name of function for calling the nif export operators.

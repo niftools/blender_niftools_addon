@@ -103,7 +103,7 @@ class CommonNif:
         options={'HIDDEN'})
 
 
-class CommonEGM:
+class CommonEgm:
     # Default file name extension.
     filename_ext = ".egm"
 
@@ -113,7 +113,7 @@ class CommonEGM:
         options={'HIDDEN'})
 
 
-class CommonKF:
+class CommonKf:
     # Default file name extension.
     filename_ext = ".kf"
 
