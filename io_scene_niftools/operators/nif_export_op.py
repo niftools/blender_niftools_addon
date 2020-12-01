@@ -43,7 +43,7 @@ from bpy_extras.io_utils import ExportHelper
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.nif_export import NifExport
-from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonNif
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonNIF
 
 
 def _game_to_enum(game):
@@ -53,7 +53,7 @@ def _game_to_enum(game):
     return enum
 
 
-class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonScale, CommonNif):
+class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonScale, CommonNIF):
     """Operator for saving a nif file."""
 
     # Name of function for calling the nif export operators.
