@@ -44,6 +44,7 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_export.collision import Collision
 from io_scene_niftools.modules.nif_export.constraint import Constraint
@@ -54,11 +55,10 @@ from io_scene_niftools.modules.nif_export.property.object import ObjectProperty
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import util_math, util_consts
 from io_scene_niftools.utils.util_global import NifOp, EGMData, NifData
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.util_logging import NifLog, NifError
 
 
 # main export class
-from io_scene_niftools.utils.util_math import NifError
 
 
 class NifExport(NifCommon):
@@ -116,7 +116,7 @@ class NifExport(NifCommon):
                     if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                         for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE' and b_mod.use_bone_envelopes:
-                                raise util_math.NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                raise io_scene_niftools.utils.util_logging.NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
                                                          f"If you don't have vertex groups, select the bones one by one press W to "
                                                          f"convert their envelopes to vertex weights, and turn off envelopes.")
 

@@ -42,6 +42,7 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.file_io.nif import NifFile
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.modules.nif_import.animation.object import ObjectAnimation
@@ -60,8 +61,7 @@ from io_scene_niftools.modules.nif_import.property.object import ObjectProperty
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import util_math
 from io_scene_niftools.utils.util_global import NifOp, NifData
-from io_scene_niftools.utils.util_logging import NifLog
-from io_scene_niftools.utils.util_math import NifError
+from io_scene_niftools.utils.util_logging import NifLog, NifError
 
 
 class NifImport(NifCommon):
@@ -90,7 +90,7 @@ class NifImport(NifCommon):
             # to armature' mode
             if NifOp.props.skeleton == "GEOMETRY_ONLY":
                 if len(self.SELECTED_OBJECTS) != 1 or self.SELECTED_OBJECTS[0].type != 'ARMATURE':
-                    raise util_math.NifError("You must select exactly one armature in 'Import Geometry Only' mode.")
+                    raise io_scene_niftools.utils.util_logging.NifError("You must select exactly one armature in 'Import Geometry Only' mode.")
 
             NifLog.info("Importing data")
             # calculate and set frames per second
@@ -148,7 +148,7 @@ class NifImport(NifCommon):
         """Main import function."""
         # check that this is not a kf file
         if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
-            raise util_math.NifError("Use the KF import operator to load KF files.")
+            raise io_scene_niftools.utils.util_logging.NifError("Use the KF import operator to load KF files.")
 
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):

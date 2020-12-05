@@ -41,6 +41,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export.collision import Collision
 from io_scene_niftools.utils import util_math, util_consts
@@ -487,12 +488,12 @@ class BhkCollision(Collision):
             fdistlist = [fdistlist[fdict[hsh]] for hsh in fkeys]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise util_math.NifError("Mesh has too many polygons/vertices. Simply/split your mesh and try again.")
+                raise io_scene_niftools.utils.util_logging.NifError("Mesh has too many polygons/vertices. Simply/split your mesh and try again.")
 
             return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist)
 
         else:
-            raise util_math.NifError(f'Cannot export collision type {collision_shape} to collision shape list')
+            raise io_scene_niftools.utils.util_logging.NifError(f'Cannot export collision type {collision_shape} to collision shape list')
 
     def export_collision_packed(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add object ob as packed collision object to collision body

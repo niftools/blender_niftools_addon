@@ -39,6 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.utils import util_math
 from io_scene_niftools.utils.util_consts import BIP_01, B_L_SUFFIX, BIP01_L, B_R_SUFFIX, BIP01_R, NPC_SUFFIX, B_L_POSTFIX, \
     NPC_L, B_R_POSTFIX, BRACE_L, BRACE_R, NPC_R, OPEN_BRACKET, CLOSE_BRACKET
@@ -89,7 +90,7 @@ class ExportBlockRegistry:
         try:
             block = getattr(NifFormat, block_type)()
         except AttributeError:
-            raise util_math.NifError(f"'{block_type}': Unknown block type (this is probably a bug).")
+            raise io_scene_niftools.utils.util_logging.NifError(f"'{block_type}': Unknown block type (this is probably a bug).")
         return self.register_block(block, b_obj)
 
     @staticmethod

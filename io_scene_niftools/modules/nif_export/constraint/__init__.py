@@ -42,6 +42,7 @@ from pyffi.formats.nif import NifFormat
 import bpy
 import mathutils
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import util_math, util_consts
 from io_scene_niftools.utils.util_logging import NifLog
@@ -82,7 +83,7 @@ class Constraint:
                         break
                 else:
                     # no collision body for this object
-                    raise util_math.NifError(f"Object {b_obj.name} has a rigid body constraint, but is not exported as collision object")
+                    raise io_scene_niftools.utils.util_logging.NifError(f"Object {b_obj.name} has a rigid body constraint, but is not exported as collision object")
 
                 # yes there is a rigid body constraint
                 # is it of a type that is supported?
@@ -103,7 +104,7 @@ class Constraint:
                         n_bhkconstraint.type = 2
                     n_bhkdescriptor = n_bhkconstraint.limited_hinge
                 else:
-                    raise util_math.NifError("Unsupported rigid body joint type ({0}), only ball and hinge are supported.".format(b_constr.type))
+                    raise io_scene_niftools.utils.util_logging.NifError("Unsupported rigid body joint type ({0}), only ball and hinge are supported.".format(b_constr.type))
 
                 # defaults and getting object properties for user settings (should use constraint properties,
                 # but blender does not have those...)
@@ -151,7 +152,7 @@ class Constraint:
                         break
                 else:
                     # not found
-                    raise util_math.NifError("Rigid body target not exported in nif tree check that {0} is selected during export.".format(targetobj))
+                    raise io_scene_niftools.utils.util_logging.NifError("Rigid body target not exported in nif tree check that {0} is selected during export.".format(targetobj))
 
                 # priority
                 n_bhkconstraint.priority = 1

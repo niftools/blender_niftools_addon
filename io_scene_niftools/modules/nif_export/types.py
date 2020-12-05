@@ -39,6 +39,7 @@
 
 import bpy
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import util_math
 from io_scene_niftools.utils.util_global import NifOp
@@ -109,7 +110,7 @@ def export_furniture_marker(n_root, filebase):
         try:
             furniturenumber = int(filebase[15:])
         except ValueError:
-            raise util_math.NifError("Furniture marker has invalid number ({0}).\n"
+            raise io_scene_niftools.utils.util_logging.NifError("Furniture marker has invalid number ({0}).\n"
                                      "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.".format(filebase[15:]))
 
         # create furniture marker block

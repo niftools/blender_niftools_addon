@@ -96,3 +96,8 @@ class NifLog:
 
         pyffi_level_num = getattr(logging, operator.properties.pyffi_log_level)
         logging.getLogger("pyffi").setLevel(pyffi_level_num)
+
+
+class NifError(Exception):
+    """A simple custom exception class for export errors."""
+    pass

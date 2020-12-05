@@ -44,6 +44,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
 from io_scene_niftools.modules.nif_export.block_registry import block_store as block_store_export
 from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
@@ -280,7 +281,7 @@ class Armature:
                 (NifData.data.version in (0x14000005, 0x14020007) and os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif')):
 
             if not isinstance(ni_block, NifFormat.NiNode):
-                raise util_math.NifError("Cannot import skeleton: root is not a NiNode")
+                raise io_scene_niftools.utils.util_logging.NifError("Cannot import skeleton: root is not a NiNode")
 
             # for morrowind, take the Bip01 node to be the skeleton root
             if NifData.data.version == 0x04000002:
@@ -332,7 +333,7 @@ class Armature:
                         NifLog.debug(f"'{skelroot.name}' is an armature")
                 elif NifOp.props.skeleton == "GEOMETRY_ONLY":
                     if skelroot not in self.dict_armatures:
-                        raise util_math.NifError(f"Nif structure incompatible with '{b_armature_obj.name}' as armature: node '{ni_block.name}' has '{skelroot.name}' as armature")
+                        raise io_scene_niftools.utils.util_logging.NifError(f"Nif structure incompatible with '{b_armature_obj.name}' as armature: node '{ni_block.name}' has '{skelroot.name}' as armature")
 
                 for boneBlock in skininst.bones:
                     # boneBlock can be None; see pyffi issue #3114079

@@ -41,6 +41,7 @@ import os
 
 import pyffi.spells.nif.fix
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools import NifLog
 from io_scene_niftools.file_io.kf import KFFile
 from io_scene_niftools.modules.nif_export import armature
@@ -48,7 +49,7 @@ from io_scene_niftools.modules.nif_import.animation.transform import TransformAn
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import util_math
 from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_math import NifError
+from io_scene_niftools.utils.util_logging import NifError
 
 
 class KfImport(NifCommon):
@@ -67,7 +68,7 @@ class KfImport(NifCommon):
             kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
             b_armature = util_math.get_armature()
             if not b_armature:
-                raise util_math.NifError("No armature was found in scene, can not import KF animation!")
+                raise io_scene_niftools.utils.util_logging.NifError("No armature was found in scene, can not import KF animation!")
 
             # the axes used for bone correction depend on the armature in our scene
             util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)

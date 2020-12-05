@@ -42,6 +42,7 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
@@ -225,7 +226,7 @@ class ObjectDataProperty:
                 if root_object.niftools_bs_invmarker:
                     for extra_item in n_root.extra_data_list:
                         if isinstance(extra_item, NifFormat.BSInvMarker):
-                            raise util_math.NifError("Multiple Items have Inventory marker data only one item may contain this data")
+                            raise io_scene_niftools.utils.util_logging.NifError("Multiple Items have Inventory marker data only one item may contain this data")
                     else:
                         n_extra_list = NifFormat.BSInvMarker()
                         n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()

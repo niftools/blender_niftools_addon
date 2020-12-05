@@ -40,6 +40,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.util_logging
 from io_scene_niftools.modules.nif_import.animation.morph import MorphAnimation
 from io_scene_niftools.modules.nif_import.geometry.vertex.groups import VertexGroup
 from io_scene_niftools.modules.nif_import.geometry import mesh
@@ -75,7 +76,7 @@ class Mesh:
         # shortcut for mesh geometry data
         n_tri_data = n_block.data
         if not n_tri_data:
-            raise util_math.NifError(f"No shape data in {node_name}")
+            raise io_scene_niftools.utils.util_logging.NifError(f"No shape data in {node_name}")
 
         # create raw mesh from vertices and triangles
         b_mesh.from_pydata(n_tri_data.vertices, [], n_tri_data.get_triangles())

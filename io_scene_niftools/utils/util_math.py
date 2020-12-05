@@ -47,11 +47,6 @@ THETA_THRESHOLD_NEGY = 1.0e-9
 THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5
 
 
-class NifError(Exception):
-    """A simple custom exception class for export errors."""
-    pass
-
-
 def set_bone_orientation(from_forward, from_up):
     # if version in (0x14020007, ):
     #   skyrim

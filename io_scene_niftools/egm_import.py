@@ -44,7 +44,7 @@ from io_scene_niftools.file_io.egm import EGMFile
 from io_scene_niftools.modules.nif_import.animation.morph import MorphAnimation
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils.util_global import NifOp, EGMData
-from io_scene_niftools.utils.util_math import NifError
+from io_scene_niftools.utils.util_logging import NifError
 
 
 class EgmImport(NifCommon):
