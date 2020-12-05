@@ -57,14 +57,14 @@ del _dependencies_path
 import io_scene_niftools
 from io_scene_niftools import properties, operators, ui, update
 
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 with open(os.path.join(current_dir, "VERSION.txt")) as version:
     NifLog.info(f"Loading: Blender Niftools Addon: {version.read()}")
 
 import pyffi
 NifLog.info(f"Loading: Pyffi: {pyffi.__version__}")
 
-from io_scene_niftools.utils import util_debug
+from io_scene_niftools.utils import debugging
 
 # Blender addon info.
 bl_info = {

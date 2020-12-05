@@ -36,12 +36,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
+import inspect
 import logging
 
 
 class _MockOperator:
     """A default implementation of the report function in the case where the operator has not been initialised."""
+
     def report(self, level, message):
         print(f"{level}: {message}")
 
@@ -96,3 +97,12 @@ class NifLog:
 
         pyffi_level_num = getattr(logging, operator.properties.pyffi_log_level)
         logging.getLogger("pyffi").setLevel(pyffi_level_num)
+
+
+class NifError(Exception):
+    """A simple custom exception class for export errors."""
+    def __init__(self, msg):
+        caller = inspect.getframeinfo(inspect.stack()[1][0])
+        NifLog.error(f"{msg:s}")
+        NifLog.error(f"{caller.filename:s}:{caller.lineno:d}")
+    pass

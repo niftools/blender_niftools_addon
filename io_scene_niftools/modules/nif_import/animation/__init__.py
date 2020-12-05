@@ -41,7 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_import import animation
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 
 FPS = 30
 

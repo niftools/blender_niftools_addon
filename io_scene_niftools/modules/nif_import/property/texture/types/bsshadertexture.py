@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 
 
 class BSShaderTexture:

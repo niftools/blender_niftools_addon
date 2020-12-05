@@ -48,9 +48,9 @@ from pyffi.utils.quickhull import qhull3d
 from io_scene_niftools.modules.nif_import import collision
 from io_scene_niftools.modules.nif_import.collision import Collision
 from io_scene_niftools.modules.nif_import.object import Object
-from io_scene_niftools.utils import util_consts
-from io_scene_niftools.utils.util_global import NifData
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import consts
+from io_scene_niftools.utils.singleton import NifData
+from io_scene_niftools.utils.logging import NifLog
 
 
 class BhkCollision(Collision):
@@ -62,9 +62,9 @@ class BhkCollision(Collision):
 
         # TODO [collision][havok][property] Need better way to set this, maybe user property
         if NifData.data._user_version_value_._value == 12 and NifData.data._user_version_2_value_._value == 83:
-            self.HAVOK_SCALE = util_consts.HAVOK_SCALE * 10
+            self.HAVOK_SCALE = consts.HAVOK_SCALE * 10
         else:
-            self.HAVOK_SCALE = util_consts.HAVOK_SCALE
+            self.HAVOK_SCALE = consts.HAVOK_SCALE
 
         self.process_bhk = singledispatch(self.process_bhk)
         self.process_bhk.register(NifFormat.bhkTransformShape, self.import_bhktransform)
