@@ -39,10 +39,12 @@
 
 import bpy
 
+from io_scene_niftools import NifLog
 from io_scene_niftools.file_io.egm import EGMFile
 from io_scene_niftools.modules.nif_import.animation.morph import MorphAnimation
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils.util_global import NifOp, EGMData
+from io_scene_niftools.utils.util_math import NifError
 
 
 class EgmImport(NifCommon):
@@ -56,15 +58,21 @@ class EgmImport(NifCommon):
     def execute(self):
         """Main import function."""
 
-        egm_path = NifOp.props.filepath
+        try:
+            egm_path = NifOp.props.filepath
 
-        if egm_path:
-            EGMData.init(EGMFile.load_egm(egm_path))
-            # scale the data
-            EGMData.data.apply_scale(NifOp.props.scale_correction_import)
-            # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
-            # grab the active object
-            b_obj = bpy.context.view_layer.objects.active
-            if b_obj and b_obj.type == "MESH":
-                self.morph_anim.import_egm_morphs(b_obj)
+            if egm_path:
+                EGMData.init(EGMFile.load_egm(egm_path))
+                # scale the data
+                EGMData.data.apply_scale(NifOp.props.scale_correction_import)
+                # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
+                # grab the active object
+                b_obj = bpy.context.view_layer.objects.active
+                if b_obj and b_obj.type == "MESH":
+                    self.morph_anim.import_egm_morphs(b_obj)
+        except NifError:
+            NifLog.error("Error occurred during execution")
+            return {'CANCELLED'}
+
+        NifLog.info("Finished successfully")
         return {'FINISHED'}
