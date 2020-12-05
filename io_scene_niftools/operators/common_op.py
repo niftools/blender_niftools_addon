@@ -124,7 +124,7 @@ class CommonEGM:
 
 class CommonKF:
     # Default file name extension.
-    filename_ext = ".egm"
+    filename_ext = ".kf"
 
     # File name filter for file select dialog.
     filter_glob: bpy.props.StringProperty(
