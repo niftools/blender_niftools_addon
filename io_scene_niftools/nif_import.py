@@ -133,7 +133,6 @@ class NifImport(NifCommon):
                 self.import_root(root)
 
         except NifError:
-            NifLog.error("Error occurred during execution")
             return {'CANCELLED'}
 
         NifLog.info("Finished")

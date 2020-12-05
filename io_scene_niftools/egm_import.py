@@ -71,7 +71,6 @@ class EgmImport(NifCommon):
                 if b_obj and b_obj.type == "MESH":
                     self.morph_anim.import_egm_morphs(b_obj)
         except NifError:
-            NifLog.error("Error occurred during execution")
             return {'CANCELLED'}
 
         NifLog.info("Finished successfully")

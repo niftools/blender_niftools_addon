@@ -345,8 +345,7 @@ class NifExport(NifCommon):
             # save exported file (this is used by the test suite)
             self.root_blocks = [root_block]
 
-        except NifError as expt:
-            NifLog.error("Error occurred during execution")
+        except NifError:
             return {'CANCELLED'}
 
         NifLog.info("Finished")

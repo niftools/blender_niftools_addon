@@ -89,7 +89,6 @@ class KfImport(NifCommon):
                     self.tranform_anim.import_kf_root(kf_root, b_armature, bind_data)
 
         except NifError:
-            NifLog.error("Error occurred during execution")
             return {'CANCELLED'}
 
         NifLog.info("Finished successfully")
