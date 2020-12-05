@@ -455,7 +455,7 @@ class Mesh:
                                 NifLog.warn("Using less than 24 bones per partition on Skyrim export."
                                             "Set it to 24 to get higher quality skin partitions.")
                         if lostweight > NifOp.props.epsilon:
-                            NifLog.warn(f"Lost {lostweight:s} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{trishape.name}')")
+                            NifLog.warn(f"Lost {lostweight:f} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{trishape.name}')")
 
                     if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
                         partitions = skininst.partitions
