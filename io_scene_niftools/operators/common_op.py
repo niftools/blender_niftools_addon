@@ -36,8 +36,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-
 import bpy
 
 
@@ -85,10 +83,19 @@ class CommonDevOperator:
 
 
 class CommonScale:
+
+    def get_import_scale(self):
+        return bpy.context.scene.niftools_scene.scale_correction
+
+    def set_import_scale(self, scale):
+        bpy.context.scene.niftools_scene.scale_correction = scale
+
     # Number of nif units per blender unit.
     scale_correction: bpy.props.FloatProperty(
         name="Scale Correction",
         description="Changes size of mesh to fit onto Blender's default grid.",
+        get=get_import_scale,
+        set=set_import_scale,
         default=0.1,
         min=0.001, max=100.0, precision=2)
 
