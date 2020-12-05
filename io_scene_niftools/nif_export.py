@@ -44,7 +44,6 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_export.collision import Collision
 from io_scene_niftools.modules.nif_export.constraint import Constraint
@@ -116,9 +115,9 @@ class NifExport(NifCommon):
                     if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                         for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE' and b_mod.use_bone_envelopes:
-                                raise io_scene_niftools.utils.logging.NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
-                                                         f"If you don't have vertex groups, select the bones one by one press W to "
-                                                         f"convert their envelopes to vertex weights, and turn off envelopes.")
+                                raise NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                               f"If you don't have vertex groups, select the bones one by one press W to "
+                                               f"convert their envelopes to vertex weights, and turn off envelopes.")
 
                 # check for non-uniform transforms
                 scale = b_obj.matrix_local.to_scale()
@@ -282,7 +281,6 @@ class NifExport(NifCommon):
             """
 
             # apply scale
-            # moved from NifOp.props.scale_correction
             scale_correction = bpy.context.scene.niftools_scene.scale_correction
             if abs(scale_correction) > NifOp.props.epsilon:
                 NifLog.info(f"Applying scale correction {scale_correction}")
