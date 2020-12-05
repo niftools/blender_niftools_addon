@@ -58,6 +58,9 @@ from io_scene_niftools.utils.util_logging import NifLog
 
 
 # main export class
+from io_scene_niftools.utils.util_math import NifError
+
+
 class NifExport(NifCommon):
 
     IDENTITY44 = NifFormat.Matrix44()
@@ -338,11 +341,13 @@ class NifExport(NifCommon):
                 egmfile = os.path.join(directory, filebase + ext)
                 with open(egmfile, "wb") as stream:
                     EGMData.data.write(stream)
-        finally:
-            # clear progress bar
-            NifLog.info("Finished")
 
-        # save exported file (this is used by the test suite)
-        self.root_blocks = [root_block]
+            # save exported file (this is used by the test suite)
+            self.root_blocks = [root_block]
 
+        except NifError as expt:
+            NifLog.error("Error occurred during execution")
+            return {'CANCELLED'}
+
+        NifLog.info("Finished")
         return {'FINISHED'}

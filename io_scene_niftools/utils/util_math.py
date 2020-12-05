@@ -36,8 +36,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import math
-
 import bpy
 from bpy_extras.io_utils import axis_conversion
 import mathutils

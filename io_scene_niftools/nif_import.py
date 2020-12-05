@@ -61,6 +61,7 @@ from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import util_math
 from io_scene_niftools.utils.util_global import NifOp, NifData
 from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.util_math import NifError
 
 
 class NifImport(NifCommon):
@@ -130,10 +131,12 @@ class NifImport(NifCommon):
                 # import this root block
                 NifLog.debug(f"Root block: {root.get_global_display()}")
                 self.import_root(root)
-        finally:
-            # clear progress bar
-            NifLog.info("Finished")
 
+        except NifError:
+            NifLog.error("Error occurred during execution")
+            return {'CANCELLED'}
+
+        NifLog.info("Finished")
         return {'FINISHED'}
 
     def load_files(self):
