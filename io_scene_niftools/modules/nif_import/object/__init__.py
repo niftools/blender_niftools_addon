@@ -42,9 +42,9 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_import.geometry.mesh import Mesh
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 
 # used for weapon locations or attachments to a body
 PRN_DICT = {
@@ -111,7 +111,7 @@ class Object:
 
                 # this works even for arbitrary bone orientation
                 # note that matrix_parent_inverse is a unity matrix on import, so could be simplified further with a constant
-                mpi = util_math.nif_bind_to_blender_bind(b_child.matrix_parent_inverse).inverted()
+                mpi = math.nif_bind_to_blender_bind(b_child.matrix_parent_inverse).inverted()
                 mpi.translation.y -= b_obj.length
                 # essentially we mimic a transformed matrix_parent_inverse and delegate its transform
                 # nb. matrix local is relative to the armature object, not the bone
@@ -138,7 +138,7 @@ class Object:
     def import_geometry_object(self, b_armature, n_block):
         # it's a shape node and we're not importing skeleton only
         b_obj = self.create_mesh_object(n_block)
-        b_obj.matrix_local = util_math.import_matrix(n_block)  # set transform matrix for the mesh
+        b_obj.matrix_local = math.import_matrix(n_block)  # set transform matrix for the mesh
         self.mesh.import_mesh(n_block, b_obj)
         bpy.context.view_layer.objects.active = b_obj
         # store flags etc

@@ -41,7 +41,7 @@ from bpy_extras.io_utils import axis_conversion
 import mathutils
 from pyffi.formats.nif import NifFormat
 
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 
 THETA_THRESHOLD_NEGY = 1.0e-9
 THETA_THRESHOLD_NEGY_CLOSE = 1.0e-5

@@ -46,7 +46,7 @@ from io_scene_niftools.modules.nif_import.property.geometry.niproperty import Ni
 from io_scene_niftools.modules.nif_import.property.nodes_wrapper import NodesWrapper
 from io_scene_niftools.modules.nif_import.property.shader.bsshaderlightingproperty import BSShaderLightingPropertyProcessor
 from io_scene_niftools.modules.nif_import.property.shader.bsshaderproperty import BSShaderPropertyProcessor
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 
 
 class MeshPropertyProcessor:

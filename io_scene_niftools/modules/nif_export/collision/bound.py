@@ -42,7 +42,7 @@ import mathutils
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export import types
 from io_scene_niftools.modules.nif_export.collision import Collision
-from io_scene_niftools.utils import util_math
+from io_scene_niftools.utils import math
 
 
 class BSBound(Collision):
@@ -125,7 +125,7 @@ class NiCollision(Collision):
         """ Export b_obj as a NiCollisionData's bounding_volume sphere """
 
         n_bv.collision_type = 0
-        matrix = util_math.get_object_bind(b_obj)
+        matrix = math.get_object_bind(b_obj)
         center = matrix.translation
         n_bv.sphere.radius = b_obj.dimensions.x / 2
         sphere_center = n_bv.sphere.center
@@ -137,7 +137,7 @@ class NiCollision(Collision):
         """ Export b_obj as a NiCollisionData's bounding_volume box """
 
         n_bv.collision_type = 1
-        matrix = util_math.get_object_bind(b_obj)
+        matrix = math.get_object_bind(b_obj)
 
         # set center
         center = matrix.translation
@@ -163,7 +163,7 @@ class NiCollision(Collision):
         """ Export b_obj as a NiCollisionData's bounding_volume capsule """
 
         n_bv.collision_type = 2
-        matrix = util_math.get_object_bind(b_obj)
+        matrix = math.get_object_bind(b_obj)
         offset = matrix.translation
         # calculate the direction unit vector
         v_dir = (mathutils.Vector((0, 0, 1)) @ matrix.to_3x3().inverted()).normalized()

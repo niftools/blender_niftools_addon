@@ -41,12 +41,12 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.util_logging
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export.collision import Collision
-from io_scene_niftools.utils import util_math, util_consts
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math, consts
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 
 
 class BhkCollision(Collision):
@@ -57,7 +57,7 @@ class BhkCollision(Collision):
     EXPORT_OB_SOLID = True
 
     def __init__(self):
-        self.HAVOK_SCALE = util_consts.HAVOK_SCALE
+        self.HAVOK_SCALE = consts.HAVOK_SCALE
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -79,7 +79,7 @@ class BhkCollision(Collision):
         # Set Havok Scale ratio
         b_scene = bpy.context.scene.niftools_scene
         if b_scene.user_version == 12 and b_scene.user_version_2 == 83:
-            self.HAVOK_SCALE = util_consts.HAVOK_SCALE * 10
+            self.HAVOK_SCALE = consts.HAVOK_SCALE * 10
 
         # find physics properties/defaults
         # get havok material name from material name
@@ -212,8 +212,8 @@ class BhkCollision(Collision):
         n_blend_ctrl.flags = 12
         n_blend_ctrl.frequency = 1.0
         n_blend_ctrl.phase = 0.0
-        n_blend_ctrl.start_time = util_consts.FLOAT_MAX
-        n_blend_ctrl.stop_time = util_consts.FLOAT_MIN
+        n_blend_ctrl.start_time = consts.FLOAT_MAX
+        n_blend_ctrl.stop_time = consts.FLOAT_MIN
         parent_block.add_controller(n_blend_ctrl)
 
     # TODO [collision] Move to collision
@@ -353,7 +353,7 @@ class BhkCollision(Collision):
             unk_8[6] = 253
             unk_8[7] = 4
 
-            hktf = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
+            hktf = mathutils.Matrix(math.get_object_matrix(b_obj).as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
 
@@ -415,7 +415,7 @@ class BhkCollision(Collision):
 
             length = b_obj.dimensions.z - b_obj.dimensions.x
             radius = b_obj.dimensions.x / 2
-            matrix = util_math.get_object_bind(b_obj)
+            matrix = math.get_object_bind(b_obj)
 
             length_half = length / 2
             # calculate the direction unit vector
@@ -448,7 +448,7 @@ class BhkCollision(Collision):
 
         elif collision_shape == 'CONVEX_HULL':
             b_mesh = b_obj.data
-            b_transform_mat = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
+            b_transform_mat = mathutils.Matrix(math.get_object_matrix(b_obj).as_list())
 
             b_rot_quat = b_transform_mat.decompose()[1]
             b_scale_vec = b_transform_mat.decompose()[0]
@@ -469,16 +469,16 @@ class BhkCollision(Collision):
             # remove duplicates through dictionary
             vertdict = {}
             for i, vert in enumerate(vertlist):
-                vertdict[(int(vert[0] * util_consts.VERTEX_RESOLUTION),
-                          int(vert[1] * util_consts.VERTEX_RESOLUTION),
-                          int(vert[2] * util_consts.VERTEX_RESOLUTION))] = i
+                vertdict[(int(vert[0] * consts.VERTEX_RESOLUTION),
+                          int(vert[1] * consts.VERTEX_RESOLUTION),
+                          int(vert[2] * consts.VERTEX_RESOLUTION))] = i
 
             fdict = {}
             for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
-                fdict[(int(norm[0] * util_consts.NORMAL_RESOLUTION),
-                       int(norm[1] * util_consts.NORMAL_RESOLUTION),
-                       int(norm[2] * util_consts.NORMAL_RESOLUTION),
-                       int(dist * util_consts.VERTEX_RESOLUTION))] = i
+                fdict[(int(norm[0] * consts.NORMAL_RESOLUTION),
+                       int(norm[1] * consts.NORMAL_RESOLUTION),
+                       int(norm[2] * consts.NORMAL_RESOLUTION),
+                       int(dist * consts.VERTEX_RESOLUTION))] = i
 
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
@@ -488,12 +488,12 @@ class BhkCollision(Collision):
             fdistlist = [fdistlist[fdict[hsh]] for hsh in fkeys]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise io_scene_niftools.utils.util_logging.NifError("Mesh has too many polygons/vertices. Simply/split your mesh and try again.")
+                raise io_scene_niftools.utils.logging.NifError("Mesh has too many polygons/vertices. Simply/split your mesh and try again.")
 
             return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist)
 
         else:
-            raise io_scene_niftools.utils.util_logging.NifError(f'Cannot export collision type {collision_shape} to collision shape list')
+            raise io_scene_niftools.utils.logging.NifError(f'Cannot export collision type {collision_shape} to collision shape list')
 
     def export_collision_packed(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add object ob as packed collision object to collision body
@@ -519,7 +519,7 @@ class BhkCollision(Collision):
             #     raise ValueError('Not a packed list of collisions')
 
         b_mesh = b_obj.data
-        transform = mathutils.Matrix(util_math.get_object_matrix(b_obj).as_list())
+        transform = mathutils.Matrix(math.get_object_matrix(b_obj).as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in b_mesh.vertices]

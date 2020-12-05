@@ -42,15 +42,15 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.util_logging
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_niftools.modules.nif_import.object import PRN_DICT
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 
 
 class ObjectProperty:
@@ -226,7 +226,7 @@ class ObjectDataProperty:
                 if root_object.niftools_bs_invmarker:
                     for extra_item in n_root.extra_data_list:
                         if isinstance(extra_item, NifFormat.BSInvMarker):
-                            raise io_scene_niftools.utils.util_logging.NifError("Multiple Items have Inventory marker data only one item may contain this data")
+                            raise io_scene_niftools.utils.logging.NifError("Multiple Items have Inventory marker data only one item may contain this data")
                     else:
                         n_extra_list = NifFormat.BSInvMarker()
                         n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()

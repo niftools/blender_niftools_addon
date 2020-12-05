@@ -38,9 +38,9 @@
 # ***** END LICENSE BLOCK *****
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.util_logging
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
-from io_scene_niftools.utils import util_math
+from io_scene_niftools.utils import math
 
 
 class BSShaderProperty:
@@ -51,7 +51,7 @@ class BSShaderProperty:
     def export_bs_shader_property(self, b_mat=None):
         """Export a Bethesda shader property block."""
         if b_mat.niftools_shader.bs_shadertype == 'None':
-            raise io_scene_niftools.utils.util_logging.NifError(f"Export version expected shader. No shader applied to mesh '{b_mat}', these cannot be exported to NIF."
+            raise io_scene_niftools.utils.logging.NifError(f"Export version expected shader. No shader applied to mesh '{b_mat}', these cannot be exported to NIF."
                                      f"Set shader before exporting.")
 
         self.texturehelper.determine_texture_types(b_mat)

@@ -41,12 +41,11 @@ from abc import ABC
 import bpy
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.util_logging
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export import animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp, NifData
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.singleton import NifOp, NifData
+from io_scene_niftools.utils.logging import NifLog
 
 # FPS = 30
 
@@ -155,7 +154,7 @@ class Animation(ABC):
                 controlled_block.node_name = target_name
                 controlled_block.controller_type = "NiTransformController"
         else:
-            raise io_scene_niftools.utils.util_logging.NifError("Unsupported KeyframeController parent!")
+            raise io_scene_niftools.utils.logging.NifError("Unsupported KeyframeController parent!")
         
         return n_kfc, n_kfi
 

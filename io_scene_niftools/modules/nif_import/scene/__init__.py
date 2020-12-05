@@ -40,7 +40,7 @@
 import bpy
 from pyffi.formats.nif import NifFormat
 from io_scene_niftools.properties.scene import _game_to_enum
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 
 def import_version_info(data):
     scene = bpy.context.scene.niftools_scene

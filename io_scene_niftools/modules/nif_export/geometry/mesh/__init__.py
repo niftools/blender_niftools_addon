@@ -41,15 +41,15 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.util_logging
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.geometry import mesh
 from io_scene_niftools.modules.nif_export.animation.morph import MorphAnimation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export.property.object import ObjectProperty
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp, NifData
-from io_scene_niftools.utils.util_logging import NifLog, NifError
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.singleton import NifOp, NifData
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class Mesh:
@@ -151,7 +151,7 @@ class Mesh:
             # the trishape itself then needs identity transform (default)
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
-                util_math.set_object_matrix(b_obj, trishape)
+                math.set_object_matrix(b_obj, trishape)
 
             # check if there is a parent
             if n_parent:
@@ -250,7 +250,7 @@ class Mesh:
                             break
 
                     if f_index[i] > 65535:
-                        raise io_scene_niftools.utils.util_logging.NifError("Too many vertices. Decimate your mesh and try again.")
+                        raise io_scene_niftools.utils.logging.NifError("Too many vertices. Decimate your mesh and try again.")
 
                     if f_index[i] == len(vertquad_list):
                         # first: add it to the vertex map
@@ -295,7 +295,7 @@ class Mesh:
                 self.select_unassigned_polygons(b_mesh, b_obj, polygons_without_bodypart)
 
             if len(trilist) > 65535:
-                raise io_scene_niftools.utils.util_logging.NifError("Too many polygons. Decimate your mesh and try again.")
+                raise io_scene_niftools.utils.logging.NifError("Too many polygons. Decimate your mesh and try again.")
             if len(vertlist) == 0:
                 continue  # m_4444x: skip 'empty' material indices
 
@@ -331,7 +331,7 @@ class Mesh:
                 tridata.bs_num_uv_sets = len(mesh_uv_layers)
                 if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
                     if len(mesh_uv_layers) > 1:
-                        raise io_scene_niftools.utils.util_logging.NifError("Fallout 3 does not support multiple UV layers")
+                        raise io_scene_niftools.utils.logging.NifError("Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
                 for j, uv_layer in enumerate(mesh_uv_layers):
@@ -483,7 +483,7 @@ class Mesh:
         for n_block, b_obj in block_store.block_to_obj.items():
             if isinstance(n_block, NifFormat.NiNode) and b_bone == b_obj:
                 return n_block
-        raise io_scene_niftools.utils.util_logging.NifError(f"Bone '{b_bone.name}' not found.")
+        raise io_scene_niftools.utils.logging.NifError(f"Bone '{b_bone.name}' not found.")
 
     def get_body_part_groups(self, b_obj, b_mesh):
         """Returns a set of vertices (no dupes) for each body part"""
@@ -512,7 +512,7 @@ class Mesh:
                     skininst.skeleton_root = block
                     break
         else:
-            raise io_scene_niftools.utils.util_logging.NifError(f"Skeleton root '{n_root_name}' not found.")
+            raise io_scene_niftools.utils.logging.NifError(f"Skeleton root '{n_root_name}' not found.")
 
         # create skinning data and link it
         skindata = block_store.create_block("NiSkinData", b_obj)
@@ -520,7 +520,7 @@ class Mesh:
 
         skindata.has_vertex_weights = True
         # fix geometry rest pose: transform relative to skeleton root
-        skindata.set_transform(util_math.get_object_matrix(b_obj).get_inverse())
+        skindata.set_transform(math.get_object_matrix(b_obj).get_inverse())
         return skininst, skindata
 
     # TODO [object][flags] Move up to object
@@ -566,7 +566,7 @@ class Mesh:
             # select unweighted vertices
             bpy.ops.mesh.select_ungrouped(extend=False)
 
-            raise io_scene_niftools.utils.util_logging.NifError("Cannot export mesh with unweighted vertices. "
+            raise io_scene_niftools.utils.logging.NifError("Cannot export mesh with unweighted vertices. "
                                      "The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
 

@@ -40,7 +40,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-from io_scene_niftools.utils.util_logging import NifLog, NifError
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class NifFile:

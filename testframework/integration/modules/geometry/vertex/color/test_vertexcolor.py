@@ -89,7 +89,7 @@ class TestBaseVertexColor(SingleNif):
 
     def b_check_data(self):
         # TODO [geometry] nif file has wrong transform and wrong geometry
-        from io_scene_niftools.utils import util_debug
+        from io_scene_niftools.utils import debugging
         # nif_debug.start_debug()
 
         b_obj = bpy.data.objects[self.b_name]

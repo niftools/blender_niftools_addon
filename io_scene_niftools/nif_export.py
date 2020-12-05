@@ -44,7 +44,7 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.util_logging
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_export.collision import Collision
 from io_scene_niftools.modules.nif_export.constraint import Constraint
@@ -53,9 +53,9 @@ from io_scene_niftools.modules.nif_export.object import Object
 from io_scene_niftools.modules.nif_export import scene
 from io_scene_niftools.modules.nif_export.property.object import ObjectProperty
 from io_scene_niftools.nif_common import NifCommon
-from io_scene_niftools.utils import util_math, util_consts
-from io_scene_niftools.utils.util_global import NifOp, EGMData, NifData
-from io_scene_niftools.utils.util_logging import NifLog, NifError
+from io_scene_niftools.utils import math, consts
+from io_scene_niftools.utils.singleton import NifOp, EGMData, NifData
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 # main export class
@@ -116,7 +116,7 @@ class NifExport(NifCommon):
                     if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                         for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE' and b_mod.use_bone_envelopes:
-                                raise io_scene_niftools.utils.util_logging.NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                raise io_scene_niftools.utils.logging.NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
                                                          f"If you don't have vertex groups, select the bones one by one press W to "
                                                          f"convert their envelopes to vertex weights, and turn off envelopes.")
 
@@ -126,10 +126,10 @@ class NifExport(NifCommon):
                     NifLog.warn(f"Non-uniform scaling not supported.\n"
                                 f"Workaround: apply size and rotation (CTRL-A) on '{b_obj.name}'.")
 
-            b_armature = util_math.get_armature()
+            b_armature = math.get_armature()
             # some scenes may not have an armature, so nothing to do here
             if b_armature:
-                util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
+                math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
             prefix = ""
             NifLog.info("Exporting")
@@ -217,8 +217,8 @@ class NifExport(NifCommon):
                             n_kfc.flags = 12
                             n_kfc.frequency = 1.0
                             n_kfc.phase = 0.0
-                            n_kfc.start_time = util_consts.FLOAT_MAX
-                            n_kfc.stop_time = util_consts.FLOAT_MIN
+                            n_kfc.start_time = consts.FLOAT_MAX
+                            n_kfc.stop_time = consts.FLOAT_MIN
             else:
                 # here comes everything that should be exported EXCEPT for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
