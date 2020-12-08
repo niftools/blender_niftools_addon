@@ -42,10 +42,11 @@ import os.path
 import bpy
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 
 
 class TextureWriter:
@@ -105,13 +106,13 @@ class TextureWriter:
         """
 
         if not isinstance(b_texture_node, bpy.types.ShaderNodeTexImage):
-            raise util_math.NifError(f"Expected a Shader node texture, got {type(b_texture_node)}")
+            raise io_scene_niftools.utils.logging.NifError(f"Expected a Shader node texture, got {type(b_texture_node)}")
         # get filename from image
 
         # TODO [b_texture_node] still needed? can b_texture_node.image be None in current blender?
         # check that image is loaded
         if b_texture_node.image is None:
-            raise util_math.NifError("Image type texture has no file loaded ('{0}')".format(b_texture_node.name))
+            raise io_scene_niftools.utils.logging.NifError("Image type texture has no file loaded ('{0}')".format(b_texture_node.name))
 
         filename = b_texture_node.image.filepath
 

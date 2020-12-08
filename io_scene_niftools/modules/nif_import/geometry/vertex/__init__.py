@@ -37,8 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 import mathutils
 
 class Vertex:

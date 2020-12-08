@@ -45,8 +45,8 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.modules.nif_import.object import block_registry
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.logging import NifLog
 
 
 def interpolate(x_out, x_in, y_in):
@@ -235,7 +235,7 @@ class TransformAnimation(Animation):
             for t, val in eulers:
                 key = mathutils.Euler(val)
                 if bone_name:
-                    key = util_math.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
+                    key = math.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
                 self.add_key(fcurves, t, key, interp_rot)
         elif rotations:
             NifLog.debug('Rotation keys...(quaternions)')
@@ -243,7 +243,7 @@ class TransformAnimation(Animation):
             for t, val in rotations:
                 key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                 if bone_name:
-                    key = util_math.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
+                    key = math.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
                 self.add_key(fcurves, t, key, interp_rot)
         if translations:
             NifLog.debug('Translation keys...')
@@ -251,7 +251,7 @@ class TransformAnimation(Animation):
             for t, val in translations:
                 key = mathutils.Vector([val.x, val.y, val.z])
                 if bone_name:
-                    key = util_math.import_keymat(n_bone_bind_rot_inv, mathutils.Matrix.Translation(key - n_bone_bind_trans)).to_translation()
+                    key = math.import_keymat(n_bone_bind_rot_inv, mathutils.Matrix.Translation(key - n_bone_bind_trans)).to_translation()
                 self.add_key(fcurves, t, key, interp_loc)
         if scales:
             NifLog.debug('Scale keys...')
@@ -263,15 +263,15 @@ class TransformAnimation(Animation):
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""
         # find keyframe controller
-        n_kfc = util_math.find_controller(n_block, NifFormat.NiKeyframeController)
+        n_kfc = math.find_controller(n_block, NifFormat.NiKeyframeController)
         # try again
         if not n_kfc:
-            n_kfc = util_math.find_controller(n_block, NifFormat.NiTransformController)
+            n_kfc = math.find_controller(n_block, NifFormat.NiTransformController)
         if n_kfc:
             # skeletal animation
             if bone_name:
-                bone_bm = util_math.import_matrix(n_block)  # base pose
-                n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = util_math.decompose_srt(bone_bm)
+                bone_bm = math.import_matrix(n_block)  # base pose
+                n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = math.decompose_srt(bone_bm)
                 self.import_keyframe_controller(n_kfc, b_obj, bone_name, n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
             # object-level animation
             else:

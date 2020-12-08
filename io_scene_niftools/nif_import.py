@@ -42,6 +42,7 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.logging
 from io_scene_niftools.file_io.nif import NifFile
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.modules.nif_import.animation.object import ObjectAnimation
@@ -58,9 +59,9 @@ from io_scene_niftools.modules.nif_import import scene
 from io_scene_niftools.modules.nif_import.property.object import ObjectProperty
 
 from io_scene_niftools.nif_common import NifCommon
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp, NifData
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.singleton import NifOp, NifData
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class NifImport(NifCommon):
@@ -89,7 +90,7 @@ class NifImport(NifCommon):
             # to armature' mode
             if NifOp.props.skeleton == "GEOMETRY_ONLY":
                 if len(self.SELECTED_OBJECTS) != 1 or self.SELECTED_OBJECTS[0].type != 'ARMATURE':
-                    raise util_math.NifError("You must select exactly one armature in 'Import Geometry Only' mode.")
+                    raise io_scene_niftools.utils.logging.NifError("You must select exactly one armature in 'Import Geometry Only' mode.")
 
             NifLog.info("Importing data")
             # calculate and set frames per second
@@ -132,10 +133,11 @@ class NifImport(NifCommon):
                 # import this root block
                 NifLog.debug(f"Root block: {root.get_global_display()}")
                 self.import_root(root)
-        finally:
-            # clear progress bar
-            NifLog.info("Finished")
 
+        except NifError:
+            return {'CANCELLED'}
+
+        NifLog.info("Finished")
         return {'FINISHED'}
 
     def load_files(self):
@@ -147,7 +149,7 @@ class NifImport(NifCommon):
         """Main import function."""
         # check that this is not a kf file
         if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
-            raise util_math.NifError("Use the KF import operator to load KF files.")
+            raise io_scene_niftools.utils.logging.NifError("Use the KF import operator to load KF files.")
 
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
@@ -224,7 +226,7 @@ class NifImport(NifCommon):
                     b_obj = self.armaturehelper.import_armature(n_block)
                 else:
                     n_name = block_store.import_name(n_block)
-                    b_obj = util_math.get_armature()
+                    b_obj = math.get_armature()
                     NifLog.info(f"Merging nif tree '{n_name}' with armature '{b_obj.name}'")
                     if n_name != b_obj.name:
                         NifLog.warn(f"Using Nif block '{n_name}' as armature '{b_obj.name}' but names do not match")
@@ -269,7 +271,7 @@ class NifImport(NifCommon):
             # set object transform, this must be done after all children objects have been parented to b_obj
             if isinstance(b_obj, bpy.types.Object):
                 # note: bones and this object's children already have their matrix set
-                b_obj.matrix_local = util_math.import_matrix(n_block)
+                b_obj.matrix_local = math.import_matrix(n_block)
 
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:

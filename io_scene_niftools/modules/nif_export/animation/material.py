@@ -41,9 +41,9 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 
 
 class MaterialAnimation(Animation):

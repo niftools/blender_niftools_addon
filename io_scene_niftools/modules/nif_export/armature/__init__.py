@@ -40,9 +40,9 @@ import bpy
 from io_scene_niftools.modules.nif_export import types
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 
 
 def get_bind_data(b_armature):
@@ -50,7 +50,7 @@ def get_bind_data(b_armature):
     if b_armature:
         bind_data = {}
         for b_bone in b_armature.data.bones:
-            n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = util_math.decompose_srt(util_math.get_bind_matrix(b_bone))
+            n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = math.decompose_srt(math.get_bind_matrix(b_bone))
             bind_data[b_bone.name] = (n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
         return bind_data
 
@@ -82,7 +82,7 @@ class Armature:
 
         self.export_bone_flags(b_bone, n_node)
         # rest pose
-        util_math.set_object_matrix(b_bone, n_node)
+        math.set_object_matrix(b_bone, n_node)
 
         # per-bone animation
         self.transform_anim.export_transforms(n_node, b_obj, self.b_action, b_bone)

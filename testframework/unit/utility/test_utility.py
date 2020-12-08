@@ -44,7 +44,7 @@ from nose.tools import nottest
 import mathutils
 import math
 
-from io_scene_niftools.utils import util_math
+from io_scene_niftools.utils import math
 
 from pyffi.formats.nif import NifFormat
 
@@ -89,7 +89,7 @@ class TestMatrixOperations:
         cls.blender_matrix = None
 
     def test_import_matrix(self):
-        converted_mat = util_math.import_matrix(self.niBlock)
+        converted_mat = math.import_matrix(self.niBlock)
 
         print("Comparing Matrices:")
         for row in range(0, 4):
@@ -214,7 +214,7 @@ class TestFindBlockProperties:
 
     def test_find_no_prop(self):
         """Expect None, no proterty"""
-        prop = util_math.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
+        prop = math.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
         nose.tools.assert_true((prop is None))
 
     def test_find_property_no_matching(self):
@@ -222,7 +222,7 @@ class TestFindBlockProperties:
         self.n_ninode.add_property(self.ni_texture_prop)
         nose.tools.assert_equals(self.n_ninode.num_properties, 1)
 
-        prop = util_math.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
+        prop = math.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
         nose.tools.assert_true(prop is None)
 
     def test_find_property(self):
@@ -232,5 +232,5 @@ class TestFindBlockProperties:
         self.n_ninode.add_property(self.ni_mat_prop1)
         nose.tools.assert_equals(self.n_ninode.num_properties, 3)
 
-        prop = util_math.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
+        prop = math.find_property(self.n_ninode, NifFormat.NiMaterialProperty)
         nose.tools.assert_true(prop == self.ni_mat_prop)

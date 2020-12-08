@@ -39,7 +39,7 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 
 
 class VertexGroup:

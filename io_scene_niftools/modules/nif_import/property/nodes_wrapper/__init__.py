@@ -42,8 +42,8 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_import.geometry.vertex import Vertex
 from io_scene_niftools.modules.nif_import.property.texture.loader import TextureLoader
-from io_scene_niftools.utils.util_logging import NifLog
-from io_scene_niftools.utils.util_nodes import nodes_iterate
+from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.nodes import nodes_iterate
 
 
 # TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property

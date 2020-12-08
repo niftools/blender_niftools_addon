@@ -43,8 +43,8 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_export.animation.material import MaterialAnimation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 
 EXPORT_OPTIMIZE_MATERIALS = True
 
