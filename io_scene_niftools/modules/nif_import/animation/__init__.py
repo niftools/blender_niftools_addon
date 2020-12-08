@@ -91,7 +91,7 @@ class Animation:
         # armature pose bone animation
         if bonename:
             fcurves = [
-                action.fcurves.new(data_path=f'pose.bones["{bonename}""].{dtype}', index=i, action_group=bonename)
+                action.fcurves.new(data_path=f'pose.bones["{bonename}"].{dtype}', index=i, action_group=bonename)
                 for i in drange]
         # shapekey pose bone animation
         elif keyname:
