@@ -1,17 +1,30 @@
+Version v0.0.4
+==============
+- #401 Consolidate scale correction value to be shared.
+- #398 Animation - Imported animations with 'blank' keyframes containing no transformation
+- #399 Animation - Fix fcurve data path
+- #396 Usability - Improve logs to be more user friendly, remove stack traces
+- #395 Bug - Exporting mesh with weight would cause execution to fail
+- Fixed issue with .nif extension not being set on export
+- Fixed issue with .kf being mapped to .egm
+
 Version v0.0.3
-============================
+==============
 - #389 Docs - Updating Sphinx Documentation
 
 Version v0.0.2
-============================
+==============
 - #390 Bug - Fixes bug where logging scale correction on export would cause execution to fail
 
 Version v0.0.1
-============================
+==============
 
 - Rename plugin to use new naming scheme
 - Add in updated templates
 - Add in auto-updater to allow addon to fetch releases and upgrade from within user preferences
+
+
+
 
 .. note::
 The following are older versions, using the old naming scheme
