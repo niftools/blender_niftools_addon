@@ -45,8 +45,9 @@ from io_scene_niftools.file_io.kf import KFFile
 from io_scene_niftools.modules.nif_export import armature
 from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_niftools.nif_common import NifCommon
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_global import NifOp
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class KfImport(NifCommon):
@@ -60,27 +61,33 @@ class KfImport(NifCommon):
     def execute(self):
         """Main import function."""
 
-        dirname = os.path.dirname(NifOp.props.filepath)
-        kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
-        b_armature = util_math.get_armature()
-        if not b_armature:
-            raise util_math.NifError("No armature was found in scene, can not import KF animation!")
+        try:
+            dirname = os.path.dirname(NifOp.props.filepath)
+            kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
+            b_armature = math.get_armature()
+            if not b_armature:
+                raise NifError("No armature was found in scene, can not import KF animation!")
 
-        # the axes used for bone correction depend on the armature in our scene
-        util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
+            # the axes used for bone correction depend on the armature in our scene
+            math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
-        # get nif space bind pose of armature here for all anims
-        bind_data = armature.get_bind_data(b_armature)
-        for kf_file in kf_files:
-            kfdata = KFFile.load_kf(kf_file)
+            # get nif space bind pose of armature here for all anims
+            bind_data = armature.get_bind_data(b_armature)
+            for kf_file in kf_files:
+                kfdata = KFFile.load_kf(kf_file)
 
-            # use pyffi toaster to scale the tree
-            toaster = pyffi.spells.nif.NifToaster()
-            toaster.scale = NifOp.props.scale_correction_import
-            pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
+                # use pyffi toaster to scale the tree
+                toaster = pyffi.spells.nif.NifToaster()
+                toaster.scale = NifOp.props.scale_correction
+                pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
 
-            # calculate and set frames per second
-            self.tranform_anim.set_frames_per_second(kfdata.roots)
-            for kf_root in kfdata.roots:
-                self.tranform_anim.import_kf_root(kf_root, b_armature, bind_data)
+                # calculate and set frames per second
+                self.tranform_anim.set_frames_per_second(kfdata.roots)
+                for kf_root in kfdata.roots:
+                    self.tranform_anim.import_kf_root(kf_root, b_armature, bind_data)
+
+        except NifError:
+            return {'CANCELLED'}
+
+        NifLog.info("Finished successfully")
         return {'FINISHED'}

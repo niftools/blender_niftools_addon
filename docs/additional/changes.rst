@@ -1,7 +1,9 @@
+.. _changes:
+
 #######
 Changes
 #######
-.. _changes:
+
 .. toctree::
    :maxdepth: 1
 

@@ -43,6 +43,8 @@ from bpy.props import PointerProperty, IntProperty
 from bpy.types import PropertyGroup
 from pyffi.formats.nif import NifFormat
 
+from io_scene_niftools.operators.common_op import CommonScale
+
 
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
@@ -62,21 +64,24 @@ def update_version_from_game(self, context):
 class Scene(PropertyGroup):
 
     nif_version: IntProperty(
-        name='Nif Version',
+        name='Version',
+        description="The Gamebryo Engine version used",
         default=0
     )
 
     user_version: IntProperty(
         name='User Version',
+        description="Studio specific version, used to denote versioning from game to game",
         default=0
     )
 
     user_version_2: IntProperty(
         name='User Version 2',
+        description="Studio specific version, used to denote versioning from game to game",
         default=0
     )
 
-    #: For which game to export.
+    # For which game to export.
     game: bpy.props.EnumProperty(
         items=[
             (_game_to_enum(game), game, "Export for " + game)
@@ -88,7 +93,7 @@ class Scene(PropertyGroup):
         default='OBLIVION',
         update=update_version_from_game)
 
-    #: Map game enum to nif version.
+    # Map game enum to nif version.
     VERSION = {
         _game_to_enum(game): versions[-1]
         for game, versions in NifFormat.games.items() if game != '?'
@@ -106,3 +111,9 @@ class Scene(PropertyGroup):
         'FALLOUT_3': 34,
         'SKYRIM': 83
     }
+
+    scale_correction: bpy.props.FloatProperty(
+        name="Scale Correction",
+        description="Changes size of mesh to fit onto Blender's default grid.",
+        default=0.1,
+        min=0.001, max=100.0, precision=2)

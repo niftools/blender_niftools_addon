@@ -38,34 +38,23 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, PropertyGroup
 from bpy_extras.io_utils import ImportHelper
 
-from io_scene_niftools import kf_import
-from .nif_common_op import NifOperatorCommon
+from io_scene_niftools.kf_import import KfImport
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonKf
 
 
-class KfImportOperator(Operator, ImportHelper, NifOperatorCommon):
+class KfImportOperator(Operator, ImportHelper, CommonDevOperator, CommonScale, CommonKf):
     """Operator for loading a kf file."""
 
-    #: Name of function for calling the nif export operators.
+    # Name of function for calling the nif export operators.
     bl_idname = "import_scene.kf"
 
-    #: How the nif import operators is labelled in the user interface.
+    # How the nif import operators is labelled in the user interface.
     bl_label = "Import KF"
 
-    #: Number of nif units per blender unit.
-    scale_correction_import: bpy.props.FloatProperty(
-        name="Scale Correction Import",
-        description="Changes size of mesh to fit onto Blender's default grid.",
-        default=1.0,
-        min=0.01, max=100.0, precision=2)
-
-    #: File name filter for file select dialog.
-    filter_glob: bpy.props.StringProperty(
-        default="*.kf", options={'HIDDEN'})
-
-    files: bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
+    files: bpy.props.CollectionProperty(type=PropertyGroup)
 
     def execute(self, context):
         """Execute the import operators: first constructs a
@@ -74,4 +63,4 @@ class KfImportOperator(Operator, ImportHelper, NifOperatorCommon):
         method.
         """
 
-        return kf_import.KfImport(self, context).execute()
+        return KfImport(self, context).execute()

@@ -5,8 +5,7 @@ Features
 .. 
    todo::
 
-   It would be a good habit to document every feature we have,
-   and quick instructions for how to use them.
+   It would be a good habit to document every feature we have, and quick instructions for how to use them.
    
    Split this up into separate files mimicking test framework structure.
 

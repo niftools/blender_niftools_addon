@@ -52,12 +52,14 @@ from io_scene_niftools.modules.nif_export.object import Object
 from io_scene_niftools.modules.nif_export import scene
 from io_scene_niftools.modules.nif_export.property.object import ObjectProperty
 from io_scene_niftools.nif_common import NifCommon
-from io_scene_niftools.utils import util_math, util_consts
-from io_scene_niftools.utils.util_global import NifOp, EGMData, NifData
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math, consts
+from io_scene_niftools.utils.singleton import NifOp, EGMData, NifData
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 # main export class
+
+
 class NifExport(NifCommon):
 
     IDENTITY44 = NifFormat.Matrix44()
@@ -70,7 +72,6 @@ class NifExport(NifCommon):
 
         # Helper systems
         self.transform_anim = TransformAnimation()
-        # self.propertyhelper = Property(parent=self)
         self.constrainthelper = Constraint()
         self.objecthelper = Object()
         self.exportable_objects = []
@@ -114,9 +115,9 @@ class NifExport(NifCommon):
                     if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                         for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE' and b_mod.use_bone_envelopes:
-                                raise util_math.NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
-                                                         f"If you don't have vertex groups, select the bones one by one press W to "
-                                                         f"convert their envelopes to vertex weights, and turn off envelopes.")
+                                raise NifError(f"'{b_obj.name}': Cannot export envelope skinning. If you have vertex groups, turn off envelopes.\n"
+                                               f"If you don't have vertex groups, select the bones one by one press W to "
+                                               f"convert their envelopes to vertex weights, and turn off envelopes.")
 
                 # check for non-uniform transforms
                 scale = b_obj.matrix_local.to_scale()
@@ -124,10 +125,10 @@ class NifExport(NifCommon):
                     NifLog.warn(f"Non-uniform scaling not supported.\n"
                                 f"Workaround: apply size and rotation (CTRL-A) on '{b_obj.name}'.")
 
-            b_armature = util_math.get_armature()
+            b_armature = math.get_armature()
             # some scenes may not have an armature, so nothing to do here
             if b_armature:
-                util_math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
+                math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
             prefix = ""
             NifLog.info("Exporting")
@@ -215,8 +216,8 @@ class NifExport(NifCommon):
                             n_kfc.flags = 12
                             n_kfc.frequency = 1.0
                             n_kfc.phase = 0.0
-                            n_kfc.start_time = util_consts.FLOAT_MAX
-                            n_kfc.stop_time = util_consts.FLOAT_MIN
+                            n_kfc.start_time = consts.FLOAT_MAX
+                            n_kfc.stop_time = consts.FLOAT_MIN
             else:
                 # here comes everything that should be exported EXCEPT for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
@@ -280,16 +281,17 @@ class NifExport(NifCommon):
             """
 
             # apply scale
-            if abs(NifOp.props.scale_correction_export) > NifOp.props.epsilon:
-                NifLog.info(f"Applying scale correction {NifOp.props.scale_correction_export}")
+            scale_correction = bpy.context.scene.niftools_scene.scale_correction
+            if abs(scale_correction) > NifOp.props.epsilon:
+                NifLog.info(f"Applying scale correction {scale_correction}")
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
-                toaster.scale = NifOp.props.scale_correction_export
+                toaster.scale = 1 / scale_correction
                 pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
 
                 # also scale egm
                 if EGMData.data:
-                    EGMData.data.apply_scale(NifOp.props.scale_correction_export)
+                    EGMData.data.apply_scale(1 / scale_correction)
 
             # generate mopps (must be done after applying scale!)
             if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
@@ -339,11 +341,12 @@ class NifExport(NifCommon):
                 egmfile = os.path.join(directory, filebase + ext)
                 with open(egmfile, "wb") as stream:
                     EGMData.data.write(stream)
-        finally:
-            # clear progress bar
-            NifLog.info("Finished")
 
-        # save exported file (this is used by the test suite)
-        self.root_blocks = [root_block]
+            # save exported file (this is used by the test suite)
+            self.root_blocks = [root_block]
 
+        except NifError:
+            return {'CANCELLED'}
+
+        NifLog.info("Finished")
         return {'FINISHED'}

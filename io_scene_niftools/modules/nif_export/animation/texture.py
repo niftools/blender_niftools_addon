@@ -39,10 +39,11 @@
 
 import bpy
 
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export.property.texture.writer import TextureWriter
-from io_scene_niftools.utils import util_math
+from io_scene_niftools.utils import math
 
 
 class TextureAnimation(Animation):
@@ -88,5 +89,5 @@ class TextureAnimation(Animation):
             n_flip.sources[n_flip.num_sources - 1] = tex
             count += 1
         if count < 2:
-            raise util_math.NifError("Error in Texture Flip buffer '{}': must define at least two textures".format(fliptxt.name))
+            raise io_scene_niftools.utils.logging.NifError("Error in Texture Flip buffer '{}': must define at least two textures".format(fliptxt.name))
         n_flip.delta = (n_flip.stop_time - n_flip.start_time) / count

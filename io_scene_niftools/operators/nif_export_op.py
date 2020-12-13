@@ -42,8 +42,8 @@ from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 from pyffi.formats.nif import NifFormat
 
-from io_scene_niftools import nif_export
-from .nif_common_op import NifOperatorCommon
+from io_scene_niftools.nif_export import NifExport
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonNif, CommonScale
 
 
 def _game_to_enum(game):
@@ -53,7 +53,7 @@ def _game_to_enum(game):
     return enum
 
 
-class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
+class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonNif, CommonScale):
     """Operator for saving a nif file."""
 
     # Name of function for calling the nif export operators.
@@ -61,13 +61,6 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
 
     # How the nif export operators is labelled in the user interface.
     bl_label = "Export NIF"
-
-    # Number of blender units per nif unit.
-    scale_correction_export: bpy.props.FloatProperty(
-        name="Scale Correction Export",
-        description="Changes size of mesh from Blender default to nif default.",
-        default=1.0,
-        min=0.01, max=100.0, precision=2)
 
     # How to export animation.
     animation: bpy.props.EnumProperty(
@@ -77,7 +70,7 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
             ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif."),
             ('ANIM_KF', "Animation only (kf)", "Only animation to a single kf."),
         ],
-        name="Process",
+        name="Animation export",
         description="Selects which parts of the blender file to export.",
         default='ALL_NIF')
 
@@ -141,7 +134,7 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
     # Whether or not to remove duplicate materials
     optimise_materials: bpy.props.BoolProperty(
         name="Optimise Materials",
-        description="",
+        description="Remove duplicate materials",
         default=True)
 
     # Map game enum to nif version.
@@ -150,10 +143,13 @@ class NifExportOperator(Operator, ExportHelper, NifOperatorCommon):
         for game, versions in NifFormat.games.items() if game != '?'
     }
 
+    def draw(self, context):
+        pass
+
     def execute(self, context):
         """Execute the export operators: first constructs a
         :class:`~io_scene_niftools.nif_export.NifExport` instance and then
         calls its :meth:`~io_scene_niftools.nif_export.NifExport.execute`
         method.
         """
-        return nif_export.NifExport(self, context).execute()
+        return NifExport(self, context).execute()

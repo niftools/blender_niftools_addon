@@ -38,14 +38,14 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Panel
 from bpy_extras.io_utils import ImportHelper
 
-from io_scene_niftools import nif_import
-from .nif_common_op import NifOperatorCommon
+from io_scene_niftools.nif_import import NifImport
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonNif
 
 
-class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
+class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, CommonNif):
     """Operator for loading a nif file."""
 
     # Name of function for calling the nif export operators.
@@ -53,13 +53,6 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
 
     # How the nif import operators is labelled in the user interface.
     bl_label = "Import NIF"
-
-    # Number of nif units per blender unit.
-    scale_correction_import: bpy.props.FloatProperty(
-        name="Scale Correction Import",
-        description="Changes size of mesh to fit onto Blender's default grid.",
-        default=1.0,
-        min=0.01, max=100.0, precision=3)
 
     # Whether or not to import the header information into the scene
     override_scene_info: bpy.props.BoolProperty(
@@ -118,8 +111,11 @@ class NifImportOperator(Operator, ImportHelper, NifOperatorCommon):
         description="Merge vertices that have identical location and normal values.",
         default=False)
 
+    def draw(self, context):
+        pass
+
     def execute(self, context):
         """Execute the import operators: first constructs a :class:`~io_scene_niftools.nif_import.NifImport` instance and then
         calls its :meth:`~io_scene_niftools.nif_import.NifImport.execute` method."""
 
-        return nif_import.NifImport(self, context).execute()
+        return NifImport(self, context).execute()

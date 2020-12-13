@@ -36,46 +36,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-
 import bpy
 
 
-class NifOperatorCommon:
+class CommonDevOperator:
     """Abstract base class for import and export user interface."""
 
-    # filepath is created by ImportHelper/ExportHelper
-
-    # Default file name extension.
-    filename_ext = ".nif"
-
-    # File name filter for file select dialog.
-    filter_glob: bpy.props.StringProperty(
-        default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
+    error_level_map = (
+        ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
+        ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
+        ("WARNING", "Warning", "Only show warnings and errors.", 30),
+        ("ERROR", "Error", "Only show errors.", 40),
+        ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
+    )
 
     # Level of verbosity on the console.
     plugin_log_level: bpy.props.EnumProperty(
-        items=(
-            ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
-            ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
-            ("WARNING", "Warning", "Only show warnings and errors.", 30),
-            ("ERROR", "Error", "Only show errors.", 40),
-            ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
-        ),
-        name="Log Level",
-        description="Blender Niftools Addon log level of verbosity on the console.",
-        default="DEBUG")  # TODO [general] Dev config, revert for release
+        items=error_level_map,
+        name="Plugin Log Level",
+        description="Blender Nif Plugin log level of verbosity on the console.",
+        default="INFO")
 
     # Level of verbosity on the console.
     pyffi_log_level: bpy.props.EnumProperty(
-        items=(
-            ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
-            ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
-            ("WARNING", "Warning", "Only show warnings and errors.", 30),
-            ("ERROR", "Error", "Only show errors.", 40),
-            ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
-        ),
-        name="Log Level",
+        items=error_level_map,
+        name="Pyffi Log Level",
         description="Pyffi log level of verbosity on the console.",
         default="INFO")
 
@@ -94,4 +79,52 @@ class NifOperatorCommon:
         description="Used for checking equality between floats.",
         default=0.0005,
         min=0.0, max=1.0, precision=5,
+        options={'HIDDEN'})
+
+
+class CommonScale:
+
+    def get_import_scale(self):
+        return bpy.context.scene.niftools_scene.scale_correction
+
+    def set_import_scale(self, scale):
+        bpy.context.scene.niftools_scene.scale_correction = scale
+
+    # Number of nif units per blender unit.
+    scale_correction: bpy.props.FloatProperty(
+        name="Scale Correction",
+        description="Changes size of mesh to fit onto Blender's default grid.",
+        get=get_import_scale,
+        set=set_import_scale,
+        default=0.1,
+        min=0.001, max=100.0, precision=2)
+
+
+class CommonNif:
+    # Default file name extension.
+    filename_ext = ".nif"
+
+    # File name filter for file select dialog.
+    filter_glob: bpy.props.StringProperty(
+        default="*.nif;*.item;*.nifcache;*.jmi",
+        options={'HIDDEN'})
+
+
+class CommonEgm:
+    # Default file name extension.
+    filename_ext = ".egm"
+
+    # File name filter for file select dialog.
+    filter_glob: bpy.props.StringProperty(
+        default="*.egm",
+        options={'HIDDEN'})
+
+
+class CommonKf:
+    # Default file name extension.
+    filename_ext = ".kf"
+
+    # File name filter for file select dialog.
+    filter_glob: bpy.props.StringProperty(
+        default="*.kf",
         options={'HIDDEN'})

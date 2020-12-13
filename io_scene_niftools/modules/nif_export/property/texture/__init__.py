@@ -38,11 +38,11 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+
 from io_scene_niftools.modules.nif_export.animation.texture import TextureAnimation
 from io_scene_niftools.modules.nif_export.property import texture
 from io_scene_niftools.modules.nif_export.property.texture.writer import TextureWriter
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class TextureSlotManager:
@@ -88,8 +88,8 @@ class TextureSlotManager:
         elif isinstance(uv_node, bpy.types.ShaderNodeTexCoord):
             return "REFLECT"
         else:
-            raise util_math.NifError(f"Unsupported vector input for {b_texture_node.name} in material '{self.b_mat.name}''.\n"
-                                     f"Expected 'UV Map' or 'Texture Coordinate' nodes")
+            raise NifError(f"Unsupported vector input for {b_texture_node.name} in material '{self.b_mat.name}''.\n"
+                           f"Expected 'UV Map' or 'Texture Coordinate' nodes")
 
     @staticmethod
     def get_used_textslots(b_mat):
@@ -120,12 +120,12 @@ class TextureSlotManager:
                 if slot_name in b_texture_node.label:
                     # slot has already been populated
                     if self.slots[slot_name]:
-                        raise util_math.NifError(f"Multiple {slot_name} textures in material '{b_mat.name}''.\n"
-                                                 f"Make sure there is only one texture node labeled as '{slot_name}'")
+                        raise NifError(f"Multiple {slot_name} textures in material '{b_mat.name}''.\n"
+                                       f"Make sure there is only one texture node labeled as '{slot_name}'")
                     # it's a new slot so store it
                     self.slots[slot_name] = b_texture_node
                     break
             # unsupported texture type
             else:
-                raise util_math.NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}'."
-                                         f"Delete it or change its label.")
+                raise NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}'."
+                               f"Delete it or change its label.")

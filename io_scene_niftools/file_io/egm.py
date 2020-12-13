@@ -39,8 +39,7 @@
 
 
 from pyffi.formats.egm import EgmFormat
-from io_scene_niftools.utils.util_logging import NifLog
-from io_scene_niftools.utils.util_math import NifError
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class EGMFile:

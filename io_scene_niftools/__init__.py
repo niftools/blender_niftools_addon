@@ -57,14 +57,14 @@ del _dependencies_path
 import io_scene_niftools
 from io_scene_niftools import properties, operators, ui, update
 
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 with open(os.path.join(current_dir, "VERSION.txt")) as version:
     NifLog.info(f"Loading: Blender Niftools Addon: {version.read()}")
 
 import pyffi
 NifLog.info(f"Loading: Pyffi: {pyffi.__version__}")
 
-from io_scene_niftools.utils import util_debug
+from io_scene_niftools.utils import debugging
 
 # Blender addon info.
 bl_info = {
@@ -72,7 +72,7 @@ bl_info = {
     "description": "Import and export files in the NetImmerse/Gamebryo formats (.nif, .kf, .egm)",
     "author": "Niftools team",
     "blender": (2, 81, 0),
-    "version": (0, 0, 2),  # can't read from VERSION, blender wants it hardcoded
+    "version": (0, 0, 3),  # can't read from VERSION, blender wants it hardcoded
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "Partially functional port from 2.49 series still in progress",
@@ -119,10 +119,8 @@ properties.register()
 ui.register()
 # todo [general] add more properties, make sure they show up
 classes = (
-    operators.nif_import_op.NifImportOperator,
-    operators.kf_import_op.KfImportOperator,
     operators.egm_import_op.EgmImportOperator,
-    operators.nif_export_op.NifExportOperator,
+    operators.kf_import_op.KfImportOperator,
     operators.geometry.BsInvMarkerAdd,
     operators.geometry.BsInvMarkerRemove,
     operators.geometry.NfTlPartFlagAdd,
@@ -131,7 +129,8 @@ classes = (
     operators.object.UPBExtraDataAdd,
     operators.object.SampleExtraDataAdd,
     operators.object.NiExtraDataRemove,
-
+    operators.nif_import_op.NifImportOperator,
+    operators.nif_export_op.NifExportOperator,
 
     properties.armature.BoneProperty,
     properties.armature.ArmatureProperty,
@@ -155,13 +154,25 @@ classes = (
 
     properties.shader.ShaderProps,
 
-
     ui.armature.BonePanel,
     ui.armature.ArmaturePanel,
+
     ui.collision.CollisionBoundsPanel,
+
     ui.geometry.PartFlagPanel,
+
     ui.material.MaterialFlagPanel,
     ui.material.MaterialColorPanel,
+
+    ui.operator.OperatorImportIncludePanel,
+    ui.operator.OperatorImportTransformPanel,
+    ui.operator.OperatorImportArmaturePanel,
+    ui.operator.OperatorImportAnimationPanel,
+    ui.operator.OperatorExportTransformPanel,
+    ui.operator.OperatorExportArmaturePanel,
+    ui.operator.OperatorExportAnimationPanel,
+    ui.operator.OperatorExportOptimisePanel,
+    ui.operator.OperatorCommonDevPanel,
 
     ui.object.ObjectPanel,
     ui.object.ObjectExtraData,
@@ -170,6 +181,8 @@ classes = (
     ui.object.ObjectBSInvMarkerPanel,
 
     ui.scene.ScenePanel,
+
+    ui.scene.SceneVersionInfoPanel,
 
     ui.shader.ShaderPanel,
 
@@ -194,20 +207,18 @@ def register():
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
     # register all property groups after their classes have been registered
-    bpy.types.Bone.niftools = bpy.props.PointerProperty(type=properties.armature.BoneProperty)
     bpy.types.Armature.niftools = bpy.props.PointerProperty(type=properties.armature.ArmatureProperty)
-    bpy.types.Object.nifcollision = bpy.props.PointerProperty(type=properties.collision.CollisionProperty)
-    bpy.types.Object.niftools_constraint = bpy.props.PointerProperty(type=properties.constraint.ConstraintProperty)
-    bpy.types.Object.niftools_part_flags_panel = bpy.props.PointerProperty(type=properties.geometry.SkinPartHeader)
-    bpy.types.Object.niftools_part_flags = bpy.props.CollectionProperty(type=properties.geometry.SkinPartFlags)
+    bpy.types.Bone.niftools = bpy.props.PointerProperty(type=properties.armature.BoneProperty)
     bpy.types.Material.niftools = bpy.props.PointerProperty(type=properties.material.Material)
     bpy.types.Material.niftools_alpha = bpy.props.PointerProperty(type=properties.material.AlphaFlags)
-
+    bpy.types.Material.niftools_shader = bpy.props.PointerProperty(type=properties.shader.ShaderProps)
+    bpy.types.Object.nifcollision = bpy.props.PointerProperty(type=properties.collision.CollisionProperty)
     bpy.types.Object.niftools = bpy.props.PointerProperty(type=properties.object.ObjectProperty)
     bpy.types.Object.niftools_bs_invmarker = bpy.props.CollectionProperty(type=properties.object.BsInventoryMarker)
-
+    bpy.types.Object.niftools_constraint = bpy.props.PointerProperty(type=properties.constraint.ConstraintProperty)
+    bpy.types.Object.niftools_part_flags = bpy.props.CollectionProperty(type=properties.geometry.SkinPartFlags)
+    bpy.types.Object.niftools_part_flags_panel = bpy.props.PointerProperty(type=properties.geometry.SkinPartHeader)
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=properties.scene.Scene)
-    bpy.types.Material.niftools_shader = bpy.props.PointerProperty(type=properties.shader.ShaderProps)
 
 
 def select_zip_file(self, tag):
@@ -226,6 +237,7 @@ def configure_autoupdater():
     addon_updater_ops.updater.user = "niftools"
     addon_updater_ops.updater.repo = "blender_niftools_addon"
     addon_updater_ops.updater.website = "https://github.com/niftools/blender-niftools-addon/"
+    addon_updater_ops.updater.version_min_update = (0, 0, 2)
 
 
 def unregister():

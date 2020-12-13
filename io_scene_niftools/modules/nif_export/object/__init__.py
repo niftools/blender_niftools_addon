@@ -50,8 +50,8 @@ from io_scene_niftools.modules.nif_export.collision.havok import BhkCollision
 from io_scene_niftools.modules.nif_export.geometry.mesh import Mesh
 from io_scene_niftools.modules.nif_export.property.object import ObjectDataProperty
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.logging import NifLog
 
 # dictionary of names, to map NIF blocks to correct Blender names
 DICT_NAMES = {}
@@ -201,7 +201,7 @@ class Object:
         # and fill in this node's non-trivial values
         node.name = block_store.get_full_name(b_obj)
         self.set_node_flags(b_obj, node)
-        util_math.set_object_matrix(b_obj, node)
+        math.set_object_matrix(b_obj, node)
 
         # export object animation
         self.transform_anim.export_transforms(node, b_obj, b_action)

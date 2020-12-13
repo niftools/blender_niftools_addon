@@ -42,13 +42,48 @@ from abc import ABC
 import bpy
 
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 
 
 class BSShader(ABC):
 
     def __init__(self):
-        self.b_mesh = None
+        self._n_block = None
+        self._b_mesh = None
+        self._b_mat = None
+        self._nodes_wrapper = None
+
+    @property
+    def nodes_wrapper(self):
+        return self._nodes_wrapper
+
+    @nodes_wrapper.setter
+    def nodes_wrapper(self, value):
+        self._nodes_wrapper = value
+
+    @property
+    def b_mesh(self):
+        return self._b_mesh
+
+    @b_mesh.setter
+    def b_mesh(self, value):
+        self._b_mesh = value
+
+    @property
+    def n_block(self):
+        return self._n_block
+
+    @n_block.setter
+    def n_block(self, value):
+        self._n_block = value
+
+    @property
+    def b_mat(self):
+        return self._b_mat
+
+    @b_mat.setter
+    def b_mat(self, value):
+        self._b_mat = value
 
     # TODO [texture] Implement clamp on image wrapping
     @staticmethod
@@ -92,7 +127,6 @@ class BSShader(ABC):
         b_mat.use_transparency = True
         b_mat.alpha = (1 - shader_property.alpha)
         b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-        return b_mat
 
     def create_material_name(self, bs_shader_property):
         name = block_store.import_name(bs_shader_property)

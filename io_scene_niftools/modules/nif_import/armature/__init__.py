@@ -44,13 +44,14 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
 from io_scene_niftools.modules.nif_export.block_registry import block_store as block_store_export
 from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_import.object import Object
-from io_scene_niftools.utils import util_math
-from io_scene_niftools.utils.util_logging import NifLog
-from io_scene_niftools.utils.util_global import NifOp, NifData
+from io_scene_niftools.utils import math
+from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.singleton import NifOp, NifData
 
 
 class Armature:
@@ -153,7 +154,7 @@ class Armature:
         # use heuristics to determine a suitable orientation
         forward, up = self.guess_orientation(n_armature)
         # pass them to the matrix utility
-        util_math.set_bone_orientation(forward, up)
+        math.set_bone_orientation(forward, up)
         # store axis orientation for export
         b_armature_data.niftools.axis_forward = forward
         b_armature_data.niftools.axis_up = up
@@ -186,7 +187,7 @@ class Armature:
             n_pose = armature_space_pose_store[n_block]
             b_pose_bone = b_armature_obj.pose.bones[b_name]
             n_bind = mathutils.Matrix(n_pose.as_list()).transposed()
-            b_pose_bone.matrix = util_math.nif_bind_to_blender_bind(n_bind)
+            b_pose_bone.matrix = math.nif_bind_to_blender_bind(n_bind)
             # force update is required to ensure the transforms are set properly in blender
             bpy.context.view_layer.update()
 
@@ -206,7 +207,7 @@ class Armature:
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
         n_bind = mathutils.Matrix(n_bind_store.get(n_block, NifFormat.Matrix44()).as_list()).transposed()
         # get transformation in blender's coordinate space
-        b_bind = util_math.nif_bind_to_blender_bind(n_bind)
+        b_bind = math.nif_bind_to_blender_bind(n_bind)
 
         # the following is a workaround because blender can no longer set matrices to bones directly
         tail, roll = bpy.types.Bone.AxisRollFromMatrix(b_bind.to_3x3())
@@ -280,7 +281,7 @@ class Armature:
                 (NifData.data.version in (0x14000005, 0x14020007) and os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif')):
 
             if not isinstance(ni_block, NifFormat.NiNode):
-                raise util_math.NifError("Cannot import skeleton: root is not a NiNode")
+                raise io_scene_niftools.utils.logging.NifError("Cannot import skeleton: root is not a NiNode")
 
             # for morrowind, take the Bip01 node to be the skeleton root
             if NifData.data.version == 0x04000002:
@@ -332,7 +333,7 @@ class Armature:
                         NifLog.debug(f"'{skelroot.name}' is an armature")
                 elif NifOp.props.skeleton == "GEOMETRY_ONLY":
                     if skelroot not in self.dict_armatures:
-                        raise util_math.NifError(f"Nif structure incompatible with '{b_armature_obj.name}' as armature: node '{ni_block.name}' has '{skelroot.name}' as armature")
+                        raise io_scene_niftools.utils.logging.NifError(f"Nif structure incompatible with '{b_armature_obj.name}' as armature: node '{ni_block.name}' has '{skelroot.name}' as armature")
 
                 for boneBlock in skininst.bones:
                     # boneBlock can be None; see pyffi issue #3114079

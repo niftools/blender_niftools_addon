@@ -41,7 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_import import animation
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.logging import NifLog
 
 FPS = 30
 
@@ -91,7 +91,7 @@ class Animation:
         # armature pose bone animation
         if bonename:
             fcurves = [
-                action.fcurves.new(data_path=f'pose.bones["{bonename}""].{dtype}', index=i, action_group=bonename)
+                action.fcurves.new(data_path=f'pose.bones["{bonename}"].{dtype}', index=i, action_group=bonename)
                 for i in drange]
         # shapekey pose bone animation
         elif keyname:

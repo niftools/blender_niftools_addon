@@ -1,60 +1,66 @@
+.. _user-workflow:
+
+========
 Workflow
 ========
 
-.. _user-workflow:
+This section explains vthe general workflow used to import and export ``.nif`` files using Blender.
 
-This section will explain the general workflow used to import/export .nif files to/from Blender.
-
-* The nif importer and exporter is shown under 
-   **File > Import** and **File > Export**.
+* The nif importer and exporters are available in **File** > **Import** and **File** > **Export**, repsectively.
 
 .. note::
-   If you need an introduction consider reading `the Blender Manual <https://http://blender.org/manual/>`_.
-   This assumes at least beginner level skills with Blender.
+   If you need an introduction consider reading `the Blender Manual <https://blender.org/manual/>`_. The
+   documentation below assumes that you have at least beginner level skills with Blender.
 
 .. _user-workflow-import:
 
+------
 Import
 ------
 
-You now can import the nif directly into Blender! 
-These settings are explained at :ref:`I/O Settings Section <user-features-iosettings-import>`.
+You now can import the nif directly into Blender! These settings are explained at :ref:`I/O Settings Section
+<user-features-iosettings-import>`.
 
 .. _user-workflow-export:
 
+------
 Export
 ------
 
-The following section deals the various model components, required to export to the .nif format.
+The following section covers various model components, each required to export 3D objects to the ``.nif`` format.
 
-+------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **Base Model**         | Create your base model and configure the settings on the object, refer to the :ref:`Geometry Section <geometry-mesh>`.    |
-+------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **General Nif Info**   | Add in the general info required to identify the .nif file, refer to the :ref:`Nif Version Info <object-common>`.         |
-+------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **Shaders**            | Create and configure the shaders for each selected object, refer to the :ref:`Shader Section <shader>`.                   |
-+------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **Material**           | Create and configure the materials for each selected object, refer to the :ref:`Materials Section <properties>`.          |
-+------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **Textures**           | Add the different textures types for each material, refer to the :ref:`Textures Section <textures>`.                      |
-+------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **Exporting**          | You're now ready to export! These settings are explained at :ref:`I/O Settings Section <iosettings>`.                     |
-+------------------------+---------------------------------------------------------------------------------------------------------------------------+
-
++-----------------------------------+------------------------------------------------------------------------------+
+|              Section              |                                 Description                                  |
++===================================+==============================================================================+
+| :ref:`Base Model <geometry-mesh>` | Create your base model and configure the object's settings                   |
++-----------------------------------+------------------------------------------------------------------------------+
+| :ref:`Nif Info <object-common>`   | Add in the required general information to identify the ``.nif`` file        |
++-----------------------------------+------------------------------------------------------------------------------+
+| :ref:`Shaders <shader>`           | Create and configure shaders for each   selected object                      |
++-----------------------------------+------------------------------------------------------------------------------+
+| :ref:`Materials <properties>`     | Create and configure materials for each selected object                      |
++-----------------------------------+------------------------------------------------------------------------------+
+| :ref:`Textures <textures>`        | Add different texture types for each  material                               |
++-----------------------------------+------------------------------------------------------------------------------+
+| :ref:`Exporting <iosettings>`     | Now you're ready for export! Check the link to learn about all of the export |
+|                                   | settings!                                                                    |
++-----------------------------------+------------------------------------------------------------------------------+
 
 .. _workflow-advmesh:
 
+-----------------
 Advanced Modeling
 -----------------
 
-The following are advanced topics and optional for most models.
-You should only attempt the following when you are competent in the basics.
+The following are advanced topics and optional for *most* models.
+You should only attempt the following when you are comfortable with the basics.
 
-+----------------+----------------------------------------------------------------------------------------------------------------------------------+
-| **Collisions** | Create collision objects and update their collision settings, refer to the :ref:`Collision Section <collison-system>`.           |
-+----------------+----------------------------------------------------------------------------------------------------------------------------------+
-| **Armatures**  | Create a rigged model and configure the flags for each selected bone, refer to the :ref:`Armature Section <armature-armatures>`. |
-+----------------+----------------------------------------------------------------------------------------------------------------------------------+
-| **Animations** | Not yet supported.                                                                                                               |
-+----------------+----------------------------------------------------------------------------------------------------------------------------------+
-
++---------------------------------------+----------------------------------------------------------------------+
+|                Section                |                             Description                              |
++=======================================+======================================================================+
+| :ref:`Collisions <collision-system>`  | Create collision objects and update collision settings               |
++---------------------------------------+----------------------------------------------------------------------+
+| :ref:`Armatures <armature-armatures>` | Create a rigged model and configure the flags for each selected bone |
++---------------------------------------+----------------------------------------------------------------------+
+| :ref:`Animations <#>`                 | Currently Unsupported                                                |
++---------------------------------------+----------------------------------------------------------------------+

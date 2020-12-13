@@ -45,8 +45,8 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_import.property import texture
-from io_scene_niftools.utils.util_global import NifOp
-from io_scene_niftools.utils.util_logging import NifLog
+from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.logging import NifLog
 
 
 class TextureLoader:
