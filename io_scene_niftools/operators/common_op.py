@@ -36,8 +36,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-
 import bpy
 
 
@@ -84,21 +82,21 @@ class CommonDevOperator:
         options={'HIDDEN'})
 
 
-class CommonImportScale:
+class CommonScale:
+
+    def get_import_scale(self):
+        return bpy.context.scene.niftools_scene.scale_correction
+
+    def set_import_scale(self, scale):
+        bpy.context.scene.niftools_scene.scale_correction = scale
+
     # Number of nif units per blender unit.
-    scale_correction_import: bpy.props.FloatProperty(
-        name="Scale Correction Import",
+    scale_correction: bpy.props.FloatProperty(
+        name="Scale Correction",
         description="Changes size of mesh to fit onto Blender's default grid.",
+        get=get_import_scale,
+        set=set_import_scale,
         default=0.1,
-        min=0.001, max=100.0, precision=2)
-
-
-class CommonExportScale:
-    # Number of blender units per nif unit.
-    scale_correction_export: bpy.props.FloatProperty(
-        name="Scale Correction Export",
-        description="Changes size of mesh from Blender default to nif default.",
-        default=10.0,
         min=0.001, max=100.0, precision=2)
 
 
@@ -112,7 +110,7 @@ class CommonNif:
         options={'HIDDEN'})
 
 
-class CommonEGM:
+class CommonEgm:
     # Default file name extension.
     filename_ext = ".egm"
 
@@ -122,7 +120,7 @@ class CommonEGM:
         options={'HIDDEN'})
 
 
-class CommonKF:
+class CommonKf:
     # Default file name extension.
     filename_ext = ".kf"
 

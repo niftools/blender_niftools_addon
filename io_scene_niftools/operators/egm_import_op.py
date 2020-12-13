@@ -41,10 +41,10 @@ from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper
 
 from io_scene_niftools import egm_import
-from io_scene_niftools.operators.common_op import CommonDevOperator, CommonEGM, CommonImportScale
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonEgm, CommonScale
 
 
-class EgmImportOperator(Operator, ImportHelper, CommonImportScale, CommonEGM, CommonDevOperator):
+class EgmImportOperator(Operator, ImportHelper, CommonScale, CommonEgm, CommonDevOperator):
     """Operator for loading a egm file."""
 
     # Name of function for calling the nif export operators.

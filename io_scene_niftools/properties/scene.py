@@ -43,6 +43,8 @@ from bpy.props import PointerProperty, IntProperty
 from bpy.types import PropertyGroup
 from pyffi.formats.nif import NifFormat
 
+from io_scene_niftools.operators.common_op import CommonScale
+
 
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
@@ -109,3 +111,9 @@ class Scene(PropertyGroup):
         'FALLOUT_3': 34,
         'SKYRIM': 83
     }
+
+    scale_correction: bpy.props.FloatProperty(
+        name="Scale Correction",
+        description="Changes size of mesh to fit onto Blender's default grid.",
+        default=0.1,
+        min=0.001, max=100.0, precision=2)

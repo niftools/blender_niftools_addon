@@ -39,12 +39,11 @@
 
 import bpy
 
-from io_scene_niftools import NifLog
 from io_scene_niftools.file_io.egm import EGMFile
 from io_scene_niftools.modules.nif_import.animation.morph import MorphAnimation
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils.singleton import NifOp, EGMData
-from io_scene_niftools.utils.logging import NifError
+from io_scene_niftools.utils.logging import NifError, NifLog
 
 
 class EgmImport(NifCommon):
@@ -64,7 +63,7 @@ class EgmImport(NifCommon):
             if egm_path:
                 EGMData.init(EGMFile.load_egm(egm_path))
                 # scale the data
-                EGMData.data.apply_scale(NifOp.props.scale_correction_import)
+                EGMData.data.apply_scale(NifOp.props.scale_correction)
                 # TODO [morph][egm] if there is an egm, the assumption is that there is only one mesh in the nif
                 # grab the active object
                 b_obj = bpy.context.view_layer.objects.active

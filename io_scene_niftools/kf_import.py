@@ -41,15 +41,13 @@ import os
 
 import pyffi.spells.nif.fix
 
-import io_scene_niftools.utils.logging
-from io_scene_niftools import NifLog
 from io_scene_niftools.file_io.kf import KFFile
 from io_scene_niftools.modules.nif_export import armature
 from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifError
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class KfImport(NifCommon):
@@ -68,7 +66,7 @@ class KfImport(NifCommon):
             kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
             b_armature = math.get_armature()
             if not b_armature:
-                raise io_scene_niftools.utils.logging.NifError("No armature was found in scene, can not import KF animation!")
+                raise NifError("No armature was found in scene, can not import KF animation!")
 
             # the axes used for bone correction depend on the armature in our scene
             math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
@@ -80,7 +78,7 @@ class KfImport(NifCommon):
 
                 # use pyffi toaster to scale the tree
                 toaster = pyffi.spells.nif.NifToaster()
-                toaster.scale = NifOp.props.scale_correction_import
+                toaster.scale = NifOp.props.scale_correction
                 pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
 
                 # calculate and set frames per second
