@@ -1,4 +1,4 @@
-Version v0.0.4
+Version v0.0.3
 ==============
 - #401 Consolidate scale correction value to be shared.
 - #398 Animation - Imported animations with 'blank' keyframes containing no transformation
@@ -7,9 +7,6 @@ Version v0.0.4
 - #395 Bug - Exporting mesh with weight would cause execution to fail
 - Fixed issue with .nif extension not being set on export
 - Fixed issue with .kf being mapped to .egm
-
-Version v0.0.3
-==============
 - #389 Docs - Updating Sphinx Documentation
 
 Version v0.0.2
