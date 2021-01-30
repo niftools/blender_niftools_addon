@@ -38,7 +38,6 @@
 # ***** END LICENSE BLOCK *****
 
 
-import bpy
 from bpy.types import Panel
 
 
@@ -213,6 +212,7 @@ class OperatorExportAnimationPanel(OperatorSetting, Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
+        layout.prop(operator, "animation")
         layout.prop(operator, "bs_animation_node")
 
 
