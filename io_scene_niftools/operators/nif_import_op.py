@@ -91,7 +91,7 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
         default=False)
 
     # What should be imported.
-    skeleton: bpy.props.EnumProperty(
+    process: bpy.props.EnumProperty(
         items=(
             ("EVERYTHING", "Everything", "Import everything."),
             ("SKELETON_ONLY", "Skeleton Only", "Import skeleton only and make it parent of selected geometry."),
