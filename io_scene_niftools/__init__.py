@@ -164,15 +164,18 @@ classes = (
     ui.material.MaterialFlagPanel,
     ui.material.MaterialColorPanel,
 
-    ui.operator.OperatorImportIncludePanel,
-    ui.operator.OperatorImportTransformPanel,
-    ui.operator.OperatorImportArmaturePanel,
-    ui.operator.OperatorImportAnimationPanel,
-    ui.operator.OperatorExportTransformPanel,
-    ui.operator.OperatorExportArmaturePanel,
-    ui.operator.OperatorExportAnimationPanel,
-    ui.operator.OperatorExportOptimisePanel,
-    ui.operator.OperatorCommonDevPanel,
+    ui.operators.OperatorCommonDevPanel,
+
+    ui.operators.nif_import.OperatorImportIncludePanel,
+    ui.operators.nif_import.OperatorImportTransformPanel,
+    ui.operators.nif_import.OperatorImportGeometryPanel,
+    ui.operators.nif_import.OperatorImportArmaturePanel,
+    ui.operators.nif_import.OperatorImportAnimationPanel,
+
+    ui.operators.nif_export.OperatorExportTransformPanel,
+    ui.operators.nif_export.OperatorExportArmaturePanel,
+    ui.operators.nif_export.OperatorExportAnimationPanel,
+    ui.operators.nif_export.OperatorExportOptimisePanel,
 
     ui.object.ObjectPanel,
     ui.object.ObjectExtraData,
