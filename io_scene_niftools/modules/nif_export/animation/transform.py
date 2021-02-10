@@ -94,6 +94,29 @@ class TransformAnimation(Animation):
             #         # wipe controller target
             #         ctrl.target = None
 
+        # skyrim
+        elif bpy.context.scene.niftools_scene.game in ('SKYRIM'):
+
+            NifLog.info(f"SKYRIM: Exporting animation on the skeleton: {b_armature.name}")
+            b_action = self.get_active_action(b_armature)
+            kf_root = block_store.create_block("NiControllerSequence")
+            targetname = "Scene Root"
+            for bone in b_armature.data.bones:
+                self.export_transforms(kf_root,b_armature,b_action,bone)
+            anim_textextra = self.export_text_keys(b_action)
+
+            kf_root.name = b_action.name
+            kf_root.unknown_int_1 = 1
+            kf_root.weight = 1.0
+            kf_root.text_keys = anim_textextra
+            kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
+            kf_root.frequency = 1.0
+            kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
+            kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
+
+            kf_root.target_name = targetname
+            kf_root.string_palette = NifFormat.NiStringPalette()
+
         # oblivion
         elif bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
             # TODO [animation] allow for object kf only
@@ -169,7 +192,7 @@ class TransformAnimation(Animation):
             # if variable_2:
             # controlledblock.set_variable_2(variable_2)
         else:
-            raise io_scene_niftools.utils.logging.NifError(f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
+            raise io_scene_niftools.utils.logging.NifError(f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.\nOnly Morrowind, Oblivion, Skyrim, Fallout 3, Civilization IV,"
                                      " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported.")
         return kf_root
 
