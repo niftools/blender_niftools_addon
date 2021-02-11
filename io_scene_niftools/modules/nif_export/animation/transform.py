@@ -47,7 +47,7 @@ from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.logging import NifError, NifLog
 
 
 class TransformAnimation(Animation):
@@ -97,25 +97,30 @@ class TransformAnimation(Animation):
         # skyrim
         elif bpy.context.scene.niftools_scene.game in ('SKYRIM'):
 
-            NifLog.info(f"SKYRIM: Exporting animation on the skeleton: {b_armature.name}")
-            b_action = self.get_active_action(b_armature)
-            kf_root = block_store.create_block("NiControllerSequence")
-            targetname = "Scene Root"
-            for bone in b_armature.data.bones:
-                self.export_transforms(kf_root,b_armature,b_action,bone)
-            anim_textextra = self.export_text_keys(b_action)
+            if b_armature:
+                NifLog.info(f"Skyrim: Exporting animation on the skeleton: {b_armature.name}")
+                b_action = self.get_active_action(b_armature)
+                kf_root = block_store.create_block("NiControllerSequence")
+                targetname = "Scene Root"
+                for bone in b_armature.data.bones:
+                    self.export_transforms(kf_root,b_armature,b_action,bone)
 
-            kf_root.name = b_action.name
-            kf_root.unknown_int_1 = 1
-            kf_root.weight = 1.0
-            kf_root.text_keys = anim_textextra
-            kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
-            kf_root.frequency = 1.0
-            kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
-            kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
+                anim_textextra = self.export_text_keys(b_action)
 
-            kf_root.target_name = targetname
-            kf_root.string_palette = NifFormat.NiStringPalette()
+                kf_root.name = b_action.name
+                kf_root.unknown_int_1 = 1
+                kf_root.weight = 1.0
+                kf_root.text_keys = anim_textextra
+                kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
+                kf_root.frequency = 1.0
+                kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
+                kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
+
+                kf_root.target_name = targetname
+                kf_root.string_palette = NifFormat.NiStringPalette()
+
+            else:
+                NifError("Cannot export animation without skeleton")
 
         # oblivion
         elif bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
