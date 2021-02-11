@@ -161,6 +161,14 @@ class NifExport(NifCommon):
                 kffile = os.path.join(directory, prefix + filebase + ext)
                 data.roots = [kf_root]
                 data.neosteam = (bpy.context.scene.niftools_scene.game == 'NEOSTEAM')
+
+                # scale correction for the skeleton
+                if bpy.context.scene.niftools_scene.game in ('SKYRIM'):
+                    toaster = pyffi.spells.nif.NifToaster()
+                    toaster.scale = round(1 / NifOp.props.scale_correction)
+                    pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
+                    NifLog.info(f"Scale Correction set to {round(1 / NifOp.props.scale_correction)}")
+
                 with open(kffile, "wb") as stream:
                     data.write(stream)
                 # if only anim, no need to do the time consuming nif export
