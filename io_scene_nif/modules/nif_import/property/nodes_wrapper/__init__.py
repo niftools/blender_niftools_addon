@@ -80,9 +80,14 @@ class NodesWrapper:
             self.tree.links.new(uv.outputs[6], b_texture_node.inputs[0])
         # use supplied UV maps for everything else, if present
         else:
-            uv = self.tree.nodes.new('ShaderNodeUVMap')
-            uv.name = "TexCoordIndex" + str(uv_index)
-            uv.uv_map = f"UV{uv_index}"
+            uv_name = "TexCoordIndex" + str(uv_index)
+            existing_node = self.tree.nodes.get(uv_name)
+            if not existing_node:
+                uv = self.tree.nodes.new('ShaderNodeUVMap')
+                uv.name = uv_name
+                uv.uv_map = f"UV{uv_index}"
+            else:
+                uv = existing_node
             self.tree.links.new(uv.outputs[0], b_texture_node.inputs[0])
             # todo [texture/anim] if present in nifs, support it and move to anim sys
             # if tex_transform or tex_anim:
