@@ -117,15 +117,42 @@ class BSShaderPropertyProcessor(BSShader):
         # Textures
         self.texturehelper.import_bsshaderproperty_textureset(bs_shader_property, self._nodes_wrapper)
 
-        # TODO [shader] UV offset node support
-        # if hasattr(bs_shader_property, 'texture_clamp_mode'):
-        #     self.import_clamp(self.b_mat, bs_shader_property)
-        #
-        # if hasattr(bs_shader_property, 'uv_offset'):
-        #     self.import_uv_offset(self.b_mat, bs_shader_property)
-        #
-        # if hasattr(bs_shader_property, 'uv_scale'):
-        #     self.import_uv_scale(self.b_mat, bs_shader_property)
+        #translate the clamp, uv offset and uv scale to values to use in blender
+        if hasattr(bs_shader_property, 'texture_clamp_mode'):
+            clamp_mode = bs_shader_property.texture_clamp_mode
+            if clamp_mode == 3:
+                clamp_x = False
+                clamp_y = False
+            if clamp_mode == 2:
+                clamp_x = False
+                clamp_y = True
+            if clamp_mode == 1:
+                clamp_x = True
+                clamp_y = False
+            if clamp_mode == 0:
+                clamp_x = True
+                clamp_y = True
+        else:
+            clamp_x = False
+            clamp_y = False
+
+        if hasattr(bs_shader_property, 'uv_offset'):
+            x_offset = bs_shader_property.uv_offset.u
+            y_offset = bs_shader_property.uv_offset.v
+        else:
+            x_offset = 0
+            y_offset = 0
+        
+        if hasattr(bs_shader_property, 'uv_scale'):
+            x_scale = bs_shader_property.uv_scale.u
+            y_scale = bs_shader_property.uv_scale.v
+        else:
+            x_scale = 1
+            y_scale = 1
+
+        b_x_offset = 1 - x_offset - x_scale
+        b_y_offset = 1 - y_offset - y_scale
+        self._nodes_wrapper.global_uv_offset_scale(b_x_offset, b_y_offset, x_scale, y_scale, clamp_x, clamp_y)
 
         # Diffuse color
         if bs_shader_property.skin_tint_color:
