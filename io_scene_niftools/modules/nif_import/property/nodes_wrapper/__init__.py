@@ -107,6 +107,63 @@ class NodesWrapper:
             #                 transform.keyframe_insert("translation", index=j, frame=int(key[0] * fps))
             #     tree.links.new(uv.outputs[0], transform.inputs[0])
             #     tree.links.new(transform.outputs[0], tex.inputs[0])
+        
+    def global_uv_offset_scale(self, x_offset, y_offset, x_scale, y_scale, clamp_x, clamp_y):
+        # get all uv nodes (by name, since we are importing they have the predefined name
+        # and then we don't have to loop through every node
+        uv_nodes = {}
+        i = 0
+        while True:
+            uv_name = "TexCoordIndex" + str(i)
+            i +=1
+            uv_node = self.tree.nodes.get(uv_name)
+            if uv_node and isinstance(uv_node, bpy.types.ShaderNodeUVMap):
+                uv_nodes[uv_name] = uv_node
+            else:
+                break
+        
+        b_x_offset = 1 - x_offset - x_scale
+        b_y_offset = 1 - y_offset - y_scale
+        b_x_scale = x_scale
+        b_y_scale = y_scale
+        clip_texture = clamp_x and clamp_y
+
+        for uv_name, uv_node in uv_nodes.items():
+            #for each of those, create a new uv output node and relink
+            split_node = self.tree.nodes.new("ShaderNodeSeparateXYZ")
+            combine_node = self.tree.nodes.new("ShaderNodeCombineXYZ")
+            
+            x_node = self.tree.nodes.new("ShaderNodeMath")
+            x_node.operation = 'MULTIPLY_ADD'
+            x_node.use_clamp = clamp_x and not clip_texture
+            x_node.inputs[1].default_value = b_x_scale
+            x_node.inputs[2].default_value = b_x_offset
+            self.tree.links.new(split_node.outputs[0], x_node.inputs[0])
+            self.tree.links.new(x_node.outputs[0], combine_node.inputs[0])
+            
+            y_node = self.tree.nodes.new("ShaderNodeMath")
+            y_node.operation = 'MULTIPLY_ADD'
+            y_node.use_clamp = clamp_y and not clip_texture
+            y_node.inputs[1].default_value = b_y_scale
+            y_node.inputs[2].default_value = b_y_offset
+            self.tree.links.new(split_node.outputs[1], y_node.inputs[0])
+            self.tree.links.new(y_node.outputs[0], combine_node.inputs[1])
+        
+            #get all the texture nodes to which it is linked, and re-link them to the uv output node
+            for link in uv_node.outputs[0].links:
+                #get the target link/socket
+                target_node = link.to_node
+                if isinstance(link.to_node, bpy.types.ShaderNodeTexImage):
+                    target_socket = link.to_socket
+                    #delete the existing link
+                    self.tree.links.remove(link)
+                    #make new ones
+                    self.tree.links.new(combine_node.outputs[0], target_socket)
+                    #if we clamp in both directions, clip the images:
+                    if clip_texture:
+                        target_node.extension = 'CLIP'
+            self.tree.links.new(uv_node.outputs[0],split_node.inputs[0])
+        pass
 
     def clear_default_nodes(self):
         self.b_mat.use_backface_culling = True
