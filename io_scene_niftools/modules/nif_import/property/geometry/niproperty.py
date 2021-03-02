@@ -71,14 +71,14 @@ class NiPropertyProcessor:
     #         super().__init__()
     #         NiPropertyProcessor.__instance = self
 
-    def attach(self, processor):
-        processor.attach(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
-        processor.attach(NifFormat.NiAlphaProperty, self.process_nialpha_property)
-        processor.attach(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
-        processor.attach(NifFormat.NiStencilProperty, self.process_nistencil_property)
-        processor.attach(NifFormat.NiSpecularProperty, self.process_nispecular_property)
-        processor.attach(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
-        processor.attach(NifFormat.NiVertexColorProperty, self.process_nivertexcolor_property)
+    def register(self, processor):
+        processor.register(NifFormat.NiMaterialProperty, self.process_nimaterial_property)
+        processor.register(NifFormat.NiAlphaProperty, self.process_nialpha_property)
+        processor.register(NifFormat.NiTexturingProperty, self.process_nitexturing_property)
+        processor.register(NifFormat.NiStencilProperty, self.process_nistencil_property)
+        processor.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
+        processor.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
+        processor.register(NifFormat.NiVertexColorProperty, self.process_nivertexcolor_property)
 
     @property
     def b_mesh(self):
