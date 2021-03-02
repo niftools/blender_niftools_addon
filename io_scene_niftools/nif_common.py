@@ -66,4 +66,3 @@ class NifCommon:
         NifLog.info(f"Executing - Niftools : Blender Niftools Addon v{niftools_ver}"
                     f"(running on Blender {bpy.app.version_string}, "
                     f"PyFFI {pyffi.__version__})")
-
