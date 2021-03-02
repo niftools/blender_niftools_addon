@@ -63,7 +63,7 @@ class MeshPropertyProcessor:
         # Register processors
         self.process_property = singledispatch(self.process_property)
         for processor in self.processors:
-            processor.register(self.process_property)
+            processor.attach(self.process_property)
 
     def process_property_list(self, n_block, b_obj):
         b_mesh = b_obj.data

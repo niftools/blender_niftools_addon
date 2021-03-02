@@ -72,7 +72,7 @@ class BSShaderLightingPropertyProcessor(BSShader):
         return BSShaderLightingPropertyProcessor.__instance
 
     def register(self, processor):
-        processor.register(NifFormat.BSShaderPPLightingProperty, self.import_bs_shader_pp_lighting_proprerty)
+        processor.attach(NifFormat.BSShaderPPLightingProperty, self.import_bs_shader_pp_lighting_proprerty)
 
     def import_bs_shader_pp_lighting_proprerty(self, bs_shader_prop):
         # Shader Flags

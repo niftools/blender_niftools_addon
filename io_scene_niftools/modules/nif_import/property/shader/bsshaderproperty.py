@@ -80,8 +80,8 @@ class BSShaderPropertyProcessor(BSShader):
         return BSShaderPropertyProcessor.__instance
 
     def register(self, processor):
-        processor.register(NifFormat.BSLightingShaderProperty, self.import_bs_lighting_shader_property)
-        processor.register(NifFormat.BSEffectShaderProperty, self.import_bs_effect_shader_property)
+        processor.attach(NifFormat.BSLightingShaderProperty, self.import_bs_lighting_shader_property)
+        processor.attach(NifFormat.BSEffectShaderProperty, self.import_bs_effect_shader_property)
 
     def import_bs_lighting_shader_property(self, bs_shader_property):
 
