@@ -39,6 +39,8 @@
 import inspect
 import logging
 
+from io_scene_niftools.utils.consts import LOGGER_PYFFI, LOGGER_PLUGIN
+
 
 class _MockOperator:
     """A default implementation of the report function in the case where the operator has not been initialised."""
@@ -93,10 +95,10 @@ class NifLog:
         NifLog.op = operator
 
         niftools_level_num = getattr(logging, operator.properties.plugin_log_level)
-        logging.getLogger("niftools").setLevel(niftools_level_num)
+        logging.getLogger(LOGGER_PLUGIN).setLevel(niftools_level_num)
 
         pyffi_level_num = getattr(logging, operator.properties.pyffi_log_level)
-        logging.getLogger("pyffi").setLevel(pyffi_level_num)
+        logging.getLogger(LOGGER_PYFFI).setLevel(pyffi_level_num)
 
 
 class NifError(Exception):
@@ -106,3 +108,20 @@ class NifError(Exception):
         NifLog.error(f"{msg:s}")
         NifLog.error(f"{caller.filename:s}:{caller.lineno:d}")
     pass
+
+
+def init_loggers():
+    """Set up loggers."""
+    log_handler = logging.StreamHandler()
+    log_handler.setLevel(logging.DEBUG)
+    log_formatter = logging.Formatter("%(name)s:%(levelname)s:%(message)s")
+    log_handler.setFormatter(log_formatter)
+
+    create_logger(log_handler, LOGGER_PYFFI)
+    create_logger(log_handler, LOGGER_PLUGIN)
+
+
+def create_logger(log_handler, name):
+    pyffi_logger = logging.getLogger(name)
+    pyffi_logger.setLevel(logging.WARNING)
+    pyffi_logger.addHandler(log_handler)
