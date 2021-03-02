@@ -47,7 +47,7 @@ from io_scene_niftools.modules.nif_export.property.shader import BSShaderPropert
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_niftools.modules.nif_import.object import PRN_DICT
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import math
+from io_scene_niftools.utils.consts import UPB_DEFAULT
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog, NifError
 
