@@ -183,6 +183,9 @@ def register():
 
 
 def unregister():
+    del bpy.types.Object.niftools
+    del bpy.types.Object.niftools_bs_invmarker
+
     unregister_classes(CLASSES, __name__)
 
 
