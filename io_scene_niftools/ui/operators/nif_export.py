@@ -38,7 +38,14 @@
 # ***** END LICENSE BLOCK *****
 
 from bpy.types import Panel
-from io_scene_niftools.ui.operators import OperatorSetting
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
+
+class OperatorSetting:
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_parent_id = "FILE_PT_operator"
 
 
 class OperatorExportTransformPanel(OperatorSetting, Panel):
@@ -137,3 +144,19 @@ class OperatorExportOptimisePanel(OperatorSetting, Panel):
         layout.prop(operator, "stitch_strips")
         layout.prop(operator, "force_dds")
         layout.prop(operator, "optimise_materials")
+
+
+classes = [
+    OperatorExportTransformPanel,
+    OperatorExportArmaturePanel,
+    OperatorExportAnimationPanel,
+    OperatorExportOptimisePanel
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

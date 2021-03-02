@@ -37,6 +37,16 @@
 #
 # ***** END LICENSE BLOCK *****
 
+from io_scene_niftools.utils.decorators import register_modules, unregister_modules
+
+from io_scene_niftools.ui import armature, collision, geometry, material, object, operators, shader, scene
+MODS = [armature, collision, geometry, material, object, operators, shader, scene]
+
 
 def register():
-    from . import armature, collision, geometry, material, object, operators, shader, scene
+    register_modules(MODS, __name__)
+
+
+def unregister():
+    unregister_modules(MODS, __name__)
+

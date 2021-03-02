@@ -40,10 +40,12 @@
 import bpy
 from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
+
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.nif_export import NifExport
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonNif, CommonScale
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 def _game_to_enum(game):
@@ -153,3 +155,16 @@ class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonNif, Co
         method.
         """
         return NifExport(self, context).execute()
+
+
+classes = [
+    NifExportOperator
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

@@ -60,7 +60,7 @@ class NifCommon:
         debugging.start_debug()
 
         # print scripts info
-        from . import bl_info
+        from io_scene_niftools import bl_info
         niftools_ver = (".".join(str(i) for i in bl_info["version"]))
 
         NifLog.info(f"Executing - Niftools : Blender Niftools Addon v{niftools_ver}"

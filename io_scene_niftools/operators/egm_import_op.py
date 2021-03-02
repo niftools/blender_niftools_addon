@@ -42,6 +42,7 @@ from bpy_extras.io_utils import ImportHelper
 
 from io_scene_niftools import egm_import
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonEgm, CommonScale
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class EgmImportOperator(Operator, ImportHelper, CommonScale, CommonEgm, CommonDevOperator):
@@ -61,3 +62,16 @@ class EgmImportOperator(Operator, ImportHelper, CommonScale, CommonEgm, CommonDe
         """
 
         return egm_import.EgmImport(self, context).execute()
+
+
+classes = [
+    EgmImportOperator
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

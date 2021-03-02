@@ -43,6 +43,7 @@ from bpy_extras.io_utils import ImportHelper
 
 from io_scene_niftools.kf_import import KfImport
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonKf
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class KfImportOperator(Operator, ImportHelper, CommonDevOperator, CommonScale, CommonKf):
@@ -64,3 +65,16 @@ class KfImportOperator(Operator, ImportHelper, CommonDevOperator, CommonScale, C
         """
 
         return KfImport(self, context).execute()
+
+
+classes = [
+    KfImportOperator
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

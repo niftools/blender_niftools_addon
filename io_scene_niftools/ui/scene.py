@@ -41,6 +41,8 @@ from bpy.types import Panel
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
 
 class SceneButtonsPanel:
     bl_space_type = 'PROPERTIES'
@@ -88,7 +90,6 @@ class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
         col = flow.column()
         col.prop(nif_scene_props, "user_version_2")
 
-
 # class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):
 #     bl_label = "Nif Author Info"
 #     bl_idname = "NIFTOOLS_PT_scene_author_info"
@@ -108,3 +109,17 @@ class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
 #         col = flow.column()
 #         col.prop(nif_scene_props, "nif_author_info_2")
 #
+
+
+classes = [
+    ScenePanel,
+    SceneVersionInfoPanel,
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

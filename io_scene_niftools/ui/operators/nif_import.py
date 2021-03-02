@@ -37,10 +37,15 @@
 #
 # ***** END LICENSE BLOCK *****
 
-
 from bpy.types import Panel
 
-from io_scene_niftools.ui.operators import OperatorSetting
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
+
+class OperatorSetting:
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_parent_id = "FILE_PT_operator"
 
 
 class OperatorImportIncludePanel(OperatorSetting, Panel):
@@ -159,3 +164,20 @@ class OperatorImportAnimationPanel(OperatorSetting, Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation
+
+
+classes = [
+    OperatorImportIncludePanel,
+    OperatorImportTransformPanel,
+    OperatorImportGeometryPanel,
+    OperatorImportArmaturePanel,
+    OperatorImportAnimationPanel
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

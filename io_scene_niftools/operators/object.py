@@ -40,6 +40,7 @@
 from bpy.types import Operator
 
 from io_scene_niftools import properties
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class BSXExtraDataAdd(Operator):
@@ -90,3 +91,19 @@ class NiExtraDataRemove(Operator):
         item = b_obj.niftools.extra_data_store.extra_data_index
         b_obj.niftools.extra_data_store.extra_data.remove(item)
         return {'FINISHED'}
+
+
+classes = [
+    BSXExtraDataAdd,
+    UPBExtraDataAdd,
+    SampleExtraDataAdd,
+    NiExtraDataRemove
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

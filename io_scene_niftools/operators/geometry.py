@@ -40,6 +40,8 @@
 import bpy
 from bpy.types import Operator
 
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
 
 class BsInvMarkerAdd(Operator):
     """Adds BsInvMarker set"""
@@ -97,3 +99,19 @@ class NfTlPartFlagRemove(bpy.types.Operator):
         obj.niftools_part_flags.remove(item)
         obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
         return {'FINISHED'}
+
+
+classes = [
+    BsInvMarkerAdd,
+    BsInvMarkerRemove,
+    NfTlPartFlagAdd,
+    NfTlPartFlagRemove
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

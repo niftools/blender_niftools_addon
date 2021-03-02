@@ -38,5 +38,37 @@
 # ***** END LICENSE BLOCK *****
 
 
+import bpy
+from io_scene_niftools.utils.decorators import register_modules, unregister_modules
+from io_scene_niftools.operators import object, geometry, nif_import_op, nif_export_op, kf_import_op, egm_import_op  # kf_export_op
+
+
+# noinspection PyUnusedLocal
+def menu_func_import(self, context):
+    self.layout.operator(nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+    self.layout.operator(kf_import_op.KfImportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
+    self.layout.operator(egm_import_op.EgmImportOperator.bl_idname, text="NetImmerse/Gamebryo (.egm)")
+    # TODO [general] get default path from config registry
+    # default_path = bpy.data.filename.replace(".blend", ".nif")
+    # ).filepath = default_path
+
+
+# noinspection PyUnusedLocal
+def menu_func_export(self, context):
+    self.layout.operator(nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+    # self.layout.operator(operators.kf_export_op.KfExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
+
+
+MODS = [object, geometry, nif_import_op, nif_export_op, kf_import_op, egm_import_op]
+
+
 def register():
-    from . import object, geometry, nif_import_op, nif_export_op, kf_import_op, egm_import_op  # kf_export_op
+    register_modules(MODS, __name__)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+
+
+def unregister():
+    unregister_modules(MODS, __name__)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)

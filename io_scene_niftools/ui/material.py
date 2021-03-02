@@ -37,8 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import bpy
 from bpy.types import Panel
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class MaterialFlagPanel(Panel):
@@ -93,11 +94,18 @@ class MaterialColorPanel(Panel):
         col.prop(mat, "lightingeffect2")
 
 
+CLASSES = [
+    MaterialColorPanel,
+    MaterialFlagPanel
+]
+
+
 def register():
-    bpy.utils.register_class(MaterialColorPanel)
-    bpy.types.MATERIAL_PT_shading.prepend(MaterialColorPanel)
+    register_classes(CLASSES, __name__)
+    #
+    # bpy.types.MATERIAL_PT_shading.prepend(MaterialColorPanel)
 
 
 def unregister():
-    bpy.types.MATERIAL_PT_shading.remove(MaterialColorPanel)
-    bpy.utils.unregister_class(MaterialColorPanel)
+    # bpy.types.MATERIAL_PT_shading.remove(MaterialColorPanel)
+    unregister_classes(CLASSES, __name__)

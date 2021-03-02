@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 from bpy.props import (PointerProperty,
                        IntProperty,
                        BoolProperty,
@@ -44,7 +45,10 @@ from bpy.props import (PointerProperty,
                        FloatProperty,
                        )
 from bpy.types import PropertyGroup
+
 from pyffi.formats.nif import NifFormat
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class CollisionProperty(PropertyGroup):
@@ -113,3 +117,20 @@ class CollisionProperty(PropertyGroup):
         description='Whether or not to export collision settings via blender properties',
         default=False,
     )
+
+
+CLASSES = [
+    CollisionProperty
+]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+
+    bpy.types.Object.nifcollision = bpy.props.PointerProperty(type=CollisionProperty)
+
+
+def unregister():
+    del bpy.types.Object.nifcollision
+
+    unregister_classes(CLASSES, __name__)

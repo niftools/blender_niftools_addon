@@ -39,6 +39,8 @@
 
 from bpy.types import Panel
 
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
 
 class ShaderPanel(Panel):
     bl_label = "Niftools Shader Panel"
@@ -165,3 +167,16 @@ class ShaderPanel(Panel):
             row.prop(nif_obj_props, "slsf_2_weapon_blood")
             row.prop(nif_obj_props, "slsf_2_wireframe")
             row.prop(nif_obj_props, "slsf_2_z_buffer_write")
+
+
+classes = [
+    ShaderPanel
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

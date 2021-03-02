@@ -39,6 +39,9 @@
 
 from bpy.types import Panel
 
+from io_scene_niftools.ui.operators import nif_import, nif_export
+from io_scene_niftools.utils.decorators import register_modules, unregister_modules, register_classes, unregister_classes
+
 
 class OperatorSetting:
     bl_space_type = 'FILE_BROWSER'
@@ -56,9 +59,7 @@ class OperatorCommonDevPanel(OperatorSetting, Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname in ("IMPORT_SCENE_OT_nif",
-                                      "EXPORT_SCENE_OT_nif")
-        # "IMPORT_SCENE_OT_kf")
+        return operator.bl_idname in ("IMPORT_SCENE_OT_nif", "EXPORT_SCENE_OT_nif")  # "IMPORT_SCENE_OT_kf")
 
     def draw(self, context):
         layout = self.layout
@@ -71,3 +72,17 @@ class OperatorCommonDevPanel(OperatorSetting, Panel):
         layout.prop(operator, "pyffi_log_level")
         layout.prop(operator, "plugin_log_level")
         layout.prop(operator, "epsilon")
+
+
+CLASSES = [OperatorCommonDevPanel]
+MODS = [nif_import, nif_export]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+    register_modules(MODS, __name__)
+
+
+def unregister():
+    unregister_modules(MODS, __name__)
+    unregister_classes(CLASSES, __name__)

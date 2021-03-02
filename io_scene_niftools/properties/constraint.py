@@ -37,10 +37,13 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 from bpy.props import (PointerProperty,
                        FloatProperty,
                        )
 from bpy.types import PropertyGroup
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class ConstraintProperty(PropertyGroup):
@@ -60,3 +63,20 @@ class ConstraintProperty(PropertyGroup):
         name='damping',
         description='Havok limited hinge max friction.'
     )
+
+
+CLASSES = [
+    ConstraintProperty
+]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+
+    bpy.types.Object.niftools_constraint = bpy.props.PointerProperty(type=ConstraintProperty)
+
+
+def unregister():
+    del bpy.types.Object.niftools_constraint
+
+    unregister_classes(CLASSES, __name__)
