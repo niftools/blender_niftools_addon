@@ -45,7 +45,6 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
-from io_scene_niftools.modules.nif_export.collision import Collision
 from io_scene_niftools.modules.nif_export.constraint import Constraint
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export.object import Object

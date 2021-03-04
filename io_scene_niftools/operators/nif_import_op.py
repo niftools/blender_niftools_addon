@@ -43,6 +43,7 @@ from bpy_extras.io_utils import ImportHelper
 
 from io_scene_niftools.nif_import import NifImport
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonNif
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, CommonNif):
@@ -91,7 +92,7 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
         default=False)
 
     # What should be imported.
-    skeleton: bpy.props.EnumProperty(
+    process: bpy.props.EnumProperty(
         items=(
             ("EVERYTHING", "Everything", "Import everything."),
             ("SKELETON_ONLY", "Skeleton Only", "Import skeleton only and make it parent of selected geometry."),
@@ -119,3 +120,16 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
         calls its :meth:`~io_scene_niftools.nif_import.NifImport.execute` method."""
 
         return NifImport(self, context).execute()
+
+
+classes = [
+    NifImportOperator
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

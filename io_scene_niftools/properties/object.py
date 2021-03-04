@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 from bpy.props import (PointerProperty,
                        StringProperty,
                        IntProperty,
@@ -44,8 +45,11 @@ from bpy.props import (PointerProperty,
                        CollectionProperty,
                        FloatProperty
                        )
-from bpy.types import PropertyGroup
+from bpy.types import PropertyGroup, Object
+
 from pyffi.formats.nif import NifFormat
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class ExtraData(PropertyGroup):
@@ -161,3 +165,28 @@ class BsInventoryMarker(PropertyGroup):
         description="Inventory object Zoom level.",
         default=1
     )
+
+
+CLASSES = [
+    ExtraData,
+    ExtraDataStore,
+    ObjectProperty,
+    BsInventoryMarker
+]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+
+    bpy.types.Object.niftools = bpy.props.PointerProperty(type=ObjectProperty)
+    bpy.types.Object.niftools_bs_invmarker = bpy.props.CollectionProperty(type=BsInventoryMarker)
+
+
+def unregister():
+    del bpy.types.Object.niftools
+    del bpy.types.Object.niftools_bs_invmarker
+
+    unregister_classes(CLASSES, __name__)
+
+
+

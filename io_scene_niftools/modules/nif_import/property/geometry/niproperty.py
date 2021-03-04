@@ -96,6 +96,14 @@ class NiPropertyProcessor:
     def n_block(self, value):
         self._n_block = value
 
+    @property
+    def nodes_wrapper(self):
+        return self._nodes_wrapper
+
+    @nodes_wrapper.setter
+    def nodes_wrapper(self, value):
+        self._nodes_wrapper = value
+
     def process_nistencil_property(self, prop):
         """Stencil (for double sided meshes"""
         Material.set_stencil(self.b_mat, prop)

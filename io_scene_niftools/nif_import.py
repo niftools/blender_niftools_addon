@@ -88,7 +88,7 @@ class NifImport(NifCommon):
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
-            if NifOp.props.skeleton == "GEOMETRY_ONLY":
+            if NifOp.props.process == "GEOMETRY_ONLY":
                 if len(self.SELECTED_OBJECTS) != 1 or self.SELECTED_OBJECTS[0].type != 'ARMATURE':
                     raise io_scene_niftools.utils.logging.NifError("You must select exactly one armature in 'Import Geometry Only' mode.")
 
@@ -125,7 +125,7 @@ class NifImport(NifCommon):
                         b.skin_instance.data.set_transform(root.get_transform() * b.skin_instance.data.get_transform())
                         b.skin_instance.skeleton_root = root
                         # delete non-skeleton nodes if we're importing skeleton only
-                        if NifOp.props.skeleton == "SKELETON_ONLY":
+                        if NifOp.props.process == "SKELETON_ONLY":
                             nonbip_children = (child for child in root.children if child.name[:6] != 'Bip01 ')
                             for child in nonbip_children:
                                 root.remove_child(child)
@@ -177,7 +177,7 @@ class NifImport(NifCommon):
             self.constrainthelper.import_bhk_constraints()
 
             # parent selected meshes to imported skeleton
-            if NifOp.props.skeleton == "SKELETON_ONLY":
+            if NifOp.props.process == "SKELETON_ONLY":
                 # update parenting & armature modifier
                 for child in bpy.context.selected_objects:
                     if isinstance(child, bpy.types.Object) and not isinstance(child.data, bpy.types.Armature):
@@ -215,14 +215,14 @@ class NifImport(NifCommon):
             return None
 
         NifLog.info(f"Importing data for block '{n_block.name.decode()}'")
-        if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.skeleton != "SKELETON_ONLY":
+        if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.process != "SKELETON_ONLY":
             return self.objecthelper.import_geometry_object(b_armature, n_block)
 
         elif isinstance(n_block, NifFormat.NiNode):
             # import object
             if self.armaturehelper.is_armature_root(n_block):
                 # all bones in the tree are also imported by import_armature
-                if NifOp.props.skeleton != "GEOMETRY_ONLY":
+                if NifOp.props.process != "GEOMETRY_ONLY":
                     b_obj = self.armaturehelper.import_armature(n_block)
                 else:
                     n_name = block_store.import_name(n_block)
@@ -256,7 +256,7 @@ class NifImport(NifCommon):
                     b_children.append(b_child)
 
             # import collision objects & bounding box
-            if NifOp.props.skeleton != "SKELETON_ONLY":
+            if NifOp.props.process != "SKELETON_ONLY":
                 b_children.extend(self.import_collision(n_block))
                 b_children.extend(self.boundhelper.import_bounding_box(n_block))
 

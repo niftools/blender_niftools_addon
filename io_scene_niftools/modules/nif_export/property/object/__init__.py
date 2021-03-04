@@ -42,15 +42,14 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
 from io_scene_niftools.modules.nif_import.object import PRN_DICT
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import math
+from io_scene_niftools.utils.consts import UPB_DEFAULT
 from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class ObjectProperty:
@@ -226,7 +225,7 @@ class ObjectDataProperty:
                 if root_object.niftools_bs_invmarker:
                     for extra_item in n_root.extra_data_list:
                         if isinstance(extra_item, NifFormat.BSInvMarker):
-                            raise io_scene_niftools.utils.logging.NifError("Multiple Items have Inventory marker data only one item may contain this data")
+                            raise NifError("Multiple Items have Inventory marker data only one item may contain this data")
                     else:
                         n_extra_list = NifFormat.BSInvMarker()
                         n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
@@ -268,7 +267,7 @@ class ObjectDataProperty:
                     upb = block_store.create_block("NiStringExtraData")
                     upb.name = 'UPB'
                     if b_obj.niftools.upb == '':
-                        upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                        upb.string_data = UPB_DEFAULT
                     else:
                         upb.string_data = b_obj.niftools.upb.encode()
                     root_block.add_extra_data(upb)

@@ -39,6 +39,8 @@
 
 from bpy.types import Panel
 
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
 
 class PartFlagPanel(Panel):
     bl_idname = "NIFTOOLS_PT_SkinPartFlagPanel"
@@ -73,3 +75,16 @@ class PartFlagPanel(Panel):
             col.prop(nif_pf_list_props[i], "name", index=i)
             col.prop(nif_pf_list_props[i], "pf_startflag", index=i)
             col.prop(nif_pf_list_props[i], "pf_editorflag", index=i)
+
+
+classes = [
+    PartFlagPanel
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

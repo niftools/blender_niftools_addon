@@ -37,12 +37,16 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 from bpy.props import (PointerProperty,
                        BoolProperty,
                        EnumProperty,
                        )
 from bpy.types import PropertyGroup
+
 from pyffi.formats.nif import NifFormat
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class ShaderProps(PropertyGroup):
@@ -456,3 +460,20 @@ class ShaderProps(PropertyGroup):
     slsf_2_hd_lod_objects: BoolProperty(
         name='HD LOD Objects'
     )
+
+
+CLASSES = [
+    ShaderProps
+]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+
+    bpy.types.Material.niftools_shader = bpy.props.PointerProperty(type=ShaderProps)
+
+
+def unregister():
+    del bpy.types.Material.niftools_shader
+
+    unregister_classes(CLASSES, __name__)

@@ -277,7 +277,7 @@ class Armature:
         # case where we import skeleton only,
         # or importing an Oblivion or Fallout 3 skeleton:
         # do all NiNode's as bones
-        if NifOp.props.skeleton == "SKELETON_ONLY" or \
+        if NifOp.props.process == "SKELETON_ONLY" or \
                 (NifData.data.version in (0x14000005, 0x14020007) and os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif')):
 
             if not isinstance(ni_block, NifFormat.NiNode):
@@ -298,7 +298,7 @@ class Armature:
             return  # done!
 
         # attaching to selected armature -> first identify armature and bones
-        elif NifOp.props.skeleton == "GEOMETRY_ONLY" and not self.dict_armatures:
+        elif NifOp.props.process == "GEOMETRY_ONLY" and not self.dict_armatures:
             b_armature_obj = bpy.context.selected_objects[0]
             skelroot = ni_block.find(block_name=b_armature_obj.name)
             if not skelroot:
@@ -327,11 +327,11 @@ class Armature:
                 # so mark the node to be imported as an armature
                 skininst = ni_block.skin_instance
                 skelroot = skininst.skeleton_root
-                if NifOp.props.skeleton == "EVERYTHING":
+                if NifOp.props.process == "EVERYTHING":
                     if skelroot not in self.dict_armatures:
                         self.dict_armatures[skelroot] = []
                         NifLog.debug(f"'{skelroot.name}' is an armature")
-                elif NifOp.props.skeleton == "GEOMETRY_ONLY":
+                elif NifOp.props.process == "GEOMETRY_ONLY":
                     if skelroot not in self.dict_armatures:
                         raise io_scene_niftools.utils.logging.NifError(f"Nif structure incompatible with '{b_armature_obj.name}' as armature: node '{ni_block.name}' has '{skelroot.name}' as armature")
 

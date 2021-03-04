@@ -42,7 +42,6 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import math
@@ -197,7 +196,7 @@ class TransformAnimation(Animation):
             # if variable_2:
             # controlledblock.set_variable_2(variable_2)
         else:
-            raise io_scene_niftools.utils.logging.NifError(f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.\nOnly Morrowind, Oblivion, Skyrim, Fallout 3, Civilization IV,"
+            raise NifError(f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.\nOnly Morrowind, Oblivion, Skyrim, Fallout 3, Civilization IV,"
                                      " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported.")
         return kf_root
 
@@ -235,7 +234,7 @@ class TransformAnimation(Animation):
 
             # raise error on any objects parented to bones
             if b_obj.parent and b_obj.parent_type == "BONE":
-                raise io_scene_niftools.utils.logging.NifError("{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
+                raise NifError("{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
 
             target_name = block_store.get_full_name(b_obj)
             priority = 0
@@ -269,7 +268,7 @@ class TransformAnimation(Animation):
         # ensure that those groups that are present have all their fcurves
         for fcus, num_fcus in ((quaternions, 4), (eulers, 3), (translations, 3), (scales, 3)):
             if fcus and len(fcus) != num_fcus:
-                raise io_scene_niftools.utils.logging.NifError("Incomplete key set {} for action {}. Ensure that if a bone is keyframed for a property, all channels are keyframed.".format(bonestr, b_action.name))
+                raise NifError("Incomplete key set {} for action {}. Ensure that if a bone is keyframed for a property, all channels are keyframed.".format(bonestr, b_action.name))
 
         # go over all fcurves collected above and transform and store all their keys
         quat_curve = []
