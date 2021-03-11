@@ -120,4 +120,4 @@ def configure_autoupdater():
     addon_updater_ops.updater.user = "niftools"
     addon_updater_ops.updater.repo = "blender_niftools_addon"
     addon_updater_ops.updater.website = "https://github.com/niftools/blender-niftools-addon/"
-    addon_updater_ops.updater.version_min_update = (0, 0, 2)
+    addon_updater_ops.updater.version_min_update = (0, 0, 4)
