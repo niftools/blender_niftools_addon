@@ -39,6 +39,8 @@
 
 from bpy.types import Panel
 
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
 
 class BonePanel(Panel):
     bl_idname = "NIFTOOLS_PT_BonePanel"
@@ -82,3 +84,17 @@ class ArmaturePanel(Panel):
 
         row.prop(nif_armature_props, "axis_forward")
         row.prop(nif_armature_props, "axis_up")
+
+
+classes = [
+    BonePanel,
+    ArmaturePanel
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

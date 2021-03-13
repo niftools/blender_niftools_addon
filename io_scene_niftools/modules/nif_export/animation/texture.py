@@ -43,7 +43,6 @@ import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export.property.texture.writer import TextureWriter
-from io_scene_niftools.utils import math
 
 
 class TextureAnimation(Animation):

@@ -57,6 +57,8 @@ BIP_01 = "Bip01 "
 BIP01_R = "Bip01 R "
 BIP01_L = "Bip01 L "
 
+UPB_DEFAULT = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+
 FLOAT_MIN = -3.4028234663852886e+38
 FLOAT_MAX = +3.4028234663852886e+38
 
@@ -64,3 +66,6 @@ HAVOK_SCALE = 6.996
 
 VERTEX_RESOLUTION = 1000
 NORMAL_RESOLUTION = 100
+
+LOGGER_PYFFI = "pyffi"
+LOGGER_PLUGIN = "niftools"

@@ -37,9 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
-
-import bpy
 from bpy.types import Panel
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class OperatorSetting:
@@ -67,9 +67,8 @@ class OperatorImportIncludePanel(OperatorSetting, Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, "skeleton")
-        layout.prop(operator, "combine_vertices")
-        layout.prop(operator, "use_custom_normals")
+        layout.prop(operator, "process")
+        layout.prop(operator, "override_scene_info")
 
 
 class OperatorImportTransformPanel(OperatorSetting, Panel):
@@ -92,6 +91,29 @@ class OperatorImportTransformPanel(OperatorSetting, Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, "scale_correction")
+
+
+class OperatorImportGeometryPanel(OperatorSetting, Panel):
+    bl_label = "Transform"
+    bl_idname = "NIFTOOLS_PT_import_operator_transform"
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "IMPORT_SCENE_OT_nif"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, "combine_vertices")
+        layout.prop(operator, "use_custom_normals")
 
 
 class OperatorImportArmaturePanel(OperatorSetting, Panel):
@@ -144,125 +166,18 @@ class OperatorImportAnimationPanel(OperatorSetting, Panel):
         layout.use_property_decorate = False  # No animation
 
 
-class OperatorExportTransformPanel(OperatorSetting, Panel):
-    bl_label = "Transform"
-    bl_idname = "NIFTOOLS_PT_export_operator_transform"
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_nif"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.prop(operator, "scale_correction")
+classes = [
+    OperatorImportIncludePanel,
+    OperatorImportTransformPanel,
+    OperatorImportGeometryPanel,
+    OperatorImportArmaturePanel,
+    OperatorImportAnimationPanel
+]
 
 
-class OperatorExportArmaturePanel(OperatorSetting, Panel):
-    bl_label = "Armature"
-    bl_idname = "NIFTOOLS_PT_export_operator_armature"
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_nif"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.prop(operator, "flatten_skin")
-        layout.prop(operator, "skin_partition")
-        layout.prop(operator, "pad_bones")
-        layout.prop(operator, "max_bones_per_partition")
-        layout.prop(operator, "max_bones_per_vertex")
+def register():
+    register_classes(classes, __name__)
 
 
-class OperatorExportAnimationPanel(OperatorSetting, Panel):
-    bl_label = "Animation"
-    bl_idname = "NIFTOOLS_PT_export_operator_animation"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_nif"
-
-    # noinspection PyUnusedLocal
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.prop(operator, "bs_animation_node")
-
-
-class OperatorExportOptimisePanel(OperatorSetting, Panel):
-    bl_label = "Optimise"
-    bl_idname = "NIFTOOLS_PT_export_operator_optimise"
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_nif"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.prop(operator, "stripify")
-        layout.prop(operator, "stitch_strips")
-        layout.prop(operator, "force_dds")
-        layout.prop(operator, "optimise_materials")
-
-
-class OperatorCommonDevPanel(OperatorSetting, Panel):
-    bl_label = "Dev Options"
-    bl_idname = "NIFTOOLS_PT_common_operator_dev"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname in ("IMPORT_SCENE_OT_nif",
-                                      "EXPORT_SCENE_OT_nif") 
-        # "IMPORT_SCENE_OT_kf")
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.prop(operator, "pyffi_log_level")
-        layout.prop(operator, "plugin_log_level")
-        layout.prop(operator, "epsilon")
+def unregister():
+    unregister_classes(classes, __name__)

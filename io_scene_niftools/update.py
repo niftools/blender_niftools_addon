@@ -38,10 +38,13 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+
 from io_scene_niftools import addon_updater_ops
 
 
-# @addon_updater_ops.make_annotations
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
+
 class UpdaterPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
@@ -100,3 +103,16 @@ class UpdaterPreferences(bpy.types.AddonPreferences):
     # col = mainrow.column()
     # col.scale_y = 2
     # col.operator("wm.url_open","Open webpage ").url=addon_updater_ops.updater.website
+
+
+classes = [
+    UpdaterPreferences
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

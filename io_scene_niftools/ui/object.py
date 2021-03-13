@@ -39,6 +39,8 @@
 
 from bpy.types import Panel, UIList, Menu
 
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
 
 class ObjectPanel(Panel):
     bl_label = "Niftools Object Property"
@@ -162,3 +164,20 @@ class ObjectBSInvMarkerPanel(Panel):
             col.prop(nif_bsinv_props[i], "bs_inv_y", index=i)
             col.prop(nif_bsinv_props[i], "bs_inv_z", index=i)
             col.prop(nif_bsinv_props[i], "bs_inv_zoom", index=i)
+
+
+classes = [
+    ObjectBSInvMarkerPanel,
+    ObjectExtraDataList,
+    ObjectExtraDataType,
+    ObjectExtraData,
+    ObjectPanel
+]
+
+
+def register():
+    register_classes(classes, __name__)
+
+
+def unregister():
+    unregister_classes(classes, __name__)

@@ -37,12 +37,15 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 from bpy.props import (PointerProperty,
                        IntProperty,
                        EnumProperty,
                        StringProperty
                        )
 from bpy.types import PropertyGroup
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class BoneProperty(PropertyGroup):
@@ -84,3 +87,23 @@ class ArmatureProperty(PropertyGroup):
                    ),
             default="Y",
             )
+
+
+CLASSES = [
+    BoneProperty,
+    ArmatureProperty
+]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+
+    bpy.types.Armature.niftools = bpy.props.PointerProperty(type=ArmatureProperty)
+    bpy.types.Bone.niftools = bpy.props.PointerProperty(type=BoneProperty)
+
+
+def unregister():
+    del bpy.types.Armature.niftools
+    del bpy.types.Bone.niftools
+
+    unregister_classes(CLASSES, __name__)

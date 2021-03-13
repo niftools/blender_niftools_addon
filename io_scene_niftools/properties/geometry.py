@@ -45,6 +45,8 @@ from bpy.props import (PointerProperty,
                        )
 from bpy.types import PropertyGroup
 
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
 
 class SkinPartHeader(PropertyGroup):
     pf_partcount: IntProperty(
@@ -67,3 +69,23 @@ class SkinPartFlags(PropertyGroup):
     pf_editorflag: BoolProperty(
         name="Editor Visible"
     )
+
+
+CLASSES = [
+    SkinPartHeader,
+    SkinPartFlags
+]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+
+    bpy.types.Object.niftools_part_flags = bpy.props.CollectionProperty(type=SkinPartFlags)
+    bpy.types.Object.niftools_part_flags_panel = bpy.props.PointerProperty(type=SkinPartHeader)
+
+
+def unregister():
+    del bpy.types.Object.niftools_part_flags
+    del bpy.types.Object.niftools_part_flags_panel
+
+    unregister_classes(CLASSES, __name__)

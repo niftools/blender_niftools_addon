@@ -39,6 +39,10 @@
 
 import functools
 
+from bpy.utils import register_class, unregister_class
+
+from io_scene_niftools.utils.logging import NifLog
+
 
 def overload_method(*types):
     """Allows method overloading to enable polymorphic behaviour"""
@@ -67,3 +71,32 @@ def overload_method(*types):
 
 
 overload_method.registry = {}
+
+
+def register_classes(cls_list, mod_name):
+    NifLog.debug(f"Registering Classes for module: {mod_name}")
+    for clz in cls_list:
+        register_class(clz)
+    NifLog.debug(f"Registered Classes: {[c.__name__ for c in cls_list]}")
+
+
+def unregister_classes(cls_list, mod_name):
+    NifLog.debug(f"Unregistering Classes for module: {mod_name} ")
+    for clz in cls_list:
+        unregister_class(clz)
+    NifLog.debug(f"Unregistered Classes: {[c.__name__ for c in cls_list]}")
+
+
+def register_modules(module_list, mod_name):
+    NifLog.debug("Registering submodules for: " + mod_name)
+    for mod in module_list:
+        mod.register()
+    NifLog.debug(f"Registered the following submodules: {[m.__name__ for m in module_list]}")
+
+
+def unregister_modules(module_list, mod_name):
+    NifLog.debug(f"Unregistering submodules for: {mod_name}")
+    for mod in module_list:
+        mod.unregister()
+
+    NifLog.debug(f"Unregistered the following submodules: {[m.__name__ for m in module_list]}")

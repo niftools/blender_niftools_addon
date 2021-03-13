@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 from bpy.props import (PointerProperty,
                        FloatVectorProperty,
                        IntProperty,
@@ -44,6 +45,8 @@ from bpy.props import (PointerProperty,
                        FloatProperty,
                        )
 from bpy.types import PropertyGroup
+
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class Material(PropertyGroup):
@@ -91,3 +94,23 @@ class AlphaFlags(PropertyGroup):
         name='Material Flag',
         default=0
     )
+
+
+CLASSES = [
+    Material,
+    AlphaFlags
+]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+
+    bpy.types.Material.niftools = bpy.props.PointerProperty(type=Material)
+    bpy.types.Material.niftools_alpha = bpy.props.PointerProperty(type=AlphaFlags)
+
+
+def unregister():
+    del bpy.types.Material.niftools
+    del bpy.types.Material.niftools_alpha
+
+    unregister_classes(CLASSES, __name__)

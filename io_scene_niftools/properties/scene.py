@@ -41,9 +41,10 @@
 import bpy
 from bpy.props import PointerProperty, IntProperty
 from bpy.types import PropertyGroup
+
 from pyffi.formats.nif import NifFormat
 
-from io_scene_niftools.operators.common_op import CommonScale
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 def _game_to_enum(game):
@@ -117,3 +118,20 @@ class Scene(PropertyGroup):
         description="Changes size of mesh to fit onto Blender's default grid.",
         default=0.1,
         min=0.001, max=100.0, precision=2)
+
+
+CLASSES = [
+    Scene
+]
+
+
+def register():
+    register_classes(CLASSES, __name__)
+
+    bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=Scene)
+
+
+def unregister():
+    del bpy.types.Scene.niftools_scene
+
+    unregister_classes(CLASSES, __name__)

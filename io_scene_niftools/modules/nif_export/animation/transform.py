@@ -42,12 +42,11 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.logging import NifError, NifLog
 
 
 class TransformAnimation(Animation):
@@ -93,6 +92,34 @@ class TransformAnimation(Animation):
             #         kf_root.add_controller(ctrl)
             #         # wipe controller target
             #         ctrl.target = None
+
+        # skyrim
+        elif bpy.context.scene.niftools_scene.game in ('SKYRIM'):
+
+            if b_armature:
+                NifLog.info(f"Skyrim: Exporting animation on the skeleton: {b_armature.name}")
+                b_action = self.get_active_action(b_armature)
+                kf_root = block_store.create_block("NiControllerSequence")
+                targetname = "Scene Root"
+                for bone in b_armature.data.bones:
+                    self.export_transforms(kf_root,b_armature,b_action,bone)
+
+                anim_textextra = self.export_text_keys(b_action)
+
+                kf_root.name = b_action.name
+                kf_root.unknown_int_1 = 1
+                kf_root.weight = 1.0
+                kf_root.text_keys = anim_textextra
+                kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
+                kf_root.frequency = 1.0
+                kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
+                kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
+
+                kf_root.target_name = targetname
+                kf_root.string_palette = NifFormat.NiStringPalette()
+
+            else:
+                NifError("Cannot export animation without skeleton")
 
         # oblivion
         elif bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
@@ -169,7 +196,7 @@ class TransformAnimation(Animation):
             # if variable_2:
             # controlledblock.set_variable_2(variable_2)
         else:
-            raise io_scene_niftools.utils.logging.NifError(f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.\nOnly Morrowind, Oblivion, Fallout 3, Civilization IV,"
+            raise NifError(f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.\nOnly Morrowind, Oblivion, Skyrim, Fallout 3, Civilization IV,"
                                      " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported.")
         return kf_root
 
@@ -207,7 +234,7 @@ class TransformAnimation(Animation):
 
             # raise error on any objects parented to bones
             if b_obj.parent and b_obj.parent_type == "BONE":
-                raise io_scene_niftools.utils.logging.NifError("{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
+                raise NifError("{} is parented to a bone AND has animations. The nif format does not support this!".format(b_obj.name))
 
             target_name = block_store.get_full_name(b_obj)
             priority = 0
@@ -241,7 +268,7 @@ class TransformAnimation(Animation):
         # ensure that those groups that are present have all their fcurves
         for fcus, num_fcus in ((quaternions, 4), (eulers, 3), (translations, 3), (scales, 3)):
             if fcus and len(fcus) != num_fcus:
-                raise io_scene_niftools.utils.logging.NifError("Incomplete key set {} for action {}. Ensure that if a bone is keyframed for a property, all channels are keyframed.".format(bonestr, b_action.name))
+                raise NifError("Incomplete key set {} for action {}. Ensure that if a bone is keyframed for a property, all channels are keyframed.".format(bonestr, b_action.name))
 
         # go over all fcurves collected above and transform and store all their keys
         quat_curve = []
