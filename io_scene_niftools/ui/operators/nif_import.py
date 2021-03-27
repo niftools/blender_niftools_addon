@@ -39,6 +39,7 @@
 
 from bpy.types import Panel
 
+from io_scene_niftools import NifLog
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
@@ -95,7 +96,7 @@ class OperatorImportTransformPanel(OperatorSetting, Panel):
 
 class OperatorImportGeometryPanel(OperatorSetting, Panel):
     bl_label = "Transform"
-    bl_idname = "NIFTOOLS_PT_import_operator_transform"
+    bl_idname = "NIFTOOLS_PT_import_operator_geometry"
 
     @classmethod
     def poll(cls, context):
@@ -180,4 +181,5 @@ def register():
 
 
 def unregister():
+    NifLog.info(f"BORK - {classes}")
     unregister_classes(classes, __name__)
