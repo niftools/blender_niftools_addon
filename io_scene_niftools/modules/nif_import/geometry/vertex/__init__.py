@@ -38,8 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifLog
-import mathutils
+
 
 class Vertex:
 
@@ -47,8 +46,7 @@ class Vertex:
     def map_vertex_colors(b_mesh, n_tri_data):
         if n_tri_data.has_vertex_colors:
             b_mesh.vertex_colors.new(name=f"RGBA")
-            b_mesh.vertex_colors[-1].data.foreach_set("color",
-                    [c for col in [n_tri_data.vertex_colors[l.vertex_index] for l in b_mesh.loops] for c in (col.r, col.g, col.b, col.a)])
+            b_mesh.vertex_colors[-1].data.foreach_set("color", [channel for col in [n_tri_data.vertex_colors[loop.vertex_index] for loop in b_mesh.loops] for channel in (col.r, col.g, col.b, col.a)])
 
     @staticmethod
     def map_uv_layer(b_mesh, n_tri_data):
@@ -59,8 +57,7 @@ class Vertex:
         # "sticky" UV coordinates: these are transformed in Blender UV's
         for uv_i, uv_set in enumerate(n_tri_data.uv_sets):
             b_mesh.uv_layers.new(name=f"UV{uv_i}")
-            b_mesh.uv_layers[-1].data.foreach_set("uv",
-                                              [c for uv in [uv_set[l.vertex_index] for l in b_mesh.loops] for c in (uv.u, 1.0 - uv.v)])
+            b_mesh.uv_layers[-1].data.foreach_set("uv", [coord for uv in [uv_set[loop.vertex_index] for loop in b_mesh.loops] for coord in (uv.u, 1.0 - uv.v)])
 
     @staticmethod
     def map_normals(b_mesh, n_tri_data):

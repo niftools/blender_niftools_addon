@@ -95,7 +95,7 @@ class OperatorImportTransformPanel(OperatorSetting, Panel):
 
 class OperatorImportGeometryPanel(OperatorSetting, Panel):
     bl_label = "Transform"
-    bl_idname = "NIFTOOLS_PT_import_operator_transform"
+    bl_idname = "NIFTOOLS_PT_import_operator_geometry"
 
     @classmethod
     def poll(cls, context):
