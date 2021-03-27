@@ -39,7 +39,6 @@
 
 from bpy.types import Panel
 
-from io_scene_niftools import NifLog
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
@@ -181,5 +180,4 @@ def register():
 
 
 def unregister():
-    NifLog.info(f"BORK - {classes}")
     unregister_classes(classes, __name__)
