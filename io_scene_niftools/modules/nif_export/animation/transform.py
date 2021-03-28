@@ -100,7 +100,7 @@ class TransformAnimation(Animation):
                 NifLog.info(f"Skyrim: Exporting animation on the skeleton: {b_armature.name}")
                 b_action = self.get_active_action(b_armature)
                 kf_root = block_store.create_block("NiControllerSequence")
-                targetname = "Scene Root"
+                targetname = "NPC Root [Root]"
                 for bone in b_armature.data.bones:
                     self.export_transforms(kf_root,b_armature,b_action,bone)
 
@@ -112,11 +112,16 @@ class TransformAnimation(Animation):
                 kf_root.text_keys = anim_textextra
                 kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
                 kf_root.frequency = 1.0
-                kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
-                kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
 
                 kf_root.target_name = targetname
                 kf_root.string_palette = NifFormat.NiStringPalette()
+
+                if anim_textextra.num_text_keys > 0:
+                    kf_root.start_time = anim_textextra.text_keys[0].time
+                    kf_root.stop_time = anim_textextra.text_keys[anim_textextra.num_text_keys - 1].time
+                else:
+                    kf_root.start_time = bpy.context.scene.frame_start * bpy.context.scene.render.fps
+                    kf_root.stop_time = (bpy.context.scene.frame_end - bpy.context.scene.frame_start) * bpy.context.scene.render.fps
 
             else:
                 NifError("Cannot export animation without skeleton")
