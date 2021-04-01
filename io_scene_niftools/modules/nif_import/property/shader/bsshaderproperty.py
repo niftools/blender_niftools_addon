@@ -100,16 +100,16 @@ class BSShaderPropertyProcessor(BSShader):
         #translate the clamp, uv offset and uv scale to values to use in blender
         if hasattr(bs_shader_property, 'texture_clamp_mode'):
             clamp_mode = bs_shader_property.texture_clamp_mode
-            if clamp_mode == 3:
+            if clamp_mode == NifFormat.TexClampMode.WRAP_S_WRAP_T:
                 clamp_x = False
                 clamp_y = False
-            if clamp_mode == 2:
+            if clamp_mode == NifFormat.TexClampMode.WRAP_S_CLAMP_T:
                 clamp_x = False
                 clamp_y = True
-            if clamp_mode == 1:
+            if clamp_mode == NifFormat.TexClampMode.CLAMP_S_WRAP_T:
                 clamp_x = True
                 clamp_y = False
-            if clamp_mode == 0:
+            if clamp_mode == NifFormat.TexClampMode.CLAMP_S_CLAMP_T:
                 clamp_x = True
                 clamp_y = True
         else:
@@ -130,9 +130,9 @@ class BSShaderPropertyProcessor(BSShader):
             x_scale = 1
             y_scale = 1
 
-        b_x_offset = 1 - x_offset - x_scale
+        #only the y offset needs conversion, xoffset is the same for the same result
         b_y_offset = 1 - y_offset - y_scale
-        self._nodes_wrapper.global_uv_offset_scale(b_x_offset, b_y_offset, x_scale, y_scale, clamp_x, clamp_y)
+        self._nodes_wrapper.global_uv_offset_scale(x_scale, y_scale, x_offset, b_y_offset, clamp_x, clamp_y)
 
         # Diffuse color
         if bs_shader_property.skin_tint_color:
