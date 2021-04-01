@@ -85,28 +85,44 @@ class BSShaderTexture(TextureSlotManager):
         if self.slots["Gloss"]:
             texset.textures[7] = TextureWriter.export_texture_filename(self.slots["Gloss"])
 
-        # TODO [shader] UV offset node support
-        # # UV Offset
-        # if hasattr(bsshader, 'uv_offset'):
-        #     self.export_uv_offset(bsshader)
-        #
-        # # UV Scale
-        # if hasattr(bsshader, 'uv_scale'):
-        #     self.export_uv_scale(bsshader)
+        #get the offset, scale and UV wrapping mode and set them
+        x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_global_uv_transform_clip(self.slots["Base"])
+        #default values for if they haven't been defined:
+        if x_scale is None: x_scale = 1
+        if y_scale is None: y_scale = 1
+        if x_offset is None: x_offset = 0
+        if y_offset is None:
+            y_offset = 0
+        else:
+        #need to translate blender offset to nif offset to get the same results
+            y_offset = 1 - y_scale - y_offset
+        if clamp_x is None: clamp_x = False
+        if clamp_y is None: clamp_y = False
+
+        if hasattr(bsshader, "uv_scale"):
+            bsshader.uv_scale.u = x_scale
+            bsshader.uv_scale.v = y_scale
+
+        if hasattr(bsshader, 'uv_offset'):
+            bsshader.uv_offset.u = x_offset
+            bsshader.uv_offset.v = y_offset
 
         # Texture Clamping mode
         b_img = self.slots["Base"].image
-        # TODO [texture] Implement clamp on image wrapping
-        # if not b_img.use_clamp_x:
-        #     wrap_s = 2
-        # else:
-        #     wrap_s = 0
-        # if not b_img.use_clamp_y:
-        #     wrap_t = 1
-        # else:
-        #     wrap_t = 0
-        #
-        # bsshader.texture_clamp_mode = (wrap_s + wrap_t)
+        if self.slots["Base"].extension == "CLIP":
+            #if the extension is clip, we know the wrap mode is clamp for both,
+            bsshader.texture_clamp_mode = NifFormat.TexClampMode.CLAMP_S_CLAMP_T
+        else:
+            #otherwise, look at the given clip modes from the nodes
+            if not clamp_x:
+                wrap_s = 2
+            else:
+                wrap_s = 0
+            if not clamp_y:
+                wrap_t = 1
+            else:
+                wrap_t = 0
+            bsshader.texture_clamp_mode = (wrap_s + wrap_t)
 
     def export_bs_shader_pp_lighting_prop_textures(self, bsshader):
         bsshader.texture_set = self._create_textureset()

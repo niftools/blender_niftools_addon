@@ -71,13 +71,37 @@ class TextureSlotManager:
                 "Specular": None,
                 "Normal": None,
         }
+    
+    def get_input_node_of_type(self, input_socket, node_types):
+        #search back in the node tree for nodes of a certain type(s), depth-first
+        links = input_socket.links
+        if not links:
+            #this socket has no inputs
+            return None
+        node = links[0].from_node
+        if isinstance(node, node_types):
+            #the input node is of the required type
+            return node
+        else:
+            if len(node.inputs) > 0:
+                for input in node.inputs:
+                    #check every input if somewhere up that tree is a node of the required type
+                    input_results = self.get_input_node_of_type(input, node_types)
+                    if input_results:
+                        return input_results
+                #we found nothing
+                return None
+            else:
+                #this has no inputs, and doesn't classify itself
+                return None
 
     def get_uv_node(self, b_texture_node):
-        # check if a node is plugged into the b_texture_node's vector input
-        links = b_texture_node.inputs[0].links
-        if not links:
-            return 0
-        uv_node = links[0].from_node
+        uv_node = self.get_input_node_of_type(b_texture_node.inputs[0], (bpy.types.ShaderNodeUVMap, bpy.types.ShaderNodeTexCoord))
+        if uv_node is None:
+            links = b_texture_node.inputs[0].links
+            if not links:
+                #nothing is plugged in, so it will use the first UV map
+                return 0
         if isinstance(uv_node, bpy.types.ShaderNodeUVMap):
             uv_name = uv_node.uv_map
             try:
@@ -90,6 +114,33 @@ class TextureSlotManager:
         else:
             raise NifError(f"Unsupported vector input for {b_texture_node.name} in material '{self.b_mat.name}''.\n"
                            f"Expected 'UV Map' or 'Texture Coordinate' nodes")
+
+    def get_global_uv_transform_clip(self, b_texture_node):
+        #get the values from the nodes, find the nodes by name, or search back in the node tree
+        x_scale = y_scale = x_offset = y_offset = clamp_x = clamp_y = None
+        #first check if there are any of the preset name - much more time efficient
+        try:
+            combine_node = b_texture_node.id_data.nodes["Combine UV0"]
+            if not isinstance(combine_node, bpy.types.ShaderNodeCombineXYZ):
+                combine_node = self.get_input_node_of_type(b_texture_node.inputs[0], bpy.types.ShaderNodeCombineXYZ)
+        except:
+            #if there is a combine node, it does not have the standard name
+            combine_node = self.get_input_node_of_type(b_texture_node.inputs[0], bpy.types.ShaderNodeCombineXYZ)
+            
+        if combine_node:
+            x_link = combine_node.inputs[0].links
+            if x_link:
+                x_node = x_link[0].from_node
+                x_scale =  x_node.inputs[1].default_value
+                x_offset =  x_node.inputs[2].default_value
+                clamp_x = x_node.use_clamp
+            y_link = combine_node.inputs[1].links
+            if y_link:
+                y_node = y_link[0].from_node
+                y_scale = y_node.inputs[1].default_value
+                y_offset = y_node.inputs[2].default_value
+                clamp_y = y_node.use_clamp
+        return x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y
 
     @staticmethod
     def get_used_textslots(b_mat):
