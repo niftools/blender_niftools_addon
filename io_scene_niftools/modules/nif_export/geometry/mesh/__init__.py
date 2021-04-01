@@ -350,6 +350,8 @@ class Mesh:
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if mesh_uv_layers and mesh_hasnormals:
                 if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                    if bpy.context.scene.niftools_scene.game == 'SKYRIM':
+                        tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
                     trishape.update_tangent_space(as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
