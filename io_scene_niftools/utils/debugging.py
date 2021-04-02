@@ -46,27 +46,32 @@ CLIENT_PORT = 5678
 REMOTE_PORT = 1234
 
 
-def start_debug(port=REMOTE_PORT):
-    NifLog.debug("Setting up debugger")
+def start_debug(host='localhost', port=REMOTE_PORT):
+    NifLog.debug(f"Setting up debugger")
     try:
         pydev_src = os.environ['PYDEVDEBUG']
-        NifLog.debug(f"Found: {pydev_src}")
+        NifLog.debug(f"Dev: Found: {pydev_src}")
         if sys.path.count(pydev_src) < 1:
             sys.path.append(pydev_src)
+        NifLog.debug(f"Dev: Added to sys.path - {sys.path}")
     except KeyError:
-        NifLog.info("Dev: Sys variable not set")
+        NifLog.info(f"Dev: Sys variable not set")
         return
 
     try:
+        NifLog.debug(f"Attempting to load pydevd")
         from pydevd_pycharm import settrace
+        NifLog.debug(f"Dev: Loaded pydevd")
     except ImportError:
-        NifLog.debug("Dev: Import failed to find pydevd module.\nPython Remote Debugging Server not found")
+        NifLog.debug(f"Dev: Import failed to find pydevd module.\nPython Remote Debugging Server not found")
         return
 
     try:
-        settrace('localhost', port=port, stdoutToServer=True, stderrToServer=True, suspend=True)
+        NifLog.debug(f"Dev: Attempting to set a tracepoint in the stack")
+        settrace(host=host, port=port, stdoutToServer=True, stderrToServer=True, suspend=True)
+        NifLog.debug(f"Dev: Debugger was successfully detected")
     except Exception as e:
-        NifLog.debug("Unable to connect to remote debugging server")
+        NifLog.debug(f"Dev: Unable to connect to remote debugging server")
         NifLog.debug(e)
         return
 
