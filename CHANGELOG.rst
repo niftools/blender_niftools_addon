@@ -1,9 +1,3 @@
-Version v0.0.5
-==============
-- #411 Usability : Niftool addon fails to install
-- #424 Bug/fix operator menu registration
-- #423 Update the release workflow to include the new update instructions.
-
 Version v0.0.4
 ==============
 - #410 Kf export
