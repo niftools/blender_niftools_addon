@@ -123,9 +123,13 @@ class TextureSlotManager:
             combine_node = b_texture_node.id_data.nodes["Combine UV0"]
             if not isinstance(combine_node, bpy.types.ShaderNodeCombineXYZ):
                 combine_node = self.get_input_node_of_type(b_texture_node.inputs[0], bpy.types.ShaderNodeCombineXYZ)
+                NifLog.warn(f"Found node with name 'Combine UV0', but it was of the wrong type.\n"
+                            f"Searching through vector input of base texture gave {combine_node}")
         except:
             #if there is a combine node, it does not have the standard name
             combine_node = self.get_input_node_of_type(b_texture_node.inputs[0], bpy.types.ShaderNodeCombineXYZ)
+            NifLog.warn(f"Did not find node with 'Combine UV0' name.\n"
+                        f"Searching through vector input of base texture gave {combine_node}")
             
         if combine_node:
             x_link = combine_node.inputs[0].links
@@ -164,11 +168,11 @@ class TextureSlotManager:
         self._reset_fields()
 
         for b_texture_node in self.get_used_textslots(b_mat):
-            NifLog.debug(f"Found node {b_texture_node.name} of type {b_texture_node.label}")
-
             shown_label = b_texture_node.label
             if shown_label == '':
                 shown_label = b_texture_node.image.name
+            NifLog.debug(f"Found node {b_texture_node.name} of type {shown_label}")
+
             # go over all slots
             for slot_name in self.slots.keys():
                 if slot_name in shown_label:

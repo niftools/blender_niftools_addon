@@ -88,16 +88,21 @@ class BSShaderTexture(TextureSlotManager):
         #get the offset, scale and UV wrapping mode and set them
         x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_global_uv_transform_clip(self.slots["Base"])
         #default values for if they haven't been defined:
-        if x_scale is None: x_scale = 1
-        if y_scale is None: y_scale = 1
-        if x_offset is None: x_offset = 0
+        if x_scale is None:
+            x_scale = 1
+        if y_scale is None:
+            y_scale = 1
+        if x_offset is None:
+            x_offset = 0
         if y_offset is None:
             y_offset = 0
         else:
-        #need to translate blender offset to nif offset to get the same results
+            #need to translate blender offset to nif offset to get the same results
             y_offset = 1 - y_scale - y_offset
-        if clamp_x is None: clamp_x = False
-        if clamp_y is None: clamp_y = False
+        if clamp_x is None:
+            clamp_x = False
+        if clamp_y is None:
+            clamp_y = False
 
         if hasattr(bsshader, "uv_scale"):
             bsshader.uv_scale.u = x_scale
