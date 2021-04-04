@@ -99,7 +99,6 @@ Skyrim PP shader for assigning material/shader/texture.
 
 This shader node is used for things.
 
-<<<<<<< HEAD
 +-------------------------------+----------------------------------------------------------------+
 |           Property            |                          Description                           |
 +===============================+================================================================+
