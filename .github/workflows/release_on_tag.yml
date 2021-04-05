@@ -41,16 +41,17 @@ jobs:
           release_name: "Blender Niftools Addon - ${{ steps.get_tag.outputs.tag_name }}"
           body:
             "
-              Changes in ${{ steps.get_tag.outputs.tag_name }}
-              -
+              **Changes in ${{ steps.get_tag.outputs.tag_name }}**
 
-              [Full Changelog](https://github.com/niftools/blender_niftools_addon/blob/${{ steps.get_tag.outputs.tag_name }}/CHANGELOG.rst)
+                [Full Changelog](https://github.com/niftools/blender_niftools_addon/blob/${{ steps.get_tag.outputs.tag_name }}/CHANGELOG.rst)
 
               **Auto-update**
-              If you have a previous release, you can auto-update from within Blender under the addon's preferences
-              <img src=\"https://user-images.githubusercontent.com/525919/99152545-518dd200-269a-11eb-9236-38c72e641884.gif\" width=\"300\" height=\"200\">
+
+                 If you have a previous release, you can auto-update from within Blender under the addon's preferences
+                 <img src=\"https://user-images.githubusercontent.com/525919/99152545-518dd200-269a-11eb-9236-38c72e641884.gif\" width=\"300\" height=\"200\">
 
               **Clean Install**
+
                 Please use the following link to download the latest release - [${{ steps.build_addon.outputs.zip_name }}](https://github.com/niftools/blender_niftools_addon/releases/download/${{ steps.get_tag.outputs.tag_name }}/${{ steps.build_addon.outputs.zip_name }})
 
                 Click image for installation tutorial
