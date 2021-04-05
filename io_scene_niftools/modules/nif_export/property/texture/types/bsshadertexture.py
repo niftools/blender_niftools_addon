@@ -155,15 +155,3 @@ class BSShaderTexture(TextureSlotManager):
                 shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + + (wrap_s + wrap_t)
 
         return shader
-
-    def export_uv_offset(self, shader):
-        shader.uv_offset.u = self.slots["Base"].offset.x
-        shader.uv_offset.v = self.slots["Base"].offset.y
-
-        return shader
-
-    def export_uv_scale(self, shader):
-        shader.uv_scale.u = self.slots["Base"].scale.x
-        shader.uv_scale.v = self.slots["Base"].scale.y
-
-        return shader
