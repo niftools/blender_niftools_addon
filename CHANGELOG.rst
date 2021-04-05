@@ -1,6 +1,9 @@
 Version v0.0.6
 ==============
+- #426 Minor animation export bugs fixed
+- #420 Minor bugs in Kf Export
 - #428 Updated shader import/export, mostly for BSShaderProperty
+- #404 Export to Skyrim nif missing Has_Tangents bit
 
 Version v0.0.5
 ==============
