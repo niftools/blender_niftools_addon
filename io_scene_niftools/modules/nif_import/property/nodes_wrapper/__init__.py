@@ -44,6 +44,7 @@ from io_scene_niftools.modules.nif_import.geometry.vertex import Vertex
 from io_scene_niftools.modules.nif_import.property.texture.loader import TextureLoader
 from io_scene_niftools.utils.logging import NifLog
 from io_scene_niftools.utils.nodes import nodes_iterate
+from io_scene_niftools.utils.consts import TEX_SLOTS
 
 
 # TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
@@ -286,11 +287,11 @@ class NodesWrapper:
 
     def link_base_node(self, b_texture_node):
         self.diffuse_texture = b_texture_node
-        b_texture_node.label = "Base"
+        b_texture_node.label = TEX_SLOTS.BASE
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node)
 
     def link_bump_map_node(self, b_texture_node):
-        b_texture_node.label = "Bump Map"
+        b_texture_node.label = TEX_SLOTS.BUMP_MAP
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = False  # causes artifacts otherwise.
         #
@@ -304,7 +305,7 @@ class NodesWrapper:
         # b_texture_node.use_map_alpha = False
 
     def link_normal_node(self, b_texture_node):
-        b_texture_node.label = "Normal"
+        b_texture_node.label = TEX_SLOTS.NORMAL
         #set to non-color data
         b_texture_node.image.colorspace_settings.name = 'Non-Color'
         #create tangent normal map converter and link to it
@@ -325,7 +326,7 @@ class NodesWrapper:
         # b_texture_node.use_map_alpha = False
 
     def link_glow_node(self, b_texture_node):
-        b_texture_node.label = "Glow"
+        b_texture_node.label = TEX_SLOTS.GLOW
         # # Influence mapping
         # b_texture_node.texture.use_alpha = False
         #
@@ -338,7 +339,7 @@ class NodesWrapper:
         # b_texture_node.use_map_emit = True
 
     def link_gloss_node(self, b_texture_node):
-        b_texture_node.label = "Gloss"
+        b_texture_node.label = TEX_SLOTS.GLOSS
         # # Influence mapping
         # b_texture_node.texture.use_alpha = False
         #
@@ -352,23 +353,23 @@ class NodesWrapper:
         # b_texture_node.use_map_color_spec = True
 
     def link_decal_0_node(self, b_texture_node):
-        b_texture_node.label = "Decal 0"
+        b_texture_node.label = TEX_SLOTS.DECAL_0
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def link_decal_1_node(self, b_texture_node):
-        b_texture_node.label = "Decal 1"
+        b_texture_node.label = TEX_SLOTS.DECAL_1
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def link_decal_2_node(self, b_texture_node):
-        b_texture_node.label = "Decal2"
+        b_texture_node.label = TEX_SLOTS.DECAL_2
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def link_detail_node(self, b_texture_node):
-        b_texture_node.label = "Detail"
+        b_texture_node.label = TEX_SLOTS.DETAIL
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Detail")
 
     def link_dark_node(self, b_texture_node):
-        b_texture_node.label = "Dark"
+        b_texture_node.label = TEX_SLOTS.DARK
 
     def link_reflection_node(self, b_texture_node):
         # Influence mapping

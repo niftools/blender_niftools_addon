@@ -43,6 +43,7 @@ from io_scene_niftools.modules.nif_export.animation.texture import TextureAnimat
 from io_scene_niftools.modules.nif_export.property import texture
 from io_scene_niftools.modules.nif_export.property.texture.writer import TextureWriter
 from io_scene_niftools.utils.logging import NifLog, NifError
+from io_scene_niftools.utils.consts import TEX_SLOTS
 
 
 class TextureSlotManager:
@@ -57,20 +58,9 @@ class TextureSlotManager:
         self._reset_fields()
 
     def _reset_fields(self):
-        self.slots = {
-                "Base": None,
-                "Dark": None,
-                "Detail": None,
-                "Gloss": None,
-                "Glow": None,
-                "Bump Map": None,
-                "Decal 0": None,
-                "Decal 1": None,
-                "Decal 2": None,
-                # extra shader stuff?
-                "Specular": None,
-                "Normal": None,
-        }
+        self.slots = {}
+        for slot_name in vars(TEX_SLOTS).values():
+            self.slots[slot_name] = None
     
     def get_input_node_of_type(self, input_socket, node_types):
         #search back in the node tree for nodes of a certain type(s), depth-first

@@ -39,6 +39,7 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_export.property.texture import TextureWriter, TextureSlotManager
+from io_scene_niftools.utils.consts import TEX_SLOTS
 
 
 class BSShaderTexture(TextureSlotManager):
@@ -63,10 +64,10 @@ class BSShaderTexture(TextureSlotManager):
     def export_bs_effect_shader_prop_textures(self, bsshader):
         bsshader.texture_set = self._create_textureset()
 
-        if self.slots["Base"]:
-            bsshader.source_texture = TextureWriter.export_texture_filename(self.slots["Base"])
-        if self.slots["Glow"]:
-            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.slots["Glow"])
+        if self.slots[TEX_SLOTS.BASE]:
+            bsshader.source_texture = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.BASE])
+        if self.slots[TEX_SLOTS.GLOW]:
+            bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.GLOW])
 
         #get the offset, scale and UV wrapping mode and set them
         self.export_uv_transform(bsshader)
@@ -79,11 +80,11 @@ class BSShaderTexture(TextureSlotManager):
         texset.num_textures = 9
         texset.textures.update_size()
 
-        if self.slots["Detail"]:
-            texset.textures[6] = TextureWriter.export_texture_filename(self.slots["Detail"])
+        if self.slots[TEX_SLOTS.DETAIL]:
+            texset.textures[6] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.DETAIL])
 
-        if self.slots["Gloss"]:
-            texset.textures[7] = TextureWriter.export_texture_filename(self.slots["Gloss"])
+        if self.slots[TEX_SLOTS.GLOSS]:
+            texset.textures[7] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.GLOSS])
 
         #get the offset, scale and UV wrapping mode and set them
         self.export_uv_transform(bsshader)
@@ -95,23 +96,23 @@ class BSShaderTexture(TextureSlotManager):
     def _create_textureset(self):
         texset = NifFormat.BSShaderTextureSet()
 
-        if self.slots["Base"]:
-            texset.textures[0] = TextureWriter.export_texture_filename(self.slots["Base"])
+        if self.slots[TEX_SLOTS.BASE]:
+            texset.textures[0] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.BASE])
 
-        if self.slots["Normal"]:
-            texset.textures[1] = TextureWriter.export_texture_filename(self.slots["Normal"])
+        if self.slots[TEX_SLOTS.NORMAL]:
+            texset.textures[1] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.NORMAL])
 
-        if self.slots["Glow"]:
-            texset.textures[2] = TextureWriter.export_texture_filename(self.slots["Glow"])
+        if self.slots[TEX_SLOTS.GLOW]:
+            texset.textures[2] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.GLOW])
 
-        if self.slots["Detail"]:
-            texset.textures[3] = TextureWriter.export_texture_filename(self.slots["Detail"])
+        if self.slots[TEX_SLOTS.DETAIL]:
+            texset.textures[3] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.DETAIL])
 
         return texset
 
     def export_uv_transform(self, shader):
         #get the offset, scale and UV wrapping mode and set them
-        x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_global_uv_transform_clip(self.slots["Base"])
+        x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_global_uv_transform_clip(self.slots[TEX_SLOTS.BASE])
         #default values for if they haven't been defined:
         if x_scale is None:
             x_scale = 1
@@ -139,7 +140,7 @@ class BSShaderTexture(TextureSlotManager):
 
         # Texture Clamping mode
         if hasattr(shader, 'texture_clamp_mode'):
-            if self.slots["Base"].extension == "CLIP":
+            if self.slots[TEX_SLOTS.BASE].extension == "CLIP":
                 #if the extension is clip, we know the wrap mode is clamp for both,
                 shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + NifFormat.TexClampMode.CLAMP_S_CLAMP_T
             else:
