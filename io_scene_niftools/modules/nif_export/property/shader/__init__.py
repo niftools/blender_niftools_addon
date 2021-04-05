@@ -78,9 +78,6 @@ class BSShaderProperty:
         # if b_mat.use_transparency:
         #     bsshader.alpha = (1 - b_mat.alpha)
 
-        # clamp Mode
-        bsshader.texture_clamp_mode = 65283
-
         # Emissive
         bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
         bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
