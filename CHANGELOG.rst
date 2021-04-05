@@ -1,3 +1,7 @@
+Version v0.0.6
+==============
+- #428 Updated shader import/export, mostly for BSShaderProperty
+
 Version v0.0.5
 ==============
 - #411 Usability : Niftool addon fails to install
