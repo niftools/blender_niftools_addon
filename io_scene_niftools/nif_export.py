@@ -61,9 +61,6 @@ from io_scene_niftools.utils.logging import NifLog, NifError
 
 class NifExport(NifCommon):
 
-    IDENTITY44 = NifFormat.Matrix44()
-    IDENTITY44.set_identity()
-
     # TODO: - Expose via properties
 
     def __init__(self, operator, context):

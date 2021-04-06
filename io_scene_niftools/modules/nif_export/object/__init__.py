@@ -59,12 +59,6 @@ DICT_NAMES = {}
 # keeps track of names of exported blocks, to make sure they are unique
 BLOCK_NAMES_LIST = []
 
-# identity matrix, for comparisons
-IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
-                               [0.0, 1.0, 0.0, 0.0],
-                               [0.0, 0.0, 1.0, 0.0],
-                               [0.0, 0.0, 0.0, 1.0]])
-
 
 class Object:
 
@@ -258,7 +252,6 @@ class Object:
             else:
                 # all nodes failed so add new one
                 node = types.create_ninode(b_obj)
-                # node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy{:d}'.format(n_parent.num_children)
                 if b_obj.niftools.flags != 0:
                     node_flag_hex = hex(b_obj.niftools.flags)
