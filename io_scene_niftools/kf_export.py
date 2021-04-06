@@ -89,7 +89,7 @@ class KfExport(NifCommon):
         data.neosteam = (bpy.context.scene.niftools_scene.game == 'NEOSTEAM')
 
         # scale correction for the skeleton
-        apply_scale(data, round(1 / NifOp.props.scale_correction))
+        self.apply_scale(data, round(1 / NifOp.props.scale_correction))
 
         kffile = os.path.join(directory, prefix + filebase + ext)
         with open(kffile, "wb") as stream:
@@ -99,8 +99,3 @@ class KfExport(NifCommon):
         return {'FINISHED'}
 
 
-def apply_scale(data, scale):
-    NifLog.info(f"Scale Correction set to {scale}")
-    toaster = pyffi.spells.nif.NifToaster()
-    toaster.scale = scale
-    pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()

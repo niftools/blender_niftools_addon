@@ -107,12 +107,9 @@ class NifImport(NifCommon):
             if NifOp.props.apply_skin_deformation:
                 VertexGroup.apply_skin_deformation(NifData.data)
 
-            # scale tree
-            toaster = pyffi.spells.nif.NifToaster()
-            toaster.scale = NifOp.props.scale_correction
             # store scale correction
             bpy.context.scene.niftools_scene.scale_correction = NifOp.props.scale_correction
-            pyffi.spells.nif.fix.SpellScale(data=NifData.data, toaster=toaster).recurse()
+            self.apply_scale(NifData.data, NifOp.props.scale_correction)
 
             # import all root blocks
             for block in NifData.data.roots:

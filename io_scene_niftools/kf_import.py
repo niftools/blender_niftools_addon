@@ -76,10 +76,7 @@ class KfImport(NifCommon):
             for kf_file in kf_files:
                 kfdata = KFFile.load_kf(kf_file)
 
-                # use pyffi toaster to scale the tree
-                toaster = pyffi.spells.nif.NifToaster()
-                toaster.scale = NifOp.props.scale_correction
-                pyffi.spells.nif.fix.SpellScale(data=kfdata, toaster=toaster).recurse()
+                self.apply_scale(kfdata, NifOp.props.scale_correction)
 
                 # calculate and set frames per second
                 self.tranform_anim.set_frames_per_second(kfdata.roots)
