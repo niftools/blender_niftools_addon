@@ -71,6 +71,7 @@ class KfExport(NifCommon):
 
         prefix = "x" if bpy.context.scene.niftools_scene.game in ('MORROWIND',) else ""
         self.version, data = scene.get_version_data()
+        # todo[anim] - change to KfData, but create_controller() [and maybe more] has to be updated first
         NifData.init(data)
 
         b_armature = math.get_armature()
