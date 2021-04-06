@@ -254,7 +254,7 @@ class Constraint:
                     # friction
                     n_bhkdescriptor.max_friction = max_friction
                 else:
-                    raise ValueError("unknown descriptor {0}".format(n_bhkdescriptor.__class__.__name__))
+                    raise ValueError(f"unknown descriptor {n_bhkdescriptor.__class__.__name__}")
 
                 # do AB
                 n_bhkconstraint.update_a_b(root_block)

@@ -588,8 +588,8 @@ class Mesh:
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
 
         # raise exception
-        raise NifError("Some polygons of {0} not assigned to any body part."
-                       "The unassigned polygons have been selected in the mesh so they can easily be identified.".format(b_obj))
+        raise NifError(f"Some polygons of {b_obj.name} not assigned to any body part."
+                       f"The unassigned polygons have been selected in the mesh so they can easily be identified.")
 
     def is_new_face_corner_data(self, vertquad, v_quad_old):
         """Compares vert info to old vert info if relevant data is present"""
