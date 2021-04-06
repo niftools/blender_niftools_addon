@@ -103,7 +103,7 @@ class TransformAnimation(Animation):
 				b_action = self.get_active_action(b_armature)
 				for b_bone in b_armature.data.bones:
 					self.export_transforms(kf_root, b_armature, b_action, b_bone)
-				if scene.niftools_scene.game not in ('SKYRIM'):
+				if scene.niftools_scene.game not in ('SKYRIM', ):
 					# quick hack to set correct target name
 					if "Bip01" in b_armature.data.bones:
 						targetname = "Bip01"
