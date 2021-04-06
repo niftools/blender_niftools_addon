@@ -226,5 +226,5 @@ class NiTextureProp(TextureSlotManager):
         elif b_blend_type == "MIX":
             return NifFormat.ApplyMode.APPLY_MODULATE
 
-        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
+        NifLog.warn(f"Unsupported blend type ({b_blend_type}) in material, using apply mode APPLY_MODULATE")
         return NifFormat.ApplyMode.APPLY_MODULATE
