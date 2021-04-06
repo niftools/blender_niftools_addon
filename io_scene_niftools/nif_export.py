@@ -243,14 +243,10 @@ class NifExport(NifCommon):
             """
 
             # apply scale
+            data.roots = [root_block]
             scale_correction = bpy.context.scene.niftools_scene.scale_correction
             if abs(scale_correction) > NifOp.props.epsilon:
-                NifLog.info(f"Applying scale correction {scale_correction}")
-                data.roots = [root_block]
-                toaster = pyffi.spells.nif.NifToaster()
-                toaster.scale = 1 / scale_correction
-                pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
-
+                self.apply_scale(data, round(1 / NifOp.props.scale_correction))
                 # also scale egm
                 if EGMData.data:
                     EGMData.data.apply_scale(1 / scale_correction)
