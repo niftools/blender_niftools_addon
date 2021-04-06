@@ -169,8 +169,7 @@ class TransformAnimation(Animation):
             # raise error on any objects parented to bones
             if b_obj.parent and b_obj.parent_type == "BONE":
                 raise NifError(
-                    "{} is parented to a bone AND has animations. The nif format does not support this!".format(
-                        b_obj.name))
+                    f"{b_obj.name} is parented to a bone AND has animations. The nif format does not support this!")
 
             target_name = block_store.get_full_name(b_obj)
             priority = 0
