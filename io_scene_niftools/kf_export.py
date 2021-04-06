@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import os
+import bpy
 
 import pyffi.spells.nif.fix
 
@@ -46,7 +47,7 @@ from io_scene_niftools.modules.nif_export import armature
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import math
-from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog, NifError
 from io_scene_niftools.modules.nif_export import scene
 
@@ -57,7 +58,7 @@ class KfExport(NifCommon):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.tranform_anim = TransformAnimation()
+        self.transform_anim = TransformAnimation()
 
     def execute(self):
         """Main import function."""
@@ -70,7 +71,7 @@ class KfExport(NifCommon):
 
         prefix = "x" if bpy.context.scene.niftools_scene.game in ('MORROWIND',) else ""
         self.version, data = scene.get_version_data()
-        # NifData.init(data)
+        NifData.init(data)
 
         b_armature = math.get_armature()
         # some scenes may not have an armature, so nothing to do here

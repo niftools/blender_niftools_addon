@@ -368,9 +368,14 @@ class TransformAnimation(Animation):
 
     def export_text_keys(self, b_action):
         """Process b_action's pose markers and return an extra string data block."""
-        if NifOp.props.animation == 'GEOM_NIF':
-            # animation group extra data is not present in geometry only files
-            return
+        try:
+            if NifOp.props.animation == 'GEOM_NIF':
+                # animation group extra data is not present in geometry only files
+                return
+        except AttributeError:
+            # kf export has no animation mode
+            pass
+
         NifLog.info("Exporting animation groups")
 
         self.add_dummy_markers(b_action)
