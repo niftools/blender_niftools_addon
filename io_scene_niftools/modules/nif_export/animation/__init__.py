@@ -113,6 +113,7 @@ class Animation(ABC):
 
     @staticmethod
     def create_controller(parent_block, target_name, priority=0):
+        # todo[anim] - make independent of global NifData.data.version, and move check for NifOp.props.animation outside
         n_kfi = None
         n_kfc = None
 
