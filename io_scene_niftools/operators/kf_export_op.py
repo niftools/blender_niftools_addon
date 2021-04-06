@@ -41,18 +41,9 @@ import bpy
 from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 
-from pyffi.formats.nif import NifFormat
-
 from io_scene_niftools.kf_export import KfExport
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonKf
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
-
-
-def _game_to_enum(game):
-    symbols = ":,'\" +-*!?;./="
-    table = str.maketrans(symbols, "_" * len(symbols))
-    enum = game.upper().translate(table).replace("__", "_")
-    return enum
 
 
 class KfExportOperator(Operator, ExportHelper, CommonDevOperator, CommonScale, CommonKf):
@@ -63,23 +54,6 @@ class KfExportOperator(Operator, ExportHelper, CommonDevOperator, CommonScale, C
 
     # How the kf export operators is labelled in the user interface.
     bl_label = "Export KF"
-
-    # For which game to export.
-    # implementation note: reversed makes it show alphabetically (at least with the current blender)
-    game: bpy.props.EnumProperty(
-        items=[
-            (_game_to_enum(game), game, "Export for " + game)
-            for game in reversed(sorted([x for x in NifFormat.games.keys() if x != '?']))
-        ],
-        name="Game",
-        description="For which game to export.",
-        default='OBLIVION')
-
-    # Map game enum to nif version.
-    version = {
-        _game_to_enum(game): versions[-1]
-        for game, versions in NifFormat.games.items() if game != '?'
-    }
 
     # Use BSAnimationNode (for Morrowind).
     bs_animation_node: bpy.props.BoolProperty(

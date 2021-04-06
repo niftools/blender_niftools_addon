@@ -41,18 +41,9 @@ import bpy
 from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 
-from pyffi.formats.nif import NifFormat
-
 from io_scene_niftools.nif_export import NifExport
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonNif, CommonScale
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
-
-
-def _game_to_enum(game):
-    symbols = ":,'\" +-*!?;./="
-    table = str.maketrans(symbols, "_" * len(symbols))
-    enum = game.upper().translate(table).replace("__", "_")
-    return enum
 
 
 class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonNif, CommonScale):
@@ -70,7 +61,6 @@ class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonNif, Co
             ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
             ('ALL_NIF_XNIF_XKF', "All (nif, xnif, xkf)", "Geometry and animation to a nif, xnif, and xkf (for Morrowind)."),
             ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif."),
-            ('ANIM_KF', "Animation only (kf)", "Only animation to a single kf."),
         ],
         name="Animation export",
         description="Selects which parts of the blender file to export.",
@@ -138,12 +128,6 @@ class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonNif, Co
         name="Optimise Materials",
         description="Remove duplicate materials",
         default=True)
-
-    # Map game enum to nif version.
-    version = {
-        _game_to_enum(game): versions[-1]
-        for game, versions in NifFormat.games.items() if game != '?'
-    }
 
     def draw(self, context):
         pass

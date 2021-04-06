@@ -80,14 +80,6 @@ class NifExport(NifCommon):
 
         NifLog.info(f"Exporting {NifOp.props.filepath}")
 
-        # TODO [animation[ Fix morrowind animation support
-        '''
-        if NifOp.props.animation == 'ALL_NIF_XNIF_XKF' and bpy.context.scene.niftools_scene.game == 'MORROWIND':
-            # if exporting in nif+xnif+kf mode, then first export
-            # the nif with geometry + animation, which is done by:
-            NifOp.props.animation = 'ALL_NIF'
-        '''
-
         # extract directory, base name, extension
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
@@ -126,52 +118,18 @@ class NifExport(NifCommon):
             if b_armature:
                 math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
-            prefix = ""
+            prefix = "x" if bpy.context.scene.niftools_scene.game in ('MORROWIND', ) else ""
             NifLog.info("Exporting")
             if NifOp.props.animation == 'ALL_NIF':
                 NifLog.info("Exporting geometry and animation")
             elif NifOp.props.animation == 'GEOM_NIF':
                 # for morrowind: everything except keyframe controllers
                 NifLog.info("Exporting geometry only")
-            elif NifOp.props.animation == 'ANIM_KF':
-                # for morrowind: only keyframe controllers
-                NifLog.info("Exporting animation only (as .kf file)")
-            elif NifOp.props.animation == 'ALL_NIF_XNIF_XKF':
-                prefix = "x"
-                NifLog.info("Exporting geometry and animation in xnif-style")
 
             # find nif version to write
 
             self.version, data = scene.get_version_data()
             NifData.init(data)
-
-            # write external animation to a KF tree
-            if NifOp.props.animation in ('ANIM_KF', 'ALL_NIF_XNIF_XKF'):
-                NifLog.info("Creating keyframe tree")
-                kf_root = self.transform_anim.export_kf_root(b_armature)
-
-                # write kf (and xkf if asked)
-                ext = ".kf"
-                NifLog.info(f"Writing {prefix}{ext} file")
-
-                kffile = os.path.join(directory, prefix + filebase + ext)
-                data.roots = [kf_root]
-                data.neosteam = (bpy.context.scene.niftools_scene.game == 'NEOSTEAM')
-
-                # scale correction for the skeleton
-                if bpy.context.scene.niftools_scene.game in ('SKYRIM'):
-                    toaster = pyffi.spells.nif.NifToaster()
-                    toaster.scale = round(1 / NifOp.props.scale_correction)
-                    pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
-                    NifLog.info(f"Scale Correction set to {round(1 / NifOp.props.scale_correction)}")
-
-                with open(kffile, "wb") as stream:
-                    data.write(stream)
-                # if only anim, no need to do the time consuming nif export
-                if NifOp.props.animation == 'ANIM_KF':
-                    # clear progress bar
-                    NifLog.info("Finished")
-                    return {'FINISHED'}
 
             # export the actual root node (the name is fixed later to avoid confusing the exporter with duplicate names)
             root_block = self.objecthelper.export_root_node(self.root_objects, filebase)
