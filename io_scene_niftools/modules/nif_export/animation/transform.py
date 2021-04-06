@@ -103,7 +103,9 @@ class TransformAnimation(Animation):
                 b_action = self.get_active_action(b_armature)
                 for b_bone in b_armature.data.bones:
                     self.export_transforms(kf_root, b_armature, b_action, b_bone)
-                if scene.niftools_scene.game not in ('SKYRIM', ):
+                if scene.niftools_scene.game in ('SKYRIM', ):
+                    targetname = "NPC Root [Root]"
+                else:
                     # quick hack to set correct target name
                     if "Bip01" in b_armature.data.bones:
                         targetname = "Bip01"
@@ -124,8 +126,13 @@ class TransformAnimation(Animation):
             kf_root.text_keys = anim_textextra
             kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
             kf_root.frequency = 1.0
-            kf_root.start_time = scene.frame_start * scene.render.fps
-            kf_root.stop_time = (scene.frame_end - scene.frame_start) * scene.render.fps
+
+            if anim_textextra.num_text_keys > 0:
+                kf_root.start_time = anim_textextra.text_keys[0].time
+                kf_root.stop_time = anim_textextra.text_keys[anim_textextra.num_text_keys - 1].time
+            else:
+                kf_root.start_time = scene.frame_start * scene.render.fps
+                kf_root.stop_time = (scene.frame_end - scene.frame_start) * scene.render.fps
 
             kf_root.target_name = targetname
             kf_root.string_palette = NifFormat.NiStringPalette()
