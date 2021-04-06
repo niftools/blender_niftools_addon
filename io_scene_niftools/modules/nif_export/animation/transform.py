@@ -205,8 +205,8 @@ class TransformAnimation(Animation):
         for fcus, num_fcus in ((quaternions, 4), (eulers, 3), (translations, 3), (scales, 3)):
             if fcus and len(fcus) != num_fcus:
                 raise NifError(
-                    "Incomplete key set {} for action {}. Ensure that if a bone is keyframed for a property, all channels are keyframed.".format(
-                        bonestr, b_action.name))
+                    f"Incomplete key set {bonestr} for action {b_action.name}."
+                    f"Ensure that if a bone is keyframed for a property, all channels are keyframed.")
 
         # go over all fcurves collected above and transform and store all their keys
         quat_curve = []
