@@ -88,5 +88,5 @@ class TextureAnimation(Animation):
             n_flip.sources[n_flip.num_sources - 1] = tex
             count += 1
         if count < 2:
-            raise io_scene_niftools.utils.logging.NifError("Error in Texture Flip buffer '{}': must define at least two textures".format(fliptxt.name))
+            raise io_scene_niftools.utils.logging.NifError(f"Error in Texture Flip buffer '{fliptxt.name}': must define at least two textures")
         n_flip.delta = (n_flip.stop_time - n_flip.start_time) / count

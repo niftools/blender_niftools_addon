@@ -69,7 +69,7 @@ class Animation:
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
             return "CONSTANT"
-        # NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
+        # NifLog.warn(f"Unsupported interpolation mode ({n_ipol}) in nif, using quadratic/bezier.")
         return "BEZIER"
 
     @staticmethod

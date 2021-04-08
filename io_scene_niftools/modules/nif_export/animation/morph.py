@@ -149,8 +149,7 @@ class MorphAnimation(Animation):
                 continue
             
             # find fcurve that animates this shapekey's influence
-            # TODO: Does this need f-strings, too?
-            b_dtype = 'key_blocks["{}"].value'.format(key_block.name)
+            b_dtype = f'key_blocks["{key_block.name}"].value'
             fcurves = [fcu for fcu in b_shape_action.fcurves if b_dtype in fcu.data_path]
             if not fcurves:
                 continue

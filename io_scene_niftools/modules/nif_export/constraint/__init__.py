@@ -104,7 +104,7 @@ class Constraint:
                         n_bhkconstraint.type = 2
                     n_bhkdescriptor = n_bhkconstraint.limited_hinge
                 else:
-                    raise io_scene_niftools.utils.logging.NifError("Unsupported rigid body joint type ({0}), only ball and hinge are supported.".format(b_constr.type))
+                    raise io_scene_niftools.utils.logging.NifError(f"Unsupported rigid body joint type ({b_constr.type}), only ball and hinge are supported.")
 
                 # defaults and getting object properties for user settings (should use constraint properties,
                 # but blender does not have those...)
@@ -152,7 +152,7 @@ class Constraint:
                         break
                 else:
                     # not found
-                    raise io_scene_niftools.utils.logging.NifError("Rigid body target not exported in nif tree check that {0} is selected during export.".format(targetobj))
+                    raise io_scene_niftools.utils.logging.NifError(f"Rigid body target not exported in nif tree - check that {targetobj} is selected during export.")
 
                 # priority
                 n_bhkconstraint.priority = 1
@@ -254,7 +254,7 @@ class Constraint:
                     # friction
                     n_bhkdescriptor.max_friction = max_friction
                 else:
-                    raise ValueError("unknown descriptor {0}".format(n_bhkdescriptor.__class__.__name__))
+                    raise ValueError(f"unknown descriptor {n_bhkdescriptor.__class__.__name__}")
 
                 # do AB
                 n_bhkconstraint.update_a_b(root_block)

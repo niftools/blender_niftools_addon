@@ -113,14 +113,19 @@ class Animation(ABC):
 
     @staticmethod
     def create_controller(parent_block, target_name, priority=0):
+        # todo[anim] - make independent of global NifData.data.version, and move check for NifOp.props.animation outside
         n_kfi = None
         n_kfc = None
-        
-        if NifOp.props.animation == 'GEOM_NIF' and NifData.data.version < 0x0A020000:
-            # keyframe controllers are not present in geometry only files
-            # for more recent versions, the controller and interpolators are
-            # present, only the data is not present (see further on)
-            return n_kfc, n_kfi
+
+        try:
+            if NifOp.props.animation == 'GEOM_NIF' and NifData.data.version < 0x0A020000:
+                # keyframe controllers are not present in geometry only files
+                # for more recent versions, the controller and interpolators are
+                # present, only the data is not present (see further on)
+                return n_kfc, n_kfi
+        except AttributeError:
+            # kf export has no animation mode
+            pass
 
         # add a KeyframeController block, and refer to this block in the
         # parent's time controller

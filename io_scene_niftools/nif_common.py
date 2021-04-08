@@ -66,3 +66,10 @@ class NifCommon:
         NifLog.info(f"Executing - Niftools : Blender Niftools Addon v{niftools_ver}"
                     f"(running on Blender {bpy.app.version_string}, "
                     f"PyFFI {pyffi.__version__})")
+
+    @staticmethod
+    def apply_scale(data, scale):
+        NifLog.info(f"Scale Correction set to {scale}")
+        toaster = pyffi.spells.nif.NifToaster()
+        toaster.scale = scale
+        pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()

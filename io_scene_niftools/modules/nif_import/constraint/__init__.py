@@ -244,7 +244,7 @@ class Constraint:
                 axis_x = mathutils.Vector.cross(axis_y, axis_z)
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
             else:
-                raise ValueError("Unknown descriptor {0}".format(hkdescriptor.__class__.__name__))
+                raise ValueError(f"Unknown descriptor {hkdescriptor.__class__.__name__}")
 
             # transform pivot point and constraint matrix into object
             # coordinates
@@ -342,4 +342,4 @@ class Constraint:
                 # (limited) hinge
                 b_constr.pivot_type = 'HINGE'
             else:
-                raise ValueError("Unknown descriptor {0}".format(hkdescriptor.__class__.__name__))
+                raise ValueError(f"Unknown descriptor {hkdescriptor.__class__.__name__}")

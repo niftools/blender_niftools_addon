@@ -40,7 +40,7 @@
 
 import bpy
 from io_scene_niftools.utils.decorators import register_modules, unregister_modules
-from io_scene_niftools.operators import object, geometry, nif_import_op, nif_export_op, kf_import_op, egm_import_op  # kf_export_op
+from io_scene_niftools.operators import object, geometry, nif_import_op, nif_export_op, kf_import_op, egm_import_op, kf_export_op
 
 
 # noinspection PyUnusedLocal
@@ -56,10 +56,10 @@ def menu_func_import(self, context):
 # noinspection PyUnusedLocal
 def menu_func_export(self, context):
     self.layout.operator(nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
-    # self.layout.operator(operators.kf_export_op.KfExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
+    self.layout.operator(kf_export_op.KfExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
 
 
-MODS = [object, geometry, nif_import_op, nif_export_op, kf_import_op, egm_import_op]
+MODS = [object, geometry, nif_import_op, nif_export_op, kf_import_op, kf_export_op, egm_import_op]
 
 
 def register():

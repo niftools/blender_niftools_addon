@@ -112,7 +112,7 @@ class TextureWriter:
         # TODO [b_texture_node] still needed? can b_texture_node.image be None in current blender?
         # check that image is loaded
         if b_texture_node.image is None:
-            raise io_scene_niftools.utils.logging.NifError("Image type texture has no file loaded ('{0}')".format(b_texture_node.name))
+            raise io_scene_niftools.utils.logging.NifError(f"Image type texture has no file loaded ('{b_texture_node.name}')")
 
         filename = b_texture_node.image.filepath
 
