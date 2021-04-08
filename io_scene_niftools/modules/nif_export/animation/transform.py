@@ -131,8 +131,8 @@ class TransformAnimation(Animation):
                 kf_root.start_time = anim_textextra.text_keys[0].time
                 kf_root.stop_time = anim_textextra.text_keys[anim_textextra.num_text_keys - 1].time
             else:
-                kf_root.start_time = scene.frame_start * scene.render.fps
-                kf_root.stop_time = (scene.frame_end - scene.frame_start) * scene.render.fps
+                kf_root.start_time = scene.frame_start / self.fps
+                kf_root.stop_time = scene.frame_end / self.fps
 
             kf_root.target_name = targetname
             kf_root.string_palette = NifFormat.NiStringPalette()
