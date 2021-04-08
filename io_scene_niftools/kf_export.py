@@ -61,7 +61,7 @@ class KfExport(NifCommon):
         self.transform_anim = TransformAnimation()
 
     def execute(self):
-        """Main import function."""
+        """Main export function."""
 
         NifLog.info(f"Exporting {NifOp.props.filepath}")
 
@@ -98,5 +98,4 @@ class KfExport(NifCommon):
 
         NifLog.info("Finished successfully")
         return {'FINISHED'}
-
 
