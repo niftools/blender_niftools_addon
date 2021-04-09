@@ -105,22 +105,30 @@ class TextureSlotManager:
             raise NifError(f"Unsupported vector input for {b_texture_node.name} in material '{self.b_mat.name}''.\n"
                            f"Expected 'UV Map' or 'Texture Coordinate' nodes")
 
-    def get_global_uv_transform_clip(self, b_texture_node):
+    def get_global_uv_transform_clip(self):
         #get the values from the nodes, find the nodes by name, or search back in the node tree
         x_scale = y_scale = x_offset = y_offset = clamp_x = clamp_y = None
         #first check if there are any of the preset name - much more time efficient
         try:
-            combine_node = b_texture_node.id_data.nodes["Combine UV0"]
+            combine_node = self.b_mat.node_tree.nodes["Combine UV0"]
             if not isinstance(combine_node, bpy.types.ShaderNodeCombineXYZ):
-                combine_node = self.get_input_node_of_type(b_texture_node.inputs[0], bpy.types.ShaderNodeCombineXYZ)
-                NifLog.warn(f"Found node with name 'Combine UV0', but it was of the wrong type.\n"
-                            f"Searching through vector input of base texture gave {combine_node}")
+                combine_node = None
+                NifLog.warn(f"Found node with name 'Combine UV0', but it was of the wrong type.")
         except:
             #if there is a combine node, it does not have the standard name
-            combine_node = self.get_input_node_of_type(b_texture_node.inputs[0], bpy.types.ShaderNodeCombineXYZ)
-            NifLog.warn(f"Did not find node with 'Combine UV0' name.\n"
-                        f"Searching through vector input of base texture gave {combine_node}")
-            
+            combine_node = None
+            NifLog.warn(f"Did not find node with 'Combine UV0' name.")
+
+        if combine_node is None:
+            #did not find a (correct) combine node, search through the first existing texture node vector input
+            b_texture_node = None
+            for slot_name, slot_node in self.slots.items():
+                if slot_node is not None:
+                    break
+            if slot_node is not None:
+                combine_node = self.get_input_node_of_type(slot_node.inputs[0], bpy.types.ShaderNodeCombineXYZ)
+                NifLog.warn(f"Searching through vector input of {slot_name} texture gave {combine_node}")
+
         if combine_node:
             x_link = combine_node.inputs[0].links
             if x_link:

@@ -112,7 +112,7 @@ class BSShaderTexture(TextureSlotManager):
 
     def export_uv_transform(self, shader):
         #get the offset, scale and UV wrapping mode and set them
-        x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_global_uv_transform_clip(self.slots[TEX_SLOTS.BASE])
+        x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_global_uv_transform_clip()
         #default values for if they haven't been defined:
         if x_scale is None:
             x_scale = 1
@@ -140,7 +140,7 @@ class BSShaderTexture(TextureSlotManager):
 
         # Texture Clamping mode
         if hasattr(shader, 'texture_clamp_mode'):
-            if self.slots[TEX_SLOTS.BASE].extension == "CLIP":
+            if self.slots[TEX_SLOTS.BASE] and (self.slots[TEX_SLOTS.BASE].extension == "CLIP"):
                 #if the extension is clip, we know the wrap mode is clamp for both,
                 shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + NifFormat.TexClampMode.CLAMP_S_CLAMP_T
             else:
@@ -153,6 +153,6 @@ class BSShaderTexture(TextureSlotManager):
                     wrap_t = 1
                 else:
                     wrap_t = 0
-                shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + + (wrap_s + wrap_t)
+                shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + (wrap_s + wrap_t)
 
         return shader
