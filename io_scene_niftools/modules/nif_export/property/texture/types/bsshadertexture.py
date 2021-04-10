@@ -69,7 +69,7 @@ class BSShaderTexture(TextureSlotManager):
         if self.slots[TEX_SLOTS.GLOW]:
             bsshader.greyscale_texture = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.GLOW])
 
-        #get the offset, scale and UV wrapping mode and set them
+        # get the offset, scale and UV wrapping mode and set them
         self.export_uv_transform(bsshader)
 
     def export_bs_lighting_shader_prop_textures(self, bsshader):
@@ -86,9 +86,8 @@ class BSShaderTexture(TextureSlotManager):
         if self.slots[TEX_SLOTS.GLOSS]:
             texset.textures[7] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.GLOSS])
 
-        #get the offset, scale and UV wrapping mode and set them
+        # get the offset, scale and UV wrapping mode and set them
         self.export_uv_transform(bsshader)
-
 
     def export_bs_shader_pp_lighting_prop_textures(self, bsshader):
         bsshader.texture_set = self._create_textureset()
@@ -111,9 +110,9 @@ class BSShaderTexture(TextureSlotManager):
         return texset
 
     def export_uv_transform(self, shader):
-        #get the offset, scale and UV wrapping mode and set them
+        # get the offset, scale and UV wrapping mode and set them
         x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_global_uv_transform_clip()
-        #default values for if they haven't been defined:
+        # default values for if they haven't been defined:
         if x_scale is None:
             x_scale = 1
         if y_scale is None:
@@ -123,7 +122,7 @@ class BSShaderTexture(TextureSlotManager):
         if y_offset is None:
             y_offset = 0
         else:
-            #need to translate blender offset to nif offset to get the same results
+            # need to translate blender offset to nif offset to get the same results
             y_offset = 1 - y_scale - y_offset
         if clamp_x is None:
             clamp_x = False
@@ -141,10 +140,10 @@ class BSShaderTexture(TextureSlotManager):
         # Texture Clamping mode
         if hasattr(shader, 'texture_clamp_mode'):
             if self.slots[TEX_SLOTS.BASE] and (self.slots[TEX_SLOTS.BASE].extension == "CLIP"):
-                #if the extension is clip, we know the wrap mode is clamp for both,
+                # if the extension is clip, we know the wrap mode is clamp for both,
                 shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + NifFormat.TexClampMode.CLAMP_S_CLAMP_T
             else:
-                #otherwise, look at the given clip modes from the nodes
+                # otherwise, look at the given clip modes from the nodes
                 if not clamp_x:
                     wrap_s = 2
                 else:

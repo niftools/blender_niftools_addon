@@ -49,6 +49,7 @@ class NiTextureProp:
         self.slots = {}
         for slot_name in vars(TEX_SLOTS).values():
             self.slots[slot_name] = None
+
     def import_nitextureprop_textures(self, n_texture_desc, nodes_wrapper):
         # NifLog.debug(f"Importing {n_texture_desc}")
         # go over all valid texture slots
@@ -62,4 +63,3 @@ class NiTextureProp:
                 NifLog.debug(f"Texdesc has active {slot_name}")
                 n_tex = getattr(n_texture_desc, field_name)
                 nodes_wrapper.create_and_link(slot_name, n_tex)
-

@@ -61,28 +61,28 @@ class TextureSlotManager:
         self.slots = {}
         for slot_name in vars(TEX_SLOTS).values():
             self.slots[slot_name] = None
-    
+
     def get_input_node_of_type(self, input_socket, node_types):
-        #search back in the node tree for nodes of a certain type(s), depth-first
+        # search back in the node tree for nodes of a certain type(s), depth-first
         links = input_socket.links
         if not links:
-            #this socket has no inputs
+            # this socket has no inputs
             return None
         node = links[0].from_node
         if isinstance(node, node_types):
-            #the input node is of the required type
+            # the input node is of the required type
             return node
         else:
             if len(node.inputs) > 0:
                 for input in node.inputs:
-                    #check every input if somewhere up that tree is a node of the required type
+                    # check every input if somewhere up that tree is a node of the required type
                     input_results = self.get_input_node_of_type(input, node_types)
                     if input_results:
                         return input_results
-                #we found nothing
+                # we found nothing
                 return None
             else:
-                #this has no inputs, and doesn't classify itself
+                # this has no inputs, and doesn't classify itself
                 return None
 
     def get_uv_node(self, b_texture_node):
@@ -90,7 +90,7 @@ class TextureSlotManager:
         if uv_node is None:
             links = b_texture_node.inputs[0].links
             if not links:
-                #nothing is plugged in, so it will use the first UV map
+                # nothing is plugged in, so it will use the first UV map
                 return 0
         if isinstance(uv_node, bpy.types.ShaderNodeUVMap):
             uv_name = uv_node.uv_map
@@ -106,21 +106,21 @@ class TextureSlotManager:
                            f"Expected 'UV Map' or 'Texture Coordinate' nodes")
 
     def get_global_uv_transform_clip(self):
-        #get the values from the nodes, find the nodes by name, or search back in the node tree
+        # get the values from the nodes, find the nodes by name, or search back in the node tree
         x_scale = y_scale = x_offset = y_offset = clamp_x = clamp_y = None
-        #first check if there are any of the preset name - much more time efficient
+        # first check if there are any of the preset name - much more time efficient
         try:
             combine_node = self.b_mat.node_tree.nodes["Combine UV0"]
             if not isinstance(combine_node, bpy.types.ShaderNodeCombineXYZ):
                 combine_node = None
                 NifLog.warn(f"Found node with name 'Combine UV0', but it was of the wrong type.")
         except:
-            #if there is a combine node, it does not have the standard name
+            # if there is a combine node, it does not have the standard name
             combine_node = None
             NifLog.warn(f"Did not find node with 'Combine UV0' name.")
 
         if combine_node is None:
-            #did not find a (correct) combine node, search through the first existing texture node vector input
+            # did not find a (correct) combine node, search through the first existing texture node vector input
             b_texture_node = None
             for slot_name, slot_node in self.slots.items():
                 if slot_node is not None:
@@ -133,8 +133,8 @@ class TextureSlotManager:
             x_link = combine_node.inputs[0].links
             if x_link:
                 x_node = x_link[0].from_node
-                x_scale =  x_node.inputs[1].default_value
-                x_offset =  x_node.inputs[2].default_value
+                x_scale = x_node.inputs[1].default_value
+                x_offset = x_node.inputs[2].default_value
                 clamp_x = x_node.use_clamp
             y_link = combine_node.inputs[1].links
             if y_link:
@@ -184,4 +184,4 @@ class TextureSlotManager:
             # unsupported texture type
             else:
                 raise NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}' with label '{shown_label}'."
-                                         f"Delete it or change its label.")
+                               f"Delete it or change its label.")
