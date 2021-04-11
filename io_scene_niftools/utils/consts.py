@@ -69,3 +69,21 @@ NORMAL_RESOLUTION = 100
 
 LOGGER_PYFFI = "pyffi"
 LOGGER_PLUGIN = "niftools"
+
+
+class EmptyObject:
+    pass
+
+
+TEX_SLOTS = EmptyObject()
+TEX_SLOTS.BASE = "Base"
+TEX_SLOTS.DARK = "Dark"
+TEX_SLOTS.DETAIL = "Detail"
+TEX_SLOTS.GLOSS = "Gloss"
+TEX_SLOTS.GLOW = "Glow"
+TEX_SLOTS.BUMP_MAP = "Bump Map"
+TEX_SLOTS.DECAL_0 = "Decal 0"
+TEX_SLOTS.DECAL_1 = "Decal 1"
+TEX_SLOTS.DECAL_2 = "Decal 2"
+TEX_SLOTS.SPECULAR = "Specular"
+TEX_SLOTS.NORMAL = "Normal"

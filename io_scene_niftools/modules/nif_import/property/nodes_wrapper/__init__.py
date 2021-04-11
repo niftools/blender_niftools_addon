@@ -44,6 +44,7 @@ from io_scene_niftools.modules.nif_import.geometry.vertex import Vertex
 from io_scene_niftools.modules.nif_import.property.texture.loader import TextureLoader
 from io_scene_niftools.utils.logging import NifLog
 from io_scene_niftools.utils.nodes import nodes_iterate
+from io_scene_niftools.utils.consts import TEX_SLOTS
 
 
 # TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
@@ -107,7 +108,7 @@ class NodesWrapper:
             #                 transform.keyframe_insert("translation", index=j, frame=int(key[0] * fps))
             #     tree.links.new(uv.outputs[0], transform.inputs[0])
             #     tree.links.new(transform.outputs[0], tex.inputs[0])
-        
+
     def global_uv_offset_scale(self, x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y):
         # get all uv nodes (by name, since we are importing they have the predefined name
         # and then we don't have to loop through every node
@@ -118,34 +119,33 @@ class NodesWrapper:
             uv_node = self.tree.nodes.get(uv_name)
             if uv_node and isinstance(uv_node, bpy.types.ShaderNodeUVMap):
                 uv_nodes[uv_name] = uv_node
-                i +=1
+                i += 1
             else:
                 break
-        
 
         clip_texture = clamp_x and clamp_y
 
         for uv_name, uv_node in uv_nodes.items():
-            #for each of those, create a new uv output node and relink
+            # for each of those, create a new uv output node and relink
             split_node = self.tree.nodes.new("ShaderNodeSeparateXYZ")
             split_node.name = "Separate UV" + uv_name[-1]
             split_node.label = split_node.name
             combine_node = self.tree.nodes.new("ShaderNodeCombineXYZ")
             combine_node.name = "Combine UV" + uv_name[-1]
             combine_node.label = combine_node.name
-            
+
             x_node = self.tree.nodes.new("ShaderNodeMath")
             x_node.name = "X offset and scale UV" + uv_name[-1]
             x_node.label = x_node.name
             x_node.operation = 'MULTIPLY_ADD'
-            #only clamp on the math node when we're not clamping on both directions
-            #otherwise, the clip on the image texture node will take care of it
+            # only clamp on the math node when we're not clamping on both directions
+            # otherwise, the clip on the image texture node will take care of it
             x_node.use_clamp = clamp_x and not clip_texture
             x_node.inputs[1].default_value = x_scale
             x_node.inputs[2].default_value = x_offset
             self.tree.links.new(split_node.outputs[0], x_node.inputs[0])
             self.tree.links.new(x_node.outputs[0], combine_node.inputs[0])
-            
+
             y_node = self.tree.nodes.new("ShaderNodeMath")
             y_node.name = "Y offset and scale UV" + uv_name[-1]
             y_node.label = y_node.name
@@ -155,21 +155,21 @@ class NodesWrapper:
             y_node.inputs[2].default_value = y_offset
             self.tree.links.new(split_node.outputs[1], y_node.inputs[0])
             self.tree.links.new(y_node.outputs[0], combine_node.inputs[1])
-        
-            #get all the texture nodes to which it is linked, and re-link them to the uv output node
+
+            # get all the texture nodes to which it is linked, and re-link them to the uv output node
             for link in uv_node.outputs[0].links:
-                #get the target link/socket
+                # get the target link/socket
                 target_node = link.to_node
                 if isinstance(link.to_node, bpy.types.ShaderNodeTexImage):
                     target_socket = link.to_socket
-                    #delete the existing link
+                    # delete the existing link
                     self.tree.links.remove(link)
-                    #make new ones
+                    # make new ones
                     self.tree.links.new(combine_node.outputs[0], target_socket)
-                    #if we clamp in both directions, clip the images:
+                    # if we clamp in both directions, clip the images:
                     if clip_texture:
                         target_node.extension = 'CLIP'
-            self.tree.links.new(uv_node.outputs[0],split_node.inputs[0])
+            self.tree.links.new(uv_node.outputs[0], split_node.inputs[0])
         pass
 
     def clear_default_nodes(self):
@@ -286,11 +286,11 @@ class NodesWrapper:
 
     def link_base_node(self, b_texture_node):
         self.diffuse_texture = b_texture_node
-        b_texture_node.label = "Base"
+        b_texture_node.label = TEX_SLOTS.BASE
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node)
 
     def link_bump_map_node(self, b_texture_node):
-        b_texture_node.label = "Bump Map"
+        b_texture_node.label = TEX_SLOTS.BUMP_MAP
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = False  # causes artifacts otherwise.
         #
@@ -304,13 +304,13 @@ class NodesWrapper:
         # b_texture_node.use_map_alpha = False
 
     def link_normal_node(self, b_texture_node):
-        b_texture_node.label = "Normal"
-        #set to non-color data
+        b_texture_node.label = TEX_SLOTS.NORMAL
+        # set to non-color data
         b_texture_node.image.colorspace_settings.name = 'Non-Color'
-        #create tangent normal map converter and link to it
+        # create tangent normal map converter and link to it
         tangent_converter = self.b_mat.node_tree.nodes.new("ShaderNodeNormalMap")
         self.tree.links.new(b_texture_node.outputs[0], tangent_converter.inputs[1])
-        #link to the diffuse shader
+        # link to the diffuse shader
         self.tree.links.new(tangent_converter.outputs[0], self.diffuse_shader.inputs[2])
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = True  # causes artifacts otherwise.
@@ -325,7 +325,7 @@ class NodesWrapper:
         # b_texture_node.use_map_alpha = False
 
     def link_glow_node(self, b_texture_node):
-        b_texture_node.label = "Glow"
+        b_texture_node.label = TEX_SLOTS.GLOW
         # # Influence mapping
         # b_texture_node.texture.use_alpha = False
         #
@@ -338,7 +338,7 @@ class NodesWrapper:
         # b_texture_node.use_map_emit = True
 
     def link_gloss_node(self, b_texture_node):
-        b_texture_node.label = "Gloss"
+        b_texture_node.label = TEX_SLOTS.GLOSS
         # # Influence mapping
         # b_texture_node.texture.use_alpha = False
         #
@@ -352,23 +352,23 @@ class NodesWrapper:
         # b_texture_node.use_map_color_spec = True
 
     def link_decal_0_node(self, b_texture_node):
-        b_texture_node.label = "Decal 0"
+        b_texture_node.label = TEX_SLOTS.DECAL_0
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def link_decal_1_node(self, b_texture_node):
-        b_texture_node.label = "Decal 1"
+        b_texture_node.label = TEX_SLOTS.DECAL_1
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def link_decal_2_node(self, b_texture_node):
-        b_texture_node.label = "Decal2"
+        b_texture_node.label = TEX_SLOTS.DECAL_2
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Decal")
 
     def link_detail_node(self, b_texture_node):
-        b_texture_node.label = "Detail"
+        b_texture_node.label = TEX_SLOTS.DETAIL
         self.diffuse_pass = self.connect_to_pass(self.diffuse_pass, b_texture_node, texture_type="Detail")
 
     def link_dark_node(self, b_texture_node):
-        b_texture_node.label = "Dark"
+        b_texture_node.label = TEX_SLOTS.DARK
 
     def link_reflection_node(self, b_texture_node):
         # Influence mapping

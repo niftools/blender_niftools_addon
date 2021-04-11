@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.consts import TEX_SLOTS
 
 
 class NiTextureProp:
@@ -45,21 +46,9 @@ class NiTextureProp:
     __instance = None
 
     def __init__(self):
-        # todo [texture] merge with export slots dict, or change to simple list?
-        self.slots = {
-            "Base": None,
-            "Dark": None,
-            "Detail": None,
-            "Gloss": None,
-            "Glow": None,
-            "Bump Map": None,
-            "Decal 0": None,
-            "Decal 1": None,
-            "Decal 2": None,
-            # extra shader stuff?
-            "Specular": None,
-            "Normal": None,
-        }
+        self.slots = {}
+        for slot_name in vars(TEX_SLOTS).values():
+            self.slots[slot_name] = None
 
     def import_nitextureprop_textures(self, n_texture_desc, nodes_wrapper):
         # NifLog.debug(f"Importing {n_texture_desc}")
@@ -74,4 +63,3 @@ class NiTextureProp:
                 NifLog.debug(f"Texdesc has active {slot_name}")
                 n_tex = getattr(n_texture_desc, field_name)
                 nodes_wrapper.create_and_link(slot_name, n_tex)
-

@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.consts import TEX_SLOTS
 
 
 class BSShaderTexture:
@@ -62,17 +63,17 @@ class BSShaderTexture:
     def import_bsshaderproperty_textureset(self, bs_shader_property, nodes_wrapper):
         textures = bs_shader_property.texture_set.textures
         slots = {
-            "Base": 0,
-            "Normal": 1,
-            "Glow": 2,
-            "Detail": 3,
-            "Gloss": 7,
-            "Bump Map": None,
-            "Decal 0": 6,
-            "Decal 1": None,
-            "Decal 2": None,
+            TEX_SLOTS.BASE: 0,
+            TEX_SLOTS.NORMAL: 1,
+            TEX_SLOTS.GLOW: 2,
+            TEX_SLOTS.DETAIL: 3,
+            TEX_SLOTS.GLOSS: 7,
+            TEX_SLOTS.BUMP_MAP: None,
+            TEX_SLOTS.DECAL_0: 6,
+            TEX_SLOTS.DECAL_1: None,
+            TEX_SLOTS.DECAL_2: None,
             # extra shader stuff?
-            "Specular": None,
+            TEX_SLOTS.SPECULAR: None,
         }
         for slot_name, slot_i in slots.items():
             # skip those whose index we don't know from old code
@@ -87,10 +88,10 @@ class BSShaderTexture:
 
         base = bs_effect_shader_property.source_texture.decode()
         if base:
-            nodes_wrapper.create_and_link("Base", base)
+            nodes_wrapper.create_and_link(TEX_SLOTS.BASE, base)
 
         glow = bs_effect_shader_property.greyscale_texture.decode()
         if glow:
-            nodes_wrapper.create_and_link("Glow", glow)
+            nodes_wrapper.create_and_link(TEX_SLOTS.GLOW, glow)
 
         # self.import_texture_game_properties(b_mat, bs_effect_shader_property)

@@ -93,8 +93,9 @@ class Material:
 
     @staticmethod
     def import_material_gloss(b_mat, glossiness):
-        # b_mat.specular_hardness = glossiness
-        b_mat.roughness = glossiness  # Blender multiplies specular color with this value
+        # convert glossiness, range [0,inf), with high values leading to sharp reflections, to roughness, range [0,1],
+        # where low values give sharp reflections
+        b_mat.roughness = 1/(glossiness+1)
 
     @staticmethod
     def import_material_alpha(b_mat, n_alpha):
