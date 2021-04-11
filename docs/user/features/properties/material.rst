@@ -67,12 +67,13 @@ This value sets how much light the material emits.
 Gloss
 ~~~~~
 
-This value sets how diffuse the specular highlight across the material.
+This value sets how diffuse the specular highlight across the material. Higher values of gloss(iness) mean that the
+highlight is sharper/smaller.
 
-#. In the **Specular** panel
-#. Set the **Hardness** 
-
-* This value is used to set how intense the specular highlight should be.
+#. In the **Surface** panel, deactivate the "Use Nodes" setting (setting the roughness of the BSDF node does nothing at
+   the moment).
+#. Set the **Roughness**. This is roughly the inverse of the gloss, calculated via roughness = 1/(gloss + 1)
+#. Reactivate the "Use Nodes" setting. This is needed because otherwise the exporter needs nodes for textures etc.
 
 Specular
 ~~~~~~~~
