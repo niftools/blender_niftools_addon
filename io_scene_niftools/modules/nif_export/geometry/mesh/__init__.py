@@ -50,6 +50,7 @@ from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop i
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog, NifError
+from io_scene_niftools.modules.nif_export.geometry.mesh.skin_partition import update_skin_partition
 
 
 class Mesh:
@@ -433,6 +434,9 @@ class Mesh:
 
                     if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
                         NifLog.info("Creating skin partition")
+                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, part_flag.name, None) for part_flag in b_obj.niftools_part_flags]
+                        part_order = [body_part for body_part in part_order if body_part is not None]
+                        trishape.update_skin_partition = update_skin_partition.__get__(trishape)
                         lostweight = trishape.update_skin_partition(
                             maxbonesperpartition=NifOp.props.max_bones_per_partition,
                             maxbonespervertex=NifOp.props.max_bones_per_vertex,
@@ -441,7 +445,8 @@ class Mesh:
                             padbones=NifOp.props.pad_bones,
                             triangles=trilist,
                             trianglepartmap=bodypartfacemap,
-                            maximize_bone_sharing=(bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM')))
+                            maximize_bone_sharing=(bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM')),
+                            part_sort_order = part_order)
 
                         # warn on bad config settings
                         if bpy.context.scene.niftools_scene.game == 'OBLIVION':
