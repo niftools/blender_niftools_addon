@@ -38,6 +38,7 @@
 
 import logging
 import pyffi
+from pyffi.formats.nif import NifFormat
 
 
 def update_skin_partition(self,
@@ -404,7 +405,7 @@ def update_skin_partition(self,
                             body_part_order_map[parts[shared_boneset_start][2]]])
                 shared_boneset_start = shared_boneset_end
                 shared_boneset_end = shared_boneset_start + 1
-            # then sort the bonesets based on their first entry body part
+            # then sort the bonesets based on their first entry's body part
             bone_sharing_lists = sorted(bone_sharing_lists,
                         key = lambda x: x[1])
             bone_sharing_lists = [entry[0] for entry in bone_sharing_lists]

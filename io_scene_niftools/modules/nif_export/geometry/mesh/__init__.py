@@ -434,7 +434,7 @@ class Mesh:
 
                     if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
                         NifLog.info("Creating skin partition")
-                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, part_flag.name, None) for part_flag in b_obj.niftools_part_flags]
+                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, vertex_group.name, None) for vertex_group in b_obj.vertex_groups]
                         part_order = [body_part for body_part in part_order if body_part is not None]
                         trishape.update_skin_partition = update_skin_partition.__get__(trishape)
                         lostweight = trishape.update_skin_partition(
@@ -462,17 +462,6 @@ class Mesh:
                                             "Set it to 24 to get higher quality skin partitions.")
                         if lostweight > NifOp.props.epsilon:
                             NifLog.warn(f"Lost {lostweight:f} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{trishape.name}')")
-
-                    if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-                        partitions = skininst.partitions
-                        b_obj_part_flags = b_obj.niftools_part_flags
-                        for s_part in partitions:
-                            s_part_index = NifFormat.BSDismemberBodyPartType._enumvalues.index(s_part.body_part)
-                            s_part_name = NifFormat.BSDismemberBodyPartType._enumkeys[s_part_index]
-                            for b_part in b_obj_part_flags:
-                                if s_part_name == b_part.name:
-                                    s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
-                                    s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
 
                     # clean up
                     del vert_weights
