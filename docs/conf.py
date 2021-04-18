@@ -24,7 +24,7 @@ copyright = "2005, NifTools"
 author = "NifTools"
 
 # The full version, including alpha/beta/rc tags
-with codecs.open("../io_scene_niftools/VERSION", "rb", encoding="ascii") as f:
+with codecs.open("../io_scene_niftools/VERSION.txt", "rb", encoding="ascii") as f:
     release = f.read().strip()
 
 
