@@ -29,7 +29,8 @@ Contents:
    user/index
    
    development/index
-   
+
+   additional/index
    additional/authors
    additional/contributing
    additional/changes
