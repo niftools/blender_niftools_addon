@@ -1,2 +1,2 @@
 sphinx >= 1.5.6
-yummy_sphinx_theme
+niftools_sphinx_theme>=0.3.3

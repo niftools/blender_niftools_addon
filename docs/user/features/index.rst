@@ -23,9 +23,7 @@ If in need of a guide to make sure your model is complete please visit the :ref:
    scene/index
    geometry/index
    object/index
-   shader/index
    properties/index
-   textures/index
    collisions/index
    armature/index
    

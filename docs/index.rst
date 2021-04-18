@@ -1,13 +1,10 @@
-.. Blender Niftools Addon documentation master file, created by
-   sphinx-quickstart on Sat Jul 23 19:47:06 2011.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+:title: Blender Niftools Addon
+:geopattern: v |release|
 
 Welcome to Blender Niftools Addon documentation!
 ================================================
 
 .. warning::
-
    Documentation is incomplete and is still a work in progress.
 
 The Blender Niftools Addon is a Blender addon that adds support for import and export NIF files.
@@ -32,7 +29,8 @@ Contents:
    user/index
    
    development/index
-   
+
+   additional/index
    additional/authors
    additional/contributing
    additional/changes
@@ -44,4 +42,3 @@ Indices and Tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
