@@ -45,7 +45,7 @@ Version v0.0.1
 
 
 .. note::
-The following are older versions, using the old naming scheme
+    The following are older versions, using the old naming scheme
 
 Version 2.6.0.adev4
 ===================
