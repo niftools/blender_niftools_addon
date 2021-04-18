@@ -328,11 +328,11 @@ class Mesh:
                     v.r, v.g, v.b, v.a = vcollist[i]
 
             if mesh_uv_layers:
+                if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM'):
+                    if len(mesh_uv_layers) > 1:
+                        raise NifError(bpy.context.scene.niftools_scene.game + " does not support multiple UV layers.")
                 tridata.num_uv_sets = len(mesh_uv_layers)
                 tridata.bs_num_uv_sets = len(mesh_uv_layers)
-                if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
-                    if len(mesh_uv_layers) > 1:
-                        raise io_scene_niftools.utils.logging.NifError("Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
                 for j, uv_layer in enumerate(mesh_uv_layers):
