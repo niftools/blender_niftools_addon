@@ -194,7 +194,7 @@ Bug Fixes
 | 242    | Export : UV offset not found                                                                              |
 +--------+-----------------------------------------------------------------------------------------------------------+
 | 251    | - TypeError: load_nif() missing 1 required positional argument: 'file_path'                               |
-|        | - AttributeError: 'NifExport' object has no attribute 'set_object_matrix'                                |
+|        | - AttributeError: 'NifExport' object has no attribute 'set_object_matrix'                                 |
 +--------+-----------------------------------------------------------------------------------------------------------+
 | 275    | Fix Addon Documentation and Bug Tracker links                                                             |
 +--------+-----------------------------------------------------------------------------------------------------------+
