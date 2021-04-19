@@ -112,10 +112,13 @@ First, we complete the object panel:
 
    Select one from the drop-down box.
 
-#. The **BS Num UV Set** is ????????. Set it to an appropriate number.
+#. The Weapon Location determines where on the body the object is equipped, for Oblivion, Fallout 3 or Skyrim. Set it
+   to an appropriate setting, or leave to NONE if not applicable. Not every game has specialised values for every
+   setting. For example, Fallout 3 does not have slots for a bow.
 #. The **UPB**'s use is currently unknown. It is recommended you leave it at the default value.
 #. Set your **BSX Flags**.
-#. The **Consistency Flag** is ????????. Select one from the drop-down box.
+#. Select a **Consistency Flag** from the drop-down box. See `this comment
+   <https://github.com/niftools/nifskope/issues/69#issuecomment-61427385>`_ for discussion of they might do.
 #. The **Object Flag** is ???????. Set it to an appropriate number.
 #. The **Nif Long Name** is ???????. Set it to an appropriate string.   
 

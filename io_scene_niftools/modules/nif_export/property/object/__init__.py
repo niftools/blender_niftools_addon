@@ -240,7 +240,7 @@ class ObjectDataProperty:
         # export weapon location
         if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             loc = root_obj.niftools.prn_location
-            if loc != "NONE":
+            if loc != "NONE" and (PRN_DICT[loc][bpy.context.scene.niftools_scene.game] is not None):
                 # add string extra data
                 prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'

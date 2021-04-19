@@ -115,11 +115,6 @@ class ObjectProperty(PropertyGroup):
         # default = 'NONE'
     )
 
-    bsnumuvset: IntProperty(
-        name='BS Num UV Set',
-        default=0
-    )
-
     longname: StringProperty(
         name='Nif Long Name'
     )
@@ -165,19 +160,19 @@ class BsInventoryMarker(PropertyGroup):
 
     bs_inv_x: IntProperty(
         name="Inv X value",
-        description="Position of object in inventory on the x axis.",
+        description="Rotation of object in inventory around the x axis.",
         default=0
     )
 
     bs_inv_y: IntProperty(
         name="Inv Y value",
-        description="Position of object in inventory on the y axis.",
+        description="Rotation of object in inventory around the y axis.",
         default=0
     )
 
     bs_inv_z: IntProperty(
         name="Inv Z value",
-        description="Position of object in inventory on the z axis.",
+        description="Rotation of object in inventory around the z axis.",
         default=0
     )
 
