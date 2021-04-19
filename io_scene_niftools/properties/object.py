@@ -52,6 +52,27 @@ from pyffi.formats.nif import NifFormat
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
+prn_array = [
+            ["OBLIVION", "FALLOUT_3", "SKYRIM"],
+            ["DAGGER", "SideWeapon", "Weapon", "WeaponDagger"],
+            ["2HANDED", "BackWeapon", "Weapon", "WeaponBack"],
+            ["BOW", "BackWeapon", None, "WeaponBow"],
+            ["MACE", "SideWeapon", "Weapon", "WeaponMace"],
+            ["SHIELD", "Bip01 L ForearmTwist", None, "SHIELD"],
+            ["STAFF", "Torch", "Weapon", "WeaponStaff"],
+            ["SWORD", "SideWeapon", "Weapon", "WeaponSword"],
+            ["AXE", "SideWeapon", "Weapon", "WeaponAxe"],
+            ["QUIVER", "Quiver", "Weapon", "QUIVER"],
+            ["TORCH", "Torch", "Weapon", "SHIELD"],
+            ["HELMET", "Bip01 Head", "Bip01 Head", "NPC Head [Head]"],
+            ["RING", "Bip01 R Finger1", "Bip01 R Finger1", "NPC R Finger10 [RF10]"]
+            ]
+# PRN_DICT is a dict like so: dict['SLOT']['GAME']: 'Bone'
+PRN_DICT = {}
+for row in prn_array[1:]:
+    PRN_DICT[row[0]] = dict(zip(prn_array[0], row[1:]))
+
+
 class ExtraData(PropertyGroup):
     name: StringProperty()
     data: StringProperty()
@@ -90,7 +111,7 @@ class ObjectProperty(PropertyGroup):
     prn_location: EnumProperty(
         name='Weapon Location',
         description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',
-        items=[(item, item, "", i) for i, item in enumerate(["NONE","BACK","SIDE","QUIVER","SHIELD","HELM","RING"])],
+        items=[(item, item, "", i) for i, item in enumerate(["NONE"] + list(PRN_DICT.keys()))],
         # default = 'NONE'
     )
 

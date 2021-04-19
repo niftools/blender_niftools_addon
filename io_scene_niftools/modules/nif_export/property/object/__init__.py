@@ -45,7 +45,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_niftools.modules.nif_import.object import PRN_DICT
+from io_scene_niftools.properties.object import PRN_DICT
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils.consts import UPB_DEFAULT
 from io_scene_niftools.utils.singleton import NifOp
@@ -244,7 +244,7 @@ class ObjectDataProperty:
                 # add string extra data
                 prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
-                prn.string_data = PRN_DICT[loc]
+                prn.string_data = PRN_DICT[loc][bpy.context.scene.niftools_scene.game]
                 n_root.add_extra_data(prn)
 
     # TODO [object][property] Move to object property
