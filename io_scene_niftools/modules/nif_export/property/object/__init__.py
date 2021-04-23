@@ -50,6 +50,7 @@ from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils.consts import UPB_DEFAULT
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog, NifError
+from math import pi
 
 
 class ObjectProperty:
@@ -229,9 +230,9 @@ class ObjectDataProperty:
                     else:
                         n_extra_list = NifFormat.BSInvMarker()
                         n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
-                        n_extra_list.rotation_x = root_object.niftools_bs_invmarker[0].bs_inv_x
-                        n_extra_list.rotation_y = root_object.niftools_bs_invmarker[0].bs_inv_y
-                        n_extra_list.rotation_z = root_object.niftools_bs_invmarker[0].bs_inv_z
+                        n_extra_list.rotation_x = (-root_object.niftools_bs_invmarker[0].bs_inv_x % (2*pi)) * 1000
+                        n_extra_list.rotation_y = (-root_object.niftools_bs_invmarker[0].bs_inv_y % (2*pi)) * 1000
+                        n_extra_list.rotation_z = (-root_object.niftools_bs_invmarker[0].bs_inv_z % (2*pi)) * 1000
                         n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
                         n_root.add_extra_data(n_extra_list)
 

@@ -40,6 +40,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.properties.object import PRN_DICT
+from math import pi
 
 
 class ObjectProperty:
@@ -84,7 +85,7 @@ class ObjectProperty:
             elif isinstance(n_extra, NifFormat.BSInvMarker):
                 b_obj.niftools_bs_invmarker.add()
                 b_obj.niftools_bs_invmarker[0].name = n_extra.name.decode()
-                b_obj.niftools_bs_invmarker[0].bs_inv_x = n_extra.rotation_x
-                b_obj.niftools_bs_invmarker[0].bs_inv_y = n_extra.rotation_y
-                b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra.rotation_z
+                b_obj.niftools_bs_invmarker[0].bs_inv_x = (-n_extra.rotation_x/1000) % (2*pi)
+                b_obj.niftools_bs_invmarker[0].bs_inv_y = (-n_extra.rotation_y/1000) % (2*pi)
+                b_obj.niftools_bs_invmarker[0].bs_inv_z = (-n_extra.rotation_z/1000) % (2*pi)
                 b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra.zoom

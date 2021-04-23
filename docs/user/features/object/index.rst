@@ -55,11 +55,14 @@ BS Inventory Marker
 
 2. Apply desired values to x, y, z to set the preferred rotation.
 
-   a. Set view to back view and use rotation to achieve the preferred object orientation.
+   a. Set view to back view (i.e. from positive Y-axis) 
+   #. Set the rotation of the root node to ZYX and use rotation to achieve the preferred object orientation.
    #. Copy the values from the rotation display into the x, y, z lines for BS Inv Marker.
-   #. Delete the decimal and remove any numbers to the right of the fourth digit.
    #. Press ``Alt + R`` to reset the object rotation back to 0
    
+   Due to the way this is stored in the nif format (integers rather than floats), repeated import and export may lead
+   to some deviation from the origina value. However, this should be minor.
+
 #. Apply desired value to zoom   
 
    a. A value of ``1`` for zoom is the default, lower values ``.99`` to ``.01`` decrease the item size in the menu.
