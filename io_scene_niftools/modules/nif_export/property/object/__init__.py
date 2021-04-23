@@ -248,7 +248,7 @@ class ObjectDataProperty:
                 n_root.add_extra_data(prn)
 
     # TODO [object][property] Move to object property
-    def export_bsxflags_upb(self, root_block):
+    def export_bsxflags_upb(self, root_block, root_objects):
         # TODO [object][property] Fixme
         NifLog.info("Checking collision")
         # activate oblivion/Fallout 3 collision and physics
@@ -258,8 +258,15 @@ class ObjectDataProperty:
                 # enable collision
                 bsx = block_store.create_block("BSXFlags")
                 bsx.name = 'BSX'
-                bsx.integer_data = b_obj.niftools.bsxflags
                 root_block.add_extra_data(bsx)
+                found_bsx = False
+                for root_object in root_objects:
+                    if root_object.niftools.bsxflags:
+                        if found_bsx:
+                            raise NifError("Multiple objects have BSXFlags. Only one onject may contain this data")
+                        else:
+                            found_bxs = True
+                            bsx.integer_data = root_object.niftools.bsxflags
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game

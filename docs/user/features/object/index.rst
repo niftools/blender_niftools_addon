@@ -118,7 +118,7 @@ First, we complete the object panel:
 #. The **UPB**'s use is currently unknown. It is recommended you leave it at the default value.
 #. Set your **BSX Flags**.
 #. Select a **Consistency Flag** from the drop-down box. See `this comment
-   <https://github.com/niftools/nifskope/issues/69#issuecomment-61427385>`_ for discussion of they might do.
+   <https://github.com/niftools/nifskope/issues/69#issuecomment-61427385>`_ for discussion of what they might do.
 #. The **Object Flag** is ???????. Set it to an appropriate number.
 #. The **Nif Long Name** is ???????. Set it to an appropriate string.   
 
