@@ -1,3 +1,7 @@
+Version v0.0.7
+==============
+
+
 Version v0.0.6
 ==============
 - #431 Docs link not working
