@@ -43,6 +43,7 @@ from io_scene_niftools.modules.nif_export.animation.texture import TextureAnimat
 from io_scene_niftools.modules.nif_export.property import texture
 from io_scene_niftools.modules.nif_export.property.texture.writer import TextureWriter
 from io_scene_niftools.utils.logging import NifLog, NifError
+from io_scene_niftools.utils.consts import TEX_SLOTS
 
 
 class TextureSlotManager:
@@ -57,27 +58,40 @@ class TextureSlotManager:
         self._reset_fields()
 
     def _reset_fields(self):
-        self.slots = {
-                "Base": None,
-                "Dark": None,
-                "Detail": None,
-                "Gloss": None,
-                "Glow": None,
-                "Bump Map": None,
-                "Decal 0": None,
-                "Decal 1": None,
-                "Decal 2": None,
-                # extra shader stuff?
-                "Specular": None,
-                "Normal": None,
-        }
+        self.slots = {}
+        for slot_name in vars(TEX_SLOTS).values():
+            self.slots[slot_name] = None
+
+    def get_input_node_of_type(self, input_socket, node_types):
+        # search back in the node tree for nodes of a certain type(s), depth-first
+        links = input_socket.links
+        if not links:
+            # this socket has no inputs
+            return None
+        node = links[0].from_node
+        if isinstance(node, node_types):
+            # the input node is of the required type
+            return node
+        else:
+            if len(node.inputs) > 0:
+                for input in node.inputs:
+                    # check every input if somewhere up that tree is a node of the required type
+                    input_results = self.get_input_node_of_type(input, node_types)
+                    if input_results:
+                        return input_results
+                # we found nothing
+                return None
+            else:
+                # this has no inputs, and doesn't classify itself
+                return None
 
     def get_uv_node(self, b_texture_node):
-        # check if a node is plugged into the b_texture_node's vector input
-        links = b_texture_node.inputs[0].links
-        if not links:
-            return 0
-        uv_node = links[0].from_node
+        uv_node = self.get_input_node_of_type(b_texture_node.inputs[0], (bpy.types.ShaderNodeUVMap, bpy.types.ShaderNodeTexCoord))
+        if uv_node is None:
+            links = b_texture_node.inputs[0].links
+            if not links:
+                # nothing is plugged in, so it will use the first UV map
+                return 0
         if isinstance(uv_node, bpy.types.ShaderNodeUVMap):
             uv_name = uv_node.uv_map
             try:
@@ -90,6 +104,45 @@ class TextureSlotManager:
         else:
             raise NifError(f"Unsupported vector input for {b_texture_node.name} in material '{self.b_mat.name}''.\n"
                            f"Expected 'UV Map' or 'Texture Coordinate' nodes")
+
+    def get_global_uv_transform_clip(self):
+        # get the values from the nodes, find the nodes by name, or search back in the node tree
+        x_scale = y_scale = x_offset = y_offset = clamp_x = clamp_y = None
+        # first check if there are any of the preset name - much more time efficient
+        try:
+            combine_node = self.b_mat.node_tree.nodes["Combine UV0"]
+            if not isinstance(combine_node, bpy.types.ShaderNodeCombineXYZ):
+                combine_node = None
+                NifLog.warn(f"Found node with name 'Combine UV0', but it was of the wrong type.")
+        except:
+            # if there is a combine node, it does not have the standard name
+            combine_node = None
+            NifLog.warn(f"Did not find node with 'Combine UV0' name.")
+
+        if combine_node is None:
+            # did not find a (correct) combine node, search through the first existing texture node vector input
+            b_texture_node = None
+            for slot_name, slot_node in self.slots.items():
+                if slot_node is not None:
+                    break
+            if slot_node is not None:
+                combine_node = self.get_input_node_of_type(slot_node.inputs[0], bpy.types.ShaderNodeCombineXYZ)
+                NifLog.warn(f"Searching through vector input of {slot_name} texture gave {combine_node}")
+
+        if combine_node:
+            x_link = combine_node.inputs[0].links
+            if x_link:
+                x_node = x_link[0].from_node
+                x_scale = x_node.inputs[1].default_value
+                x_offset = x_node.inputs[2].default_value
+                clamp_x = x_node.use_clamp
+            y_link = combine_node.inputs[1].links
+            if y_link:
+                y_node = y_link[0].from_node
+                y_scale = y_node.inputs[1].default_value
+                y_offset = y_node.inputs[2].default_value
+                clamp_y = y_node.use_clamp
+        return x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y
 
     @staticmethod
     def get_used_textslots(b_mat):
@@ -113,11 +166,14 @@ class TextureSlotManager:
         self._reset_fields()
 
         for b_texture_node in self.get_used_textslots(b_mat):
-            NifLog.debug(f"Found node {b_texture_node.name} of type {b_texture_node.label}")
+            shown_label = b_texture_node.label
+            if shown_label == '':
+                shown_label = b_texture_node.image.name
+            NifLog.debug(f"Found node {b_texture_node.name} of type {shown_label}")
 
             # go over all slots
             for slot_name in self.slots.keys():
-                if slot_name in b_texture_node.label:
+                if slot_name in shown_label:
                     # slot has already been populated
                     if self.slots[slot_name]:
                         raise NifError(f"Multiple {slot_name} textures in material '{b_mat.name}''.\n"
@@ -127,5 +183,5 @@ class TextureSlotManager:
                     break
             # unsupported texture type
             else:
-                raise NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}'."
+                raise NifError(f"Do not know how to export texture node '{b_texture_node.name}' in material '{b_mat.name}' with label '{shown_label}'."
                                f"Delete it or change its label.")

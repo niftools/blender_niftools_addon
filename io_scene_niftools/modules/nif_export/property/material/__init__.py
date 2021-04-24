@@ -99,8 +99,8 @@ class MaterialProp:
         n_mat_prop.emissive_color.g = emissive.g
         n_mat_prop.emissive_color.b = emissive.b
 
-        # gloss mat 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-        n_mat_prop.glossiness = b_mat.specular_intensity
+        # map roughness [0,1] to glossiness (MW -> 0.0 - 128.0)
+        n_mat_prop.glossiness = min(1/b_mat.roughness - 1, 128) if b_mat.roughness != 0 else 128
         n_mat_prop.alpha = b_mat.niftools.emissive_alpha.v
         # todo [material] this float is used by FO3's material properties
         # n_mat_prop.emit_multi = emitmulti

@@ -110,8 +110,8 @@ def export_furniture_marker(n_root, filebase):
         try:
             furniturenumber = int(filebase[15:])
         except ValueError:
-            raise io_scene_niftools.utils.logging.NifError("Furniture marker has invalid number ({0}).\n"
-                                     "Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.".format(filebase[15:]))
+            raise io_scene_niftools.utils.logging.NifError(f"Furniture marker has invalid number ({filebase[15:]}).\n"
+                                     f"Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19.")
 
         # create furniture marker block
         furnmark = block_store.create_block("BSFurnitureMarker")

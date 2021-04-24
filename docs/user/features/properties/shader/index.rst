@@ -230,6 +230,15 @@ This shader node is used for things.
 | Z-Buffer Write                | Enables writing to the z-buffer                                |
 +-------------------------------+----------------------------------------------------------------+
 
+When importing a BS Lighting Shader Property, the UV scale, UV offset and the clamp mode are converted into shader 
+nodes. When this happens, the UV Map input node is first split into X and Y, and later combined for a final output. 
+This combining node is what the exporter looks for when trying to find the nodes that do the X and Y transform. 
+Therefore, it has a standard name: *'Combine UV0'*. The label is also the same by default, but that can be anything. 
+If you want to export UV Scale, UV Offset or the clamp mode, making sure it follows this format is the best way to do 
+it. If there is no node with that name, the exporter will still try to find that node by tracing back from the UV map 
+input of the 'Base' image texture node, but it will give you a warning. If none are found, the standard values are 
+chosen.
+
 .. _shader-effect:
 
 BS Effect Shader Property

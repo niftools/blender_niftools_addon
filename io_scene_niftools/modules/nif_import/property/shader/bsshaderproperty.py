@@ -97,15 +97,9 @@ class BSShaderPropertyProcessor(BSShader):
         # Textures
         self.texturehelper.import_bsshaderproperty_textureset(bs_shader_property, self._nodes_wrapper)
 
-        # TODO [shader] UV offset node support
-        # if hasattr(bs_shader_property, 'texture_clamp_mode'):
-        #     self.import_clamp(self.b_mat, bs_shader_property)
-        #
-        # if hasattr(bs_shader_property, 'uv_offset'):
-        #     self.import_uv_offset(self.b_mat, bs_shader_property)
-        #
-        # if hasattr(bs_shader_property, 'uv_scale'):
-        #     self.import_uv_scale(self.b_mat, bs_shader_property)
+        x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_uv_transform(bs_shader_property)
+
+        self._nodes_wrapper.global_uv_offset_scale(x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y)
 
         # Diffuse color
         if bs_shader_property.skin_tint_color:
@@ -145,12 +139,9 @@ class BSShaderPropertyProcessor(BSShader):
 
         self.texturehelper.import_bseffectshaderproperty_textures(bs_effect_shader_property, self._nodes_wrapper)
 
-        # todo [material] update for nodes
-        # if hasattr(bs_effect_shader_property, 'uv_offset'):
-        #     self.import_uv_offset(self.b_mat, bs_effect_shader_property)
-        #
-        # if hasattr(bs_effect_shader_property, 'uv_scale'):
-        #     self.import_uv_scale(self.b_mat, bs_effect_shader_property)
+        x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y = self.get_uv_transform(bs_effect_shader_property)
+
+        self._nodes_wrapper.global_uv_offset_scale(x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y)
 
         # TODO [material][shader][property] Handle nialphaproperty node lookup
         # # Alpha
@@ -175,3 +166,49 @@ class BSShaderPropertyProcessor(BSShader):
 
         flag_2 = b_prop.shader_flags_2
         self.import_flags(self._b_mat, flag_2)
+
+    def get_uv_transform(self, shader):
+        # get the uv scale and offset from the shader (used by BSLightingShaderProperty, BSEffectShaderProperty,
+        # BSWaterShaderProperty and BSSkyShaderProperty, according to nif.xml)
+        if hasattr(shader, 'uv_offset'):
+            x_offset = shader.uv_offset.u
+            y_offset = shader.uv_offset.v
+        else:
+            x_offset = 0
+            y_offset = 0
+
+        if hasattr(shader, 'uv_scale'):
+            x_scale = shader.uv_scale.u
+            y_scale = shader.uv_scale.v
+        else:
+            x_scale = 1
+            y_scale = 1
+
+        # only the y offset needs conversion, xoffset is the same for the same result
+        b_y_offset = 1 - y_offset - y_scale
+
+        # get the clamp (x and y direction)
+        if hasattr(shader, 'texture_clamp_mode'):
+            # use modulo 256, because in BSEffectShaderProperty, pyffi also takes other bytes, making the value appear
+            # higher than it is
+            clamp_mode = shader.texture_clamp_mode % 256
+            if clamp_mode == NifFormat.TexClampMode.WRAP_S_WRAP_T:
+                clamp_x = False
+                clamp_y = False
+            elif clamp_mode == NifFormat.TexClampMode.WRAP_S_CLAMP_T:
+                clamp_x = False
+                clamp_y = True
+            elif clamp_mode == NifFormat.TexClampMode.CLAMP_S_WRAP_T:
+                clamp_x = True
+                clamp_y = False
+            elif clamp_mode == NifFormat.TexClampMode.CLAMP_S_CLAMP_T:
+                clamp_x = True
+                clamp_y = True
+            else:
+                clamp_x = False
+                clamp_y = False
+        else:
+            clamp_x = False
+            clamp_y = False
+
+        return x_scale, y_scale, x_offset, b_y_offset, clamp_x, clamp_y

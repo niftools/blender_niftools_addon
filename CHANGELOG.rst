@@ -1,3 +1,15 @@
+Version v0.0.6
+==============
+- #431 Docs link not working
+- #434 Update Sphinx docs theme
+- #81 Add support for texture transforms
+- #438 Cleanup of uv transform handling and texture slot name use, and change to glossiness import
+- #437 Enable KF export
+- #426 Minor animation export bugs fixed
+- #420 Minor bugs in Kf Export
+- #428 Updated shader import/export, mostly for BSShaderProperty
+- #404 Export to Skyrim nif missing Has_Tangents bit
+
 Version v0.0.5
 ==============
 - #411 Usability : Niftool addon fails to install
@@ -38,7 +50,7 @@ Version v0.0.1
 
 
 .. note::
-The following are older versions, using the old naming scheme
+    The following are older versions, using the old naming scheme
 
 Version 2.6.0.adev4
 ===================
@@ -93,8 +105,8 @@ Features
 |        | - The messages themselves were updated to be more helpful.                                                 |
 +--------+------------------------------------------------------------------------------------------------------------+
 
- Bug Fixes
- ---------
+Bug Fixes
+---------
 
 +--------+-----------------------------------------------------------------------------------------------------------+
 | Ticket |                                                Description                                                |
@@ -187,7 +199,7 @@ Features
 | 242    | Export : UV offset not found                                                                              |
 +--------+-----------------------------------------------------------------------------------------------------------+
 | 251    | - TypeError: load_nif() missing 1 required positional argument: 'file_path'                               |
-|        | - AttributeError: 'NifExport' object has no attribute 'set_object_matrix'                                |
+|        | - AttributeError: 'NifExport' object has no attribute 'set_object_matrix'                                 |
 +--------+-----------------------------------------------------------------------------------------------------------+
 | 275    | Fix Addon Documentation and Bug Tracker links                                                             |
 +--------+-----------------------------------------------------------------------------------------------------------+

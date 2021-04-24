@@ -104,7 +104,7 @@ class VertexGroup:
 
         # make sure that each skin is applied only once to avoid distortions when a model is referred to twice
         for n_geom in set(n_geoms):
-            NifLog.info('Applying skin deformation on geometry {0}'.format(n_geom.name))
+            NifLog.info(f'Applying skin deformation on geometry {n_geom.name}')
             skininst = n_geom.skin_instance
             skindata = skininst.data
             if skindata.has_vertex_weights:

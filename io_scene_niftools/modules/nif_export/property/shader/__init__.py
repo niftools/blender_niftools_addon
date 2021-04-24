@@ -41,6 +41,7 @@ from pyffi.formats.nif import NifFormat
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
 from io_scene_niftools.utils import math
+from io_scene_niftools.utils.consts import FLOAT_MAX
 
 
 class BSShaderProperty:
@@ -77,9 +78,6 @@ class BSShaderProperty:
         # TODO [Shader] Alpha property
         # if b_mat.use_transparency:
         #     bsshader.alpha = (1 - b_mat.alpha)
-
-        # clamp Mode
-        bsshader.texture_clamp_mode = 65283
 
         # Emissive
         bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
@@ -121,7 +119,7 @@ class BSShaderProperty:
         # bsshader.emissive_multiple = b_mat.emit
 
         # gloss
-        bsshader.glossiness = b_mat.roughness
+        bsshader.glossiness = 1/b_mat.roughness - 1 if b_mat.roughness != 0 else FLOAT_MAX
 
         # Specular color
         s = b_mat.specular_color

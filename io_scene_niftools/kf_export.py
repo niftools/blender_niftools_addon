@@ -38,53 +38,64 @@
 # ***** END LICENSE BLOCK *****
 
 import os
+import bpy
 
 import pyffi.spells.nif.fix
 
 from io_scene_niftools.file_io.kf import KFFile
 from io_scene_niftools.modules.nif_export import armature
-from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
+from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import math
-from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog, NifError
+from io_scene_niftools.modules.nif_export import scene
 
 
-class KfImport(NifCommon):
+class KfExport(NifCommon):
 
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.tranform_anim = TransformAnimation()
+        self.transform_anim = TransformAnimation()
 
     def execute(self):
-        """Main import function."""
+        """Main export function."""
 
-        try:
-            dirname = os.path.dirname(NifOp.props.filepath)
-            kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
-            b_armature = math.get_armature()
-            if not b_armature:
-                raise NifError("No armature was found in scene, can not import KF animation!")
+        NifLog.info(f"Exporting {NifOp.props.filepath}")
 
-            # the axes used for bone correction depend on the armature in our scene
+        # extract directory, base name, extension
+        directory = os.path.dirname(NifOp.props.filepath)
+        filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
+
+        prefix = "x" if bpy.context.scene.niftools_scene.game in ('MORROWIND',) else ""
+        self.version, data = scene.get_version_data()
+        # todo[anim] - change to KfData, but create_controller() [and maybe more] has to be updated first
+        NifData.init(data)
+
+        b_armature = math.get_armature()
+        # some scenes may not have an armature, so nothing to do here
+        if b_armature:
             math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
-            # get nif space bind pose of armature here for all anims
-            bind_data = armature.get_bind_data(b_armature)
-            for kf_file in kf_files:
-                kfdata = KFFile.load_kf(kf_file)
+        NifLog.info("Creating keyframe tree")
+        kf_root = self.transform_anim.export_kf_root(b_armature)
 
-                self.apply_scale(kfdata, NifOp.props.scale_correction)
+        # write kf (and xkf if asked)
+        ext = ".kf"
+        NifLog.info(f"Writing {prefix}{ext} file")
 
-                # calculate and set frames per second
-                self.tranform_anim.set_frames_per_second(kfdata.roots)
-                for kf_root in kfdata.roots:
-                    self.tranform_anim.import_kf_root(kf_root, b_armature, bind_data)
+        data.roots = [kf_root]
+        data.neosteam = (bpy.context.scene.niftools_scene.game == 'NEOSTEAM')
 
-        except NifError:
-            return {'CANCELLED'}
+        # scale correction for the skeleton
+        self.apply_scale(data, round(1 / NifOp.props.scale_correction))
+
+        kffile = os.path.join(directory, prefix + filebase + ext)
+        with open(kffile, "wb") as stream:
+            data.write(stream)
 
         NifLog.info("Finished successfully")
         return {'FINISHED'}
+
