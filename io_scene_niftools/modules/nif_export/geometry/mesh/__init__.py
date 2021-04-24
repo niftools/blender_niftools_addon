@@ -330,7 +330,7 @@ class Mesh:
             if mesh_uv_layers:
                 if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM'):
                     if len(mesh_uv_layers) > 1:
-                        raise NifError(bpy.context.scene.niftools_scene.game + " does not support multiple UV layers.")
+                        raise NifError(f"{bpy.context.scene.niftools_scene.game} does not support multiple UV layers.")
                 tridata.num_uv_sets = len(mesh_uv_layers)
                 tridata.bs_num_uv_sets = len(mesh_uv_layers)
                 tridata.has_uv = True
