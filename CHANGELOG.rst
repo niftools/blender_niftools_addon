@@ -1,5 +1,8 @@
 Version v0.0.6
 ==============
+- #434 Update Sphinx docs theme
+- #438 Cleanup of uv transform handling and texture slot name use, and change to glossiness import
+- #437 Enable KF export
 - #426 Minor animation export bugs fixed
 - #420 Minor bugs in Kf Export
 - #428 Updated shader import/export, mostly for BSShaderProperty
