@@ -1,6 +1,8 @@
 Version v0.0.6
 ==============
+- #431 Docs link not working
 - #434 Update Sphinx docs theme
+- #81 Add support for texture transforms
 - #438 Cleanup of uv transform handling and texture slot name use, and change to glossiness import
 - #437 Enable KF export
 - #426 Minor animation export bugs fixed
