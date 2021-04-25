@@ -230,22 +230,23 @@ class ObjectDataProperty:
                     else:
                         n_extra_list = NifFormat.BSInvMarker()
                         n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
-                        n_extra_list.rotation_x = (-root_object.niftools_bs_invmarker[0].bs_inv_x % (2*pi)) * 1000
-                        n_extra_list.rotation_y = (-root_object.niftools_bs_invmarker[0].bs_inv_y % (2*pi)) * 1000
-                        n_extra_list.rotation_z = (-root_object.niftools_bs_invmarker[0].bs_inv_z % (2*pi)) * 1000
+                        n_extra_list.rotation_x = (-root_object.niftools_bs_invmarker[0].bs_inv_x % (2 * pi)) * 1000
+                        n_extra_list.rotation_y = (-root_object.niftools_bs_invmarker[0].bs_inv_y % (2 * pi)) * 1000
+                        n_extra_list.rotation_z = (-root_object.niftools_bs_invmarker[0].bs_inv_z % (2 * pi)) * 1000
                         n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
                         n_root.add_extra_data(n_extra_list)
 
     # TODO [object][property] Move to new object type
     def export_weapon_location(self, n_root, root_obj):
         # export weapon location
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        game = bpy.context.scene.niftools_scene.game
+        if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             loc = root_obj.niftools.prn_location
-            if loc != "NONE" and (PRN_DICT[loc][bpy.context.scene.niftools_scene.game] is not None):
+            if loc != "NONE" and (PRN_DICT[loc][game] is not None):
                 # add string extra data
                 prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
-                prn.string_data = PRN_DICT[loc][bpy.context.scene.niftools_scene.game]
+                prn.string_data = PRN_DICT[loc][game]
                 n_root.add_extra_data(prn)
 
     # TODO [object][property] Move to object property
