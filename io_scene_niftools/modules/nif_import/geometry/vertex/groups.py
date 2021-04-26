@@ -185,10 +185,3 @@ class VertexGroup:
 
                 # create the group
                 v_group.add(groupverts, 1, 'ADD')
-            b_obj.niftools_part_flags_panel.pf_partcount = len(skinpart_list)
-            for i, pl_name in skinpart_list:
-                b_obj_partflag = b_obj.niftools_part_flags.add()
-                # b_obj.niftools_part_flags.pf_partint = (i)
-                b_obj_partflag.name = pl_name
-                b_obj_partflag.pf_editorflag = bodypart_flag[i].pf_editor_visible
-                b_obj_partflag.pf_startflag = bodypart_flag[i].pf_start_net_boneset
