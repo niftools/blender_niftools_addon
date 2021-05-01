@@ -211,7 +211,7 @@ class NifImport(NifCommon):
         if not n_block:
             return None
 
-        NifLog.info(f"Importing data for block '{n_block.name.decode()}'")
+        NifLog.info(f"Importing data for block '{math.safe_decode(n_block.name)}'")
         if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.process != "SKELETON_ONLY":
             return self.objecthelper.import_geometry_object(b_armature, n_block)
 

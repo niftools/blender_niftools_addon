@@ -178,7 +178,7 @@ class Armature:
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]
             # the property is only available from object mode!
-            block_store.store_longname(b_bone, n_block.name.decode())
+            block_store.store_longname(b_bone, math.safe_decode(n_block.name))
             if NifOp.props.animation:
                 self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
