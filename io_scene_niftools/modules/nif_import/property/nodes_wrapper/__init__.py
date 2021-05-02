@@ -48,6 +48,7 @@ from io_scene_niftools.utils.consts import TEX_SLOTS
 
 
 # TODO [property][texture] Move IMPORT_EMBEDDED_TEXTURES as a import property
+#temporarly copied in texture until further implimentation.
 IMPORT_EMBEDDED_TEXTURES = False
 
 """Names (ordered by default index) of shader texture slots for Sid Meier's Railroads and similar games."""

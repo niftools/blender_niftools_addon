@@ -73,7 +73,7 @@ class TextureLoader:
         # if the source block is not linked then return None
         if not source:
             return None
-
+        NifLog.warn(f"Import embedded texture skipped, defaulting to import external texture")#IMPORT_EMBEDDED_TEXTURES is currently a constant
         if isinstance(source, NifFormat.NiSourceTexture) and not source.use_external and texture.IMPORT_EMBEDDED_TEXTURES:
             return self.import_embedded_texture_source(source)
         else:
