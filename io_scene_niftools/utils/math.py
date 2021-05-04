@@ -227,9 +227,3 @@ def mathutils_to_nifformat_matrix(b_matrix):
     n_matrix = NifFormat.Matrix44()
     n_matrix.set_rows(*b_matrix.transposed())
     return n_matrix
-
-def safe_decode(b: bytes) -> str:
-    try:
-        return b.decode()
-    except UnicodeDecodeError:
-        return b.decode("shift-jis", errors="surrogateescape")

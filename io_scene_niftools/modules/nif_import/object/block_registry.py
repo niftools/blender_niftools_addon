@@ -39,7 +39,7 @@
 
 from io_scene_niftools.utils.logging import NifLog
 
-from io_scene_niftools.utils.math import safe_decode
+from io_scene_niftools.utils.blocks import safe_decode
 
 from io_scene_niftools.utils.consts import BIP_01, BIP01_L, B_L_SUFFIX, BIP01_R, B_R_SUFFIX, NPC_L, NPC_R, NPC_SUFFIX, \
     BRACE_R, B_R_POSTFIX, B_L_POSTFIX, CLOSE_BRACKET, BRACE_L, OPEN_BRACKET

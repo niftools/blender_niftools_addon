@@ -36,7 +36,3 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
-#TODO: detect if the texture is embeded or prompt the user to decide if the texture is embeded or not
-#setting to True is based on incomplete pyffi implimentation of save_dds
-IMPORT_EMBEDDED_TEXTURES = False

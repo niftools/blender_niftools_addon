@@ -50,6 +50,7 @@ from io_scene_niftools.modules.nif_export.block_registry import block_store as b
 from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_import.object import Object
 from io_scene_niftools.utils import math
+from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.logging import NifLog
 from io_scene_niftools.utils.singleton import NifOp, NifData
 
@@ -178,7 +179,7 @@ class Armature:
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]
             # the property is only available from object mode!
-            block_store.store_longname(b_bone, math.safe_decode(n_block.name))
+            block_store.store_longname(b_bone, safe_decode(n_block.name))
             if NifOp.props.animation:
                 self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
