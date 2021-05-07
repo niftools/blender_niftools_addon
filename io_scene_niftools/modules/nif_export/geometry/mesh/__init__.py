@@ -446,7 +446,7 @@ class Mesh:
                             triangles=trilist,
                             trianglepartmap=bodypartfacemap,
                             maximize_bone_sharing=(bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM')),
-                            part_sort_order = part_order)
+                            part_sort_order=part_order)
 
                         # warn on bad config settings
                         if bpy.context.scene.niftools_scene.game == 'OBLIVION':
@@ -565,18 +565,42 @@ class Mesh:
             raise io_scene_niftools.utils.logging.NifError("Cannot export mesh with unweighted vertices. "
                                      "The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
-
     def select_unassigned_polygons(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""
+        ngon_mesh = b_obj.data
+        # make vertex: poly map of the untriangulated mesh
+        vert_poly_dict = dict(zip(range(len(ngon_mesh.vertices)), [set() for i in range(len(ngon_mesh.vertices))]))
+        for face in ngon_mesh.polygons:
+            for vertex in face.vertices:
+                vert_poly_dict[vertex].add(face.index)
+
+        # translate the tris of polygons_without_bodypart to polygons (assuming vertex order does not change)
+        ngons_without_bodypart = []
+        for face in polygons_without_bodypart:
+            poly_set = vert_poly_dict[face.vertices[0]]
+            for vertex in face.vertices[1:]:
+                poly_set = poly_set.intersection(vert_poly_dict[vertex])
+                if len(poly_set) == 0:
+                    break
+            else:
+                for poly in poly_set:
+                    ngons_without_bodypart.append(poly)
+
+        # switch to object mode (so (de)selecting faces works
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         # select mesh object
         for b_deselect_obj in bpy.context.scene.objects:
             b_deselect_obj.select_set(False)
         bpy.context.view_layer.objects.active = b_obj
-        b_obj.select_set(True)
-        for face in b_mesh.polygons:
-            face.select = False
-        for face in polygons_without_bodypart:
-            face.select = True
+        # switch to edit mode to deselect everything in the mesh (not missing vertices or edges)
+        bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+        bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+        bpy.ops.mesh.select_all(action='DESELECT')
+
+        # switch back to object mode to make per-face selection
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+        for poly in ngons_without_bodypart:
+            ngon_mesh.polygons[poly].select = True
 
         # select bad polygons switch to edit mode to select polygons
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
