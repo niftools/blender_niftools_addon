@@ -50,7 +50,7 @@ from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop i
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog, NifError
-from io_scene_niftools.modules.nif_export.geometry.mesh.skin_partition import update_skin_partition
+from io_scene_niftools.modules.nif_export.geometry.mesh.pyffi_altered_functions import update_tangent_space, update_skin_partition
 
 
 class Mesh:
@@ -77,6 +77,7 @@ class Mesh:
 
         # get mesh from b_obj
         b_mesh = self.get_triangulated_mesh(b_obj)
+        b_mesh.calc_normals_split()
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
@@ -222,7 +223,7 @@ class Mesh:
                     # smooth = vertex normal, non-smooth = face normal)
                     if mesh_hasnormals:
                         if poly.use_smooth:
-                            fn = vertex.normal
+                            fn = b_mesh.loops[loop_index].normal
                         else:
                             fn = poly.normal
                     else:
@@ -353,6 +354,7 @@ class Mesh:
                 if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     if bpy.context.scene.niftools_scene.game == 'SKYRIM':
                         tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
+                    trishape.update_tangent_space = update_tangent_space.__get__(trishape)
                     trishape.update_tangent_space(as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account

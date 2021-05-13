@@ -38,8 +38,214 @@
 
 import logging
 import pyffi
+import struct
 from pyffi.formats.nif import NifFormat
 
+
+def update_tangent_space(self, as_extra=None, vertexprecision=3, normalprecision=3):
+    """Recalculate tangent space data.
+
+    :param as_extra: Whether to store the tangent space data as extra data
+        (as in Oblivion) or not (as in Fallout 3). If not set, switches to
+        Oblivion if an extra data block is found, otherwise does default.
+        Set it to override this detection (for example when using this
+        function to create tangent space data) and force behaviour.
+    """
+    # check that self.data exists and is valid
+    if not isinstance(self.data, NifFormat.NiTriBasedGeomData):
+        raise ValueError('cannot update tangent space of a geometry with %s data'
+                         %(self.data.__class__ if self.data else 'no'))
+
+    verts = self.data.vertices
+    norms = self.data.normals
+    if len(self.data.uv_sets) > 0:
+        uvs = self.data.uv_sets[0]
+    else:
+        # This is an error state and the mesh part should not be included in the exported nif.
+        # happens in Fallout NV meshes/architecture/bouldercity/arcadeendl.nif
+        self.data.extra_vectors_flags = 0
+        warnings.warn("Attempting to export mesh without uv data", DeprecationWarning)
+        return
+
+    # check that shape has norms and uvs
+    if len(uvs) == 0 or len(norms) == 0: return
+
+    # identify identical (vertex, normal) pairs to avoid issues along
+    # uv seams due to vertex duplication
+    # implementation note: uvprecision and vcolprecision 0
+    # should be enough, but use -2 just to be really sure
+    # that this is ignored
+    v_hash_map = list(
+        self.data.get_vertex_hash_generator(
+            vertexprecision=vertexprecision,
+            normalprecision=normalprecision,
+            vcolprecision=-2))
+
+    # tangent and binormal dictionaries by vertex hash
+    bin = dict((h, NifFormat.Vector3()) for h in v_hash_map)
+    tan = dict((h, NifFormat.Vector3()) for h in v_hash_map)
+
+    # calculate tangents and binormals from vertex and texture coordinates
+    for t1, t2, t3 in self.data.get_triangles():
+        # find hash values
+        h1 = v_hash_map[t1]
+        h2 = v_hash_map[t2]
+        h3 = v_hash_map[t3]
+        # skip degenerate triangles
+        if h1 == h2 or h2 == h3 or h3 == h1:
+            continue
+
+        v_1 = verts[t1]
+        v_2 = verts[t2]
+        v_3 = verts[t3]
+        w1 = uvs[t1]
+        w2 = uvs[t2]
+        w3 = uvs[t3]
+        v_2v_1 = v_2 - v_1
+        v_3v_1 = v_3 - v_1
+        w2w1 = w2 - w1
+        w3w1 = w3 - w1
+
+        # surface of triangle in texture space
+        r = w2w1.u * w3w1.v - w3w1.u * w2w1.v
+
+        # sign of surface
+        r_sign = (1 if r >= 0 else -1)
+
+        # contribution of this triangle to tangents and binormals
+        sdir = NifFormat.Vector3()
+        sdir.x = (w3w1.v * v_2v_1.x - w2w1.v * v_3v_1.x) * r_sign
+        sdir.y = (w3w1.v * v_2v_1.y - w2w1.v * v_3v_1.y) * r_sign
+        sdir.z = (w3w1.v * v_2v_1.z - w2w1.v * v_3v_1.z) * r_sign
+        try:
+            sdir.normalize()
+        except ZeroDivisionError: # catches zero vector
+            continue # skip triangle
+        except ValueError: # catches invalid data
+            continue # skip triangle
+
+        tdir = NifFormat.Vector3()
+        tdir.x = (w2w1.u * v_3v_1.x - w3w1.u * v_2v_1.x) * r_sign
+        tdir.y = (w2w1.u * v_3v_1.y - w3w1.u * v_2v_1.y) * r_sign
+        tdir.z = (w2w1.u * v_3v_1.z - w3w1.u * v_2v_1.z) * r_sign
+        try:
+            tdir.normalize()
+        except ZeroDivisionError: # catches zero vector
+            continue # skip triangle
+        except ValueError: # catches invalid data
+            continue # skip triangle
+
+        # vector combination algorithm could possibly be improved
+        for h in [h1, h2, h3]:
+            # addition inlined for speed
+            tanh = tan[h]
+            tanh.x += tdir.x
+            tanh.y += tdir.y
+            tanh.z += tdir.z
+            binh = bin[h]
+            binh.x += sdir.x
+            binh.y += sdir.y
+            binh.z += sdir.z
+
+    xvec = NifFormat.Vector3()
+    xvec.x = 1.0
+    xvec.y = 0.0
+    xvec.z = 0.0
+    yvec = NifFormat.Vector3()
+    yvec.x = 0.0
+    yvec.y = 1.0
+    yvec.z = 0.0
+    for n, h in zip(norms, v_hash_map):
+        binh = bin[h]
+        tanh = tan[h]
+        try:
+            n.normalize()
+        except (ValueError, ZeroDivisionError):
+            # this happens if the normal has NAN values or is zero
+            # just pick something in that case
+            n = yvec
+        try:
+            # turn n, bin, tan into a base via Gram-Schmidt
+            # bin[h] -= n * (n * bin[h])
+            # inlined for speed
+            scalar = n * binh
+            binh.x -= n.x * scalar
+            binh.y -= n.y * scalar
+            binh.z -= n.z * scalar
+            binh.normalize()
+
+            # tan[h] -= n * (n * tan[h])
+            # tan[h] -= bin[h] * (bin[h] * tan[h])
+            # inlined for speed
+            scalar = n * tanh
+            tanh.x -= n.x * scalar
+            tanh.y -= n.y * scalar
+            tanh.z -= n.z * scalar
+            
+            scalar = binh * tanh
+            tanh.x -= binh.x * scalar
+            tanh.y -= binh.y * scalar
+            tanh.z -= binh.z * scalar
+            tanh.normalize()
+        except ZeroDivisionError:
+            # insuffient data to set tangent space for this vertex
+            # in that case pick a space
+            binh = xvec.crossproduct(n)
+            try:
+                binh.normalize()
+            except ZeroDivisionError:
+                binh = yvec.crossproduct(n)
+                binh.normalize() # should work now
+            tanh = n.crossproduct(binh)
+
+    # tangent and binormal lists by vertex index
+    tan = [tan[h] for h in v_hash_map]
+    bin = [bin[h] for h in v_hash_map]
+
+    # find possible extra data block
+    for extra in self.get_extra_datas():
+        if isinstance(extra, NifFormat.NiBinaryExtraData):
+            if extra.name == b'Tangent space (binormal & tangent vectors)':
+                break
+    else:
+        extra = None
+
+    # if autodetection is on, do as_extra only if an extra data block is found
+    if as_extra is None:
+        if extra:
+            as_extra = True
+        else:
+            as_extra = False
+
+    if as_extra:
+        # if tangent space extra data already exists, use it
+        if not extra:
+            # otherwise, create a new block and link it
+            extra = NifFormat.NiBinaryExtraData()
+            extra.name = b'Tangent space (binormal & tangent vectors)'
+            self.add_extra_data(extra)
+
+        # write the data
+        binarydata = bytearray()
+        for vec in tan + bin:
+            # XXX _byte_order!! assuming little endian
+            binarydata += struct.pack('<fff', vec.x, vec.y, vec.z)
+        extra.binary_data = bytes(binarydata)
+    else:
+        # set tangent space flag
+        self.data.extra_vectors_flags = 16
+        # XXX used to be 61440
+        # XXX from Sid Meier's Railroad
+        self.data.tangents.update_size()
+        self.data.bitangents.update_size()
+        for vec, data_tans in zip(tan, self.data.tangents):
+            data_tans.x = vec.x
+            data_tans.y = vec.y
+            data_tans.z = vec.z
+        for vec, data_bins in zip(bin, self.data.bitangents):
+            data_bins.x = vec.x
+            data_bins.y = vec.y
+            data_bins.z = vec.z
 
 def update_skin_partition(self,
                         maxbonesperpartition=4, maxbonespervertex=4,
