@@ -38,6 +38,8 @@
 
 import bpy
 import mathutils
+import numpy as np
+import struct
 
 from pyffi.formats.nif import NifFormat
 
@@ -50,7 +52,7 @@ from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop i
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog, NifError
-from io_scene_niftools.modules.nif_export.geometry.mesh.pyffi_altered_functions import update_tangent_space, update_skin_partition
+from io_scene_niftools.modules.nif_export.geometry.mesh.skin_partition import update_skin_partition
 
 
 class Mesh:
@@ -195,6 +197,21 @@ class Mesh:
             # for each face in trilist, a body part index
             bodypartfacemap = []
             polygons_without_bodypart = []
+
+            if b_mesh.polygons:
+                if mesh_uv_layers:
+                    # if we have uv coordinates double check that we have uv data
+                    if not b_mesh.uv_layer_stencil:
+                        NifLog.warn(f"No UV map for texture associated with selected mesh '{b_mesh.name}'.")
+
+            use_tangents = False
+            if mesh_uv_layers and mesh_hasnormals:
+                if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                    use_tangents = True
+                    b_mesh.calc_tangents(uvmap=mesh_uv_layers[0].name)
+                    tanlist = []
+                    bitangent_sign_list = []
+
             for poly in b_mesh.polygons:
 
                 # does the face belong to this trishape?
@@ -206,14 +223,10 @@ class Mesh:
                 if f_numverts < 3:
                     continue  # ignore degenerate polygons
                 assert ((f_numverts == 3) or (f_numverts == 4))  # debug
-                if mesh_uv_layers:
-                    # if we have uv coordinates double check that we have uv data
-                    if not b_mesh.uv_layer_stencil:
-                        NifLog.warn(f"No UV map for texture associated with poly {poly.index:s} of selected mesh '{b_mesh.name}'.")
 
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [-1] * f_numverts
-                for i, loop_index in enumerate(range(poly.loop_start, poly.loop_start + poly.loop_total)):
+                for i, loop_index in enumerate(poly.loop_indices):
 
                     fv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[fv_index]
@@ -252,7 +265,7 @@ class Mesh:
                             break
 
                     if f_index[i] > 65535:
-                        raise io_scene_niftools.utils.logging.NifError("Too many vertices. Decimate your mesh and try again.")
+                        raise NifError("Too many vertices. Decimate your mesh and try again.")
 
                     if f_index[i] == len(vertquad_list):
                         # first: add it to the vertex map
@@ -266,6 +279,9 @@ class Mesh:
                         vertlist.append(vertquad[0])
                         if mesh_hasnormals:
                             normlist.append(vertquad[2])
+                        if use_tangents:
+                            tanlist.append(b_mesh.loops[loop_index].tangent)
+                            bitangent_sign_list.append([b_mesh.loops[loop_index].bitangent_sign])
                         if mesh_hasvcol:
                             vcollist.append(vertquad[3])
                         if mesh_uv_layers:
@@ -297,7 +313,7 @@ class Mesh:
                 self.select_unassigned_polygons(b_mesh, b_obj, polygons_without_bodypart)
 
             if len(trilist) > 65535:
-                raise io_scene_niftools.utils.logging.NifError("Too many polygons. Decimate your mesh and try again.")
+                raise NifError("Too many polygons. Decimate your mesh and try again.")
             if len(vertlist) == 0:
                 continue  # m_4444x: skip 'empty' material indices
 
@@ -350,12 +366,14 @@ class Mesh:
             # update tangent space (as binary extra data only for Oblivion)
             # for extra shader texture games, only export it if those textures are actually exported
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
-            if mesh_uv_layers and mesh_hasnormals:
-                if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
-                    if bpy.context.scene.niftools_scene.game == 'SKYRIM':
-                        tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
-                    trishape.update_tangent_space = update_tangent_space.__get__(trishape)
-                    trishape.update_tangent_space(as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
+            if use_tangents:
+                if bpy.context.scene.niftools_scene.game == 'SKYRIM':
+                    tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
+                # calculate the bitangents using the normals, tangent list and bitangent sign
+                bitlist = bitangent_sign_list * np.cross(normlist, tanlist)
+                # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
+                # moreover, N_v = 1 - B_v, so d(B_v) = - d(N_v), therefore N_tan = -B_bit and N_bit = B_tan
+                self.add_defined_tangents(trishape, tangents=-bitlist, bitangents=tanlist, as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any
@@ -481,7 +499,7 @@ class Mesh:
         for n_block, b_obj in block_store.block_to_obj.items():
             if isinstance(n_block, NifFormat.NiNode) and b_bone == b_obj:
                 return n_block
-        raise io_scene_niftools.utils.logging.NifError(f"Bone '{b_bone.name}' not found.")
+        raise NifError(f"Bone '{b_bone.name}' not found.")
 
     def get_body_part_groups(self, b_obj, b_mesh):
         """Returns a set of vertices (no dupes) for each body part"""
@@ -510,7 +528,7 @@ class Mesh:
                     skininst.skeleton_root = block
                     break
         else:
-            raise io_scene_niftools.utils.logging.NifError(f"Skeleton root '{n_root_name}' not found.")
+            raise NifError(f"Skeleton root '{n_root_name}' not found.")
 
         # create skinning data and link it
         skindata = block_store.create_block("NiSkinData", b_obj)
@@ -564,8 +582,8 @@ class Mesh:
             # select unweighted vertices
             bpy.ops.mesh.select_ungrouped(extend=False)
 
-            raise io_scene_niftools.utils.logging.NifError("Cannot export mesh with unweighted vertices. "
-                                     "The unweighted vertices have been selected in the mesh so they can easily be identified.")
+            raise NifError("Cannot export mesh with unweighted vertices. "
+                           "The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
     def select_unassigned_polygons(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""
@@ -670,3 +688,46 @@ class Mesh:
                 break
         else:
             b_obj.modifiers.new('Triangulate', 'TRIANGULATE')
+
+    def add_defined_tangents(self, trishape, tangents, bitangents, as_extra):
+        # check if size of tangents and bitangents is equal to num_vertices
+        nr_vertices = trishape.data.num_vertices
+        if (len(tangents) != nr_vertices) or (len(bitangents) != nr_vertices):
+            raise NifError(f'Number of tangents or bitangents does not agree with number of vertices in {trishape.name}')
+
+        if as_extra:
+            # if tangent space extra data already exists, use it
+            # find possible extra data block
+            for extra in trishape.get_extra_datas():
+                if isinstance(extra, NifFormat.NiBinaryExtraData):
+                    if extra.name == b'Tangent space (binormal & tangent vectors)':
+                        break
+            else:
+                extra = None
+            if not extra:
+                # otherwise, create a new block and link it
+                extra = NifFormat.NiBinaryExtraData()
+                extra.name = b'Tangent space (binormal & tangent vectors)'
+                trishape.add_extra_data(extra)
+
+            # write the data
+            binarydata = bytearray()
+            for vec in np.concatenate((tangents, bitangents), axis=0):
+                # XXX _byte_order!! assuming little endian
+                binarydata += struct.pack('<fff', vec[0], vec[1], vec[2])
+            extra.binary_data = bytes(binarydata)
+        else:
+            # set tangent space flag
+            trishape.data.extra_vectors_flags = 16
+            # XXX used to be 61440
+            # XXX from Sid Meier's Railroad
+            trishape.data.tangents.update_size()
+            trishape.data.bitangents.update_size()
+            for vec, data_tans in zip(tangents, trishape.data.tangents):
+                data_tans.x = vec[0]
+                data_tans.y = vec[1]
+                data_tans.z = vec[2]
+            for vec, data_bins in zip(bitangents, trishape.data.bitangents):
+                data_bins.x = vec[0]
+                data_bins.y = vec[1]
+                data_bins.z = vec[2]
