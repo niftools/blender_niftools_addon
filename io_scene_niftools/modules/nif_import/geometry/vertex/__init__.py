@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from io_scene_niftools.utils.singleton import NifOp
+import numpy as np
 
 
 class Vertex:
@@ -68,17 +69,16 @@ class Vertex:
         # set normals
         if NifOp.props.use_custom_normals:
             # map normals so we can set them to the edge corners (stored per loop)
-            no_array = []
+            no_array = np.zeros((len(b_mesh.loops), 3))
             for face in b_mesh.polygons:
-                for vertex_index in face.vertices:
-                    # no_array.append(model.normals[vertex_index])
-                    # no_array.append(mathutils.Vector(n_tri_data.normals[vertex_index]).normalized())
-                    no_array.append(n_tri_data.normals[vertex_index].as_tuple())
-                    # no_array.append((0,0,1))
-                # no_array.append(model.tangents[vertex_index])
-                # face.use_smooth = True
+                for loop_index in face.loop_indices:
+                    no_array[loop_index] = n_tri_data.normals[b_mesh.loops[loop_index].vertex_index].as_tuple()
 
             b_mesh.use_auto_smooth = True
+            # the normals need to be pre-normalized or blender will do it inconsistely, leading to marked sharp edges
+            no_norms = np.linalg.norm(no_array, ord=2, axis=1 , keepdims=True)
+            non_zero_norms = np.reshape(no_norms != 0, newshape=len(no_norms))
+            no_array[non_zero_norms] =  no_array[non_zero_norms] / no_norms[non_zero_norms]
             b_mesh.normals_split_custom_set(no_array)
 
     @staticmethod
