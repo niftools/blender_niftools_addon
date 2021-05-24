@@ -373,7 +373,10 @@ class Mesh:
                 bitlist = bitangent_sign_list * np.cross(normlist, tanlist)
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
                 # moreover, N_v = 1 - B_v, so d(B_v) = - d(N_v), therefore N_tan = -B_bit and N_bit = B_tan
-                self.add_defined_tangents(trishape, tangents=-bitlist, bitangents=tanlist, as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
+                self.add_defined_tangents(trishape,
+                                          tangents=-bitlist,
+                                          bitangents=tanlist,
+                                          as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any

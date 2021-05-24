@@ -68,18 +68,17 @@ class Vertex:
         assert len(b_mesh.vertices) == len(n_tri_data.normals)
         # set normals
         if NifOp.props.use_custom_normals:
-            # map normals so we can set them to the edge corners (stored per loop)
-            no_array = np.zeros((len(b_mesh.loops), 3))
-            for face in b_mesh.polygons:
-                for loop_index in face.loop_indices:
-                    no_array[loop_index] = n_tri_data.normals[b_mesh.loops[loop_index].vertex_index].as_tuple()
+            no_array = np.array([normal.as_tuple() for normal in n_tri_data.normals])
+            # the normals need to be pre-normalized or blender will do it inconsistely, leading to marked sharp edges
+            no_norms = np.linalg.norm(no_array, ord=2, axis=1, keepdims=True)
+            non_zero_norms = np.reshape(no_norms != 0, newshape=len(no_norms))
+            no_array[non_zero_norms] = no_array[non_zero_norms] / no_norms[non_zero_norms]
+            # map normals so we can set them to the edge corners (stored per loop), because assigning vertex.normal is
+            # not retained
+            no_loop_array = no_array[[loop.vertex_index for loop in b_mesh.loops]]
 
             b_mesh.use_auto_smooth = True
-            # the normals need to be pre-normalized or blender will do it inconsistely, leading to marked sharp edges
-            no_norms = np.linalg.norm(no_array, ord=2, axis=1 , keepdims=True)
-            non_zero_norms = np.reshape(no_norms != 0, newshape=len(no_norms))
-            no_array[non_zero_norms] =  no_array[non_zero_norms] / no_norms[non_zero_norms]
-            b_mesh.normals_split_custom_set(no_array)
+            b_mesh.normals_split_custom_set(no_loop_array)
 
     @staticmethod
     def get_uv_layer_name(uvset):
