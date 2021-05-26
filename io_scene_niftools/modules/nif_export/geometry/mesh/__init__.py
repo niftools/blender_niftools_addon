@@ -104,6 +104,7 @@ class Mesh:
         mesh_hasvcol = b_mesh.vertex_colors
         # list of body part (name, index, vertices) in this mesh
         bodypartgroups = self.get_body_part_groups(b_obj, b_mesh)
+        game = bpy.context.scene.niftools_scene.game
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
@@ -115,7 +116,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
+                if (game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
 
             # create a trishape block
@@ -145,7 +146,7 @@ class Mesh:
             self.set_mesh_flags(b_obj, trishape)
 
             # extra shader for Sid Meier's Railroads
-            if bpy.context.scene.niftools_scene.game == 'SID_MEIER_S_RAILROADS':
+            if game == 'SID_MEIER_S_RAILROADS':
                 trishape.has_shader = True
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1  # default
@@ -206,7 +207,7 @@ class Mesh:
 
             use_tangents = False
             if mesh_uv_layers and mesh_hasnormals:
-                if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
                     b_mesh.calc_tangents(uvmap=mesh_uv_layers[0].name)
                     tanlist = []
@@ -296,7 +297,7 @@ class Mesh:
                     trilist.append(f_indexed)
 
                     # add body part number
-                    if bpy.context.scene.niftools_scene.game not in ('FALLOUT_3', 'SKYRIM') or not bodypartgroups:
+                    if game not in ('FALLOUT_3', 'SKYRIM') or not bodypartgroups:
                         # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
@@ -345,9 +346,9 @@ class Mesh:
                     v.r, v.g, v.b, v.a = vcollist[i]
 
             if mesh_uv_layers:
-                if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM'):
+                if game in ('FALLOUT_3', 'SKYRIM'):
                     if len(mesh_uv_layers) > 1:
-                        raise NifError(f"{bpy.context.scene.niftools_scene.game} does not support multiple UV layers.")
+                        raise NifError(f"{game} does not support multiple UV layers.")
                 tridata.num_uv_sets = len(mesh_uv_layers)
                 tridata.bs_num_uv_sets = len(mesh_uv_layers)
                 tridata.has_uv = True
@@ -367,7 +368,7 @@ class Mesh:
             # for extra shader texture games, only export it if those textures are actually exported
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if use_tangents:
-                if bpy.context.scene.niftools_scene.game == 'SKYRIM':
+                if game == 'SKYRIM':
                     tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
                 # calculate the bitangents using the normals, tangent list and bitangent sign
                 bitlist = bitangent_sign_list * np.cross(normlist, tanlist)
@@ -376,7 +377,7 @@ class Mesh:
                 self.add_defined_tangents(trishape,
                                           tangents=-bitlist,
                                           bitangents=tanlist,
-                                          as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
+                                          as_extra_data=(game == 'OBLIVION'))
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any
@@ -468,18 +469,18 @@ class Mesh:
                             padbones=NifOp.props.pad_bones,
                             triangles=trilist,
                             trianglepartmap=bodypartfacemap,
-                            maximize_bone_sharing=(bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM')),
+                            maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
                             part_sort_order=part_order)
 
                         # warn on bad config settings
-                        if bpy.context.scene.niftools_scene.game == 'OBLIVION':
+                        if game == 'OBLIVION':
                             if NifOp.props.pad_bones:
                                 NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3'):
+                        if game in ('OBLIVION', 'FALLOUT_3'):
                             if NifOp.props.max_bones_per_partition < 18:
                                 NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
                                             "Set it to 18 to get higher quality skin partitions.")
-                        if bpy.context.scene.niftools_scene.game in 'SKYRIM':
+                        if game == 'SKYRIM':
                             if NifOp.props.max_bones_per_partition < 24:
                                 NifLog.warn("Using less than 24 bones per partition on Skyrim export."
                                             "Set it to 24 to get higher quality skin partitions.")
@@ -591,8 +592,9 @@ class Mesh:
     def select_unassigned_polygons(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""
         ngon_mesh = b_obj.data
+        num_vertices = len(ngon_mesh.vertices)
         # make vertex: poly map of the untriangulated mesh
-        vert_poly_dict = dict(zip(range(len(ngon_mesh.vertices)), [set() for i in range(len(ngon_mesh.vertices))]))
+        vert_poly_dict = dict(zip(range(num_vertices), [set() for i in range(num_vertices)]))
         for face in ngon_mesh.polygons:
             for vertex in face.vertices:
                 vert_poly_dict[vertex].add(face.index)
@@ -609,7 +611,7 @@ class Mesh:
                 for poly in poly_set:
                     ngons_without_bodypart.append(poly)
 
-        # switch to object mode (so (de)selecting faces works
+        # switch to object mode so (de)selecting faces works
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         # select mesh object
         for b_deselect_obj in bpy.context.scene.objects:
@@ -692,13 +694,13 @@ class Mesh:
         else:
             b_obj.modifiers.new('Triangulate', 'TRIANGULATE')
 
-    def add_defined_tangents(self, trishape, tangents, bitangents, as_extra):
+    def add_defined_tangents(self, trishape, tangents, bitangents, as_extra_data):
         # check if size of tangents and bitangents is equal to num_vertices
-        nr_vertices = trishape.data.num_vertices
-        if (len(tangents) != nr_vertices) or (len(bitangents) != nr_vertices):
+        num_vertices = trishape.data.num_vertices
+        if (len(tangents) != num_vertices) or (len(bitangents) != num_vertices):
             raise NifError(f'Number of tangents or bitangents does not agree with number of vertices in {trishape.name}')
 
-        if as_extra:
+        if as_extra_data:
             # if tangent space extra data already exists, use it
             # find possible extra data block
             for extra in trishape.get_extra_datas():
