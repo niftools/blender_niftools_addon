@@ -189,13 +189,13 @@ class Mesh:
 
             mesh_uv_layers = b_mesh.uv_layers
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
-            vertmap = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
-            vertlist = []
-            normlist = []
-            vcollist = []
-            uvlist = []
-            trilist = []
-            # for each face in trilist, a body part index
+            vertex_map = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
+            vertex_positions = []
+            normals = []
+            vertex_colors = []
+            uv_coords = []
+            triangles = []
+            # for each face in triangles, a body part index
             bodypartfacemap = []
             polygons_without_bodypart = []
 
@@ -210,8 +210,8 @@ class Mesh:
                 if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
                     b_mesh.calc_tangents(uvmap=mesh_uv_layers[0].name)
-                    tanlist = []
-                    bitangent_sign_list = []
+                    tangents = []
+                    bitangent_signs = []
 
             for poly in b_mesh.polygons:
 
@@ -255,9 +255,9 @@ class Mesh:
 
                     # check for duplicate vertquad?
                     f_index[i] = len(vertquad_list)
-                    if vertmap[vertex_index] is not None:
+                    if vertex_map[vertex_index] is not None:
                         # iterate only over vertices with the same vertex index
-                        for j in vertmap[vertex_index]:
+                        for j in vertex_map[vertex_index]:
                             # check if they have the same uvs, normals and colors
                             if self.is_new_face_corner_data(vertquad, vertquad_list[j]):
                                 continue
@@ -270,23 +270,23 @@ class Mesh:
 
                     if f_index[i] == len(vertquad_list):
                         # first: add it to the vertex map
-                        if not vertmap[vertex_index]:
-                            vertmap[vertex_index] = []
-                        vertmap[vertex_index].append(len(vertquad_list))
+                        if not vertex_map[vertex_index]:
+                            vertex_map[vertex_index] = []
+                        vertex_map[vertex_index].append(len(vertquad_list))
                         # new (vert, uv-vert, normal, vcol) quad: add it
                         vertquad_list.append(vertquad)
 
                         # add the vertex
-                        vertlist.append(vertquad[0])
+                        vertex_positions.append(vertquad[0])
                         if mesh_hasnormals:
-                            normlist.append(vertquad[2])
+                            normals.append(vertquad[2])
                         if use_tangents:
-                            tanlist.append(b_mesh.loops[loop_index].tangent)
-                            bitangent_sign_list.append([b_mesh.loops[loop_index].bitangent_sign])
+                            tangents.append(b_mesh.loops[loop_index].tangent)
+                            bitangent_signs.append([b_mesh.loops[loop_index].bitangent_sign])
                         if mesh_hasvcol:
-                            vcollist.append(vertquad[3])
+                            vertex_colors.append(vertquad[3])
                         if mesh_uv_layers:
-                            uvlist.append(vertquad[1])
+                            uv_coords.append(vertquad[1])
 
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
@@ -294,7 +294,7 @@ class Mesh:
                         f_indexed = (f_index[0], f_index[1 + i], f_index[2 + i])
                     else:
                         f_indexed = (f_index[0], f_index[2 + i], f_index[1 + i])
-                    trilist.append(f_indexed)
+                    triangles.append(f_indexed)
 
                     # add body part number
                     if game not in ('FALLOUT_3', 'SKYRIM') or not bodypartgroups:
@@ -313,9 +313,9 @@ class Mesh:
             if polygons_without_bodypart:
                 self.select_unassigned_polygons(b_mesh, b_obj, polygons_without_bodypart)
 
-            if len(trilist) > 65535:
+            if len(triangles) > 65535:
                 raise NifError("Too many polygons. Decimate your mesh and try again.")
-            if len(vertlist) == 0:
+            if len(vertex_positions) == 0:
                 continue  # m_4444x: skip 'empty' material indices
 
             # add NiTriShape's data
@@ -326,24 +326,24 @@ class Mesh:
             trishape.data = tridata
 
             # data
-            tridata.num_vertices = len(vertlist)
+            tridata.num_vertices = len(vertex_positions)
             tridata.has_vertices = True
             tridata.vertices.update_size()
             for i, v in enumerate(tridata.vertices):
-                v.x, v.y, v.z = vertlist[i]
+                v.x, v.y, v.z = vertex_positions[i]
             tridata.update_center_radius()
 
             if mesh_hasnormals:
                 tridata.has_normals = True
                 tridata.normals.update_size()
                 for i, v in enumerate(tridata.normals):
-                    v.x, v.y, v.z = normlist[i]
+                    v.x, v.y, v.z = normals[i]
 
             if mesh_hasvcol:
                 tridata.has_vertex_colors = True
                 tridata.vertex_colors.update_size()
                 for i, v in enumerate(tridata.vertex_colors):
-                    v.r, v.g, v.b, v.a = vcollist[i]
+                    v.r, v.g, v.b, v.a = vertex_colors[i]
 
             if mesh_uv_layers:
                 if game in ('FALLOUT_3', 'SKYRIM'):
@@ -355,14 +355,14 @@ class Mesh:
                 tridata.uv_sets.update_size()
                 for j, uv_layer in enumerate(mesh_uv_layers):
                     for i, uv in enumerate(tridata.uv_sets[j]):
-                        if len(uvlist[i]) == 0:
+                        if len(uv_coords[i]) == 0:
                             continue  # skip non-uv textures
-                        uv.u = uvlist[i][j][0]
+                        uv.u = uv_coords[i][j][0]
                         # NIF flips the texture V-coordinate (OpenGL standard)
-                        uv.v = 1.0 - uvlist[i][j][1]  # opengl standard
+                        uv.v = 1.0 - uv_coords[i][j][1]  # opengl standard
 
             # set triangles stitch strips for civ4
-            tridata.set_triangles(trilist, stitchstrips=NifOp.props.stitch_strips)
+            tridata.set_triangles(triangles, stitchstrips=NifOp.props.stitch_strips)
 
             # update tangent space (as binary extra data only for Oblivion)
             # for extra shader texture games, only export it if those textures are actually exported
@@ -371,12 +371,12 @@ class Mesh:
                 if game == 'SKYRIM':
                     tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
                 # calculate the bitangents using the normals, tangent list and bitangent sign
-                bitlist = bitangent_sign_list * np.cross(normlist, tanlist)
+                bitangents = bitangent_signs * np.cross(normals, tangents)
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
                 # moreover, N_v = 1 - B_v, so d(B_v) = - d(N_v), therefore N_tan = -B_bit and N_bit = B_tan
                 self.add_defined_tangents(trishape,
-                                          tangents=-bitlist,
-                                          bitangents=tanlist,
+                                          tangents=-bitangents,
+                                          bitangents=tangents,
                                           as_extra_data=(game == 'OBLIVION'))
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
@@ -426,7 +426,7 @@ class Mesh:
 
                     # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                     # note: allocate memory for faster performance
-                    vert_added = [False for _ in range(len(vertlist))]
+                    vert_added = [False for _ in range(len(vertex_positions))]
                     for b_bone_name in boneinfluences:
                         # find bone in exported blocks
                         bone_block = self.get_bone_block(b_obj_armature.data.bones[b_bone_name])
@@ -437,13 +437,13 @@ class Mesh:
                             # v[0] is the original vertex index
                             # v[1] is the weight
 
-                            # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
+                            # vertex_map[v[0]] is the set of vertices (indices) to which v[0] was mapped
                             # so we simply export the same weight as the original vertex for each new vertex
 
                             # write the weights
                             # extra check for multi material meshes
-                            if vertmap[v[0]] and vert_norm[v[0]]:
-                                for vert_index in vertmap[v[0]]:
+                            if vertex_map[v[0]] and vert_norm[v[0]]:
+                                for vert_index in vertex_map[v[0]]:
                                     vert_weights[vert_index] = v[1] / vert_norm[v[0]]
                                     vert_added[vert_index] = True
                         # add bone as influence, but only if there were actually any vertices influenced by the bone
@@ -467,7 +467,7 @@ class Mesh:
                             stripify=NifOp.props.stripify,
                             stitchstrips=NifOp.props.stitch_strips,
                             padbones=NifOp.props.pad_bones,
-                            triangles=trilist,
+                            triangles=triangles,
                             trianglepartmap=bodypartfacemap,
                             maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
                             part_sort_order=part_order)
@@ -495,7 +495,7 @@ class Mesh:
             tridata.consistency_flags = b_obj.niftools.consistency_flags
 
             # export EGM or NiGeomMorpherController animation
-            self.morph_anim.export_morph(b_mesh, trishape, vertmap)
+            self.morph_anim.export_morph(b_mesh, trishape, vertex_map)
         return trishape
 
     def get_bone_block(self, b_bone):
@@ -592,9 +592,8 @@ class Mesh:
     def select_unassigned_polygons(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""
         ngon_mesh = b_obj.data
-        num_vertices = len(ngon_mesh.vertices)
         # make vertex: poly map of the untriangulated mesh
-        vert_poly_dict = dict(zip(range(num_vertices), [set() for i in range(num_vertices)]))
+        vert_poly_dict = {i: set() for for i in range(len(ngon_mesh.vertices))}
         for face in ngon_mesh.polygons:
             for vertex in face.vertices:
                 vert_poly_dict[vertex].add(face.index)
@@ -696,8 +695,7 @@ class Mesh:
 
     def add_defined_tangents(self, trishape, tangents, bitangents, as_extra_data):
         # check if size of tangents and bitangents is equal to num_vertices
-        num_vertices = trishape.data.num_vertices
-        if (len(tangents) != num_vertices) or (len(bitangents) != num_vertices):
+        if not (len(tangents) == len(bitangents) == trishape.data.num_vertices):
             raise NifError(f'Number of tangents or bitangents does not agree with number of vertices in {trishape.name}')
 
         if as_extra_data:
@@ -716,11 +714,7 @@ class Mesh:
                 trishape.add_extra_data(extra)
 
             # write the data
-            binarydata = bytearray()
-            for vec in np.concatenate((tangents, bitangents), axis=0):
-                # XXX _byte_order!! assuming little endian
-                binarydata += struct.pack('<fff', vec[0], vec[1], vec[2])
-            extra.binary_data = bytes(binarydata)
+            extra.binary_data = np.concatenate((tangents, bitangents), axis=0).astype('<f').tobytes()
         else:
             # set tangent space flag
             trishape.data.extra_vectors_flags = 16

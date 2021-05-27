@@ -70,15 +70,18 @@ class Vertex:
         if NifOp.props.use_custom_normals:
             no_array = np.array([normal.as_tuple() for normal in n_tri_data.normals])
             # the normals need to be pre-normalized or blender will do it inconsistely, leading to marked sharp edges
-            no_norms = np.linalg.norm(no_array, ord=2, axis=1, keepdims=True)
-            non_zero_norms = np.reshape(no_norms != 0, newshape=len(no_norms))
-            no_array[non_zero_norms] = no_array[non_zero_norms] / no_norms[non_zero_norms]
-            # map normals so we can set them to the edge corners (stored per loop), because assigning vertex.normal is
-            # not retained
-            no_loop_array = no_array[[loop.vertex_index for loop in b_mesh.loops]]
-
+            no_array = Vertex.normalize(no_array)
+            # use normals_split_custom_set_from_vertices to set the loop custom normals from the per-vertex normals
             b_mesh.use_auto_smooth = True
-            b_mesh.normals_split_custom_set(no_loop_array)
+            b_mesh.normals_split_custom_set_from_vertices(no_array)
+
+    @staticmethod
+    def normalize(vector_array):
+        vector_norms = np.linalg.norm(vector_array, ord=2, axis=1, keepdims=True)
+        non_zero_norms = np.reshape(vector_norms != 0, newshape = len(vector_array))
+        normalized_vectors = np.copy(vector_array)
+        normalized_vectors[non_zero_norms] /= vector_norms[non_zero_norms]
+        return normalized_vectors
 
     @staticmethod
     def get_uv_layer_name(uvset):
