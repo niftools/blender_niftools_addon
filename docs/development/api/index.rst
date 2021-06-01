@@ -16,7 +16,7 @@ Contents:
 User Interface
 --------------
 
-* The user first activates the addon via **File** > **User Preferences** > **Addons**.
+* The user first activates the addon via **Edit** > **Preferences** > **Addons**.
 
 .. note::
 

@@ -5,7 +5,8 @@ Armatures
 Armature Bones
 ==============
 
-* The following section deals with Armatures
+* The following section deals with Armatures. Note that, in order for any animations to display in Blender like they
+  would in-game, ``Preserve Volume`` must be turned off in the Armature modifier.
 
 .. _armature-flags:
 

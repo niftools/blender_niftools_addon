@@ -246,7 +246,8 @@ BS Effect Shader Property
 
 .. Describe this type
 
-Skyrim non-PP shader model, used primarily for transparency effects, often as a decal.
+Skyrim non-PP shader model, used primarily for transparency effects, often as a decal. Has the same shader flags as
+BSLightingShaderProperty.
 
 +-------------------------------+---------------------------------------------------------------+
 |           Property            |                          Description                          |
