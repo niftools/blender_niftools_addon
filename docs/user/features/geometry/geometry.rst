@@ -47,6 +47,7 @@ Double Sided Mesh
 
 - Adds a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty` or similiar, see :ref:`Properties - Stencil Property
   <properties-stencil>` for more info.
+- For Skyrim, tick the Shader Property flag "Double Sided" in the Niftools Shader Panel.
 
 .. _geometry-uv:
 
@@ -82,14 +83,14 @@ Vertex Color & Alpha
 **Example:**
 
 #. :ref:`Create a mesh-object <geometry-mesh>`.
-#. Switch to Vertex Paint mode, this automatically adds a base vertex colour layer. Make sure you name this layer 'RGBA'
-#. Apply the desired vertex colours evenly to the vertex.
+#. Switch to Vertex Paint mode, this automatically adds a base vertex color layer. Make sure you name this layer 'RGBA'
+#. Apply the desired vertex colors evenly to the vertex.
 #. You can alter the alpha channel using the 'Add Alpha' and 'Erase Alpha' brushes.
 
 **Notes:**
 
-* The Nif format only supports a single colour per vertex, whereas Blender vertex colour per face vertex.
+* The Nif format only supports a single color per vertex, whereas Blender vertex color per face vertex.
 * Blender treats the vertex as if the faces had been split apart, each face can have a different colour for that vertex.
 * `This image should clarify per-face vertex colouring
   <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
-* On export, the scripts will take an average of colours.
+* On export, the scripts will create extra vertices for different vertex colors per face.
