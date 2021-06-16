@@ -307,11 +307,39 @@ class NodesWrapper:
         b_texture_node.label = TEX_SLOTS.NORMAL
         # set to non-color data
         b_texture_node.image.colorspace_settings.name = 'Non-Color'
+        # create Y-invert node (because nif normal maps are +X -Y +Z)
+        nodes = self.tree.nodes
+        links = self.tree.links
+        node_group = bpy.data.node_groups.new("InvertY", "ShaderNodeTree")
+        group_nodes = node_group.nodes
+        # add the in/output nodes
+        input_node = group_nodes.new('NodeGroupInput')
+        node_group.inputs.new('NodeSocketImage', "Input")
+        output_node = group_nodes.new('NodeGroupOutput')
+        node_group.outputs.new('NodeSocketImage', "Output")
+        # create the converting nodes
+        separate_node = group_nodes.new("ShaderNodeSeparateRGB")
+        invert_node = group_nodes.new("ShaderNodeInvert")
+        combine_node = group_nodes.new("ShaderNodeCombineRGB")
+        # link the converting nodes to each other
+        group_links = node_group.links
+        group_links.new(combine_node.inputs[0], separate_node.outputs[0])
+        group_links.new(invert_node.inputs[1], separate_node.outputs[1])
+        group_links.new(combine_node.inputs[1], invert_node.outputs[0])
+        group_links.new(combine_node.inputs[2], separate_node.outputs[2])
+        # link the converting nodes to the input/output
+        group_links.new(separate_node.inputs[0], input_node.outputs['Input'])
+        group_links.new(output_node.inputs['Output'], combine_node.outputs[0])
+        nodes_iterate(node_group, output_node)
+        # add the group node to the main node tree and link it
+        group_node = nodes.new('ShaderNodeGroup')
+        group_node.node_tree = node_group
+        links.new(group_node.inputs[0], b_texture_node.outputs[0])
         # create tangent normal map converter and link to it
-        tangent_converter = self.b_mat.node_tree.nodes.new("ShaderNodeNormalMap")
-        self.tree.links.new(b_texture_node.outputs[0], tangent_converter.inputs[1])
+        tangent_converter = nodes.new("ShaderNodeNormalMap")
+        self.tree.links.new(tangent_converter.inputs[1], group_node.outputs[0])
         # link to the diffuse shader
-        self.tree.links.new(tangent_converter.outputs[0], self.diffuse_shader.inputs[2])
+        self.tree.links.new(self.diffuse_shader.inputs[2], tangent_converter.outputs[0])
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = True  # causes artifacts otherwise.
         #
