@@ -593,7 +593,7 @@ class Mesh:
         """Select any faces which are not weighted to a vertex group"""
         ngon_mesh = b_obj.data
         # make vertex: poly map of the untriangulated mesh
-        vert_poly_dict = {i: set() for for i in range(len(ngon_mesh.vertices))}
+        vert_poly_dict = {i: set() for i in range(len(ngon_mesh.vertices))}
         for face in ngon_mesh.polygons:
             for vertex in face.vertices:
                 vert_poly_dict[vertex].add(face.index)
