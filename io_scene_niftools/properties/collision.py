@@ -51,6 +51,20 @@ from pyffi.formats.nif import NifFormat
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
+def game_specific_col_layer_items(self, context):
+    """Items for collision layers based on the currently selected game"""
+    if context is None:
+        current_game = bpy.context.scene.niftools_scene.game
+    else:
+        current_game = context.scene.niftools_scene.game
+    if current_game == "OBLIVION":
+        col_layer_format = NifFormat.OblivionLayer
+    elif current_game == "FALLOUT_3":
+        col_layer_format = NifFormat.OblivionLayer
+    elif current_game == "SKYRIM":
+        col_layer_format = NifFormat.SkyrimLayer
+    return [(str(value), item, "", value) for value, item in zip(col_layer_format._enumvalues, col_layer_format._enumkeys)]
+
 class CollisionProperty(PropertyGroup):
     """Group of Havok related properties, which gets attached to objects through a property pointer."""
 
@@ -62,11 +76,11 @@ class CollisionProperty(PropertyGroup):
 
     )
 
-    oblivion_layer: EnumProperty(
-        name='Oblivion Layer',
-        description='Mesh color, used in Editor',
-        items=[(item, item, "", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
-        # default = 'OL_STATIC',
+    collision_layer: EnumProperty(
+        name='Collision layer',
+        description='Collision layer string (game-specific)',
+        items=game_specific_col_layer_items,
+        default=0
     )
 
     deactivator_type: EnumProperty(
