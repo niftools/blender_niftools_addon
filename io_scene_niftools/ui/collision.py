@@ -66,9 +66,9 @@ class CollisionBoundsPanel(Panel):
         box.prop(col_setting, "deactivator_type", text='Deactivator Type')  # motion deactivation prop
         box.prop(col_setting, "solver_deactivation", text='Solver Deactivator')  # motion deactivation prop
         box.prop(col_setting, "quality_type", text='Quality Type')  # quality type prop
-        box.prop(col_setting, "oblivion_layer", text='Oblivion Layer')  # oblivion layer prop
-        box.prop(col_setting, "max_linear_velocity", text='Max Linear Velocity')  # oblivion layer prop
-        box.prop(col_setting, "max_angular_velocity", text='Max Angular Velocity')  # oblivion layer prop
+        box.prop(col_setting, "collision_layer", text='Collision Layer')  # collision layer prop
+        box.prop(col_setting, "max_linear_velocity", text='Max Linear Velocity')  # max velocity prop
+        box.prop(col_setting, "max_angular_velocity", text='Max Angular Velocity')  # max angular velocity prop
         box.prop(col_setting, "motion_system", text='Motion System')  # motion system prop
 
 
