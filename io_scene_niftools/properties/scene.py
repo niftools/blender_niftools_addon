@@ -84,14 +84,14 @@ class Scene(PropertyGroup):
 
     # For which game to export.
     game: bpy.props.EnumProperty(
-        items=[
+        items=[('NONE', 'NONE', 'No game selected')] + [
             (_game_to_enum(game), game, "Export for " + game)
             for game in sorted(
                 [x for x in NifFormat.games.keys() if x != '?'])
         ],
         name="Game",
         description="For which game to export.",
-        default='OBLIVION',
+        default='NONE',
         update=update_version_from_game)
 
     # Map game enum to nif version.
