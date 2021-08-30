@@ -69,6 +69,9 @@ class KfExport(NifCommon):
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
+        if bpy.context.scene.niftools_scene.game == 'NONE':
+            raise NifError("You have not selected a game. Please select a game in the scene tab.")
+
         prefix = "x" if bpy.context.scene.niftools_scene.game in ('MORROWIND',) else ""
         self.version, data = scene.get_version_data()
         # todo[anim] - change to KfData, but create_controller() [and maybe more] has to be updated first
