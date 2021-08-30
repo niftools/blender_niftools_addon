@@ -61,6 +61,7 @@ class TextureLoader:
             except:
                 NifLog.warn(f"Texture '{name}' not found or not supported and no alternate available")
                 b_image = bpy.data.images.new(name=name, width=1, height=1, alpha=True)
+                b_image.filepath=tex_path
         else:
             b_image = bpy.data.images[name]
         return b_image
@@ -163,6 +164,6 @@ class TextureLoader:
                     return self.load_image(tex)
 
         else:
-            tex = os.path.join(search_path_list[0], fn)
+            tex = fn
         # probably not found, but load a dummy regardless
         return self.load_image(tex)
