@@ -37,6 +37,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+import bmesh
 import mathutils
 import numpy as np
 import struct
@@ -103,7 +104,7 @@ class Mesh:
         # vertex color check
         mesh_hasvcol = b_mesh.vertex_colors
         # list of body part (name, index, vertices) in this mesh
-        bodypartgroups = self.get_body_part_groups(b_obj, b_mesh)
+        polygon_parts = self.get_polygon_parts(b_obj, b_mesh)
         game = bpy.context.scene.niftools_scene.game
 
         # Non-textured materials, vertex colors are used to color the mesh
@@ -297,14 +298,14 @@ class Mesh:
                     triangles.append(f_indexed)
 
                     # add body part number
-                    if game not in ('FALLOUT_3', 'SKYRIM') or not bodypartgroups:
+                    if game not in ('FALLOUT_3', 'SKYRIM') or not polygon_parts:
                         # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
-                        for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
-                            if set(b_vert_index for b_vert_index in poly.vertices) <= bodypartverts:
-                                bodypartfacemap.append(bodypartindex)
-                                break
+                        # add the polygon's body part
+                        part_index = polygon_parts[poly.index]
+                        if part_index >= 0:
+                            bodypartfacemap.append(part_index)
                         else:
                             # this signals an error
                             polygons_without_bodypart.append(poly)
@@ -390,7 +391,7 @@ class Mesh:
                 if boneinfluences:  # yes we have skinning!
                     # create new skinning instance block and link it
                     n_root_name = block_store.get_full_name(b_obj_armature)
-                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name, bodypartgroups)
+                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name, polygon_parts)
                     trishape.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
@@ -458,8 +459,9 @@ class Mesh:
 
                     if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
                         NifLog.info("Creating skin partition")
-                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, vertex_group.name, None) for vertex_group in b_obj.vertex_groups]
+                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, face_map.name, None) for face_map in b_obj.face_maps]
                         part_order = [body_part for body_part in part_order if body_part is not None]
+                        # override pyffi trishape.update_skin_partition with custom one (that allows ordering)
                         trishape.update_skin_partition = update_skin_partition.__get__(trishape)
                         lostweight = trishape.update_skin_partition(
                             maxbonesperpartition=NifOp.props.max_bones_per_partition,
@@ -505,24 +507,27 @@ class Mesh:
                 return n_block
         raise NifError(f"Bone '{b_bone.name}' not found.")
 
-    def get_body_part_groups(self, b_obj, b_mesh):
-        """Returns a set of vertices (no dupes) for each body part"""
-        bodypartgroups = []
+    def get_polygon_parts(self, b_obj, b_mesh):
+        """Returns the body part indices of the mesh polygons. -1 is either not assigned to a face map or not a valid
+        body part"""
+        index_group_map = {-1: -1}
         for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
-            vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
-            vertices_list = set()
-            if vertex_group:
-                for b_vert in b_mesh.vertices:
-                    for b_groupname in b_vert.groups:
-                        if b_groupname.group == vertex_group.index:
-                            vertices_list.add(b_vert.index)
-                NifLog.debug(f"Found body part {bodypartgroupname}")
-                bodypartgroups.append(
-                    [bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
-        return bodypartgroups
+            face_map = b_obj.face_maps.get(bodypartgroupname)
+            if face_map:
+                index_group_map[face_map.index] = getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname)
+        if len(index_group_map) <= 1:
+            # there were no valid face maps
+            return []
+        bm = bmesh.new()
+        bm.from_mesh(b_mesh)
+        bm.faces.ensure_lookup_table()
+        fm = bm.faces.layers.face_map.verify()
+        polygon_parts = [index_group_map.get(face[fm], -1) for face in bm.faces]
+        bm.free()
+        return polygon_parts
 
-    def create_skin_inst_data(self, b_obj, n_root_name, bodypartgroups):
-        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
+    def create_skin_inst_data(self, b_obj, n_root_name, polygon_parts):
+        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and polygon_parts:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
             skininst = block_store.create_block("NiSkinInstance", b_obj)
