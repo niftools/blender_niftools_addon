@@ -165,8 +165,6 @@ class VertexGroup:
 
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-            skinpart_list = []
-            bodypart_flag = []
             skinpart = ni_block.get_skin_partition()
             for bodypart, skinpartblock in zip(skininst.partitions, skinpart.skin_partition_blocks):
                 bodypart_wrap = NifFormat.BSDismemberBodyPartType()
@@ -176,9 +174,6 @@ class VertexGroup:
                 # create vertex group if it did not exist yet
                 if group_name not in b_obj.vertex_groups:
                     v_group = b_obj.vertex_groups.new(name=group_name)
-                    skinpart_index = len(skinpart_list)
-                    skinpart_list.append((skinpart_index, group_name))
-                    bodypart_flag.append(bodypart.part_flag)
 
                 # find vertex indices of this group
                 groupverts = [v_index for v_index in skinpartblock.vertex_map]
