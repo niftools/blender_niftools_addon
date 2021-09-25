@@ -1,3 +1,9 @@
+Version v0.0.8
+==============
+ - #456 Duplicates #442
+ - #442 Fix decode for some .nif, and allow external texture to be loaded on embedded .nifs
+ - #441  Import Failure: Encoding/Decoding
+
 Version v0.0.7
 ==============
 - #439 Updates to partition generation and object properties

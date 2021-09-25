@@ -111,6 +111,11 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
         name="Combine Vertices",
         description="Merge vertices that have identical location and normal values.",
         default=False)
+    
+    use_embedded_texture: bpy.props.BoolProperty(
+        name="Use Embedded Texture",
+        description="Loads texture embedded in .nif",
+        default=False)
 
     def draw(self, context):
         pass

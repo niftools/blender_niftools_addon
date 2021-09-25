@@ -94,7 +94,7 @@ class OperatorImportTransformPanel(OperatorSetting, Panel):
 
 
 class OperatorImportGeometryPanel(OperatorSetting, Panel):
-    bl_label = "Transform"
+    bl_label = "Geometry"
     bl_idname = "NIFTOOLS_PT_import_operator_geometry"
 
     @classmethod
@@ -114,6 +114,28 @@ class OperatorImportGeometryPanel(OperatorSetting, Panel):
 
         layout.prop(operator, "combine_vertices")
         layout.prop(operator, "use_custom_normals")
+
+
+class OperatorImportTexturePanel(OperatorSetting, Panel):
+    bl_label = "Texture"
+    bl_idname = "NIFTOOLS_PT_import_operator_texture"
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "IMPORT_SCENE_OT_nif"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, "use_embedded_texture")
 
 
 class OperatorImportArmaturePanel(OperatorSetting, Panel):
@@ -170,6 +192,7 @@ classes = [
     OperatorImportIncludePanel,
     OperatorImportTransformPanel,
     OperatorImportGeometryPanel,
+    OperatorImportTexturePanel,
     OperatorImportArmaturePanel,
     OperatorImportAnimationPanel
 ]
