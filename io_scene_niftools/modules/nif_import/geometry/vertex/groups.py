@@ -163,25 +163,19 @@ class VertexGroup:
                                 v_group = b_obj.vertex_groups[group_name]
                                 v_group.add([vert], w, 'REPLACE')
 
-        # import body parts as vertex groups
+        # import body parts as face maps
+        # get faces (triangles) as map of tuples to index
+        tri_map = {frozenset(polygon.vertices): polygon.index for polygon in b_obj.data.polygons}
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-            skinpart_list = []
-            bodypart_flag = []
             skinpart = ni_block.get_skin_partition()
             for bodypart, skinpartblock in zip(skininst.partitions, skinpart.skin_partition_blocks):
                 bodypart_wrap = NifFormat.BSDismemberBodyPartType()
                 bodypart_wrap.set_value(bodypart.body_part)
                 group_name = bodypart_wrap.get_detail_display()
 
-                # create vertex group if it did not exist yet
-                if group_name not in b_obj.vertex_groups:
-                    v_group = b_obj.vertex_groups.new(name=group_name)
-                    skinpart_index = len(skinpart_list)
-                    skinpart_list.append((skinpart_index, group_name))
-                    bodypart_flag.append(bodypart.part_flag)
+                # create face map if it did not exist yet
+                if group_name not in b_obj.face_maps:
+                    f_group = b_obj.face_maps.new(name=group_name)
 
-                # find vertex indices of this group
-                groupverts = [v_index for v_index in skinpartblock.vertex_map]
-
-                # create the group
-                v_group.add(groupverts, 1, 'ADD')
+                # add the triangles to the face map
+                f_group.add([tri_map[frozenset(vertices)] for vertices in skinpartblock.get_mapped_triangles()])

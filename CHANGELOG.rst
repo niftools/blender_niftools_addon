@@ -2,6 +2,17 @@ Version v0.0.9
 ==============
 
  - #446 Updates to normal and tangent import/export
+    Export of normals now respects edges that are marked sharp.
+    Vertices with different UV coordinates get different tangents on export.
+    Export now uses Blender tangents instead of pyffi tangent generation.
+    Nif vertex normals are now imported correctly when dealing with non-normalized normals (i.e. not length 1).
+    When exporting a skinned mesh that uses partitions, that has faces without partitions, the correct faces are now selected.
+    The normal map Y channel is now inverted when creating a shader on import.
+    The selection for collision layer now depends on the game.
+    A NONE game as the default in the scene tab.
+    Unresolved texture paths are now stored as they are found in the nif file, meaning they remain functional upon re-export.
+    Body parts use face maps rather than vertex groups.
+
  - #444 Some polygons of "...." not assigned to any body part.The unassigned polygons have been selected in the mesh so they can easily be identified.
  - #449 Error while export, Game not set
 

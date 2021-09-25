@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from io_scene_niftools.utils.singleton import NifOp
+import numpy as np
 
 
 class Vertex:
@@ -67,19 +68,20 @@ class Vertex:
         assert len(b_mesh.vertices) == len(n_tri_data.normals)
         # set normals
         if NifOp.props.use_custom_normals:
-            # map normals so we can set them to the edge corners (stored per loop)
-            no_array = []
-            for face in b_mesh.polygons:
-                for vertex_index in face.vertices:
-                    # no_array.append(model.normals[vertex_index])
-                    # no_array.append(mathutils.Vector(n_tri_data.normals[vertex_index]).normalized())
-                    no_array.append(n_tri_data.normals[vertex_index].as_tuple())
-                    # no_array.append((0,0,1))
-                # no_array.append(model.tangents[vertex_index])
-                # face.use_smooth = True
-
+            no_array = np.array([normal.as_tuple() for normal in n_tri_data.normals])
+            # the normals need to be pre-normalized or blender will do it inconsistely, leading to marked sharp edges
+            no_array = Vertex.normalize(no_array)
+            # use normals_split_custom_set_from_vertices to set the loop custom normals from the per-vertex normals
             b_mesh.use_auto_smooth = True
-            b_mesh.normals_split_custom_set(no_array)
+            b_mesh.normals_split_custom_set_from_vertices(no_array)
+
+    @staticmethod
+    def normalize(vector_array):
+        vector_norms = np.linalg.norm(vector_array, ord=2, axis=1, keepdims=True)
+        non_zero_norms = np.reshape(vector_norms != 0, newshape = len(vector_array))
+        normalized_vectors = np.copy(vector_array)
+        normalized_vectors[non_zero_norms] /= vector_norms[non_zero_norms]
+        return normalized_vectors
 
     @staticmethod
     def get_uv_layer_name(uvset):

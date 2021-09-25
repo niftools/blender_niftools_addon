@@ -37,7 +37,10 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+import bmesh
 import mathutils
+import numpy as np
+import struct
 
 from pyffi.formats.nif import NifFormat
 
@@ -77,6 +80,7 @@ class Mesh:
 
         # get mesh from b_obj
         b_mesh = self.get_triangulated_mesh(b_obj)
+        b_mesh.calc_normals_split()
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
@@ -100,7 +104,8 @@ class Mesh:
         # vertex color check
         mesh_hasvcol = b_mesh.vertex_colors
         # list of body part (name, index, vertices) in this mesh
-        bodypartgroups = self.get_body_part_groups(b_obj, b_mesh)
+        polygon_parts = self.get_polygon_parts(b_obj, b_mesh)
+        game = bpy.context.scene.niftools_scene.game
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
@@ -112,7 +117,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (bpy.context.scene.niftools_scene.game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
+                if (game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
                     mesh_hasnormals = False  # for proper lighting
 
             # create a trishape block
@@ -142,7 +147,7 @@ class Mesh:
             self.set_mesh_flags(b_obj, trishape)
 
             # extra shader for Sid Meier's Railroads
-            if bpy.context.scene.niftools_scene.game == 'SID_MEIER_S_RAILROADS':
+            if game == 'SID_MEIER_S_RAILROADS':
                 trishape.has_shader = True
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1  # default
@@ -185,15 +190,30 @@ class Mesh:
 
             mesh_uv_layers = b_mesh.uv_layers
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
-            vertmap = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
-            vertlist = []
-            normlist = []
-            vcollist = []
-            uvlist = []
-            trilist = []
-            # for each face in trilist, a body part index
+            vertex_map = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
+            vertex_positions = []
+            normals = []
+            vertex_colors = []
+            uv_coords = []
+            triangles = []
+            # for each face in triangles, a body part index
             bodypartfacemap = []
             polygons_without_bodypart = []
+
+            if b_mesh.polygons:
+                if mesh_uv_layers:
+                    # if we have uv coordinates double check that we have uv data
+                    if not b_mesh.uv_layer_stencil:
+                        NifLog.warn(f"No UV map for texture associated with selected mesh '{b_mesh.name}'.")
+
+            use_tangents = False
+            if mesh_uv_layers and mesh_hasnormals:
+                if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                    use_tangents = True
+                    b_mesh.calc_tangents(uvmap=mesh_uv_layers[0].name)
+                    tangents = []
+                    bitangent_signs = []
+
             for poly in b_mesh.polygons:
 
                 # does the face belong to this trishape?
@@ -205,14 +225,10 @@ class Mesh:
                 if f_numverts < 3:
                     continue  # ignore degenerate polygons
                 assert ((f_numverts == 3) or (f_numverts == 4))  # debug
-                if mesh_uv_layers:
-                    # if we have uv coordinates double check that we have uv data
-                    if not b_mesh.uv_layer_stencil:
-                        NifLog.warn(f"No UV map for texture associated with poly {poly.index:s} of selected mesh '{b_mesh.name}'.")
 
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [-1] * f_numverts
-                for i, loop_index in enumerate(range(poly.loop_start, poly.loop_start + poly.loop_total)):
+                for i, loop_index in enumerate(poly.loop_indices):
 
                     fv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[fv_index]
@@ -222,7 +238,7 @@ class Mesh:
                     # smooth = vertex normal, non-smooth = face normal)
                     if mesh_hasnormals:
                         if poly.use_smooth:
-                            fn = vertex.normal
+                            fn = b_mesh.loops[loop_index].normal
                         else:
                             fn = poly.normal
                     else:
@@ -240,9 +256,9 @@ class Mesh:
 
                     # check for duplicate vertquad?
                     f_index[i] = len(vertquad_list)
-                    if vertmap[vertex_index] is not None:
+                    if vertex_map[vertex_index] is not None:
                         # iterate only over vertices with the same vertex index
-                        for j in vertmap[vertex_index]:
+                        for j in vertex_map[vertex_index]:
                             # check if they have the same uvs, normals and colors
                             if self.is_new_face_corner_data(vertquad, vertquad_list[j]):
                                 continue
@@ -251,24 +267,27 @@ class Mesh:
                             break
 
                     if f_index[i] > 65535:
-                        raise io_scene_niftools.utils.logging.NifError("Too many vertices. Decimate your mesh and try again.")
+                        raise NifError("Too many vertices. Decimate your mesh and try again.")
 
                     if f_index[i] == len(vertquad_list):
                         # first: add it to the vertex map
-                        if not vertmap[vertex_index]:
-                            vertmap[vertex_index] = []
-                        vertmap[vertex_index].append(len(vertquad_list))
+                        if not vertex_map[vertex_index]:
+                            vertex_map[vertex_index] = []
+                        vertex_map[vertex_index].append(len(vertquad_list))
                         # new (vert, uv-vert, normal, vcol) quad: add it
                         vertquad_list.append(vertquad)
 
                         # add the vertex
-                        vertlist.append(vertquad[0])
+                        vertex_positions.append(vertquad[0])
                         if mesh_hasnormals:
-                            normlist.append(vertquad[2])
+                            normals.append(vertquad[2])
+                        if use_tangents:
+                            tangents.append(b_mesh.loops[loop_index].tangent)
+                            bitangent_signs.append([b_mesh.loops[loop_index].bitangent_sign])
                         if mesh_hasvcol:
-                            vcollist.append(vertquad[3])
+                            vertex_colors.append(vertquad[3])
                         if mesh_uv_layers:
-                            uvlist.append(vertquad[1])
+                            uv_coords.append(vertquad[1])
 
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
@@ -276,17 +295,17 @@ class Mesh:
                         f_indexed = (f_index[0], f_index[1 + i], f_index[2 + i])
                     else:
                         f_indexed = (f_index[0], f_index[2 + i], f_index[1 + i])
-                    trilist.append(f_indexed)
+                    triangles.append(f_indexed)
 
                     # add body part number
-                    if bpy.context.scene.niftools_scene.game not in ('FALLOUT_3', 'SKYRIM') or not bodypartgroups:
+                    if game not in ('FALLOUT_3', 'SKYRIM') or not polygon_parts:
                         # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
-                        for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
-                            if set(b_vert_index for b_vert_index in poly.vertices) <= bodypartverts:
-                                bodypartfacemap.append(bodypartindex)
-                                break
+                        # add the polygon's body part
+                        part_index = polygon_parts[poly.index]
+                        if part_index >= 0:
+                            bodypartfacemap.append(part_index)
                         else:
                             # this signals an error
                             polygons_without_bodypart.append(poly)
@@ -295,9 +314,9 @@ class Mesh:
             if polygons_without_bodypart:
                 self.select_unassigned_polygons(b_mesh, b_obj, polygons_without_bodypart)
 
-            if len(trilist) > 65535:
-                raise io_scene_niftools.utils.logging.NifError("Too many polygons. Decimate your mesh and try again.")
-            if len(vertlist) == 0:
+            if len(triangles) > 65535:
+                raise NifError("Too many polygons. Decimate your mesh and try again.")
+            if len(vertex_positions) == 0:
                 continue  # m_4444x: skip 'empty' material indices
 
             # add NiTriShape's data
@@ -308,52 +327,58 @@ class Mesh:
             trishape.data = tridata
 
             # data
-            tridata.num_vertices = len(vertlist)
+            tridata.num_vertices = len(vertex_positions)
             tridata.has_vertices = True
             tridata.vertices.update_size()
             for i, v in enumerate(tridata.vertices):
-                v.x, v.y, v.z = vertlist[i]
+                v.x, v.y, v.z = vertex_positions[i]
             tridata.update_center_radius()
 
             if mesh_hasnormals:
                 tridata.has_normals = True
                 tridata.normals.update_size()
                 for i, v in enumerate(tridata.normals):
-                    v.x, v.y, v.z = normlist[i]
+                    v.x, v.y, v.z = normals[i]
 
             if mesh_hasvcol:
                 tridata.has_vertex_colors = True
                 tridata.vertex_colors.update_size()
                 for i, v in enumerate(tridata.vertex_colors):
-                    v.r, v.g, v.b, v.a = vcollist[i]
+                    v.r, v.g, v.b, v.a = vertex_colors[i]
 
             if mesh_uv_layers:
-                if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM'):
+                if game in ('FALLOUT_3', 'SKYRIM'):
                     if len(mesh_uv_layers) > 1:
-                        raise NifError(f"{bpy.context.scene.niftools_scene.game} does not support multiple UV layers.")
+                        raise NifError(f"{game} does not support multiple UV layers.")
                 tridata.num_uv_sets = len(mesh_uv_layers)
                 tridata.bs_num_uv_sets = len(mesh_uv_layers)
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
                 for j, uv_layer in enumerate(mesh_uv_layers):
                     for i, uv in enumerate(tridata.uv_sets[j]):
-                        if len(uvlist[i]) == 0:
+                        if len(uv_coords[i]) == 0:
                             continue  # skip non-uv textures
-                        uv.u = uvlist[i][j][0]
+                        uv.u = uv_coords[i][j][0]
                         # NIF flips the texture V-coordinate (OpenGL standard)
-                        uv.v = 1.0 - uvlist[i][j][1]  # opengl standard
+                        uv.v = 1.0 - uv_coords[i][j][1]  # opengl standard
 
             # set triangles stitch strips for civ4
-            tridata.set_triangles(trilist, stitchstrips=NifOp.props.stitch_strips)
+            tridata.set_triangles(triangles, stitchstrips=NifOp.props.stitch_strips)
 
             # update tangent space (as binary extra data only for Oblivion)
             # for extra shader texture games, only export it if those textures are actually exported
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
-            if mesh_uv_layers and mesh_hasnormals:
-                if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
-                    if bpy.context.scene.niftools_scene.game == 'SKYRIM':
-                        tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
-                    trishape.update_tangent_space(as_extra=(bpy.context.scene.niftools_scene.game == 'OBLIVION'))
+            if use_tangents:
+                if game == 'SKYRIM':
+                    tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
+                # calculate the bitangents using the normals, tangent list and bitangent sign
+                bitangents = bitangent_signs * np.cross(normals, tangents)
+                # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
+                # moreover, N_v = 1 - B_v, so d(B_v) = - d(N_v), therefore N_tan = -B_bit and N_bit = B_tan
+                self.add_defined_tangents(trishape,
+                                          tangents=-bitangents,
+                                          bitangents=tangents,
+                                          as_extra_data=(game == 'OBLIVION'))
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any
@@ -366,7 +391,7 @@ class Mesh:
                 if boneinfluences:  # yes we have skinning!
                     # create new skinning instance block and link it
                     n_root_name = block_store.get_full_name(b_obj_armature)
-                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name, bodypartgroups)
+                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name, polygon_parts)
                     trishape.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
@@ -402,7 +427,7 @@ class Mesh:
 
                     # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                     # note: allocate memory for faster performance
-                    vert_added = [False for _ in range(len(vertlist))]
+                    vert_added = [False for _ in range(len(vertex_positions))]
                     for b_bone_name in boneinfluences:
                         # find bone in exported blocks
                         bone_block = self.get_bone_block(b_obj_armature.data.bones[b_bone_name])
@@ -413,13 +438,13 @@ class Mesh:
                             # v[0] is the original vertex index
                             # v[1] is the weight
 
-                            # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
+                            # vertex_map[v[0]] is the set of vertices (indices) to which v[0] was mapped
                             # so we simply export the same weight as the original vertex for each new vertex
 
                             # write the weights
                             # extra check for multi material meshes
-                            if vertmap[v[0]] and vert_norm[v[0]]:
-                                for vert_index in vertmap[v[0]]:
+                            if vertex_map[v[0]] and vert_norm[v[0]]:
+                                for vert_index in vertex_map[v[0]]:
                                     vert_weights[vert_index] = v[1] / vert_norm[v[0]]
                                     vert_added[vert_index] = True
                         # add bone as influence, but only if there were actually any vertices influenced by the bone
@@ -434,8 +459,9 @@ class Mesh:
 
                     if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
                         NifLog.info("Creating skin partition")
-                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, vertex_group.name, None) for vertex_group in b_obj.vertex_groups]
+                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, face_map.name, None) for face_map in b_obj.face_maps]
                         part_order = [body_part for body_part in part_order if body_part is not None]
+                        # override pyffi trishape.update_skin_partition with custom one (that allows ordering)
                         trishape.update_skin_partition = update_skin_partition.__get__(trishape)
                         lostweight = trishape.update_skin_partition(
                             maxbonesperpartition=NifOp.props.max_bones_per_partition,
@@ -443,20 +469,20 @@ class Mesh:
                             stripify=NifOp.props.stripify,
                             stitchstrips=NifOp.props.stitch_strips,
                             padbones=NifOp.props.pad_bones,
-                            triangles=trilist,
+                            triangles=triangles,
                             trianglepartmap=bodypartfacemap,
-                            maximize_bone_sharing=(bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM')),
-                            part_sort_order = part_order)
+                            maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
+                            part_sort_order=part_order)
 
                         # warn on bad config settings
-                        if bpy.context.scene.niftools_scene.game == 'OBLIVION':
+                        if game == 'OBLIVION':
                             if NifOp.props.pad_bones:
                                 NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3'):
+                        if game in ('OBLIVION', 'FALLOUT_3'):
                             if NifOp.props.max_bones_per_partition < 18:
                                 NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
                                             "Set it to 18 to get higher quality skin partitions.")
-                        if bpy.context.scene.niftools_scene.game in 'SKYRIM':
+                        if game == 'SKYRIM':
                             if NifOp.props.max_bones_per_partition < 24:
                                 NifLog.warn("Using less than 24 bones per partition on Skyrim export."
                                             "Set it to 24 to get higher quality skin partitions.")
@@ -471,7 +497,7 @@ class Mesh:
             tridata.consistency_flags = b_obj.niftools.consistency_flags
 
             # export EGM or NiGeomMorpherController animation
-            self.morph_anim.export_morph(b_mesh, trishape, vertmap)
+            self.morph_anim.export_morph(b_mesh, trishape, vertex_map)
         return trishape
 
     def get_bone_block(self, b_bone):
@@ -479,26 +505,29 @@ class Mesh:
         for n_block, b_obj in block_store.block_to_obj.items():
             if isinstance(n_block, NifFormat.NiNode) and b_bone == b_obj:
                 return n_block
-        raise io_scene_niftools.utils.logging.NifError(f"Bone '{b_bone.name}' not found.")
+        raise NifError(f"Bone '{b_bone.name}' not found.")
 
-    def get_body_part_groups(self, b_obj, b_mesh):
-        """Returns a set of vertices (no dupes) for each body part"""
-        bodypartgroups = []
+    def get_polygon_parts(self, b_obj, b_mesh):
+        """Returns the body part indices of the mesh polygons. -1 is either not assigned to a face map or not a valid
+        body part"""
+        index_group_map = {-1: -1}
         for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
-            vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
-            vertices_list = set()
-            if vertex_group:
-                for b_vert in b_mesh.vertices:
-                    for b_groupname in b_vert.groups:
-                        if b_groupname.group == vertex_group.index:
-                            vertices_list.add(b_vert.index)
-                NifLog.debug(f"Found body part {bodypartgroupname}")
-                bodypartgroups.append(
-                    [bodypartgroupname, getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname), vertices_list])
-        return bodypartgroups
+            face_map = b_obj.face_maps.get(bodypartgroupname)
+            if face_map:
+                index_group_map[face_map.index] = getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname)
+        if len(index_group_map) <= 1:
+            # there were no valid face maps
+            return []
+        bm = bmesh.new()
+        bm.from_mesh(b_mesh)
+        bm.faces.ensure_lookup_table()
+        fm = bm.faces.layers.face_map.verify()
+        polygon_parts = [index_group_map.get(face[fm], -1) for face in bm.faces]
+        bm.free()
+        return polygon_parts
 
-    def create_skin_inst_data(self, b_obj, n_root_name, bodypartgroups):
-        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and bodypartgroups:
+    def create_skin_inst_data(self, b_obj, n_root_name, polygon_parts):
+        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and polygon_parts:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
             skininst = block_store.create_block("NiSkinInstance", b_obj)
@@ -508,7 +537,7 @@ class Mesh:
                     skininst.skeleton_root = block
                     break
         else:
-            raise io_scene_niftools.utils.logging.NifError(f"Skeleton root '{n_root_name}' not found.")
+            raise NifError(f"Skeleton root '{n_root_name}' not found.")
 
         # create skinning data and link it
         skindata = block_store.create_block("NiSkinData", b_obj)
@@ -562,21 +591,45 @@ class Mesh:
             # select unweighted vertices
             bpy.ops.mesh.select_ungrouped(extend=False)
 
-            raise io_scene_niftools.utils.logging.NifError("Cannot export mesh with unweighted vertices. "
-                                     "The unweighted vertices have been selected in the mesh so they can easily be identified.")
-
+            raise NifError("Cannot export mesh with unweighted vertices. "
+                           "The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
     def select_unassigned_polygons(self, b_mesh, b_obj, polygons_without_bodypart):
         """Select any faces which are not weighted to a vertex group"""
+        ngon_mesh = b_obj.data
+        # make vertex: poly map of the untriangulated mesh
+        vert_poly_dict = {i: set() for i in range(len(ngon_mesh.vertices))}
+        for face in ngon_mesh.polygons:
+            for vertex in face.vertices:
+                vert_poly_dict[vertex].add(face.index)
+
+        # translate the tris of polygons_without_bodypart to polygons (assuming vertex order does not change)
+        ngons_without_bodypart = []
+        for face in polygons_without_bodypart:
+            poly_set = vert_poly_dict[face.vertices[0]]
+            for vertex in face.vertices[1:]:
+                poly_set = poly_set.intersection(vert_poly_dict[vertex])
+                if len(poly_set) == 0:
+                    break
+            else:
+                for poly in poly_set:
+                    ngons_without_bodypart.append(poly)
+
+        # switch to object mode so (de)selecting faces works
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         # select mesh object
         for b_deselect_obj in bpy.context.scene.objects:
             b_deselect_obj.select_set(False)
         bpy.context.view_layer.objects.active = b_obj
-        b_obj.select_set(True)
-        for face in b_mesh.polygons:
-            face.select = False
-        for face in polygons_without_bodypart:
-            face.select = True
+        # switch to edit mode to deselect everything in the mesh (not missing vertices or edges)
+        bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+        bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+        bpy.ops.mesh.select_all(action='DESELECT')
+
+        # switch back to object mode to make per-face selection
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+        for poly in ngons_without_bodypart:
+            ngon_mesh.polygons[poly].select = True
 
         # select bad polygons switch to edit mode to select polygons
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
@@ -644,3 +697,41 @@ class Mesh:
                 break
         else:
             b_obj.modifiers.new('Triangulate', 'TRIANGULATE')
+
+    def add_defined_tangents(self, trishape, tangents, bitangents, as_extra_data):
+        # check if size of tangents and bitangents is equal to num_vertices
+        if not (len(tangents) == len(bitangents) == trishape.data.num_vertices):
+            raise NifError(f'Number of tangents or bitangents does not agree with number of vertices in {trishape.name}')
+
+        if as_extra_data:
+            # if tangent space extra data already exists, use it
+            # find possible extra data block
+            for extra in trishape.get_extra_datas():
+                if isinstance(extra, NifFormat.NiBinaryExtraData):
+                    if extra.name == b'Tangent space (binormal & tangent vectors)':
+                        break
+            else:
+                extra = None
+            if not extra:
+                # otherwise, create a new block and link it
+                extra = NifFormat.NiBinaryExtraData()
+                extra.name = b'Tangent space (binormal & tangent vectors)'
+                trishape.add_extra_data(extra)
+
+            # write the data
+            extra.binary_data = np.concatenate((tangents, bitangents), axis=0).astype('<f').tobytes()
+        else:
+            # set tangent space flag
+            trishape.data.extra_vectors_flags = 16
+            # XXX used to be 61440
+            # XXX from Sid Meier's Railroad
+            trishape.data.tangents.update_size()
+            trishape.data.bitangents.update_size()
+            for vec, data_tans in zip(tangents, trishape.data.tangents):
+                data_tans.x = vec[0]
+                data_tans.y = vec[1]
+                data_tans.z = vec[2]
+            for vec, data_bins in zip(bitangents, trishape.data.bitangents):
+                data_bins.x = vec[0]
+                data_bins.y = vec[1]
+                data_bins.z = vec[2]

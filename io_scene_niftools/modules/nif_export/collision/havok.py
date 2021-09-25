@@ -90,7 +90,7 @@ class BhkCollision(Collision):
 
         # linear_velocity = b_obj.rigid_body.deactivate_linear_velocity
         # angular_velocity = b_obj.rigid_body.deactivate_angular_velocity
-        layer = b_obj.nifcollision.oblivion_layer
+        layer = int(b_obj.nifcollision.collision_layer)
 
         # TODO [object][collision][flags] export bsxFlags
         # self.export_bsx_upb_flags(b_obj, parent_block)
@@ -100,7 +100,7 @@ class BhkCollision(Collision):
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-            if layer == "OL_BIPED":
+            if layer == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
                 n_col_obj = self.export_bhk_blend_collision(b_obj)
 
@@ -135,7 +135,7 @@ class BhkCollision(Collision):
 
         n_r_body = block_store.create_block("bhkRigidBody", b_obj)
         n_col_obj.body = n_r_body
-        n_r_body.layer = getattr(NifFormat.OblivionLayer, b_obj.nifcollision.oblivion_layer)
+        n_r_body.layer = int(b_obj.nifcollision.collision_layer)
         n_r_body.col_filter = b_obj.nifcollision.col_filter
         n_r_body.unknown_short = 0
         n_r_body.unknown_int_1 = 0
@@ -185,11 +185,11 @@ class BhkCollision(Collision):
         return n_r_body
 
     def export_bhk_collison_object(self, b_obj):
-        layer = b_obj.nifcollision.oblivion_layer
+        layer = int(b_obj.nifcollision.collision_layer)
         col_filter = b_obj.nifcollision.col_filter
 
         n_col_obj = block_store.create_block("bhkCollisionObject", b_obj)
-        if layer == "OL_ANIM_STATIC" and col_filter != 128:
+        if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
             # animated collision requires flags = 41
             # unless it is a constrainted but not keyframed object
             n_col_obj.flags = 41

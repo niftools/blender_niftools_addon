@@ -88,6 +88,11 @@ class NifExport(NifCommon):
 
         try:  # catch export errors
 
+            # protect against null nif versions
+            if bpy.context.scene.niftools_scene.game == 'NONE':
+                raise NifError("You have not selected a game. Please select a game and"
+                                " nif version in the scene tab.")
+
             # find all objects that do not have a parent
             self.exportable_objects, self.root_objects = self.objecthelper.get_export_objects()
             if not self.exportable_objects:
