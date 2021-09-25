@@ -1,3 +1,7 @@
+Version v0.0.8
+==============
+
+
 Version v0.0.7
 ==============
 - #441  Import Failure: Encoding/Decoding
