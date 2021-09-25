@@ -1,15 +1,25 @@
+Version v0.0.9
+==============
+
+ - #446 Updates to normal and tangent import/export
+ - #444 Some polygons of "...." not assigned to any body part.The unassigned polygons have been selected in the mesh so they can easily be identified.
+ - #449 Error while export, Game not set
+
 Version v0.0.8
 ==============
+
  - #456 Duplicates #442
  - #442 Fix decode for some .nif, and allow external texture to be loaded on embedded .nifs
  - #441  Import Failure: Encoding/Decoding
 
 Version v0.0.7
 ==============
+
 - #439 Updates to partition generation and object properties
 
 Version v0.0.6
 ==============
+
 - #431 Docs link not working
 - #434 Update Sphinx docs theme
 - #81 Add support for texture transforms
@@ -22,12 +32,14 @@ Version v0.0.6
 
 Version v0.0.5
 ==============
+
 - #411 Usability : Niftool addon fails to install
 - #424 Bug/fix operator menu registration
 - #423 Update the release workflow to include the new update instructions.
 
 Version v0.0.4
 ==============
+
 - #410 Kf export
 - #413 (Warped Mesh) Error on .nif import using Niftools Addon v0.0.3 in Blender 2.83 and Blender 2.91
 - #417 Fix/export UI animation select registration
@@ -36,6 +48,7 @@ Version v0.0.4
 
 Version v0.0.3
 ==============
+
 - #401 Consolidate scale correction value to be shared.
 - #398 Animation - Imported animations with 'blank' keyframes containing no transformation
 - #399 Animation - Fix fcurve data path
@@ -47,6 +60,7 @@ Version v0.0.3
 
 Version v0.0.2
 ==============
+
 - #390 Bug - Fixes bug where logging scale correction on export would cause execution to fail
 
 Version v0.0.1
