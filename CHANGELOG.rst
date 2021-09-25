@@ -1,6 +1,8 @@
 Version v0.0.9
 ==============
-
+ - #446 Updates to normal and tangent import/export
+ - #444 Some polygons of "...." not assigned to any body part.The unassigned polygons have been selected in the mesh so they can easily be identified.
+ - #449 Error while export, Game not set
 
 Version v0.0.8
 ==============
