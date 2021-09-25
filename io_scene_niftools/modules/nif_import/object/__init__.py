@@ -46,16 +46,6 @@ from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
 
-# used for weapon locations or attachments to a body
-PRN_DICT = {
-    "BACK": "BackWeapon",
-    "SIDE": "SideWeapon",
-    "QUIVER": "Quiver",
-    "SHIELD": "Bip01 L ForearmTwist",
-    "HELM": "Bip01 Head",
-    "RING": "Bip01 R Finger1"
-}
-
 
 class Object:
 

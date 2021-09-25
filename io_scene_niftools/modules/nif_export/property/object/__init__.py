@@ -45,11 +45,12 @@ from pyffi.formats.nif import NifFormat
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_niftools.modules.nif_import.object import PRN_DICT
+from io_scene_niftools.properties.object import PRN_DICT
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils.consts import UPB_DEFAULT
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog, NifError
+from math import pi
 
 
 class ObjectProperty:
@@ -229,26 +230,27 @@ class ObjectDataProperty:
                     else:
                         n_extra_list = NifFormat.BSInvMarker()
                         n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
-                        n_extra_list.rotation_x = root_object.niftools_bs_invmarker[0].bs_inv_x
-                        n_extra_list.rotation_y = root_object.niftools_bs_invmarker[0].bs_inv_y
-                        n_extra_list.rotation_z = root_object.niftools_bs_invmarker[0].bs_inv_z
+                        n_extra_list.rotation_x = (-root_object.niftools_bs_invmarker[0].bs_inv_x % (2 * pi)) * 1000
+                        n_extra_list.rotation_y = (-root_object.niftools_bs_invmarker[0].bs_inv_y % (2 * pi)) * 1000
+                        n_extra_list.rotation_z = (-root_object.niftools_bs_invmarker[0].bs_inv_z % (2 * pi)) * 1000
                         n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
                         n_root.add_extra_data(n_extra_list)
 
     # TODO [object][property] Move to new object type
     def export_weapon_location(self, n_root, root_obj):
         # export weapon location
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        game = bpy.context.scene.niftools_scene.game
+        if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             loc = root_obj.niftools.prn_location
-            if loc != "NONE":
+            if loc != "NONE" and (PRN_DICT[loc][game] is not None):
                 # add string extra data
                 prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
-                prn.string_data = PRN_DICT[loc]
+                prn.string_data = PRN_DICT[loc][game]
                 n_root.add_extra_data(prn)
 
     # TODO [object][property] Move to object property
-    def export_bsxflags_upb(self, root_block):
+    def export_bsxflags_upb(self, root_block, root_objects):
         # TODO [object][property] Fixme
         NifLog.info("Checking collision")
         # activate oblivion/Fallout 3 collision and physics
@@ -258,8 +260,15 @@ class ObjectDataProperty:
                 # enable collision
                 bsx = block_store.create_block("BSXFlags")
                 bsx.name = 'BSX'
-                bsx.integer_data = b_obj.niftools.bsxflags
                 root_block.add_extra_data(bsx)
+                found_bsx = False
+                for root_object in root_objects:
+                    if root_object.niftools.bsxflags:
+                        if found_bsx:
+                            raise NifError("Multiple objects have BSXFlags. Only one onject may contain this data")
+                        else:
+                            found_bxs = True
+                            bsx.integer_data = root_object.niftools.bsxflags
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
