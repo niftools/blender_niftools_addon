@@ -60,6 +60,7 @@ from io_scene_niftools.modules.nif_import.property.object import ObjectProperty
 
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import math
+from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog, NifError
 
@@ -211,7 +212,7 @@ class NifImport(NifCommon):
         if not n_block:
             return None
 
-        NifLog.info(f"Importing data for block '{n_block.name.decode()}'")
+        NifLog.info(f"Importing data for block '{safe_decode(n_block.name)}'")
         if isinstance(n_block, NifFormat.NiTriBasedGeom) and NifOp.props.process != "SKELETON_ONLY":
             return self.objecthelper.import_geometry_object(b_armature, n_block)
 
