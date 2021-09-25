@@ -55,11 +55,14 @@ BS Inventory Marker
 
 2. Apply desired values to x, y, z to set the preferred rotation.
 
-   a. Set view to back view and use rotation to achieve the preferred object orientation.
+   a. Set view to back view (i.e. from positive Y-axis) 
+   #. Set the rotation of the root node to ZYX and use rotation to achieve the preferred object orientation.
    #. Copy the values from the rotation display into the x, y, z lines for BS Inv Marker.
-   #. Delete the decimal and remove any numbers to the right of the fourth digit.
    #. Press ``Alt + R`` to reset the object rotation back to 0
    
+   Due to the way this is stored in the nif format (integers rather than floats), repeated import and export may lead
+   to some deviation from the origina value. However, this should be minor.
+
 #. Apply desired value to zoom   
 
    a. A value of ``1`` for zoom is the default, lower values ``.99`` to ``.01`` decrease the item size in the menu.
@@ -112,10 +115,13 @@ First, we complete the object panel:
 
    Select one from the drop-down box.
 
-#. The **BS Num UV Set** is ????????. Set it to an appropriate number.
+#. The Weapon Location determines where on the body the object is equipped, for Oblivion, Fallout 3 or Skyrim. Set it
+   to an appropriate setting, or leave to NONE if not applicable. Not every game has specialised values for every
+   setting. For example, Fallout 3 does not have slots for a bow.
 #. The **UPB**'s use is currently unknown. It is recommended you leave it at the default value.
 #. Set your **BSX Flags**.
-#. The **Consistency Flag** is ????????. Select one from the drop-down box.
+#. Select a **Consistency Flag** from the drop-down box. See `this comment
+   <https://github.com/niftools/nifskope/issues/69#issuecomment-61427385>`_ for discussion of what they might do.
 #. The **Object Flag** is ???????. Set it to an appropriate number.
 #. The **Nif Long Name** is ???????. Set it to an appropriate string.   
 

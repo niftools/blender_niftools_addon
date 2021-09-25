@@ -50,6 +50,7 @@ from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop i
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog, NifError
+from io_scene_niftools.modules.nif_export.geometry.mesh.skin_partition import update_skin_partition
 
 
 class Mesh:
@@ -327,11 +328,11 @@ class Mesh:
                     v.r, v.g, v.b, v.a = vcollist[i]
 
             if mesh_uv_layers:
+                if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM'):
+                    if len(mesh_uv_layers) > 1:
+                        raise NifError(f"{bpy.context.scene.niftools_scene.game} does not support multiple UV layers.")
                 tridata.num_uv_sets = len(mesh_uv_layers)
                 tridata.bs_num_uv_sets = len(mesh_uv_layers)
-                if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
-                    if len(mesh_uv_layers) > 1:
-                        raise io_scene_niftools.utils.logging.NifError("Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
                 for j, uv_layer in enumerate(mesh_uv_layers):
@@ -433,6 +434,9 @@ class Mesh:
 
                     if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
                         NifLog.info("Creating skin partition")
+                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, vertex_group.name, None) for vertex_group in b_obj.vertex_groups]
+                        part_order = [body_part for body_part in part_order if body_part is not None]
+                        trishape.update_skin_partition = update_skin_partition.__get__(trishape)
                         lostweight = trishape.update_skin_partition(
                             maxbonesperpartition=NifOp.props.max_bones_per_partition,
                             maxbonespervertex=NifOp.props.max_bones_per_vertex,
@@ -441,7 +445,8 @@ class Mesh:
                             padbones=NifOp.props.pad_bones,
                             triangles=trilist,
                             trianglepartmap=bodypartfacemap,
-                            maximize_bone_sharing=(bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM')))
+                            maximize_bone_sharing=(bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM')),
+                            part_sort_order = part_order)
 
                         # warn on bad config settings
                         if bpy.context.scene.niftools_scene.game == 'OBLIVION':
@@ -457,17 +462,6 @@ class Mesh:
                                             "Set it to 24 to get higher quality skin partitions.")
                         if lostweight > NifOp.props.epsilon:
                             NifLog.warn(f"Lost {lostweight:f} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{trishape.name}')")
-
-                    if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-                        partitions = skininst.partitions
-                        b_obj_part_flags = b_obj.niftools_part_flags
-                        for s_part in partitions:
-                            s_part_index = NifFormat.BSDismemberBodyPartType._enumvalues.index(s_part.body_part)
-                            s_part_name = NifFormat.BSDismemberBodyPartType._enumkeys[s_part_index]
-                            for b_part in b_obj_part_flags:
-                                if s_part_name == b_part.name:
-                                    s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
-                                    s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
 
                     # clean up
                     del vert_weights

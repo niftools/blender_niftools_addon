@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from io_scene_niftools.utils.decorators import register_modules, unregister_modules
-from . import armature, collision, constraint, geometry, material, object, scene, shader
+from . import armature, collision, constraint, material, object, scene, shader
 
 
 def underscore_to_camelcase(s):
@@ -62,7 +62,7 @@ def underscore_to_camelcase(s):
     return ''.join(camelcase_words(s.split('_')))
 
 
-MODS = [armature, collision, constraint, geometry, material, object, shader, scene]
+MODS = [armature, collision, constraint, material, object, shader, scene]
 
 
 def register():

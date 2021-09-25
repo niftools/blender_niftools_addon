@@ -39,8 +39,8 @@
 
 from io_scene_niftools.utils.decorators import register_modules, unregister_modules
 
-from io_scene_niftools.ui import armature, collision, geometry, material, object, operators, shader, scene
-MODS = [armature, collision, geometry, material, object, operators, shader, scene]
+from io_scene_niftools.ui import armature, collision, material, object, operators, shader, scene
+MODS = [armature, collision, material, object, operators, shader, scene]
 
 
 def register():

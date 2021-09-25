@@ -1,3 +1,8 @@
+Version v0.0.7
+==============
+- #441  Import Failure: Encoding/Decoding
+- #442 Fix decode for some .nif, and allow external texture to be loaded on embedded .nifs
+
 Version v0.0.6
 ==============
 - #431 Docs link not working

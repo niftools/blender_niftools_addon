@@ -18,13 +18,6 @@ Bone Flags
 
 .. Otherwise no idea what they do, more research needed.
 
-.. _armature-dismemberflags:
-
-Dismember Flags
----------------
-
-* Currently does nothing - in testing.
-
 .. _armature-invmarker:
 
 Inventory Marker

@@ -1,8 +1,9 @@
 Current developers
 ------------------
 
-* neomonkeus
-* Hendrix
+* @neomonkeus
+* @HENDRIX-ZT2
+* @Candoran2
 
 
 Former developers
@@ -21,7 +22,7 @@ Contributors
 * Arcimaestro
 * Arthmoor
 * Artorp
-* Candoran2
+
 * Deedes
 * Eli2
 * Entim
@@ -32,11 +33,15 @@ Contributors
 * Kikaimegami
 * Lhammonds
 * malo
+* @M4rkFlor
 * mgm101
 * opusGlass
 * Pacificmorrowind
 * Pentinen
+* @reddraconi
 * shon
+* @SubhadeepG
+* @TagnumElite
 * Tamira
 * Thedaywalker
 * Tijer

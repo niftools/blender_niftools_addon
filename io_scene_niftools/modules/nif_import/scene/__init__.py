@@ -45,28 +45,28 @@ from io_scene_niftools.utils.logging import NifLog
 
 def import_version_info(data):
     scene = bpy.context.scene.niftools_scene
-    scene.nif_version = data._version_value_._value
-    scene.user_version = data._user_version_value_._value
-    scene.user_version_2 = data._user_version_2_value_._value
+    nif_version = data._version_value_._value
+    user_version = data._user_version_value_._value
+    user_version_2 = data._user_version_2_value_._value
 
     # filter possible games by nif version
     possible_games = []
     for game, versions in NifFormat.games.items():
         if game != '?':
-            if scene.nif_version in versions:
+            if nif_version in versions:
                 game_enum = _game_to_enum(game)
                 # go to next game if user version for this game does not match defined
                 if game_enum in scene.USER_VERSION:
-                    if scene.USER_VERSION[game_enum] != scene.user_version:
+                    if scene.USER_VERSION[game_enum] != user_version:
                         continue
                 # or user version in scene is not 0 when this game has no associated user version
-                elif scene.user_version != 0:
+                elif user_version != 0:
                     continue
                 # same checks for user version 2
                 if game_enum in scene.USER_VERSION_2:
-                    if scene.USER_VERSION_2[game_enum] != scene.user_version_2:
+                    if scene.USER_VERSION_2[game_enum] != user_version_2:
                         continue
-                elif scene.user_version_2 != 0:
+                elif user_version_2 != 0:
                     continue
                 # passed all checks, add to possible games list
                 possible_games.append(game_enum)
@@ -76,3 +76,6 @@ def import_version_info(data):
         scene.game = possible_games[0]
         # todo[version] - check if this nif's version is marked as default for any of the possible games and use that
         NifLog.warn(f"Game set to '{possible_games[0]}', but multiple games qualified")
+    scene.nif_version = nif_version
+    scene.user_version = user_version
+    scene.user_version_2 = user_version_2
