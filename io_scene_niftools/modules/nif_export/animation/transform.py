@@ -135,7 +135,6 @@ class TransformAnimation(Animation):
                 kf_root.stop_time = scene.frame_end / self.fps
 
             kf_root.target_name = targetname
-            kf_root.string_palette = NifFormat.NiStringPalette()
         else:
             raise NifError(
                 f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.")
