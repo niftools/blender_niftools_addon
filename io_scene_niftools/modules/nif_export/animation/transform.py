@@ -239,31 +239,16 @@ class TransformAnimation(Animation):
             scale_curve.append((frame, scale[0]))
 
         if n_kfi:
-            if max(len(c) for c in (quat_curve, euler_curve, trans_curve, scale_curve)) > 1:
-                # number of frames is > 1, so add transform data
+            # set the default transforms of the interpolator as the bone's bind pose
+            n_kfi.translation.x, n_kfi.translation.y, n_kfi.translation.z = bind_trans
+            n_kfi.rotation.w, n_kfi.rotation.x, n_kfi.rotation.y, n_kfi.rotation.z = bind_rot.to_quaternion()
+            n_kfi.scale = bind_scale
+
+            if max(len(c) for c in (quat_curve, euler_curve, trans_curve, scale_curve)) > 0:
+                # number of frames is > 0, so add transform data
                 n_kfd = block_store.create_block("NiTransformData", exp_fcurves)
                 n_kfi.data = n_kfd
             else:
-                # only add data if number of keys is > 1
-                # (see importer comments with import_kf_root: a single frame
-                # keyframe denotes an interpolator without further data)
-                # insufficient keys, so set the data and we're done!
-                if trans_curve:
-                    trans = trans_curve[0][1]
-                    n_kfi.translation.x, n_kfi.translation.y, n_kfi.translation.z = trans
-
-                if quat_curve:
-                    quat = quat_curve[0][1]
-                elif euler_curve:
-                    quat = euler_curve[0][1].to_quaternion()
-
-                if quat_curve or euler_curve:
-                    n_kfi.rotation.x = quat.x
-                    n_kfi.rotation.y = quat.y
-                    n_kfi.rotation.z = quat.z
-                    n_kfi.rotation.w = quat.w
-                # ignore scale for now...
-                n_kfi.scale = 1.0
                 # no need to add any keys, done
                 return
 
