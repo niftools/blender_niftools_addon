@@ -42,13 +42,12 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.utils.logging import NifLog
 
-FPS = 30
-
 
 class Animation:
 
     def __init__(self):
         self.show_pose_markers()
+        self.fps = 30
 
     @staticmethod
     def show_pose_markers():
@@ -141,7 +140,7 @@ class Animation:
         """
         Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
         """
-        frame = round(t * animation.FPS)
+        frame = round(t * self.fps)
         for fcurve, k in zip(fcurves, key):
             fcurve.keyframe_points.insert(frame, k).interpolation = interp
 
@@ -159,13 +158,12 @@ class Animation:
         if txk and b_action:
             for key in txk.text_keys:
                 newkey = key.value.decode().replace('\r\n', '/').rstrip('/')
-                frame = round(key.time * animation.FPS)
+                frame = round(key.time * self.fps)
                 marker = b_action.pose_markers.new(newkey)
                 marker.frame = frame
 
-    @staticmethod
-    def set_frames_per_second(roots):
-        """Scan all blocks and set a reasonable number for FPS to this class and the scene."""
+    def set_frames_per_second(self, roots):
+        """Scan all blocks and set a reasonable number for fps to this class and the scene."""
         # find all key times
         key_times = []
         for root in roots:
@@ -194,9 +192,9 @@ class Animation:
         if not key_times:
             return
 
-        # calculate FPS
+        # calculate fps
         key_times = sorted(set(key_times))
-        fps = animation.FPS
+        fps = self.fps
         lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps)) for time in key_times)
 
         # for test_fps in range(1,120): #disabled, used for testing
@@ -206,6 +204,6 @@ class Animation:
                 lowest_diff = diff
                 fps = test_fps
         NifLog.info(f"Animation estimated at {fps} frames per second.")
-        animation.FPS = fps
+        self.fps = fps
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
