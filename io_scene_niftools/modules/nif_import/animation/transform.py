@@ -108,7 +108,7 @@ class TransformAnimation(Animation):
 
     def import_controller_sequence(self, kf_root, b_armature_obj, bind_data):
         NifLog.debug('Importing NiControllerSequence...')
-        b_action = self.create_action(b_armature_obj, kf_root.name.decode())
+        b_action = self.create_action(b_armature_obj, kf_root.name.decode(), retrieve=False)
 
         # import text keys
         self.import_text_keys(kf_root, b_action)
