@@ -58,7 +58,7 @@ class KfExportOperator(Operator, ExportHelper, CommonDevOperator, CommonScale, C
     # Use BSAnimationNode (for Morrowind).
     bs_animation_node: bpy.props.BoolProperty(
         name="Use NiBSAnimationNode",
-        description="Use NiBSAnimationNode (for Morrowind).",
+        description="Use NiBSAnimationNode (for Morrowind)",
         default=False)
 
     def execute(self, context):
