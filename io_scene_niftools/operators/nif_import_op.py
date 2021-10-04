@@ -58,58 +58,58 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
     # Whether or not to import the header information into the scene
     override_scene_info: bpy.props.BoolProperty(
         name="Override Scene Information",
-        description="This will overwrite any previously stored scene information with the Nif header info.",
+        description="This will overwrite any previously stored scene information with the Nif header info",
         default=True)
 
     # Import animation.
     animation: bpy.props.BoolProperty(
         name="Animation",
-        description="Import animation.",
+        description="Import animation",
         default=False)
 
     # Merge skeleton roots.
     merge_skeleton_roots: bpy.props.BoolProperty(
         name="Merge Skeleton Roots",
-        description="Merge skeleton roots.",
+        description="Merge skeleton roots",
         default=False)
 
     # Send all geometries to their bind position.
     send_geoms_to_bind_pos: bpy.props.BoolProperty(
         name="Send Geometries To Bind Position",
-        description="Send all geometries to their bind position.",
+        description="Send all geometries to their bind position",
         default=False)
 
     # Send all detached geometries to the position of their parent node.
     send_detached_geoms_to_node_pos: bpy.props.BoolProperty(
         name="Send Detached Geometries To Node Position",
-        description="Send all detached geometries to the position of their parent node.",
+        description="Send all detached geometries to the position of their parent node",
         default=False)
 
     # Apply skin deformation to all skinned geometries.
     apply_skin_deformation: bpy.props.BoolProperty(
         name="Apply Skin Deformation",
-        description="Apply skin deformation to all skinned geometries.",
+        description="Apply skin deformation to all skinned geometries",
         default=False)
 
     # What should be imported.
     process: bpy.props.EnumProperty(
         items=(
-            ("EVERYTHING", "Everything", "Import everything."),
-            ("SKELETON_ONLY", "Skeleton Only", "Import skeleton only and make it parent of selected geometry."),
-            ("GEOMETRY_ONLY", "Geometry Only", "Import geometry only and parent them to selected skeleton."),
+            ("EVERYTHING", "Everything", "Import everything"),
+            ("SKELETON_ONLY", "Skeleton Only", "Import skeleton only and make it parent of selected geometry"),
+            ("GEOMETRY_ONLY", "Geometry Only", "Import geometry only and parent them to selected skeleton"),
         ),
         name="Process",
-        description="Parts of nif to be imported.",
+        description="Parts of nif to be imported",
         default="EVERYTHING")
 
     use_custom_normals: bpy.props.BoolProperty(
         name="Use Custom Normals",
-        description="Store NIF normals as custom normals.",
+        description="Store NIF normals as custom normals",
         default=True)
 
     combine_vertices: bpy.props.BoolProperty(
         name="Combine Vertices",
-        description="Merge vertices that have identical location and normal values.",
+        description="Merge vertices that have identical location and normal values",
         default=False)
     
     use_embedded_texture: bpy.props.BoolProperty(
