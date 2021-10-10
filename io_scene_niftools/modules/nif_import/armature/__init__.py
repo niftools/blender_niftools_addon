@@ -59,11 +59,10 @@ class Armature:
 
     def __init__(self):
         self.transform_anim = TransformAnimation()
-        # this is used to hold lists of bones for each armature during mark_armatures_bones
-        self.dict_armatures = {}
         # to get access to the nif bone in object mode
         self.name_to_block = {}
         self.skinned = False
+        self.n_armature = None
 
     def store_pose_matrix(self, n_node, armature_space_pose_store, n_root):
         # check that n_block is indeed a bone
@@ -281,6 +280,8 @@ class Armature:
 
     def check_for_skin(self, n_root):
         """Checks all tri geometry for skinning, sets self.skinned accordingly"""
+        # set these here once per run
+        self.n_armature = None
         self.skinned = False
         # search for all NiTriShape or NiTriStrips blocks...
         for n_block in n_root.tree():
@@ -293,130 +294,16 @@ class Armature:
                     return
         NifLog.debug(f"Found no skinned geometries.")
 
-    def mark_armatures_bones(self, ni_block):
-        """Mark armatures and bones by peeking into NiSkinInstance blocks."""
-        # case where we import skeleton only,
-        # or importing an Oblivion or Fallout 3 skeleton:
-        # do all NiNode's as bones
-        if NifOp.props.process == "SKELETON_ONLY" or \
-                (NifData.data.version in (0x14000005, 0x14020007) and os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif')):
-
-            if not isinstance(ni_block, NifFormat.NiNode):
-                raise io_scene_niftools.utils.logging.NifError("Cannot import skeleton: root is not a NiNode")
-
-            # for morrowind, take the Bip01 node to be the skeleton root
-            if NifData.data.version == 0x04000002:
-                skelroot = ni_block.find(block_name='Bip01', block_type=NifFormat.NiNode)
-                if not skelroot:
-                    skelroot = ni_block
-            else:
-                skelroot = ni_block
-            if skelroot not in self.dict_armatures:
-                self.dict_armatures[skelroot] = []
-            NifLog.info(f"Selecting node '{skelroot.name}' as skeleton root")
-            # add bones
-            self.populate_bone_tree(skelroot)
-            return  # done!
-
-        # attaching to selected armature -> first identify armature and bones
-        elif NifOp.props.process == "GEOMETRY_ONLY" and not self.dict_armatures:
-            b_armature_obj = bpy.context.selected_objects[0]
-            skelroot = ni_block.find(block_name=b_armature_obj.name)
-            if not skelroot:
-                skelroot = ni_block
-                # raise nif_utils.NifError(f"nif has no armature '{b_armature_obj.name}'")
-            NifLog.debug(f"Identified '{skelroot.name}' as armature")
-            self.dict_armatures[skelroot] = []
-            for bone_name in b_armature_obj.data.bones.keys():
-                # blender bone naming -> nif bone naming
-                nif_bone_name = block_store_export.get_bone_name_for_nif(bone_name)
-                # find a block with bone name
-                bone_block = skelroot.find(block_name=nif_bone_name)
-                # add it to the name list if there is a bone with that name
-                if bone_block:
-                    NifLog.info(f"Identified nif block '{nif_bone_name}' with bone '{bone_name}' in selected armature")
-                    self.dict_armatures[skelroot].append(bone_block)
-                    self.complete_bone_tree(bone_block, skelroot)
-
-        # search for all NiTriShape or NiTriStrips blocks...
-        if isinstance(ni_block, NifFormat.NiTriBasedGeom):
-            # yes, we found one, get its skin instance
-            if ni_block.is_skin():
-                NifLog.debug(f"Skin found on block '{ni_block.name}'")
-                # it has a skin instance, so get the skeleton root
-                # which is an armature only if it's not a skinning influence
-                # so mark the node to be imported as an armature
-                skininst = ni_block.skin_instance
-                skelroot = skininst.skeleton_root
-                if NifOp.props.process == "EVERYTHING":
-                    if skelroot not in self.dict_armatures:
-                        self.dict_armatures[skelroot] = []
-                        NifLog.debug(f"'{skelroot.name}' is an armature")
-                elif NifOp.props.process == "GEOMETRY_ONLY":
-                    if skelroot not in self.dict_armatures:
-                        raise io_scene_niftools.utils.logging.NifError(f"Nif structure incompatible with '{b_armature_obj.name}' as armature: node '{ni_block.name}' has '{skelroot.name}' as armature")
-
-                for boneBlock in skininst.bones:
-                    # boneBlock can be None; see pyffi issue #3114079
-                    if not boneBlock:
-                        continue
-                    if boneBlock not in self.dict_armatures[skelroot]:
-                        self.dict_armatures[skelroot].append(boneBlock)
-                        NifLog.debug(f"'{boneBlock.name}' is a bone of armature '{skelroot.name}'")
-                    # now we "attach" the bone to the armature:
-                    # we make sure all NiNodes from this bone all the way
-                    # down to the armature NiNode are marked as bones
-                    self.complete_bone_tree(boneBlock, skelroot)
-
-                # mark all nodes as bones
-                self.populate_bone_tree(skelroot)
-        # continue down the tree
-        for child in ni_block.get_refs():
-            if not isinstance(child, NifFormat.NiAVObject):
-                continue  # skip blocks that don't have transforms
-            self.mark_armatures_bones(child)
-
-    def populate_bone_tree(self, skelroot):
-        """Add all of skelroot's bones to its dict_armatures list."""
-        for bone in skelroot.tree():
-            if bone is skelroot:
-                continue
-            if not isinstance(bone, NifFormat.NiNode):
-                continue
-            if isinstance(bone, NifFormat.NiLODNode):
-                # LOD nodes are never bones
-                continue
-            if bone not in self.dict_armatures[skelroot]:
-                self.dict_armatures[skelroot].append(bone)
-                NifLog.debug(f"'{bone.name}' marked as extra bone of armature '{skelroot.name}'")
-
-    def complete_bone_tree(self, bone, skelroot):
-        """Make sure that the complete hierarchy from bone up to skelroot is marked in dict_armatures."""
-        # we must already have marked both as a bone
-        assert skelroot in self.dict_armatures  # debug
-        assert bone in self.dict_armatures[skelroot]  # debug
-        # get the node parent, this should be marked as an armature or as a bone
-        boneparent = bone._parent
-        if boneparent != skelroot:
-            # parent is not the skeleton root
-            if boneparent not in self.dict_armatures[skelroot]:
-                # neither is it marked as a bone: so mark the parent as a bone
-                self.dict_armatures[skelroot].append(boneparent)
-                # store the coordinates for realignement autodetection 
-                NifLog.debug(f"'{boneparent.name}' is a bone of armature '{skelroot.name}'")
-            # now the parent is marked as a bone
-            # recursion: complete the bone tree,
-            # this time starting from the parent bone
-            self.complete_bone_tree(boneparent, skelroot)
-
     def is_bone(self, ni_block):
         """Tests a NiNode to see if it has been marked as a bone."""
-        if ni_block:
-            for bones in self.dict_armatures.values():
-                if ni_block in bones:
-                    return True
-
-    def is_armature_root(self, ni_block):
-        """Tests a block to see if it's an armature."""
         if isinstance(ni_block, NifFormat.NiNode):
-            return ni_block in self.dict_armatures
+            return self.skinned
+
+    def is_armature_root(self, n_block):
+        """Tests a block to see if it's an armature."""
+        if isinstance(n_block, NifFormat.NiNode):
+            # we have skinning and are waiting for a suitable start node of the tree
+            if self.skinned and not self.n_armature:
+                # now store it as the nif armature's root
+                self.n_armature = n_block
+                return True

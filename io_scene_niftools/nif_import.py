@@ -160,7 +160,6 @@ class NifImport(NifCommon):
         self.set_parents(root_block)
 
         # mark armature nodes and bones
-        self.armaturehelper.mark_armatures_bones(root_block)
         self.armaturehelper.check_for_skin(root_block)
 
         # import the keyframe notes
@@ -224,6 +223,7 @@ class NifImport(NifCommon):
                     b_obj = self.armaturehelper.import_armature(n_block)
                 else:
                     n_name = block_store.import_name(n_block)
+                    # get the armature from the blender scene
                     b_obj = math.get_armature()
                     NifLog.info(f"Merging nif tree '{n_name}' with armature '{b_obj.name}'")
                     if n_name != b_obj.name:
