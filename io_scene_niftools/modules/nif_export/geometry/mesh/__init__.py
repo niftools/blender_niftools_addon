@@ -526,11 +526,18 @@ class Mesh:
         return polygon_parts
 
     def create_skin_inst_data(self, b_obj, b_obj_armature, polygon_parts):
-        n_root_name = block_store.get_full_name(b_obj_armature)
         if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and polygon_parts:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
             skininst = block_store.create_block("NiSkinInstance", b_obj)
+
+        # get skeleton root from custom property
+        if b_obj.niftools.skeleton_root:
+            n_root_name = b_obj.niftools.skeleton_root
+        # or use the armature name
+        else:
+            n_root_name = block_store.get_full_name(b_obj_armature)
+        # make sure that such a block exists, find it
         for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiNode):
                 if block.name.decode() == n_root_name:
