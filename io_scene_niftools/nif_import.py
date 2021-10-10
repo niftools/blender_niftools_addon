@@ -161,6 +161,7 @@ class NifImport(NifCommon):
 
         # mark armature nodes and bones
         self.armaturehelper.mark_armatures_bones(root_block)
+        self.armaturehelper.check_for_skin(root_block)
 
         # import the keyframe notes
         # if NifOp.props.animation:
