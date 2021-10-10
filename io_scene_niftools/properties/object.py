@@ -150,6 +150,11 @@ class ObjectProperty(PropertyGroup):
         type=ExtraDataStore,
     )
 
+    skeleton_root: StringProperty(
+        name='Skeleton Root',
+        description="The bone that acts as the root of the SkinInstance",
+    )
+
 
 class BsInventoryMarker(PropertyGroup):
 
