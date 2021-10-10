@@ -56,7 +56,8 @@ class ObjectPanel(Panel):
         return True
 
     def draw(self, context):
-        nif_obj_props = context.object.niftools
+        ob = context.object
+        nif_obj_props = ob.niftools
 
         layout = self.layout
         row = layout.column()
@@ -67,6 +68,10 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "consistency_flags")
         row.prop(nif_obj_props, "flags")
         row.prop(nif_obj_props, "longname")
+
+        parent = ob.parent
+        if parent and parent.type == 'ARMATURE':
+            row.prop_search(nif_obj_props, "skeleton_root", parent.data, "bones")
 
 
 class ObjectExtraData(Panel):
