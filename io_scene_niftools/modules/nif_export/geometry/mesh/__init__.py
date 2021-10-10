@@ -390,8 +390,7 @@ class Mesh:
                 boneinfluences = vertgroups & bone_names
                 if boneinfluences:  # yes we have skinning!
                     # create new skinning instance block and link it
-                    n_root_name = block_store.get_full_name(b_obj_armature)
-                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name, polygon_parts)
+                    skininst, skindata = self.create_skin_inst_data(b_obj, b_obj_armature, polygon_parts)
                     trishape.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
@@ -526,7 +525,8 @@ class Mesh:
         bm.free()
         return polygon_parts
 
-    def create_skin_inst_data(self, b_obj, n_root_name, polygon_parts):
+    def create_skin_inst_data(self, b_obj, b_obj_armature, polygon_parts):
+        n_root_name = block_store.get_full_name(b_obj_armature)
         if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and polygon_parts:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
