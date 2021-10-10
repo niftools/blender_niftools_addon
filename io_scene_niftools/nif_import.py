@@ -203,12 +203,11 @@ class NifImport(NifCommon):
                 return self.boundhelper.import_bounding_volume(n_node.collision_object.bounding_volume)
         return []
 
-    def import_branch(self, n_block, b_armature=None, n_armature=None):
+    def import_branch(self, n_block, b_armature=None):
         """Read the content of the current NIF tree branch to Blender recursively.
 
         :param n_block: The nif block to import.
         :param b_armature: The blender armature for the current branch.
-        :param n_armature: The corresponding nif block for the armature for  the current branch.
         """
         if not n_block:
             return None
@@ -230,7 +229,6 @@ class NifImport(NifCommon):
                     if n_name != b_obj.name:
                         NifLog.warn(f"Using Nif block '{n_name}' as armature '{b_obj.name}' but names do not match")
                 b_armature = b_obj
-                n_armature = n_block
 
             elif self.armaturehelper.is_bone(n_block):
                 # bones have already been imported during import_armature
@@ -250,7 +248,7 @@ class NifImport(NifCommon):
             b_children = []
             n_children = [child for child in n_block.children]
             for n_child in n_children:
-                b_child = self.import_branch(n_child, b_armature=b_armature, n_armature=n_armature)
+                b_child = self.import_branch(n_child, b_armature=b_armature)
                 if b_child and isinstance(b_child, bpy.types.Object):
                     b_children.append(b_child)
 
