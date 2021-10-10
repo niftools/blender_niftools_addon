@@ -147,6 +147,10 @@ class Object:
         if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
             cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
             b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+        if n_block.is_skin():
+            skininst = n_block.skin_instance
+            skelroot = skininst.skeleton_root
+            b_obj.niftools.skeleton_root = block_store.import_name(skelroot)
 
     @staticmethod
     def append_armature_modifier(b_obj, b_armature):
