@@ -163,8 +163,8 @@ class NifImport(NifCommon):
         self.armaturehelper.check_for_skin(root_block)
 
         # import the keyframe notes
-        # if NifOp.props.animation:
-        #     self.animationhelper.import_text_keys(root_block)
+        if NifOp.props.animation:
+            self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
         if isinstance(root_block, (NifFormat.NiNode, NifFormat.NiTriBasedGeom)):
@@ -272,7 +272,7 @@ class NifImport(NifCommon):
 
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:
-                    # self.animationhelper.import_text_keys(n_block)
+                    self.animationhelper.import_text_keys(n_block)
                     self.transform_anim.import_transforms(n_block, b_obj)
                     self.object_anim.import_visibility(n_block, b_obj)
 
