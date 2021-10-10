@@ -63,6 +63,7 @@ class Armature:
         self.dict_armatures = {}
         # to get access to the nif bone in object mode
         self.name_to_block = {}
+        self.skinned = False
 
     def store_pose_matrix(self, n_node, armature_space_pose_store, n_root):
         # check that n_block is indeed a bone
@@ -277,6 +278,20 @@ class Armature:
                 else:
                     bone_length = b_edit_bone.parent.length
                 b_edit_bone.length = bone_length
+
+    def check_for_skin(self, n_root):
+        """Checks all tri geometry for skinning, sets self.skinned accordingly"""
+        self.skinned = False
+        # search for all NiTriShape or NiTriStrips blocks...
+        for n_block in n_root.tree():
+            if isinstance(n_block, NifFormat.NiTriBasedGeom):
+                # yes, we found one, does it have skinning?
+                if n_block.is_skin():
+                    self.skinned = True
+                    NifLog.debug(f"{n_block.name} has skinning.")
+                    # one is enough to require an armature, so stop
+                    return
+        NifLog.debug(f"Found no skinned geometries.")
 
     def mark_armatures_bones(self, ni_block):
         """Mark armatures and bones by peeking into NiSkinInstance blocks."""
