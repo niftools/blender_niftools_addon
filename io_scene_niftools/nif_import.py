@@ -257,7 +257,8 @@ class NifImport(NifCommon):
 
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:
-                    self.animationhelper.import_text_keys(n_block)
+                    # todo [anim] fetch the action if it exists
+                    # self.transform_anim.import_text_keys(n_block, b_action)
                     self.transform_anim.import_transforms(n_block, b_obj)
                     self.object_anim.import_visibility(n_block, b_obj)
 
