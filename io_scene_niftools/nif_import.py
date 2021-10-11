@@ -96,7 +96,7 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                self.tranform_anim.set_frames_per_second(NifData.data.roots)
+                self.transform_anim.set_frames_per_second(NifData.data.roots)
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
