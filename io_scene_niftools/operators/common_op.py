@@ -43,31 +43,31 @@ class CommonDevOperator:
     """Abstract base class for import and export user interface."""
 
     error_level_map = (
-        ("DEBUG", "Debug", "Show all messages (only useful for debugging).", 10),
-        ("INFO", "Info", "Show some informative messages, warnings, and errors.", 20),
-        ("WARNING", "Warning", "Only show warnings and errors.", 30),
-        ("ERROR", "Error", "Only show errors.", 40),
-        ("CRITICAL", "Critical", "Only show extremely critical errors.", 50),
+        ("DEBUG", "Debug", "Show all messages (only useful for debugging)", 10),
+        ("INFO", "Info", "Show some informative messages, warnings, and errors", 20),
+        ("WARNING", "Warning", "Only show warnings and errors", 30),
+        ("ERROR", "Error", "Only show errors", 40),
+        ("CRITICAL", "Critical", "Only show extremely critical errors", 50),
     )
 
     # Level of verbosity on the console.
     plugin_log_level: bpy.props.EnumProperty(
         items=error_level_map,
         name="Plugin Log Level",
-        description="Blender Nif Plugin log level of verbosity on the console.",
+        description="Blender Nif Plugin log level of verbosity on the console",
         default="INFO")
 
     # Level of verbosity on the console.
     pyffi_log_level: bpy.props.EnumProperty(
         items=error_level_map,
         name="Pyffi Log Level",
-        description="Pyffi log level of verbosity on the console.",
+        description="Pyffi log level of verbosity on the console",
         default="INFO")
 
     # Name of file where Python profiler dumps the profile.
     profile_path: bpy.props.StringProperty(
         name="Profile Path",
-        description="File where Python profiler dumps the profile. Set to empty string to turn off profiling.",
+        description="File where Python profiler dumps the profile. Set to empty string to turn off profiling",
         maxlen=1024,
         default="",
         subtype="FILE_PATH",
@@ -76,7 +76,7 @@ class CommonDevOperator:
     # Used for checking equality between floats.
     epsilon: bpy.props.FloatProperty(
         name="Epsilon",
-        description="Used for checking equality between floats.",
+        description="Used for checking equality between floats",
         default=0.0005,
         min=0.0, max=1.0, precision=5,
         options={'HIDDEN'})
@@ -93,7 +93,7 @@ class CommonScale:
     # Number of nif units per blender unit.
     scale_correction: bpy.props.FloatProperty(
         name="Scale Correction",
-        description="Changes size of mesh to fit onto Blender's default grid.",
+        description="Changes size of mesh to fit onto Blender's default grid",
         get=get_import_scale,
         set=set_import_scale,
         default=0.1,

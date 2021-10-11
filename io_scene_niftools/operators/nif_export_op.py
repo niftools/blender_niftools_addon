@@ -58,68 +58,68 @@ class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonNif, Co
     # How to export animation.
     animation: bpy.props.EnumProperty(
         items=[
-            ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
-            ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif."),
+            ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif"),
+            ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif"),
         ],
         name="Animation export",
-        description="Selects which parts of the blender file to export.",
+        description="Selects which parts of the blender file to export",
         default='ALL_NIF')
 
     # Use BSAnimationNode (for Morrowind).
     bs_animation_node: bpy.props.BoolProperty(
         name="Use NiBSAnimationNode",
-        description="Use NiBSAnimationNode (for Morrowind).",
+        description="Use NiBSAnimationNode (for Morrowind)",
         default=False)
 
     # Stripify geometries. Deprecate? (Strips are slower than triangle shapes.)
     stripify: bpy.props.BoolProperty(
         name="Stripify Geometries",
-        description="Stripify geometries.",
+        description="Stripify geometries",
         default=False,
         options={'HIDDEN'})
 
     # Stitch strips. Deprecate? (Strips are slower than triangle shapes.)
     stitch_strips: bpy.props.BoolProperty(
         name="Stitch Strips",
-        description="Stitch strips.",
+        description="Stitch strips",
         default=True,
         options={'HIDDEN'})
 
     # Flatten skin.
     flatten_skin: bpy.props.BoolProperty(
         name="Flatten Skin",
-        description="Flatten skin.",
+        description="Flatten skin",
         default=False)
 
     # Export skin partition.
     skin_partition: bpy.props.BoolProperty(
         name="Skin Partition",
-        description="Export skin partition.",
+        description="Export skin partition",
         default=True)
 
     # Pad and sort bones.
     pad_bones: bpy.props.BoolProperty(
         name="Pad & Sort Bones",
-        description="Pad and sort bones.",
+        description="Pad and sort bones",
         default=False)
 
     # Maximum number of bones per skin partition.
     max_bones_per_partition: bpy.props.IntProperty(
         name="Max Partition Bones",
-        description="Maximum number of bones per skin partition.",
+        description="Maximum number of bones per skin partition",
         default=18, min=4, max=63)
 
     # Maximum number of bones per vertex in skin partitions.
     max_bones_per_vertex: bpy.props.IntProperty(
         name="Max Vertex Bones",
-        description="Maximum number of bones per vertex in skin partitions.",
+        description="Maximum number of bones per vertex in skin partitions",
         default=4, min=1,
     )
 
     # Pad and sort bones.
     force_dds: bpy.props.BoolProperty(
         name="Force DDS",
-        description="Force texture .dds extension.",
+        description="Force texture .dds extension",
         default=True)
 
     # Whether or not to remove duplicate materials

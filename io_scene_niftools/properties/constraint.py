@@ -51,17 +51,17 @@ class ConstraintProperty(PropertyGroup):
 
     LHMaxFriction: FloatProperty(
         name='LHMaxFriction',
-        description='Havok limited hinge max friction.',
+        description='Havok limited hinge max friction',
     )
 
     tau: FloatProperty(
         name='tau',
-        description='Havok limited hinge max friction.',
+        description='Havok limited hinge max friction',
     )
 
     damping: FloatProperty(
         name='damping',
-        description='Havok limited hinge max friction.'
+        description='Havok limited hinge max friction'
     )
 
 

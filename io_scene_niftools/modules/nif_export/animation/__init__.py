@@ -146,6 +146,10 @@ class Animation(ABC):
         elif isinstance(parent_block, NifFormat.NiControllerSequence):
             controlled_block = parent_block.add_controlled_block()
             controlled_block.priority = priority
+            # todo - pyffi adds the names to the NiStringPalette, but it creates one per controller link...
+            # also the currently used pyffi version doesn't store target_name for ZT2 style KFs in
+            # controlled_block.set_node_name(target_name)
+            # the following code handles both issues and should probably be ported to pyffi
             if NifData.data.version < 0x0A020000:
                 # older versions need the actual controller blocks
                 controlled_block.target_name = target_name
@@ -157,6 +161,15 @@ class Animation(ABC):
                 controlled_block.interpolator = n_kfi
                 controlled_block.node_name = target_name
                 controlled_block.controller_type = "NiTransformController"
+                # get the parent's string palette
+                if not parent_block.string_palette:
+                    parent_block.string_palette = NifFormat.NiStringPalette()
+                # assign string palette to controller
+                controlled_block.string_palette = parent_block.string_palette
+                # add the strings and store their offsets
+                palette = controlled_block.string_palette.palette
+                controlled_block.node_name_offset = palette.add_string(controlled_block.node_name)
+                controlled_block.controller_type_offset = palette.add_string(controlled_block.controller_type)
         else:
             raise io_scene_niftools.utils.logging.NifError("Unsupported KeyframeController parent!")
         

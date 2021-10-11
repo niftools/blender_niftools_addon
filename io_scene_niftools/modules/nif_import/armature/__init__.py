@@ -235,6 +235,11 @@ class Armature:
         # return string identifiers
         return ids[forward_ind], ids[up_ind]
 
+    @staticmethod
+    def argmax(values):
+        """Return the index of the max value in values"""
+        return max(zip(values, range(len(values))))[1]
+
     def get_forward_axis(self, n_bone, axis_indices):
         """Helper function to get the forward axis of a bone"""
         # check that n_block is indeed a bone
@@ -242,8 +247,8 @@ class Armature:
             return None
         trans = n_bone.translation.as_tuple()
         trans_abs = tuple(abs(v) for v in trans)
-        # do argmax
-        max_coord_ind = max(zip(trans_abs, range(len(trans_abs))))[1]
+        # get the index of the coordinate with the biggest absolute value
+        max_coord_ind = self.argmax(trans_abs)
         # now check the sign
         actual_value = trans[max_coord_ind]
         # handle sign accordingly so negative indices map to the negative identifiers in list

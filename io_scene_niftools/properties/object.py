@@ -101,7 +101,7 @@ class ObjectProperty(PropertyGroup):
 
     rootnode: EnumProperty(
         name='Nif Root Node',
-        description='Type of property used to display meshes.',
+        description='Type of property used to display meshes',
         items=(
             ('NiNode', 'NiNode', "", 0),
             ('BSFadeNode', 'BSFadeNode', "", 1)),
@@ -160,28 +160,28 @@ class BsInventoryMarker(PropertyGroup):
 
     bs_inv_x: FloatProperty(
         name="Inv X value",
-        description="Rotation of object in inventory around the x axis.",
+        description="Rotation of object in inventory around the x axis",
         default=0,
         subtype = "ANGLE"
     )
 
     bs_inv_y: FloatProperty(
         name="Inv Y value",
-        description="Rotation of object in inventory around the y axis.",
+        description="Rotation of object in inventory around the y axis",
         default=0,
         subtype = "ANGLE"
     )
 
     bs_inv_z: FloatProperty(
         name="Inv Z value",
-        description="Rotation of object in inventory around the z axis.",
+        description="Rotation of object in inventory around the z axis",
         default=0,
         subtype = "ANGLE"
     )
 
     bs_inv_zoom: FloatProperty(
         name="Inv Zoom Value",
-        description="Inventory object Zoom level.",
+        description="Inventory object Zoom level",
         default=1
     )
 

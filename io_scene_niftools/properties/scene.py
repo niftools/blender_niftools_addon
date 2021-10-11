@@ -90,7 +90,7 @@ class Scene(PropertyGroup):
                 [x for x in NifFormat.games.keys() if x != '?'])
         ],
         name="Game",
-        description="For which game to export.",
+        description="For which game to export",
         default='NONE',
         update=update_version_from_game)
 
@@ -115,7 +115,7 @@ class Scene(PropertyGroup):
 
     scale_correction: bpy.props.FloatProperty(
         name="Scale Correction",
-        description="Changes size of mesh to fit onto Blender's default grid.",
+        description="Changes size of mesh to fit onto Blender's default grid",
         default=0.1,
         min=0.001, max=100.0, precision=2)
 

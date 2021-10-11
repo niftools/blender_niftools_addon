@@ -53,7 +53,7 @@ class ShaderProps(PropertyGroup):
 
     bs_shadertype: EnumProperty(
         name='Shader Type',
-        description='Type of property used to display meshes.',
+        description='Type of property used to display meshes',
         items=(
             ('None', 'None', "", 0),
             ('BSShaderProperty', 'BS Shader Property', "", 1),
