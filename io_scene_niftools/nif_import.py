@@ -169,13 +169,9 @@ class NifImport(NifCommon):
 
             # parent selected meshes to imported skeleton
             if NifOp.props.process == "SKELETON_ONLY":
-                # update parenting & armature modifier
-                for child in bpy.context.selected_objects:
-                    if isinstance(child, bpy.types.Object) and not isinstance(child.data, bpy.types.Armature):
-                        child.parent = b_obj
-                        for mod in child.modifiers:
-                            if mod.type == "ARMATURE":
-                                mod.object = b_obj
+                for b_child in self.SELECTED_OBJECTS:
+                    self.objecthelper.remove_armature_modifier(b_child)
+                    self.objecthelper.append_armature_modifier(b_child, b_obj)
 
         elif isinstance(root_block, NifFormat.NiCamera):
             NifLog.warn('Skipped NiCamera root')
