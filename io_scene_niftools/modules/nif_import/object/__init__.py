@@ -154,10 +154,19 @@ class Object:
 
     @staticmethod
     def append_armature_modifier(b_obj, b_armature):
-        """Append an armature modifier for the object."""
+        """Append an armature modifier to the object."""
+        b_obj.parent = b_armature
         if b_obj and b_armature:
             armature_name = b_armature.name
             b_mod = b_obj.modifiers.new(armature_name, 'ARMATURE')
             b_mod.object = b_armature
             b_mod.use_bone_envelopes = False
             b_mod.use_vertex_groups = True
+
+    @staticmethod
+    def remove_armature_modifier(b_obj):
+        """Remove armature modifier from the object."""
+        for mod in b_obj.modifiers:
+            if mod.type == "ARMATURE":
+                b_obj.modifiers.remove(mod)
+
