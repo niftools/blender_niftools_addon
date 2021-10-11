@@ -123,7 +123,8 @@ First, we complete the object panel:
 #. Select a **Consistency Flag** from the drop-down box. See `this comment
    <https://github.com/niftools/nifskope/issues/69#issuecomment-61427385>`_ for discussion of what they might do.
 #. The **Object Flag** is ???????. Set it to an appropriate number.
-#. The **Nif Long Name** is ???????. Set it to an appropriate string.   
+#. The **Nif Long Name** is ???????. Set it to an appropriate string.
+#. The **Skeleton Root** determines the root bone used in this mesh's SkinInstance. Can usually be ignored / left empty, falls back to the armature object = root node.
 
 .. Extra Data and InvMarkers I have no idea how to fill them in. Help?
 
