@@ -153,12 +153,6 @@ class NifImport(NifCommon):
         if isinstance(root_block, NifFormat.CStreamableAssetData):
             root_block = root_block.root
 
-        # sets the root block parent to None, so that when crawling back the script won't barf
-        root_block._parent = None
-
-        # set the block parent through the tree, to ensure I can always move backward
-        self.set_parents(root_block)
-
         # mark armature nodes and bones
         self.armaturehelper.check_for_skin(root_block)
 
@@ -280,13 +274,3 @@ class NifImport(NifCommon):
 
         # all else is currently discarded
         return None
-
-    def set_parents(self, n_block):
-        """Set the parent block recursively through the tree, to allow
-        crawling back as needed."""
-        if isinstance(n_block, NifFormat.NiNode):
-            # list of non-null children
-            children = [child for child in n_block.children if child]
-            for child in children:
-                child._parent = n_block
-                self.set_parents(child)
