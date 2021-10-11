@@ -113,11 +113,10 @@ class NifImport(NifCommon):
             self.apply_scale(NifData.data, NifOp.props.scale_correction)
 
             # import all root blocks
-            for block in NifData.data.roots:
-                root = block
+            for root in NifData.data.roots:
                 # root hack for corrupt better bodies meshes and remove geometry from better bodies on skeleton import
-                for b in (b for b in block.tree() if isinstance(b, NifFormat.NiGeometry) and b.is_skin()):
-                    # check if root belongs to the children list of the skeleton root (can only happen for better bodies meshes)
+                for b in (b for b in root.tree(block_type=NifFormat.NiGeometry) if b.is_skin()):
+                    # check if root belongs to the children list of the skeleton root
                     if root in [c for c in b.skin_instance.skeleton_root.children]:
                         # fix parenting and update transform accordingly
                         b.skin_instance.data.set_transform(root.get_transform() * b.skin_instance.data.get_transform())
