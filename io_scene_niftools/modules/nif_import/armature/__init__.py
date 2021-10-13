@@ -114,6 +114,7 @@ class Armature:
         # get the bind pose from the skin data
         # NiSkinData stores the inverse bind (=rest) pose for each bone, in armature space
         for geom, bonenode, bonedata in bonelist:
+            # todo [armature] not sure if the skin instance transform is in there as well as the parent node's transform
             n_bind = (bonedata.get_transform().get_inverse(fast=False) * geom.get_transform(n_armature))
             armature_space_bind_store[bonenode] = n_bind
 
