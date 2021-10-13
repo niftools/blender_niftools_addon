@@ -65,16 +65,28 @@ class Armature:
         self.n_armature = None
 
     def store_pose_matrix(self, n_node, armature_space_pose_store, n_root):
+        NifLog.debug(f"Storing pose matrix for {n_node.name}")
         # check that n_block is indeed a bone
         if not self.is_bone(n_node):
             return None
+        # calculate the transform relative to root, ie. turn nif local into nif armature space
         armature_space_pose_store[n_node] = n_node.get_transform(n_root)
         # move down the hierarchy
         for n_child in n_node.children:
             self.store_pose_matrix(n_child, armature_space_pose_store, n_root)
 
+    def get_skinned_geometries(self, n_root):
+        """Yield all children in n_root's tree that have skinning"""
+        # search for all NiTriShape or NiTriStrips blocks...
+        for n_block in n_root.tree(block_type=NifFormat.NiTriBasedGeom):
+            # yes, we found one, does it have skinning?
+            if n_block.is_skin():
+                yield n_block
+
     def import_pose(self, n_armature):
         """Ported and adapted from pyffi send_bones_to_bind_position"""
+
+        NifLog.debug(f"Calculating pose for {n_armature.name}")
         armature_space_bind_store = {}
         armature_space_pose_store = {}
         # check all bones and bone datas to see if a bind position exists
@@ -84,7 +96,10 @@ class Armature:
             self.store_pose_matrix(n_child, armature_space_pose_store, n_armature)
 
         # prioritize geometries that have most nodes in their skin instance
-        for geom in sorted(n_armature.get_skinned_geometries(), key=lambda g: g.skin_instance.num_bones, reverse=True):
+        geoms = sorted(self.get_skinned_geometries(n_armature), key=lambda g: g.skin_instance.num_bones, reverse=True)
+        NifLog.debug(f"Found {len(geoms)} skinned geometries")
+        for geom in geoms:
+            NifLog.debug(f"Checking skin of {geom.name}")
             skininst = geom.skin_instance
             skindata = skininst.data
             for bonenode, bonedata in zip(skininst.bones, skindata.bone_list):
@@ -284,15 +299,11 @@ class Armature:
         # set these here once per run
         self.n_armature = None
         self.skinned = False
-        # search for all NiTriShape or NiTriStrips blocks...
-        for n_block in n_root.tree():
-            if isinstance(n_block, NifFormat.NiTriBasedGeom):
-                # yes, we found one, does it have skinning?
-                if n_block.is_skin():
-                    self.skinned = True
-                    NifLog.debug(f"{n_block.name} has skinning.")
-                    # one is enough to require an armature, so stop
-                    return
+        for n_block in self.get_skinned_geometries(n_root):
+            self.skinned = True
+            NifLog.debug(f"{n_block.name} has skinning.")
+            # one is enough to require an armature, so stop
+            return
         NifLog.debug(f"Found no skinned geometries.")
 
     def is_bone(self, ni_block):
