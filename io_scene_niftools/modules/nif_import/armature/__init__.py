@@ -88,7 +88,11 @@ class Armature:
         """Get armature space bind matrix for skin partition bone's inverse bind matrix"""
         # get the bind pose from the skin data
         # NiSkinData stores the inverse bind (=rest) pose for each bone, in armature space
-        # todo [armature] not sure if the skin instance transform is in there as well as the parent node's transform
+
+        # for ZT2 elephant, the skin transform is the inverse of the geom's armature space transform
+        # this gives a straight rest pose for MW too
+        # return n_bone.get_transform().get_inverse(fast=False) * geom.skin_instance.data.get_transform()
+        # however, this conflicts with send_geometries_to_bind_position for MW meshes, so stick to this now
         return n_bone.get_transform().get_inverse(fast=False) * geom.get_transform(n_root)
 
     def import_pose(self, n_armature):
@@ -106,8 +110,7 @@ class Armature:
         for geom in geoms:
             NifLog.debug(f"Checking skin of {geom.name}")
             skininst = geom.skin_instance
-            skindata = skininst.data
-            for bonenode, bonedata in zip(skininst.bones, skindata.bone_list):
+            for bonenode, bonedata in zip(skininst.bones, skininst.data.bone_list):
                 # bonenode can be None; see pyffi issue #3114079
                 if not bonenode:
                     continue
