@@ -65,10 +65,10 @@ class Armature:
         self.n_armature = None
 
     def store_pose_matrix(self, n_node, armature_space_pose_store, n_root):
-        NifLog.debug(f"Storing pose matrix for {n_node.name}")
         # check that n_block is indeed a bone
         if not self.is_bone(n_node):
             return None
+        NifLog.debug(f"Storing pose matrix for {n_node.name}")
         # calculate the transform relative to root, ie. turn nif local into nif armature space
         armature_space_pose_store[n_node] = n_node.get_transform(n_root)
         # move down the hierarchy
