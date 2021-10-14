@@ -65,6 +65,7 @@ class Armature:
         self.n_armature = None
 
     def store_pose_matrix(self, n_node, armature_space_pose_store, n_root):
+        """Stores the nif armature space matrix of a node tree"""
         # check that n_block is indeed a bone
         if not self.is_bone(n_node):
             return None
@@ -83,17 +84,21 @@ class Armature:
             if n_block.is_skin():
                 yield n_block
 
-    def import_pose(self, n_armature):
-        """Ported and adapted from pyffi send_bones_to_bind_position"""
+    def get_skin_bind(self, n_bone, geom, n_root):
+        """Get armature space bind matrix for skin partition bone's inverse bind matrix"""
+        # get the bind pose from the skin data
+        # NiSkinData stores the inverse bind (=rest) pose for each bone, in armature space
+        # todo [armature] not sure if the skin instance transform is in there as well as the parent node's transform
+        return n_bone.get_transform().get_inverse(fast=False) * geom.get_transform(n_root)
 
+    def import_pose(self, n_armature):
+        """Process all geometries' skin instances to reconstruct a bind pose from their inverse bind matrices"""
+        # improved from pyffi's send_bones_to_bind_position
         NifLog.debug(f"Calculating pose for {n_armature.name}")
         armature_space_bind_store = {}
         armature_space_pose_store = {}
-        # check all bones and bone datas to see if a bind position exists
-        bonelist = []
         # store the original pose matrix for all nodes
-        for n_child in n_armature.children:
-            self.store_pose_matrix(n_child, armature_space_pose_store, n_armature)
+        self.store_pose_matrix(n_armature, armature_space_pose_store, n_armature)
 
         # prioritize geometries that have most nodes in their skin instance
         geoms = sorted(self.get_skinned_geometries(n_armature), key=lambda g: g.skin_instance.num_bones, reverse=True)
@@ -107,32 +112,18 @@ class Armature:
                 if not bonenode:
                     continue
                 # make sure all bone data of shared bones coincides
-                for othergeom, otherbonenode, otherbonedata in bonelist:
-                    if bonenode is otherbonenode:
-                        diff = ((otherbonedata.get_transform().get_inverse(fast=False)
-                                 * othergeom.get_transform(n_armature))
-                                -
-                                (bonedata.get_transform().get_inverse(fast=False)
-                                 * geom.get_transform(n_armature)))
-                        if diff.sup_norm() > 1e-3:
-                            NifLog.debug(
-                                f"Geometries {geom.name} and {othergeom.name} do not share the same bind position."
-                                f"bone {bonenode.name} will be sent to a position matching only one of these")
-                        # break the loop
-                        break
+                # see if the bone has been used by a previous skin instance
+                if bonenode in armature_space_bind_store:
+                    # get the bind pose that has been stored
+                    diff = armature_space_bind_store[bonenode] - self.get_skin_bind(bonedata, geom, n_armature)
+                    if diff.sup_norm() > 1e-3:
+                        NifLog.debug(
+                            f"The bind position of mesh {geom.name} differs from previous meshes. "
+                            f"Bone {bonenode.name} will be sent to a position matching only one of these")
                 else:
-                    # the loop did not break, so the bone was not yet added
-                    # add it now
+                    # new bone - add it now
                     NifLog.debug(f"Found bind position data for {bonenode.name}")
-                    bonelist.append((geom, bonenode, bonedata))
-
-        # get the bind pose from the skin data
-        # NiSkinData stores the inverse bind (=rest) pose for each bone, in armature space
-        for geom, bonenode, bonedata in bonelist:
-            # todo [armature] not sure if the skin instance transform is in there as well as the parent node's transform
-            n_bind = (bonedata.get_transform().get_inverse(fast=False) * geom.get_transform(n_armature))
-            armature_space_bind_store[bonenode] = n_bind
-
+                    armature_space_bind_store[bonenode] = self.get_skin_bind(bonedata, geom, n_armature)
         NifLog.debug("Storing non-skeletal bone poses")
         self.fix_pose(n_armature, n_armature, armature_space_bind_store, armature_space_pose_store)
         return armature_space_bind_store, armature_space_pose_store
