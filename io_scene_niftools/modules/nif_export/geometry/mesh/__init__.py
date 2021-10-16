@@ -63,7 +63,7 @@ class Mesh:
         self.object_property = ObjectProperty()
         self.morph_anim = MorphAnimation()
 
-    def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
+    def export_tri_shapes(self, b_obj, n_parent, n_root, trishape_name=None):
         """
         Export a blender object ob of the type mesh, child of nif block
         n_parent, as NiTriShape and NiTriShapeData blocks, possibly
@@ -451,7 +451,9 @@ class Mesh:
                             trishape.add_bone(bone_block, vert_weights)
 
                     # update bind position skinning data
-                    trishape.update_bind_position()
+                    # trishape.update_bind_position()
+                    # override pyffi ttrishape.update_bind_position with custom one that is relative to the nif root
+                    self.update_bind_position(trishape, n_root)
 
                     # calculate center and radius for each skin bone data block
                     trishape.update_skin_center_radius()
@@ -498,6 +500,32 @@ class Mesh:
             # export EGM or NiGeomMorpherController animation
             self.morph_anim.export_morph(b_mesh, trishape, vertex_map)
         return trishape
+
+    def update_bind_position(self, n_geom, n_root):
+        """Make current position of the bones the bind position for this geometry.
+        Sets the NiSkinData overall transform to the inverse of the geometry transform
+        relative to the skeleton root, and sets the NiSkinData of each bone to
+        the geometry transform relative to the skeleton root times the inverse of the bone
+        transform relative to the skeleton root."""
+        if not n_geom.is_skin():
+            return
+
+        # validate skin and set up quick links
+        n_geom._validate_skin()
+        skininst = n_geom.skin_instance
+        skindata = skininst.data
+        skelroot = skininst.skeleton_root
+
+        # calculate overall offset
+        geomtransform = n_geom.get_transform(skelroot)
+        skindata.set_transform(geomtransform.get_inverse())
+
+        # calculate bone offsets
+        for i, bone in enumerate(skininst.bones):
+            # inverse skin bind
+            skindata.bone_list[i].set_transform(geomtransform * bone.get_transform(n_root).get_inverse())
+            # this seems to be correct for skyrim heads, but breaks stuff like ZT2 elephant
+            # skindata.bone_list[i].set_transform(bone.get_transform(n_root).get_inverse())
 
     def get_bone_block(self, b_bone):
         """For a blender bone, return the corresponding nif node from the blocks that have already been exported"""
