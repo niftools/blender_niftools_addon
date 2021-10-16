@@ -99,11 +99,11 @@ class Object:
         # TODO [collsion] detect root collision -> root collision node (can be mesh or empty)
         #     self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
         #     return None  # done; stop here
-
+        self.n_root = None
         # there is only one root object so that will be our final root
         if len(root_objects) == 1:
             b_obj = root_objects[0]
-            self.n_root = self.export_node(b_obj, None)
+            self.export_node(b_obj, None)
 
         # there is more than one root object so we create a meta root
         else:
@@ -155,9 +155,11 @@ class Object:
         :param b_obj:
         """
 
+        NifLog.debug(f"{b_obj.name}, a")
         if not b_obj:
             return None
 
+        NifLog.debug(f"{b_obj.name}, b")
         b_action = self.object_anim.get_active_action(b_obj)
 
         # can we export this b_obj?
@@ -188,10 +190,13 @@ class Object:
 
         # -> everything else (empty/armature) is a (more or less regular) node
         node = types.create_ninode(b_obj)
+        if not self.n_root:
+            self.n_root = node
 
         # make it child of its parent in the nif, if it has one
         if n_parent:
             n_parent.add_child(node)
+        NifLog.debug(f"{b_obj.name}, c")
 
         # and fill in this node's non-trivial values
         node.name = block_store.get_full_name(b_obj)

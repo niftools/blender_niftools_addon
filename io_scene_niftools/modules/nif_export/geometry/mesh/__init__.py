@@ -520,9 +520,15 @@ class Mesh:
         geomtransform = n_geom.get_transform(skelroot)
         skindata.set_transform(geomtransform.get_inverse())
 
+        # for some nifs, somehow n_root is not set properly?!
+        if not n_root:
+            NifLog.warn(f"n_root was not set, bug")
+            n_root = skelroot
+
         # calculate bone offsets
         for i, bone in enumerate(skininst.bones):
-            # inverse skin bind
+            # todo [armature] figure out the correct transform that works universally
+            # inverse skin bind in nif armature space, relative to root / geom??
             skindata.bone_list[i].set_transform(geomtransform * bone.get_transform(n_root).get_inverse())
             # this seems to be correct for skyrim heads, but breaks stuff like ZT2 elephant
             # skindata.bone_list[i].set_transform(bone.get_transform(n_root).get_inverse())
