@@ -155,11 +155,9 @@ class Object:
         :param b_obj:
         """
 
-        NifLog.debug(f"{b_obj.name}, a")
         if not b_obj:
             return None
 
-        NifLog.debug(f"{b_obj.name}, b")
         b_action = self.object_anim.get_active_action(b_obj)
 
         # can we export this b_obj?
@@ -190,13 +188,13 @@ class Object:
 
         # -> everything else (empty/armature) is a (more or less regular) node
         node = types.create_ninode(b_obj)
+        # set parenting here so that it can be accessed
         if not self.n_root:
             self.n_root = node
 
         # make it child of its parent in the nif, if it has one
         if n_parent:
             n_parent.add_child(node)
-        NifLog.debug(f"{b_obj.name}, c")
 
         # and fill in this node's non-trivial values
         node.name = block_store.get_full_name(b_obj)
