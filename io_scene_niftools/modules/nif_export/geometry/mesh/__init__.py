@@ -63,7 +63,7 @@ class Mesh:
         self.object_property = ObjectProperty()
         self.morph_anim = MorphAnimation()
 
-    def export_tri_shapes(self, b_obj, n_parent, trishape_name=None):
+    def export_tri_shapes(self, b_obj, n_parent, n_root, trishape_name=None):
         """
         Export a blender object ob of the type mesh, child of nif block
         n_parent, as NiTriShape and NiTriShapeData blocks, possibly
@@ -390,8 +390,7 @@ class Mesh:
                 boneinfluences = vertgroups & bone_names
                 if boneinfluences:  # yes we have skinning!
                     # create new skinning instance block and link it
-                    n_root_name = block_store.get_full_name(b_obj_armature)
-                    skininst, skindata = self.create_skin_inst_data(b_obj, n_root_name, polygon_parts)
+                    skininst, skindata = self.create_skin_inst_data(b_obj, b_obj_armature, polygon_parts)
                     trishape.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
@@ -452,7 +451,9 @@ class Mesh:
                             trishape.add_bone(bone_block, vert_weights)
 
                     # update bind position skinning data
-                    trishape.update_bind_position()
+                    # trishape.update_bind_position()
+                    # override pyffi ttrishape.update_bind_position with custom one that is relative to the nif root
+                    self.update_bind_position(trishape, n_root)
 
                     # calculate center and radius for each skin bone data block
                     trishape.update_skin_center_radius()
@@ -500,6 +501,38 @@ class Mesh:
             self.morph_anim.export_morph(b_mesh, trishape, vertex_map)
         return trishape
 
+    def update_bind_position(self, n_geom, n_root):
+        """Make current position of the bones the bind position for this geometry.
+        Sets the NiSkinData overall transform to the inverse of the geometry transform
+        relative to the skeleton root, and sets the NiSkinData of each bone to
+        the geometry transform relative to the skeleton root times the inverse of the bone
+        transform relative to the skeleton root."""
+        if not n_geom.is_skin():
+            return
+
+        # validate skin and set up quick links
+        n_geom._validate_skin()
+        skininst = n_geom.skin_instance
+        skindata = skininst.data
+        skelroot = skininst.skeleton_root
+
+        # calculate overall offset
+        geomtransform = n_geom.get_transform(skelroot)
+        skindata.set_transform(geomtransform.get_inverse())
+
+        # for some nifs, somehow n_root is not set properly?!
+        if not n_root:
+            NifLog.warn(f"n_root was not set, bug")
+            n_root = skelroot
+
+        # calculate bone offsets
+        for i, bone in enumerate(skininst.bones):
+            # todo [armature] figure out the correct transform that works universally
+            # inverse skin bind in nif armature space, relative to root / geom??
+            skindata.bone_list[i].set_transform(geomtransform * bone.get_transform(n_root).get_inverse())
+            # this seems to be correct for skyrim heads, but breaks stuff like ZT2 elephant
+            # skindata.bone_list[i].set_transform(bone.get_transform(n_root).get_inverse())
+
     def get_bone_block(self, b_bone):
         """For a blender bone, return the corresponding nif node from the blocks that have already been exported"""
         for n_block, b_obj in block_store.block_to_obj.items():
@@ -526,11 +559,19 @@ class Mesh:
         bm.free()
         return polygon_parts
 
-    def create_skin_inst_data(self, b_obj, n_root_name, polygon_parts):
+    def create_skin_inst_data(self, b_obj, b_obj_armature, polygon_parts):
         if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and polygon_parts:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
             skininst = block_store.create_block("NiSkinInstance", b_obj)
+
+        # get skeleton root from custom property
+        if b_obj.niftools.skeleton_root:
+            n_root_name = b_obj.niftools.skeleton_root
+        # or use the armature name
+        else:
+            n_root_name = block_store.get_full_name(b_obj_armature)
+        # make sure that such a block exists, find it
         for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.NiNode):
                 if block.name.decode() == n_root_name:

@@ -56,7 +56,7 @@ class KfImport(NifCommon):
         NifCommon.__init__(self, operator, context)
 
         # Helper systems
-        self.tranform_anim = TransformAnimation()
+        self.transform_anim = TransformAnimation()
 
     def execute(self):
         """Main import function."""
@@ -79,9 +79,9 @@ class KfImport(NifCommon):
                 self.apply_scale(kfdata, NifOp.props.scale_correction)
 
                 # calculate and set frames per second
-                self.tranform_anim.set_frames_per_second(kfdata.roots)
+                self.transform_anim.set_frames_per_second(kfdata.roots)
                 for kf_root in kfdata.roots:
-                    self.tranform_anim.import_kf_root(kf_root, b_armature, bind_data)
+                    self.transform_anim.import_kf_root(kf_root, b_armature, bind_data)
 
         except NifError:
             return {'CANCELLED'}

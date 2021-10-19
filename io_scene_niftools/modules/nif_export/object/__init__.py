@@ -72,6 +72,7 @@ class Object:
         self.bhk_helper = BhkCollision()
         self.bound_helper = NiCollision()
         self.bs_helper = BSBound()
+        self.n_root = None
 
     def get_export_objects(self, only_selected=True):
         """Get all exportable object and a subset of those objects representing root objects"""
@@ -98,36 +99,36 @@ class Object:
         # TODO [collsion] detect root collision -> root collision node (can be mesh or empty)
         #     self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
         #     return None  # done; stop here
-
+        self.n_root = None
         # there is only one root object so that will be our final root
         if len(root_objects) == 1:
             b_obj = root_objects[0]
-            n_root = self.export_node(b_obj, None)
+            self.export_node(b_obj, None)
 
         # there is more than one root object so we create a meta root
         else:
             NifLog.info("Created meta root because blender scene had multiple root objects")
-            n_root = types.create_ninode()
-            n_root.name = "Scene Root"
+            self.n_root = types.create_ninode()
+            self.n_root.name = "Scene Root"
             for b_obj in root_objects:
-                self.export_node(b_obj, n_root)
+                self.export_node(b_obj, self.n_root)
 
         # TODO [object] How dow we know we are selecting the right node in the case of multi-root?
         # making root block a fade node
         root_type = b_obj.niftools.rootnode
         if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and root_type == 'BSFadeNode':
             NifLog.info("Making root block a BSFadeNode")
-            fade_root_block = NifFormat.BSFadeNode().deepcopy(n_root)
-            fade_root_block.replace_global_node(n_root, fade_root_block)
-            n_root = fade_root_block
+            fade_root_block = NifFormat.BSFadeNode().deepcopy(self.n_root)
+            fade_root_block.replace_global_node(self.n_root, fade_root_block)
+            self.n_root = fade_root_block
 
         # various extra datas
         object_property = ObjectDataProperty()
-        object_property.export_bsxflags_upb(n_root, root_objects)
-        object_property.export_inventory_marker(n_root, root_objects)
-        object_property.export_weapon_location(n_root, b_obj)
-        types.export_furniture_marker(n_root, filebase)
-        return n_root
+        object_property.export_bsxflags_upb(self.n_root, root_objects)
+        object_property.export_inventory_marker(self.n_root, root_objects)
+        object_property.export_weapon_location(self.n_root, b_obj)
+        types.export_furniture_marker(self.n_root, filebase)
+        return self.n_root
 
     def set_node_flags(self, b_obj, n_node):
         # default node flags
@@ -176,7 +177,7 @@ class Object:
 
                 # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
                 if not (b_action or b_obj.children or is_multimaterial or has_track):
-                    return self.mesh_helper.export_tri_shapes(b_obj, n_parent, b_obj.name)
+                    return self.mesh_helper.export_tri_shapes(b_obj, n_parent, self.n_root, b_obj.name)
 
                 # set transform on trishapes rather than NiNodes for skinned meshes to fix an issue with clothing slots
                 if b_obj.parent and b_obj.parent.type == 'ARMATURE' and b_action:
@@ -187,6 +188,9 @@ class Object:
 
         # -> everything else (empty/armature) is a (more or less regular) node
         node = types.create_ninode(b_obj)
+        # set parenting here so that it can be accessed
+        if not self.n_root:
+            self.n_root = node
 
         # make it child of its parent in the nif, if it has one
         if n_parent:
@@ -202,7 +206,7 @@ class Object:
         self.object_anim.export_visibility(node, b_action)
         # if it is a mesh, export the mesh as trishape children of this ninode
         if b_obj.type == 'MESH':
-            return self.mesh_helper.export_tri_shapes(b_obj, node)
+            return self.mesh_helper.export_tri_shapes(b_obj, node, self.n_root)
         # if it is an armature, export the bones as ninode children of this ninode
         elif b_obj.type == 'ARMATURE':
             self.armaturehelper.export_bones(b_obj, node)
