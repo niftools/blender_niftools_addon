@@ -245,8 +245,8 @@ class ShaderProps(PropertyGroup):
         name='Cast Shadows'
     )
 
-    slsf_1_facegen_detail: BoolProperty(
-        name='Facegen Detail'
+    slsf_1_facegen_detail_map: BoolProperty(
+        name='Facegen Detail Map'
     )
 
     slsf_1_Parallax: BoolProperty(
