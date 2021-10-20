@@ -101,9 +101,15 @@ class BSShaderProperty:
 
         # Diffuse color
         d = b_mat.diffuse_color
-        bsshader.skin_tint_color.r = d[0]
-        bsshader.skin_tint_color.g = d[1]
-        bsshader.skin_tint_color.b = d[2]
+
+        if b_s_type == NifFormat.BSLightingShaderPropertyShaderType["Skin Tint"]:
+            bsshader.skin_tint_color.r = d[0]
+            bsshader.skin_tint_color.g = d[1]
+            bsshader.skin_tint_color.b = d[2]
+        elif b_s_type == NifFormat.BSLightingShaderPropertyShaderType["Hair Tint"]:
+            bsshader.hair_tint_color.r = d[0]
+            bsshader.hair_tint_color.g = d[1]
+            bsshader.hair_tint_color.b = d[2]
         # TODO [shader] expose intensity value
         # b_mat.diffuse_intensity = 1.0
 
