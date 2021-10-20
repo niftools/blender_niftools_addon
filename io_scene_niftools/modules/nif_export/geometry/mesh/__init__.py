@@ -117,7 +117,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
+                if (game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype in ('Skin Tint', 'Face Tint')):
                     mesh_hasnormals = False  # for proper lighting
 
             # create a trishape block
