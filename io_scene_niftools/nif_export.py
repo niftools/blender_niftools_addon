@@ -113,7 +113,7 @@ class NifExport(NifCommon):
                                                f"convert their envelopes to vertex weights, and turn off envelopes.")
 
                 # check for non-uniform transforms
-                scale = b_obj.matrix_local.to_scale()
+                scale = b_obj.scale
                 if abs(scale.x - scale.y) > NifOp.props.epsilon or abs(scale.y - scale.z) > NifOp.props.epsilon:
                     NifLog.warn(f"Non-uniform scaling not supported.\n"
                                 f"Workaround: apply size and rotation (CTRL-A) on '{b_obj.name}'.")
