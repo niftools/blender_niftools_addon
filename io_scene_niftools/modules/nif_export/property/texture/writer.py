@@ -122,7 +122,7 @@ class TextureWriter:
 
         # try and find a DDS alternative, force it if required
         ddsfilename = f"{(filename[:-4])}.dds"
-        if os.path.exists(ddsfilename) or NifOp.props.force_dds:
+        if os.path.exists(bpy.path.abspath(ddsfilename)) or NifOp.props.force_dds:
             filename = ddsfilename
 
         # sanitize file path
@@ -136,6 +136,8 @@ class TextureWriter:
             idx = filename.find("textures")
             if idx >= 0:
                 filename = filename[idx:]
+            elif not os.path.exists(bpy.path.abspath(filename)):
+                pass
             else:
                 NifLog.warn(f"{filename} does not reside in a 'Textures' folder; texture path will be stripped and textures may not display in-game")
                 filename = os.path.basename(filename)

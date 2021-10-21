@@ -262,8 +262,8 @@ class TextureLoader:
 
         # go through all texture search paths
         for texdir in search_path_list:
-            # Blender-specific directory, slows down resolve_ncase:
             if texdir[0:2] == "//":
+                # Blender-specific directory, slows down resolve_ncase:
                 relative = True
                 texdir = texdir[2:]
             else:
