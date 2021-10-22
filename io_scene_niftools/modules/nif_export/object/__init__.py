@@ -177,7 +177,10 @@ class Object:
 
                 # If this has children or animations or more than one material it gets wrapped in a purpose made NiNode.
                 if not (b_action or b_obj.children or is_multimaterial or has_track):
-                    return self.mesh_helper.export_tri_shapes(b_obj, n_parent, self.n_root, b_obj.name)
+                    mesh = self.mesh_helper.export_tri_shapes(b_obj, n_parent, self.n_root, b_obj.name)
+                    if not self.n_root:
+                        self.n_root = mesh
+                    return mesh
 
                 # set transform on trishapes rather than NiNodes for skinned meshes to fix an issue with clothing slots
                 if b_obj.parent and b_obj.parent.type == 'ARMATURE' and b_action:
