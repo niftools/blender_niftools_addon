@@ -140,9 +140,9 @@ class Object:
                 n_node.flags = 0x000E
             elif game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
                 n_node.flags = 0x0010
-            elif game is 'EMPIRE_EARTH_II':
+            elif game == 'EMPIRE_EARTH_II':
                 n_node.flags = 0x0002
-            elif game is 'DIVINITY_2':
+            elif game == 'DIVINITY_2':
                 n_node.flags = 0x0310
             else:
                 n_node.flags = 0x000C  # morrowind
