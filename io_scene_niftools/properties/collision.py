@@ -80,7 +80,6 @@ class CollisionProperty(PropertyGroup):
         name='Collision layer',
         description='Collision layer string (game-specific)',
         items=game_specific_col_layer_items,
-        default=0
     )
 
     deactivator_type: EnumProperty(
