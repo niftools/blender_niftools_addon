@@ -720,8 +720,7 @@ class Mesh:
         # get the armature influencing this mesh, if it exists
         b_armature_obj = b_obj.find_armature()
         if b_armature_obj:
-            for pbone in b_armature_obj.pose.bones:
-                pbone.matrix_basis = mathutils.Matrix()
+            b_armature_obj.data.pose_position = 'REST'
 
         # make sure the model has a triangulation modifier
         self.ensure_tri_modifier(b_obj)
@@ -729,7 +728,10 @@ class Mesh:
         # make a copy with all modifiers applied
         dg = bpy.context.evaluated_depsgraph_get()
         eval_obj = b_obj.evaluated_get(dg)
-        return eval_obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+        eval_mesh = eval_obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+        if b_armature_obj:
+            b_armature_obj.data.pose_position = 'POSE'
+        return eval_mesh
 
     def ensure_tri_modifier(self, b_obj):
         """Makes sure that ob has a triangulation modifier in its stack."""
