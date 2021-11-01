@@ -452,7 +452,7 @@ class Mesh:
 
                     # update bind position skinning data
                     # trishape.update_bind_position()
-                    # override pyffi ttrishape.update_bind_position with custom one that is relative to the nif root
+                    # override pyffi trishape.update_bind_position with custom one that is relative to the nif root
                     self.update_bind_position(trishape, n_root)
 
                     # calculate center and radius for each skin bone data block
@@ -720,6 +720,7 @@ class Mesh:
         # get the armature influencing this mesh, if it exists
         b_armature_obj = b_obj.find_armature()
         if b_armature_obj:
+            old_position = b_armature_obj.data.pose_position
             b_armature_obj.data.pose_position = 'REST'
 
         # make sure the model has a triangulation modifier
@@ -730,7 +731,7 @@ class Mesh:
         eval_obj = b_obj.evaluated_get(dg)
         eval_mesh = eval_obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
         if b_armature_obj:
-            b_armature_obj.data.pose_position = 'POSE'
+            b_armature_obj.data.pose_position = old_position
         return eval_mesh
 
     def ensure_tri_modifier(self, b_obj):
