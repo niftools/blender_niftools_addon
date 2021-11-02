@@ -244,7 +244,7 @@ class Armature:
         b_bind = math.nif_bind_to_blender_bind(n_bind)
 
         # set the bone matrix - but set the tail first to prevent issues with zero-length bone
-        b_edit_bone.tail = mathutils.Vector([0,0,1])
+        b_edit_bone.tail = mathutils.Vector([0, 0, 1])
         b_edit_bone.matrix = b_bind
         # link to parent
         if b_parent_bone:
