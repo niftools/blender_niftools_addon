@@ -89,6 +89,10 @@ def get_bind_matrix(bone):
     return bind
 
 
+def blender_bind_to_nif_bind(blender_armature_space_matrix):
+    return blender_armature_space_matrix @ correction
+
+
 def nif_bind_to_blender_bind(nif_armature_space_matrix):
     return nif_armature_space_matrix @ correction_inv
 
