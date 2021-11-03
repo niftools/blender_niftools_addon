@@ -424,7 +424,7 @@ class AddonUpdaterInstallManually(bpy.types.Operator):
             return
 
         # use a "failed flag"? it shows this label if the case failed.
-        if self.error is not "":
+        if self.error != "":
             col = layout.column()
             col.scale_y = 0.7
             col.label(text="There was an issue trying to auto-install", icon="ERROR")
@@ -1102,7 +1102,7 @@ def update_settings_ui(self, context, element=None):
     last_check = updater.json["last_check"]
     if updater.error is not None and updater.error_msg is not None:
         row.label(text=updater.error_msg)
-    elif last_check is not "" and last_check is not None:
+    elif last_check != "" and last_check is not None:
         last_check = last_check[0: last_check.index(".")]
         row.label(text="Last update check: " + last_check)
     else:

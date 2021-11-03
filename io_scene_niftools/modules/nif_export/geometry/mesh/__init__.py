@@ -117,7 +117,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype == 'Skin Tint'):
+                if (game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype in ('Skin Tint', 'Face Tint')):
                     mesh_hasnormals = False  # for proper lighting
 
             # create a trishape block
@@ -452,8 +452,8 @@ class Mesh:
 
                     # update bind position skinning data
                     # trishape.update_bind_position()
-                    # override pyffi ttrishape.update_bind_position with custom one that is relative to the nif root
-                    self.update_bind_position(trishape, n_root)
+                    # override pyffi trishape.update_bind_position with custom one that is relative to the nif root
+                    self.update_bind_position(trishape, n_root, b_obj_armature)
 
                     # calculate center and radius for each skin bone data block
                     trishape.update_skin_center_radius()
@@ -501,12 +501,12 @@ class Mesh:
             self.morph_anim.export_morph(b_mesh, trishape, vertex_map)
         return trishape
 
-    def update_bind_position(self, n_geom, n_root):
-        """Make current position of the bones the bind position for this geometry.
+    def update_bind_position(self, n_geom, n_root, b_obj_armature):
+        """Transfer the Blender bind position to the nif bind position.
         Sets the NiSkinData overall transform to the inverse of the geometry transform
         relative to the skeleton root, and sets the NiSkinData of each bone to
-        the geometry transform relative to the skeleton root times the inverse of the bone
-        transform relative to the skeleton root."""
+        the inverse of the transpose of the bone transform relative to the skeleton root, corrected
+        for the overall transform."""
         if not n_geom.is_skin():
             return
 
@@ -516,22 +516,31 @@ class Mesh:
         skindata = skininst.data
         skelroot = skininst.skeleton_root
 
-        # calculate overall offset
-        geomtransform = n_geom.get_transform(skelroot)
-        skindata.set_transform(geomtransform.get_inverse())
+        # calculate overall offset (including the skeleton root transform) and use its inverse
+        geomtransform = (n_geom.get_transform(skelroot) * skelroot.get_transform()).get_inverse(fast=False)
+        skindata.set_transform(geomtransform)
 
         # for some nifs, somehow n_root is not set properly?!
         if not n_root:
             NifLog.warn(f"n_root was not set, bug")
             n_root = skelroot
 
+        old_position = b_obj_armature.data.pose_position
+        b_obj_armature.data.pose_position = 'POSE'
+
         # calculate bone offsets
         for i, bone in enumerate(skininst.bones):
+            bone_name = block_store.block_to_obj[bone].name
+            pose_bone = b_obj_armature.pose.bones[bone_name]
+            n_bind = NifFormat.Matrix44()
+            n_bind.set_rows(*math.blender_bind_to_nif_bind(pose_bone.matrix).transposed())
             # todo [armature] figure out the correct transform that works universally
             # inverse skin bind in nif armature space, relative to root / geom??
-            skindata.bone_list[i].set_transform(geomtransform * bone.get_transform(n_root).get_inverse())
+            skindata.bone_list[i].set_transform((n_bind * geomtransform).get_inverse(fast=False))
             # this seems to be correct for skyrim heads, but breaks stuff like ZT2 elephant
             # skindata.bone_list[i].set_transform(bone.get_transform(n_root).get_inverse())
+
+        b_obj_armature.data.pose_position = old_position
 
     def get_bone_block(self, b_bone):
         """For a blender bone, return the corresponding nif node from the blocks that have already been exported"""
@@ -720,8 +729,8 @@ class Mesh:
         # get the armature influencing this mesh, if it exists
         b_armature_obj = b_obj.find_armature()
         if b_armature_obj:
-            for pbone in b_armature_obj.pose.bones:
-                pbone.matrix_basis = mathutils.Matrix()
+            old_position = b_armature_obj.data.pose_position
+            b_armature_obj.data.pose_position = 'REST'
 
         # make sure the model has a triangulation modifier
         self.ensure_tri_modifier(b_obj)
@@ -729,7 +738,10 @@ class Mesh:
         # make a copy with all modifiers applied
         dg = bpy.context.evaluated_depsgraph_get()
         eval_obj = b_obj.evaluated_get(dg)
-        return eval_obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+        eval_mesh = eval_obj.to_mesh(preserve_all_data_layers=True, depsgraph=dg)
+        if b_armature_obj:
+            b_armature_obj.data.pose_position = old_position
+        return eval_mesh
 
     def ensure_tri_modifier(self, b_obj):
         """Makes sure that ob has a triangulation modifier in its stack."""

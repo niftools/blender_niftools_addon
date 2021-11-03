@@ -80,9 +80,7 @@ class BSShaderProperty:
         #     bsshader.alpha = (1 - b_mat.alpha)
 
         # Emissive
-        bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
-        bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
-        bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
+        BSShaderProperty.set_color3_property(bsshader.emissive_color, b_mat.niftools.emissive_color)
         bsshader.emissive_color.a = b_mat.niftools.emissive_alpha.v
         # TODO [shader] Expose a emission multiplier value
         # bsshader.emissive_multiple = b_mat.emit
@@ -101,9 +99,11 @@ class BSShaderProperty:
 
         # Diffuse color
         d = b_mat.diffuse_color
-        bsshader.skin_tint_color.r = d[0]
-        bsshader.skin_tint_color.g = d[1]
-        bsshader.skin_tint_color.b = d[2]
+
+        if b_s_type == NifFormat.BSLightingShaderPropertyShaderType["Skin Tint"]:
+            BSShaderProperty.set_color3_property(bsshader.skin_tint_color, d)
+        elif b_s_type == NifFormat.BSLightingShaderPropertyShaderType["Hair Tint"]:
+            BSShaderProperty.set_color3_property(bsshader.hair_tint_color, d)
         # TODO [shader] expose intensity value
         # b_mat.diffuse_intensity = 1.0
 
@@ -111,10 +111,7 @@ class BSShaderProperty:
         bsshader.lighting_effect_2 = b_mat.niftools.lightingeffect2
 
         # Emissive
-        e = b_mat.niftools.emissive_color
-        bsshader.emissive_color.r = e[0]
-        bsshader.emissive_color.g = e[1]
-        bsshader.emissive_color.b = e[2]
+        BSShaderProperty.set_color3_property(bsshader.emissive_color, b_mat.niftools.emissive_color)
         # TODO [shader] Expose a emission multiplier value
         # bsshader.emissive_multiple = b_mat.emit
 
@@ -122,10 +119,7 @@ class BSShaderProperty:
         bsshader.glossiness = 1/b_mat.roughness - 1 if b_mat.roughness != 0 else FLOAT_MAX
 
         # Specular color
-        s = b_mat.specular_color
-        bsshader.specular_color.r = s[0]
-        bsshader.specular_color.g = s[1]
-        bsshader.specular_color.b = s[2]
+        BSShaderProperty.set_color3_property(bsshader.specular_color, b_mat.specular_color)
         bsshader.specular_strength = b_mat.specular_intensity
 
         # Alpha
@@ -175,3 +169,9 @@ class BSShaderProperty:
                 if b_flag:
                     sf_flag_index = flags._names.index(sf_flag)
                     flags._items[sf_flag_index]._value = 1
+
+    @staticmethod
+    def set_color3_property(n_property, b_color):
+        n_property.r = b_color[0]
+        n_property.g = b_color[1]
+        n_property.b = b_color[2]

@@ -102,10 +102,9 @@ class BSShaderPropertyProcessor(BSShader):
         self._nodes_wrapper.global_uv_offset_scale(x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y)
 
         # Diffuse color
-        if bs_shader_property.skin_tint_color:
+        if shader_type == NifFormat.BSLightingShaderPropertyShaderType["Skin Tint"]:
             Material.import_material_diffuse(self._b_mat, bs_shader_property.skin_tint_color)
-
-        if (self._b_mat.diffuse_color[0] + self._b_mat.diffuse_color[1] + self._b_mat.diffuse_color[2]) == 0:
+        elif shader_type == NifFormat.BSLightingShaderPropertyShaderType["Hair Tint"]:
             Material.import_material_diffuse(self._b_mat, bs_shader_property.hair_tint_color)
 
         # TODO [material][b_shader][property] Handle nialphaproperty node lookup

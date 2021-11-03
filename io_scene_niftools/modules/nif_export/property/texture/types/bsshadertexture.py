@@ -80,8 +80,8 @@ class BSShaderTexture(TextureSlotManager):
         texset.num_textures = 9
         texset.textures.update_size()
 
-        if self.slots[TEX_SLOTS.DETAIL]:
-            texset.textures[6] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.DETAIL])
+        if self.slots[TEX_SLOTS.DECAL_0]:
+            texset.textures[6] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.DECAL_0])
 
         if self.slots[TEX_SLOTS.GLOSS]:
             texset.textures[7] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.GLOSS])

@@ -243,11 +243,9 @@ class Armature:
         # get transformation in blender's coordinate space
         b_bind = math.nif_bind_to_blender_bind(n_bind)
 
-        # the following is a workaround because blender can no longer set matrices to bones directly
-        tail, roll = bpy.types.Bone.AxisRollFromMatrix(b_bind.to_3x3())
-        b_edit_bone.head = b_bind.to_translation()
-        b_edit_bone.tail = tail + b_edit_bone.head
-        b_edit_bone.roll = roll
+        # set the bone matrix - but set the tail first to prevent issues with zero-length bone
+        b_edit_bone.tail = mathutils.Vector([0, 0, 1])
+        b_edit_bone.matrix = b_bind
         # link to parent
         if b_parent_bone:
             b_edit_bone.parent = b_parent_bone

@@ -336,11 +336,13 @@ class NodesWrapper:
         group_node = nodes.new('ShaderNodeGroup')
         group_node.node_tree = node_group
         links.new(group_node.inputs[0], b_texture_node.outputs[0])
-        # create tangent normal map converter and link to it
-        tangent_converter = nodes.new("ShaderNodeNormalMap")
-        self.tree.links.new(tangent_converter.inputs[1], group_node.outputs[0])
-        # link to the diffuse shader
-        self.tree.links.new(self.diffuse_shader.inputs[2], tangent_converter.outputs[0])
+        if self.b_mat.niftools_shader.slsf_1_model_space_normals:
+            self.tree.links.new(self.diffuse_shader.inputs[2], group_node.outputs[0])
+        else:
+            # create tangent normal map converter and link to it
+            tangent_converter = nodes.new("ShaderNodeNormalMap")
+            self.tree.links.new(tangent_converter.inputs[1], group_node.outputs[0])
+            self.tree.links.new(self.diffuse_shader.inputs[2], tangent_converter.outputs[0])
         # # Influence mapping
         # b_texture_node.texture.use_normal_map = True  # causes artifacts otherwise.
         #

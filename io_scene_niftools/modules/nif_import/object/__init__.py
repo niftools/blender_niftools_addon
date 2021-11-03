@@ -56,7 +56,7 @@ class Object:
     def create_b_obj(n_block, b_obj_data, name=""):
         """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""
         # get the actual nif name
-        n_name = n_block.name.decode() if n_block else ""
+        n_name = block_store.import_name(n_block)
         if name:
             n_name = name
         # let blender choose a name
