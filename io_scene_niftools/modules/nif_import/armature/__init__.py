@@ -319,6 +319,9 @@ class Armature:
             NifLog.debug(f"{n_block.name} has skinning.")
             # one is enough to require an armature, so stop
             return
+        # force import of nodes as bones, even if no geometries are present
+        if NifOp.props.process == "SKELETON_ONLY":
+            self.skinned = True
         NifLog.debug(f"Found no skinned geometries.")
 
     def is_bone(self, ni_block):
