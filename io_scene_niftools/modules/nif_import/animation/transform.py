@@ -74,11 +74,32 @@ class TransformAnimation(Animation):
         self.import_kf_root = singledispatch(self.import_kf_root)
         self.import_kf_root.register(NifFormat.NiControllerSequence, self.import_controller_sequence)
         self.import_kf_root.register(NifFormat.NiSequenceStreamHelper, self.import_sequence_stream_helper)
+        self.import_kf_root.register(NifFormat.NiSequenceData, self.import_sequence_data)
 
     def import_kf_root(self, kf_root, b_armature_obj, bind_data):
         """Base method to warn user that this root type is not supported"""
         NifLog.warn(f"Unknown KF root block found : {kf_root.name:s}")
         NifLog.warn(f"This type isn't currently supported: {type(kf_root)}")
+
+    def import_sequence_data(self, kf_root, b_armature_obj, bind_data):
+        NifLog.debug('Importing NiSequenceData...')
+        b_action = self.create_action(b_armature_obj, kf_root.name.decode(), retrieve=False)
+        # import text keys
+        self.import_text_keys(kf_root, b_action)
+        for evaluator in kf_root.evaluators:
+            # get bone name
+            n_name = evaluator.node_name
+            bone_name = block_registry.get_bone_name_for_blender(n_name)
+            if bone_name not in b_armature_obj.data.bones:
+                continue
+            # import animation
+            if bone_name in bind_data:
+                niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
+                self.import_keyframe_controller(evaluator, b_armature_obj, bone_name, niBone_bind_scale,
+                                                niBone_bind_rot_inv, niBone_bind_trans)
+        if kf_root.cycle_type:
+            extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
+            self.set_extrapolation(extend, b_action.fcurves)
 
     def import_sequence_stream_helper(self, kf_root, b_armature_obj, bind_data):
         NifLog.debug('Importing NiSequenceStreamHelper...')
