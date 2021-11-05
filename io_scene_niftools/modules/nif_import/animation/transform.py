@@ -263,10 +263,7 @@ class TransformAnimation(Animation):
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""
         # find keyframe controller
-        n_kfc = math.find_controller(n_block, NifFormat.NiKeyframeController)
-        # try again
-        if not n_kfc:
-            n_kfc = math.find_controller(n_block, NifFormat.NiTransformController)
+        n_kfc = math.find_controller(n_block, (NifFormat.NiKeyframeController, NifFormat.NiTransformController))
         if n_kfc:
             # skeletal animation
             if bone_name:

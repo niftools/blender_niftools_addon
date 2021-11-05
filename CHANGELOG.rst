@@ -1,6 +1,13 @@
 Version v0.0.10
 ==============
 
+- #465 Remove trailing dots for descriptions and UI items
+   - Fixes #246 - UI Registration : RNA_def_property_ui_text description ends in '.'
+
+- #463 Fixes for the animation system
+   - Fixes #432 - Oblivion animation exported, NifSkope error: "<empty>"
+   - Fixes #458 - Store rest transform on NiTransformInterpolator
+   - Fixes #464 - Animation Import Fails
 
 Version v0.0.9
 ==============

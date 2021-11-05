@@ -50,7 +50,7 @@ class ObjectAnimation(Animation):
         """Import vis controller for blender object."""
 
         n_vis_ctrl = math.find_controller(n_node, NifFormat.NiVisController)
-        if not (n_vis_ctrl and n_vis_ctrl.data):
+        if not n_vis_ctrl:
             return
         NifLog.info("Importing vis controller")
 

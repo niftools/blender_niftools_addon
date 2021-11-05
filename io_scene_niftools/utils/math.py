@@ -183,9 +183,9 @@ def find_controller(n_block, controller_type):
     ctrl = n_block.controller
     while ctrl:
         if isinstance(ctrl, controller_type):
-            break
+            if ctrl.data:
+                return ctrl
         ctrl = ctrl.next_controller
-    return ctrl
 
 
 def find_extra(n_block, extratype):
