@@ -170,13 +170,13 @@ class Animation(ABC):
                 controlled_block.controller_type_offset = palette.add_string(controlled_block.controller_type)
         # morrowind style
         elif isinstance(parent_block, NifFormat.NiSequenceStreamHelper):
-                # create node reference by name
-                nodename_extra = block_store.create_block("NiStringExtraData")
-                nodename_extra.bytes_remaining = len(target_name) + 4
-                nodename_extra.string_data = target_name
-                # the controllers and extra datas form a chain down from the kf root
-                parent_block.add_extra_data(nodename_extra)
-                parent_block.add_controller(n_kfc)
+            # create node reference by name
+            nodename_extra = block_store.create_block("NiStringExtraData")
+            nodename_extra.bytes_remaining = len(target_name) + 4
+            nodename_extra.string_data = target_name
+            # the controllers and extra datas form a chain down from the kf root
+            parent_block.add_extra_data(nodename_extra)
+            parent_block.add_controller(n_kfc)
         else:
             raise NifError("Unsupported KeyframeController parent!")
         
