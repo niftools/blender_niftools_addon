@@ -46,6 +46,7 @@ from pyffi.formats.nif import NifFormat
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.modules.nif_import.object import block_registry
 from io_scene_niftools.utils import math
+from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.logging import NifLog
 
 
@@ -78,18 +79,19 @@ class TransformAnimation(Animation):
 
     def import_kf_root(self, kf_root, b_armature_obj, bind_data):
         """Base method to warn user that this root type is not supported"""
-        NifLog.warn(f"Unknown KF root block found : {kf_root.name:s}")
+        NifLog.warn(f"Unknown KF root block found : {safe_decode(kf_root.name)}")
         NifLog.warn(f"This type isn't currently supported: {type(kf_root)}")
 
+    def import_generic_kf_root(self, kf_root, b_armature_obj):
+        NifLog.debug(f'Importing {type(kf_root)}...')
+        return self.create_action(b_armature_obj, safe_decode(kf_root.name), retrieve=False)
+
     def import_sequence_data(self, kf_root, b_armature_obj, bind_data):
-        NifLog.debug('Importing NiSequenceData...')
-        b_action = self.create_action(b_armature_obj, kf_root.name.decode(), retrieve=False)
+        b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
         # import text keys
         self.import_text_keys(kf_root, b_action)
         for evaluator in kf_root.evaluators:
-            # get bone name
-            n_name = evaluator.node_name
-            bone_name = block_registry.get_bone_name_for_blender(n_name)
+            bone_name = block_registry.get_bone_name_for_blender(evaluator.node_name)
             if bone_name not in b_armature_obj.data.bones:
                 continue
             # import animation
@@ -102,8 +104,7 @@ class TransformAnimation(Animation):
             self.set_extrapolation(extend, b_action.fcurves)
 
     def import_sequence_stream_helper(self, kf_root, b_armature_obj, bind_data):
-        NifLog.debug('Importing NiSequenceStreamHelper...')
-        b_action = self.create_action(b_armature_obj, kf_root.name.decode(), retrieve=False)
+        b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
         # import parallel trees of extra datas and keyframe controllers
         extra = kf_root.extra_data
         controller = kf_root.controller
@@ -116,8 +117,7 @@ class TransformAnimation(Animation):
             # grabe the node name from string data
             bone_name = None
             if isinstance(extra, NifFormat.NiStringExtraData):
-                node_name = extra.string_data.decode()
-                bone_name = block_registry.get_bone_name_for_blender(node_name)
+                bone_name = block_registry.get_bone_name_for_blender(extra.string_data)
             # import keyframe controller
             if bone_name in bind_data:
                 niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
@@ -128,8 +128,7 @@ class TransformAnimation(Animation):
             controller = controller.next_controller
 
     def import_controller_sequence(self, kf_root, b_armature_obj, bind_data):
-        NifLog.debug('Importing NiControllerSequence...')
-        b_action = self.create_action(b_armature_obj, kf_root.name.decode(), retrieve=False)
+        b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
 
         # import text keys
         self.import_text_keys(kf_root, b_action)
@@ -168,7 +167,7 @@ class TransformAnimation(Animation):
     # TODO [animation] Is scale param required or can be removed, not used
     def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None, n_bone_bind_scale=None, n_bone_bind_rot_inv=None, n_bone_bind_trans=None):
 
-        NifLog.debug('Importing keyframe controller for'+b_obj.name)
+        NifLog.debug(f'Importing keyframe controller for {b_obj.name}')
 
         b_action = b_obj.animation_data.action
 
