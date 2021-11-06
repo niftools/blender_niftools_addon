@@ -44,7 +44,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import math
+from io_scene_niftools.utils import math, consts
 from io_scene_niftools.utils.logging import NifError, NifLog
 
 
@@ -298,3 +298,17 @@ class TransformAnimation(Animation):
                 NifLog.warn(f"Marker out of animated range ({f} not between [{f0}, {f1}])")
             key.time = f / self.fps
             key.value = marker.name.replace('/', '\r\n')
+
+    def add_dummy_controllers(self):
+        NifLog.info("Adding controllers and interpolators for skeleton")
+        # note: block_store.block_to_obj changes during iteration, so need list copy
+        for n_block in list(block_store.block_to_obj.keys()):
+            if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
+                for n_bone in n_block.tree(block_type=NifFormat.NiNode):
+                    n_kfc, n_kfi = self.transform_anim.create_controller(n_bone, n_bone.name.decode())
+                    # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
+                    n_kfc.flags = 12
+                    n_kfc.frequency = 1.0
+                    n_kfc.phase = 0.0
+                    n_kfc.start_time = consts.FLOAT_MAX
+                    n_kfc.stop_time = consts.FLOAT_MIN

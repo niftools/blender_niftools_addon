@@ -45,8 +45,6 @@ from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog, NifError
 
-# FPS = 30
-
 
 class Animation(ABC):
 

@@ -166,26 +166,7 @@ class NifExport(NifCommon):
 
             # oblivion skeleton export: check that all bones have a transform controller and transform interpolator
             if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
-
-                # TODO [armature] Extract out to armature animation
-                # here comes everything that is Oblivion skeleton export specific
-                NifLog.info("Adding controllers and interpolators for skeleton")
-                # note: block_store.block_to_obj changes during iteration, so need list copy
-                for n_block in list(block_store.block_to_obj.keys()):
-                    if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
-                        for n_bone in n_block.tree(block_type=NifFormat.NiNode):
-                            n_kfc, n_kfi = self.transform_anim.create_controller(n_bone, n_bone.name.decode())
-                            # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
-                            n_kfc.flags = 12
-                            n_kfc.frequency = 1.0
-                            n_kfc.phase = 0.0
-                            n_kfc.start_time = consts.FLOAT_MAX
-                            n_kfc.stop_time = consts.FLOAT_MIN
-            else:
-                # here comes everything that should be exported EXCEPT for Oblivion skeleton exports
-                # export animation groups (not for skeleton.nif export!)
-                # anim_textextra = self.animation_helper.export_text_keys(b_action)
-                pass
+                self.transform_anim.add_dummy_controllers()
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
             # note: block_store.block_to_obj changes during iteration, so need list copy
