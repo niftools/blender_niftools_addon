@@ -96,7 +96,6 @@ class TransformAnimation(Animation):
 
     def import_sequence_data(self, kf_root, b_armature_obj):
         b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
-        # import text keys
         self.import_text_keys(kf_root, b_action)
         for evaluator in kf_root.evaluators:
             bone_name = block_registry.get_bone_name_for_blender(evaluator.node_name)
@@ -129,10 +128,7 @@ class TransformAnimation(Animation):
 
     def import_controller_sequence(self, kf_root, b_armature_obj):
         b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
-        # import text keys
         self.import_text_keys(kf_root, b_action)
-
-        # go over all controlled blocks (NiKeyframeController)
         for controlledblock in kf_root.controlled_blocks:
             # get bone name
             # todo [pyffi] fixed get_node_name() is up, make release and clean up here
