@@ -353,7 +353,7 @@ class BhkCollision(Collision):
             unk_8[6] = 253
             unk_8[7] = 4
 
-            hktf = mathutils.Matrix(math.get_object_matrix(b_obj).as_list())
+            hktf = math.get_object_bind(b_obj)
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
 
@@ -448,7 +448,7 @@ class BhkCollision(Collision):
 
         elif collision_shape == 'CONVEX_HULL':
             b_mesh = b_obj.data
-            b_transform_mat = mathutils.Matrix(math.get_object_matrix(b_obj).as_list())
+            b_transform_mat = math.get_object_bind(b_obj)
 
             b_rot_quat = b_transform_mat.decompose()[1]
             b_scale_vec = b_transform_mat.decompose()[0]
@@ -519,7 +519,7 @@ class BhkCollision(Collision):
             #     raise ValueError('Not a packed list of collisions')
 
         b_mesh = b_obj.data
-        transform = mathutils.Matrix(math.get_object_matrix(b_obj).as_list())
+        transform = math.get_object_bind(b_obj)
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in b_mesh.vertices]

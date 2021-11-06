@@ -80,7 +80,7 @@ def export_keymat(rest_rot, key_matrix, bone):
         return rest_rot @ key_matrix
 
 
-def get_bind_matrix(bone):
+def _get_bone_bind(bone):
     """Get a nif local-space matrix from a blender bone. """
     bind = bone.matrix_local @ correction
     # make relative to parent
@@ -137,17 +137,14 @@ def get_armature():
 
 def get_object_bind(b_obj):
     """Get the bind matrix of a blender object.
-
     Returns the final NIF matrix for the given blender object.
-    Blender space and axes order are corrected for the NIF.
+    Blender space and axes order are corrected for the NIF for bones.
     Returns a 4x4 mathutils.Matrix()
     """
 
     if isinstance(b_obj, bpy.types.Bone):
-        return get_bind_matrix(b_obj)
-
+        return _get_bone_bind(b_obj)
     elif isinstance(b_obj, bpy.types.Object):
-
         # TODO [armature] Move to armaturehelper
         # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
         if b_obj.parent_bone:

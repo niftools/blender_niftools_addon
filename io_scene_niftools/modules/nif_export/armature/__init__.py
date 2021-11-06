@@ -41,8 +41,6 @@ from io_scene_niftools.modules.nif_export import types
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import math
-from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifLog
 from pyffi.formats.nif import NifFormat
 
 
@@ -51,8 +49,8 @@ def get_bind_data(b_armature):
     bind_data = {}
     if b_armature:
         for b_bone in b_armature.data.bones:
-            n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = math.decompose_srt(math.get_bind_matrix(b_bone))
-            bind_data[b_bone.name] = (n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
+            n_bind_scale, n_bind_rot, n_bind_trans = math.decompose_srt(math.get_object_bind(b_bone))
+            bind_data[b_bone.name] = (n_bind_scale, n_bind_rot.inverted(), n_bind_trans)
     return bind_data
 
 
