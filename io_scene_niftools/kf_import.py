@@ -72,7 +72,7 @@ class KfImport(NifCommon):
             math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
 
             # get nif space bind pose of armature here for all anims
-            bind_data = armature.get_bind_data(b_armature)
+            self.transform_anim.get_bind_data(b_armature)
             for kf_file in kf_files:
                 kfdata = KFFile.load_kf(kf_file)
 
@@ -81,7 +81,7 @@ class KfImport(NifCommon):
                 # calculate and set frames per second
                 self.transform_anim.set_frames_per_second(kfdata.roots)
                 for kf_root in kfdata.roots:
-                    self.transform_anim.import_kf_root(kf_root, b_armature, bind_data)
+                    self.transform_anim.import_kf_root(kf_root, b_armature)
 
         except NifError:
             return {'CANCELLED'}

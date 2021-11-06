@@ -207,7 +207,8 @@ class Armature:
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes and store the bones' long names.
         if NifOp.props.animation:
-            self.transform_anim.create_action(b_armature_obj, armature_name + "-Anim")
+            self.transform_anim.get_bind_data(b_armature_obj)
+            self.transform_anim.create_action(b_armature_obj, f"{armature_name}_Anim")
 
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]

@@ -44,16 +44,6 @@ from io_scene_niftools.utils import math
 from pyffi.formats.nif import NifFormat
 
 
-def get_bind_data(b_armature):
-    """Get the required bind data of an armature. Used by standalone KF import and export. """
-    bind_data = {}
-    if b_armature:
-        for b_bone in b_armature.data.bones:
-            n_bind_scale, n_bind_rot, n_bind_trans = math.decompose_srt(math.get_object_bind(b_bone))
-            bind_data[b_bone.name] = (n_bind_scale, n_bind_rot.inverted(), n_bind_trans)
-    return bind_data
-
-
 class Armature:
 
     def __init__(self):

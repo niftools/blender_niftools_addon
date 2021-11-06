@@ -77,7 +77,15 @@ class TransformAnimation(Animation):
         self.import_kf_root.register(NifFormat.NiSequenceStreamHelper, self.import_sequence_stream_helper)
         self.import_kf_root.register(NifFormat.NiSequenceData, self.import_sequence_data)
 
-    def import_kf_root(self, kf_root, b_armature_obj, bind_data):
+    def get_bind_data(self, b_armature):
+        """Get the required bind data of an armature. Used by standalone KF import and export. """
+        self.bind_data = {}
+        if b_armature:
+            for b_bone in b_armature.data.bones:
+                n_bind_scale, n_bind_rot, n_bind_trans = math.decompose_srt(math.get_object_bind(b_bone))
+                self.bind_data[b_bone.name] = (n_bind_rot.inverted(), n_bind_trans)
+
+    def import_kf_root(self, kf_root, b_armature_obj):
         """Base method to warn user that this root type is not supported"""
         NifLog.warn(f"Unknown KF root block found : {safe_decode(kf_root.name)}")
         NifLog.warn(f"This type isn't currently supported: {type(kf_root)}")
@@ -86,7 +94,7 @@ class TransformAnimation(Animation):
         NifLog.debug(f'Importing {type(kf_root)}...')
         return self.create_action(b_armature_obj, safe_decode(kf_root.name), retrieve=False)
 
-    def import_sequence_data(self, kf_root, b_armature_obj, bind_data):
+    def import_sequence_data(self, kf_root, b_armature_obj):
         b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
         # import text keys
         self.import_text_keys(kf_root, b_action)
@@ -94,15 +102,12 @@ class TransformAnimation(Animation):
             bone_name = block_registry.get_bone_name_for_blender(evaluator.node_name)
             if bone_name not in b_armature_obj.data.bones:
                 continue
-            # import animation
-            if bone_name in bind_data:
-                n_bind_scale, n_bind_rot_inv, n_bind_trans = bind_data[bone_name]
-                self.import_keyframe_controller(evaluator, b_armature_obj, bone_name, n_bind_rot_inv, n_bind_trans)
+            self.import_keyframe_controller(evaluator, b_armature_obj, bone_name)
         if kf_root.cycle_type:
             extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
             self.set_extrapolation(extend, b_action.fcurves)
 
-    def import_sequence_stream_helper(self, kf_root, b_armature_obj, bind_data):
+    def import_sequence_stream_helper(self, kf_root, b_armature_obj):
         b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
         # import parallel trees of extra datas and keyframe controllers
         extra = kf_root.extra_data
@@ -117,15 +122,12 @@ class TransformAnimation(Animation):
             bone_name = None
             if isinstance(extra, NifFormat.NiStringExtraData):
                 bone_name = block_registry.get_bone_name_for_blender(extra.string_data)
-            # import keyframe controller
-            if bone_name in bind_data:
-                n_bind_scale, n_bind_rot_inv, n_bind_trans = bind_data[bone_name]
-                self.import_keyframe_controller(controller, b_armature_obj, bone_name, n_bind_rot_inv, n_bind_trans)
+            self.import_keyframe_controller(controller, b_armature_obj, bone_name)
             # grab next pair of extra and controller
             extra = extra.next_extra_data
             controller = controller.next_controller
 
-    def import_controller_sequence(self, kf_root, b_armature_obj, bind_data):
+    def import_controller_sequence(self, kf_root, b_armature_obj):
         b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
         # import text keys
         self.import_text_keys(kf_root, b_action)
@@ -151,20 +153,22 @@ class TransformAnimation(Animation):
             if not kfc:
                 kfc = controlledblock.interpolator
             if kfc:
-                if bone_name in bind_data:
-                    n_bind_scale, n_bind_rot_inv, n_bind_trans = bind_data[bone_name]
-                    self.import_keyframe_controller(kfc, b_armature_obj, bone_name, n_bind_rot_inv, n_bind_trans)
+                self.import_keyframe_controller(kfc, b_armature_obj, bone_name)
         # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
         if kf_root.cycle_type:
             extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
             self.set_extrapolation(extend, b_action.fcurves)
 
-    def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None, n_bind_rot_inv=None, n_bind_trans=None):
+    def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None):
         NifLog.debug(f'Importing keyframe controller for {b_obj.name}')
         b_action = b_obj.animation_data.action
 
         if bone_name:
             b_obj = b_obj.pose.bones[bone_name]
+            if bone_name in self.bind_data:
+                n_bind_rot_inv, n_bind_trans = self.bind_data[bone_name]
+            else:
+                return
 
         translations = []
         scales = []
@@ -279,11 +283,8 @@ class TransformAnimation(Animation):
         if n_kfc:
             # skeletal animation
             if bone_name:
-                # todo - use bind pose from armature module!!!
-                bone_bm = math.import_matrix(n_block)
-                n_bind_scale, n_bind_rot, n_bind_trans = math.decompose_srt(bone_bm)
-                self.import_keyframe_controller(n_kfc, b_obj, bone_name, n_bind_rot.inverted(), n_bind_trans)
+                self.import_keyframe_controller(n_kfc, b_obj, bone_name)
             # object-level animation
             else:
-                self.create_action(b_obj, b_obj.name + "-Anim")
+                self.create_action(b_obj, f"{b_obj.name}_Anim")
                 self.import_keyframe_controller(n_kfc, b_obj)
