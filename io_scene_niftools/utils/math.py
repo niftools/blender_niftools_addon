@@ -81,8 +81,9 @@ def export_keymat(rest_rot, key_matrix, bone):
 
 
 def get_bind_matrix(bone):
-    """Get a nif armature-space matrix from a blender bone. """
+    """Get a nif local-space matrix from a blender bone. """
     bind = bone.matrix_local @ correction
+    # make relative to parent
     if bone.parent:
         p_bind_restored = bone.parent.matrix_local @ correction
         bind = p_bind_restored.inverted() @ bind
