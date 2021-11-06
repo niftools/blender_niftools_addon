@@ -145,7 +145,7 @@ class TransformAnimation(Animation):
             bind_matrix = math.get_object_bind(bone)
             exp_fcurves = b_action.groups[bone.name].channels
             # just for more detailed error reporting later on
-            bonestr = " in bone " + bone.name
+            bonestr = f" in bone {bone.name}"
             target_name = block_store.get_full_name(bone)
             priority = bone.niftools.priority
 
