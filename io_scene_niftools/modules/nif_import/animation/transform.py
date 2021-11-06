@@ -96,9 +96,8 @@ class TransformAnimation(Animation):
                 continue
             # import animation
             if bone_name in bind_data:
-                niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
-                self.import_keyframe_controller(evaluator, b_armature_obj, bone_name, niBone_bind_scale,
-                                                niBone_bind_rot_inv, niBone_bind_trans)
+                n_bind_scale, n_bind_rot_inv, n_bind_trans = bind_data[bone_name]
+                self.import_keyframe_controller(evaluator, b_armature_obj, bone_name, n_bind_rot_inv, n_bind_trans)
         if kf_root.cycle_type:
             extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
             self.set_extrapolation(extend, b_action.fcurves)
@@ -120,16 +119,14 @@ class TransformAnimation(Animation):
                 bone_name = block_registry.get_bone_name_for_blender(extra.string_data)
             # import keyframe controller
             if bone_name in bind_data:
-                niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
-                self.import_keyframe_controller(controller, b_armature_obj, bone_name, niBone_bind_scale,
-                                                    niBone_bind_rot_inv, niBone_bind_trans)
+                n_bind_scale, n_bind_rot_inv, n_bind_trans = bind_data[bone_name]
+                self.import_keyframe_controller(controller, b_armature_obj, bone_name, n_bind_rot_inv, n_bind_trans)
             # grab next pair of extra and controller
             extra = extra.next_extra_data
             controller = controller.next_controller
 
     def import_controller_sequence(self, kf_root, b_armature_obj, bind_data):
         b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
-
         # import text keys
         self.import_text_keys(kf_root, b_action)
 
@@ -148,27 +145,22 @@ class TransformAnimation(Animation):
             b_bone = b_armature_obj.data.bones[bone_name]
             # import bone priority
             b_bone.niftools.priority = controlledblock.priority
-            # import animation
-            if bone_name in bind_data:
-                niBone_bind_scale, niBone_bind_rot_inv, niBone_bind_trans = bind_data[bone_name]
-                # ZT2
-                kfc = controlledblock.controller
-                # fallout, Loki
-                if not kfc:
-                    kfc = controlledblock.interpolator
-                if kfc:
-                    self.import_keyframe_controller(kfc, b_armature_obj, bone_name, niBone_bind_scale,
-                                                    niBone_bind_rot_inv, niBone_bind_trans)
+            # ZT2
+            kfc = controlledblock.controller
+            # fallout, Loki
+            if not kfc:
+                kfc = controlledblock.interpolator
+            if kfc:
+                if bone_name in bind_data:
+                    n_bind_scale, n_bind_rot_inv, n_bind_trans = bind_data[bone_name]
+                    self.import_keyframe_controller(kfc, b_armature_obj, bone_name, n_bind_rot_inv, n_bind_trans)
         # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
         if kf_root.cycle_type:
             extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
             self.set_extrapolation(extend, b_action.fcurves)
 
-    # TODO [animation] Is scale param required or can be removed, not used
-    def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None, n_bone_bind_scale=None, n_bone_bind_rot_inv=None, n_bone_bind_trans=None):
-
+    def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None, n_bind_rot_inv=None, n_bind_trans=None):
         NifLog.debug(f'Importing keyframe controller for {b_obj.name}')
-
         b_action = b_obj.animation_data.action
 
         if bone_name:
@@ -248,14 +240,14 @@ class TransformAnimation(Animation):
         # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
         else:
             flags = None
-        
+
         if eulers:
             NifLog.debug('Rotation keys..(euler)')
             fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
             for t, val in eulers:
                 key = mathutils.Euler(val)
                 if bone_name:
-                    key = math.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
+                    key = math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
                 self.add_key(fcurves, t, key, interp_rot)
         elif rotations:
             NifLog.debug('Rotation keys...(quaternions)')
@@ -263,7 +255,7 @@ class TransformAnimation(Animation):
             for t, val in rotations:
                 key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
                 if bone_name:
-                    key = math.import_keymat(n_bone_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
+                    key = math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
                 self.add_key(fcurves, t, key, interp_rot)
         if translations:
             NifLog.debug('Translation keys...')
@@ -271,7 +263,7 @@ class TransformAnimation(Animation):
             for t, val in translations:
                 key = mathutils.Vector([val.x, val.y, val.z])
                 if bone_name:
-                    key = math.import_keymat(n_bone_bind_rot_inv, mathutils.Matrix.Translation(key - n_bone_bind_trans)).to_translation()
+                    key = math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
                 self.add_key(fcurves, t, key, interp_loc)
         if scales:
             NifLog.debug('Scale keys...')
@@ -287,9 +279,10 @@ class TransformAnimation(Animation):
         if n_kfc:
             # skeletal animation
             if bone_name:
-                bone_bm = math.import_matrix(n_block)  # base pose
-                n_bone_bind_scale, n_bone_bind_rot, n_bone_bind_trans = math.decompose_srt(bone_bm)
-                self.import_keyframe_controller(n_kfc, b_obj, bone_name, n_bone_bind_scale, n_bone_bind_rot.inverted(), n_bone_bind_trans)
+                # todo - use bind pose from armature module!!!
+                bone_bm = math.import_matrix(n_block)
+                n_bind_scale, n_bind_rot, n_bind_trans = math.decompose_srt(bone_bm)
+                self.import_keyframe_controller(n_kfc, b_obj, bone_name, n_bind_rot.inverted(), n_bind_trans)
             # object-level animation
             else:
                 self.create_action(b_obj, b_obj.name + "-Anim")
