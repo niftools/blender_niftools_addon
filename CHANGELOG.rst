@@ -1,5 +1,11 @@
+Version v0.0.12
+==============
+
+
+
 Version v0.0.11
 ==============
+
 - #469 Shader flags and BSLightingShaderProperty updates, and minor fixes.
  - Normals are not exported when using a face tint.
  - Added hair tint import/export.
@@ -11,11 +17,10 @@ Version v0.0.11
  - Fixed issue where export would error if the root object was a mesh object.
  - Changed shader flag UI/transference to be dynamic, rather than using hardcoded keys.
  - Changed use of is in comparison with string literals.
- - Remove default=0 from collision_layer EnumProperty definition.
  - Changed armature export: no longer sets pose to bind pose, and pose gets exported.
  - Tangent space converter is not added when model_space_normal shader flag is present in nif.
-
- - Closes #470
+ - Remove default=0 from collision_layer EnumProperty definition.
+    - Fixes #470 - Unable to import Skyrim SE NIFF on Blender 2.93.5 with version 0.0.10
 
 Version v0.0.10
 ==============
