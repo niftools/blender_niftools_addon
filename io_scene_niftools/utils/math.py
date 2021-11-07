@@ -90,6 +90,16 @@ def _get_bone_bind(bone):
     return bind
 
 
+def _get_bone_pose(bone):
+    """Get a nif local-space matrix from a blender pose bone. """
+    bind = bone.matrix @ correction
+    # make relative to parent
+    if bone.parent:
+        p_bind_restored = bone.parent.matrix @ correction
+        bind = p_bind_restored.inverted() @ bind
+    return bind
+
+
 def blender_bind_to_nif_bind(blender_armature_space_matrix):
     return blender_armature_space_matrix @ correction
 
@@ -144,6 +154,8 @@ def get_object_bind(b_obj):
 
     if isinstance(b_obj, bpy.types.Bone):
         return _get_bone_bind(b_obj)
+    elif isinstance(b_obj, bpy.types.PoseBone):
+        return _get_bone_pose(b_obj)
     elif isinstance(b_obj, bpy.types.Object):
         # TODO [armature] Move to armaturehelper
         # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head

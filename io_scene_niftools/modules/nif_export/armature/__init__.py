@@ -41,7 +41,6 @@ from io_scene_niftools.modules.nif_export import types
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import math
-from pyffi.formats.nif import NifFormat
 
 
 class Armature:
@@ -59,6 +58,7 @@ class Armature:
         # export the bones as NiNodes, starting from root bones
         old_position = b_obj.data.pose_position
         b_obj.data.pose_position = 'POSE'
+        # start export with root bones
         for b_bone in b_obj.data.bones.values():
             if not b_bone.parent:
                 self.export_bone(b_obj, b_bone, n_root_node, n_root_node)
@@ -74,11 +74,8 @@ class Armature:
 
         self.export_bone_flags(b_bone, n_node)
         # set the pose on the nodes
-        nif_matrix = NifFormat.Matrix44()
-        nif_matrix.set_rows(*math.blender_bind_to_nif_bind(b_obj.pose.bones[b_bone.name].matrix).transposed())
-        # make the transform relative to the parent, rather than the armature
-        nif_matrix *= n_parent_node.get_transform(n_root_node).get_inverse(fast=False)
-        n_node.set_transform(nif_matrix)
+        p_mat = math.get_object_bind(b_obj.pose.bones[b_bone.name])
+        math.set_b_matrix_to_n_block(p_mat, n_node)
 
         # per-bone animation
         self.transform_anim.export_transforms(n_node, b_obj, self.b_action, b_bone)
