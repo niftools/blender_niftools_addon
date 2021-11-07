@@ -1,7 +1,7 @@
 Version v0.0.12
 ==============
 
-
+- #176 - Number of bones in a partition
 
 Version v0.0.11
 ==============
