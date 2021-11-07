@@ -43,6 +43,7 @@ from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
+from pyffi.formats.nif import NifFormat
 
 
 def get_bind_data(b_armature):
@@ -68,11 +69,14 @@ class Armature:
         self.b_action = self.transform_anim.get_active_action(b_obj)
         # the armature b_obj was already exported as a NiNode ("Scene Root") n_root_node
         # export the bones as NiNodes, starting from root bones
+        old_position = b_obj.data.pose_position
+        b_obj.data.pose_position = 'POSE'
         for b_bone in b_obj.data.bones.values():
             if not b_bone.parent:
-                self.export_bone(b_obj, b_bone, n_root_node)
+                self.export_bone(b_obj, b_bone, n_root_node, n_root_node)
+        b_obj.data.pose_position = old_position
 
-    def export_bone(self, b_obj, b_bone, n_parent_node):
+    def export_bone(self, b_obj, b_bone, n_parent_node, n_root_node):
         """Exports a bone and all of its children."""
         # create a new nif block for this b_bone
         n_node = types.create_ninode(b_bone)
@@ -81,14 +85,18 @@ class Armature:
         n_parent_node.add_child(n_node)
 
         self.export_bone_flags(b_bone, n_node)
-        # rest pose
-        math.set_object_matrix(b_bone, n_node)
+        # set the pose on the nodes
+        nif_matrix = NifFormat.Matrix44()
+        nif_matrix.set_rows(*math.blender_bind_to_nif_bind(b_obj.pose.bones[b_bone.name].matrix).transposed())
+        # make the transform relative to the parent, rather than the armature
+        nif_matrix *= n_parent_node.get_transform(n_root_node).get_inverse(fast=False)
+        n_node.set_transform(nif_matrix)
 
         # per-bone animation
         self.transform_anim.export_transforms(n_node, b_obj, self.b_action, b_bone)
         # continue down the bone tree
         for b_child in b_bone.children:
-            self.export_bone(b_obj, b_child, n_node)
+            self.export_bone(b_obj, b_child, n_node, n_root_node)
 
     def export_bone_flags(self, b_bone, n_node):
         """Exports or sets the flags according to the custom data in b_bone or the game version if none was set"""

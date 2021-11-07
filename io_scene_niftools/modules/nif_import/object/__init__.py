@@ -56,7 +56,7 @@ class Object:
     def create_b_obj(n_block, b_obj_data, name=""):
         """Helper function to create a b_obj from b_obj_data, link it to the current scene, make it active and select it."""
         # get the actual nif name
-        n_name = n_block.name.decode() if n_block else ""
+        n_name = block_store.import_name(n_block)
         if name:
             n_name = name
         # let blender choose a name
@@ -147,13 +147,26 @@ class Object:
         if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
             cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
             b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+        if n_block.is_skin():
+            skininst = n_block.skin_instance
+            skelroot = skininst.skeleton_root
+            b_obj.niftools.skeleton_root = block_store.import_name(skelroot)
 
     @staticmethod
     def append_armature_modifier(b_obj, b_armature):
-        """Append an armature modifier for the object."""
+        """Append an armature modifier to the object."""
+        b_obj.parent = b_armature
         if b_obj and b_armature:
             armature_name = b_armature.name
             b_mod = b_obj.modifiers.new(armature_name, 'ARMATURE')
             b_mod.object = b_armature
             b_mod.use_bone_envelopes = False
             b_mod.use_vertex_groups = True
+
+    @staticmethod
+    def remove_armature_modifier(b_obj):
+        """Remove armature modifier from the object."""
+        for mod in b_obj.modifiers:
+            if mod.type == "ARMATURE":
+                b_obj.modifiers.remove(mod)
+

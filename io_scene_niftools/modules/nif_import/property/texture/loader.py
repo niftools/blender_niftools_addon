@@ -262,6 +262,12 @@ class TextureLoader:
 
         # go through all texture search paths
         for texdir in search_path_list:
+            if texdir[0:2] == "//":
+                # Blender-specific directory, slows down resolve_ncase:
+                relative = True
+                texdir = texdir[2:]
+            else:
+                relative = False
             texdir = texdir.replace('\\', os.sep)
             texdir = texdir.replace('/', os.sep)
             # go through all possible file names, try alternate extensions too; for linux, also try lower case versions of filenames
@@ -281,10 +287,15 @@ class TextureLoader:
                     tex = os.path.join(texdir, texfn)
 
                 # "ignore case" on linuxW
+                if relative:
+                    tex = bpy.path.abspath("//" + tex)
                 tex = bpy.path.resolve_ncase(tex)
                 NifLog.debug(f"Searching {tex}")
                 if os.path.exists(tex):
-                    return self.load_image(tex)
+                    if relative:
+                        return self.load_image(bpy.path.relpath(tex))
+                    else:
+                        return self.load_image(tex)
 
         else:
             tex = fn

@@ -82,15 +82,19 @@ def export_keymat(rest_rot, key_matrix, bone):
 
 def get_bind_matrix(bone):
     """Get a nif armature-space matrix from a blender bone. """
-    bind = correction @ correction_inv @ bone.matrix_local @ correction
+    bind = bone.matrix_local @ correction
     if bone.parent:
-        p_bind_restored = correction @ correction_inv @ bone.parent.matrix_local @ correction
+        p_bind_restored = bone.parent.matrix_local @ correction
         bind = p_bind_restored.inverted() @ bind
     return bind
 
 
+def blender_bind_to_nif_bind(blender_armature_space_matrix):
+    return blender_armature_space_matrix @ correction
+
+
 def nif_bind_to_blender_bind(nif_armature_space_matrix):
-    return correction_inv @ correction @ nif_armature_space_matrix @ correction_inv
+    return nif_armature_space_matrix @ correction_inv
 
 
 def import_matrix(n_block, relative_to=None):

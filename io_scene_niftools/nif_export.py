@@ -100,11 +100,7 @@ class NifExport(NifCommon):
                 return {'FINISHED'}
 
             for b_obj in self.exportable_objects:
-                # armatures should not be in rest position
-                if b_obj.type == 'ARMATURE':
-                    b_obj.data.pose_position = 'POSE'
-
-                elif b_obj.type == 'MESH':
+                if b_obj.type == 'MESH':
                     if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                         for b_mod in b_obj.modifiers:
                             if b_mod.type == 'ARMATURE' and b_mod.use_bone_envelopes:
@@ -113,7 +109,7 @@ class NifExport(NifCommon):
                                                f"convert their envelopes to vertex weights, and turn off envelopes.")
 
                 # check for non-uniform transforms
-                scale = b_obj.matrix_local.to_scale()
+                scale = b_obj.scale
                 if abs(scale.x - scale.y) > NifOp.props.epsilon or abs(scale.y - scale.z) > NifOp.props.epsilon:
                     NifLog.warn(f"Non-uniform scaling not supported.\n"
                                 f"Workaround: apply size and rotation (CTRL-A) on '{b_obj.name}'.")

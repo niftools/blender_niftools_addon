@@ -96,7 +96,7 @@ class NifImport(NifCommon):
             NifLog.info("Importing data")
             # calculate and set frames per second
             if NifOp.props.animation:
-                Animation.set_frames_per_second(NifData.data.roots)
+                self.transform_anim.set_frames_per_second(NifData.data.roots)
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
@@ -113,11 +113,10 @@ class NifImport(NifCommon):
             self.apply_scale(NifData.data, NifOp.props.scale_correction)
 
             # import all root blocks
-            for block in NifData.data.roots:
-                root = block
+            for root in NifData.data.roots:
                 # root hack for corrupt better bodies meshes and remove geometry from better bodies on skeleton import
-                for b in (b for b in block.tree() if isinstance(b, NifFormat.NiGeometry) and b.is_skin()):
-                    # check if root belongs to the children list of the skeleton root (can only happen for better bodies meshes)
+                for b in (b for b in root.tree(block_type=NifFormat.NiGeometry) if b.is_skin()):
+                    # check if root belongs to the children list of the skeleton root
                     if root in [c for c in b.skin_instance.skeleton_root.children]:
                         # fix parenting and update transform accordingly
                         b.skin_instance.data.set_transform(root.get_transform() * b.skin_instance.data.get_transform())
@@ -153,18 +152,8 @@ class NifImport(NifCommon):
         if isinstance(root_block, NifFormat.CStreamableAssetData):
             root_block = root_block.root
 
-        # sets the root block parent to None, so that when crawling back the script won't barf
-        root_block._parent = None
-
-        # set the block parent through the tree, to ensure I can always move backward
-        self.set_parents(root_block)
-
         # mark armature nodes and bones
-        self.armaturehelper.mark_armatures_bones(root_block)
-
-        # import the keyframe notes
-        # if NifOp.props.animation:
-        #     self.animationhelper.import_text_keys(root_block)
+        self.armaturehelper.check_for_skin(root_block)
 
         # read the NIF tree
         if isinstance(root_block, (NifFormat.NiNode, NifFormat.NiTriBasedGeom)):
@@ -176,13 +165,9 @@ class NifImport(NifCommon):
 
             # parent selected meshes to imported skeleton
             if NifOp.props.process == "SKELETON_ONLY":
-                # update parenting & armature modifier
-                for child in bpy.context.selected_objects:
-                    if isinstance(child, bpy.types.Object) and not isinstance(child.data, bpy.types.Armature):
-                        child.parent = b_obj
-                        for mod in child.modifiers:
-                            if mod.type == "ARMATURE":
-                                mod.object = b_obj
+                for b_child in self.SELECTED_OBJECTS:
+                    self.objecthelper.remove_armature_modifier(b_child)
+                    self.objecthelper.append_armature_modifier(b_child, b_obj)
 
         elif isinstance(root_block, NifFormat.NiCamera):
             NifLog.warn('Skipped NiCamera root')
@@ -202,12 +187,11 @@ class NifImport(NifCommon):
                 return self.boundhelper.import_bounding_volume(n_node.collision_object.bounding_volume)
         return []
 
-    def import_branch(self, n_block, b_armature=None, n_armature=None):
+    def import_branch(self, n_block, b_armature=None):
         """Read the content of the current NIF tree branch to Blender recursively.
 
         :param n_block: The nif block to import.
         :param b_armature: The blender armature for the current branch.
-        :param n_armature: The corresponding nif block for the armature for  the current branch.
         """
         if not n_block:
             return None
@@ -224,12 +208,12 @@ class NifImport(NifCommon):
                     b_obj = self.armaturehelper.import_armature(n_block)
                 else:
                     n_name = block_store.import_name(n_block)
+                    # get the armature from the blender scene
                     b_obj = math.get_armature()
                     NifLog.info(f"Merging nif tree '{n_name}' with armature '{b_obj.name}'")
                     if n_name != b_obj.name:
                         NifLog.warn(f"Using Nif block '{n_name}' as armature '{b_obj.name}' but names do not match")
                 b_armature = b_obj
-                n_armature = n_block
 
             elif self.armaturehelper.is_bone(n_block):
                 # bones have already been imported during import_armature
@@ -249,7 +233,7 @@ class NifImport(NifCommon):
             b_children = []
             n_children = [child for child in n_block.children]
             for n_child in n_children:
-                b_child = self.import_branch(n_child, b_armature=b_armature, n_armature=n_armature)
+                b_child = self.import_branch(n_child, b_armature=b_armature)
                 if b_child and isinstance(b_child, bpy.types.Object):
                     b_children.append(b_child)
 
@@ -273,7 +257,8 @@ class NifImport(NifCommon):
 
                 # import object level animations (non-skeletal)
                 if NifOp.props.animation:
-                    # self.animationhelper.import_text_keys(n_block)
+                    # todo [anim] fetch the action if it exists
+                    # self.transform_anim.import_text_keys(n_block, b_action)
                     self.transform_anim.import_transforms(n_block, b_obj)
                     self.object_anim.import_visibility(n_block, b_obj)
 
@@ -281,13 +266,3 @@ class NifImport(NifCommon):
 
         # all else is currently discarded
         return None
-
-    def set_parents(self, n_block):
-        """Set the parent block recursively through the tree, to allow
-        crawling back as needed."""
-        if isinstance(n_block, NifFormat.NiNode):
-            # list of non-null children
-            children = [child for child in n_block.children if child]
-            for child in children:
-                child._parent = n_block
-                self.set_parents(child)

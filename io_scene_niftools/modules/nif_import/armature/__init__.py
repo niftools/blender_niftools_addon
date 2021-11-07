@@ -59,89 +59,118 @@ class Armature:
 
     def __init__(self):
         self.transform_anim = TransformAnimation()
-        # this is used to hold lists of bones for each armature during mark_armatures_bones
-        self.dict_armatures = {}
         # to get access to the nif bone in object mode
         self.name_to_block = {}
+        self.pose_store = {}
+        self.bind_store = {}
+        self.skinned = False
+        self.n_armature = None
 
-    def store_pose_matrix(self, n_node, armature_space_pose_store, n_root):
+    def store_pose_matrices(self, n_node, n_root):
+        """Stores the nif armature space matrix of a node tree"""
         # check that n_block is indeed a bone
         if not self.is_bone(n_node):
             return None
-        armature_space_pose_store[n_node] = n_node.get_transform(n_root)
+        NifLog.debug(f"Storing pose matrix for {n_node.name}")
+        # calculate the transform relative to root, ie. turn nif local into nif armature space
+        self.pose_store[n_node] = n_node.get_transform(n_root)
         # move down the hierarchy
         for n_child in n_node.children:
-            self.store_pose_matrix(n_child, armature_space_pose_store, n_root)
+            self.store_pose_matrices(n_child, n_root)
 
-    def import_pose(self, n_armature):
-        """Ported and adapted from pyffi send_bones_to_bind_position"""
-        armature_space_bind_store = {}
-        armature_space_pose_store = {}
-        # check all bones and bone datas to see if a bind position exists
-        bonelist = []
-        # store the original pose matrix for all nodes
-        for n_child in n_armature.children:
-            self.store_pose_matrix(n_child, armature_space_pose_store, n_armature)
+    def get_skinned_geometries(self, n_root):
+        """Yield all children in n_root's tree that have skinning"""
+        # search for all NiTriShape or NiTriStrips blocks...
+        for n_block in n_root.tree(block_type=NifFormat.NiTriBasedGeom):
+            # yes, we found one, does it have skinning?
+            if n_block.is_skin():
+                yield n_block
 
-        # prioritize geometries that have most nodes in their skin instance
-        for geom in sorted(n_armature.get_skinned_geometries(), key=lambda g: g.skin_instance.num_bones, reverse=True):
-            skininst = geom.skin_instance
-            skindata = skininst.data
-            for bonenode, bonedata in zip(skininst.bones, skindata.bone_list):
-                # bonenode can be None; see pyffi issue #3114079
-                if not bonenode:
-                    continue
-                # make sure all bone data of shared bones coincides
-                for othergeom, otherbonenode, otherbonedata in bonelist:
-                    if bonenode is otherbonenode:
-                        diff = ((otherbonedata.get_transform().get_inverse(fast=False)
-                                 * othergeom.get_transform(n_armature))
-                                -
-                                (bonedata.get_transform().get_inverse(fast=False)
-                                 * geom.get_transform(n_armature)))
-                        if diff.sup_norm() > 1e-3:
-                            NifLog.debug(
-                                f"Geometries {geom.name} and {othergeom.name} do not share the same bind position."
-                                f"bone {bonenode.name} will be sent to a position matching only one of these")
-                        # break the loop
-                        break
-                else:
-                    # the loop did not break, so the bone was not yet added
-                    # add it now
-                    NifLog.debug(f"Found bind position data for {bonenode.name}")
-                    bonelist.append((geom, bonenode, bonedata))
-
+    def get_skin_bind(self, n_bone, geom, n_root):
+        """Get armature space bind matrix for skin partition bone's inverse bind matrix"""
         # get the bind pose from the skin data
         # NiSkinData stores the inverse bind (=rest) pose for each bone, in armature space
-        for geom, bonenode, bonedata in bonelist:
-            n_bind = (bonedata.get_transform().get_inverse(fast=False) * geom.get_transform(n_armature))
-            armature_space_bind_store[bonenode] = n_bind
+
+        # for ZT2 elephant, the skin transform is the inverse of the geom's armature space transform
+        # this gives a straight rest pose for MW too
+        # return n_bone.get_transform().get_inverse(fast=False) * geom.skin_instance.data.get_transform().get_inverse(fast=False)
+        # however, this conflicts with send_geometries_to_bind_position for MW meshes, so stick to this now
+        return n_bone.get_transform().get_inverse(fast=False) * geom.get_transform(n_root)
+
+    def bones_iter(self, skin_instance):
+        # might want to make sure that bone_list includes no dupes too to avoid breaking the first mesh
+        for bonenode, bonedata in zip(skin_instance.bones, skin_instance.data.bone_list):
+            # bonenode can be None; see pyffi issue #3114079
+            if bonenode:
+                yield bonenode, bonedata
+
+    def store_bind_matrices(self, n_armature):
+        """Process all geometries' skin instances to reconstruct a bind pose from their inverse bind matrices"""
+        # improved from pyffi's send_geometries_to_bind_position & send_bones_to_bind_position
+        NifLog.debug(f"Calculating bind for {n_armature.name}")
+        # prioritize geometries that have most nodes in their skin instance
+        geoms = sorted(self.get_skinned_geometries(n_armature), key=lambda g: g.skin_instance.num_bones, reverse=True)
+        NifLog.debug(f"Found {len(geoms)} skinned geometries")
+        for geom in geoms:
+            NifLog.debug(f"Checking skin of {geom.name}")
+            skininst = geom.skin_instance
+            for bonenode, bonedata in self.bones_iter(skininst):
+                # make sure all bone data of shared bones coincides
+                # see if the bone has been used by a previous skin instance
+                if bonenode in self.bind_store:
+                    # get the bind pose that has been stored
+                    diff = (bonedata.get_transform()
+                            * self.bind_store[bonenode]
+                            # * geom.skin_instance.data.get_transform())  use this if relative to skin instead of geom
+                            * geom.get_transform(n_armature).get_inverse(fast=False))
+                    # there is a difference between the two geometries' bind poses
+                    if not diff.is_identity():
+                        NifLog.debug(f"Fixing {geom.name} bind position")
+                        # update the skin for all bones of the new geom
+                        for bonenode, bonedata in self.bones_iter(skininst):
+                            NifLog.debug(f"Transforming bind of {bonenode.name}")
+                            bonedata.set_transform(diff.get_inverse(fast=False) * bonedata.get_transform())
+                    # transforming verts helps with nifs where the skins differ, eg MW vampire or WLP2 Gastornis
+                    for vert in geom.data.vertices:
+                        newvert = vert * diff
+                        vert.x = newvert.x
+                        vert.y = newvert.y
+                        vert.z = newvert.z
+                    for norm in geom.data.normals:
+                        newnorm = norm * diff.get_matrix_33()
+                        norm.x = newnorm.x
+                        norm.y = newnorm.y
+                        norm.z = newnorm.z
+                    break
+            # store bind pose
+            for bonenode, bonedata in self.bones_iter(skininst):
+                NifLog.debug(f"Stored {geom.name} bind position")
+                self.bind_store[bonenode] = self.get_skin_bind(bonedata, geom, n_armature)
 
         NifLog.debug("Storing non-skeletal bone poses")
-        self.fix_pose(n_armature, n_armature, armature_space_bind_store, armature_space_pose_store)
-        return armature_space_bind_store, armature_space_pose_store
+        self.fix_pose(n_armature, n_armature)
 
-    def fix_pose(self, n_armature, n_node, armature_space_bind_store, armature_space_pose_store):
+    def fix_pose(self, n_node, n_root):
         """reposition non-skeletal bones to maintain their local orientation to their skeletal parents"""
         for n_child_node in n_node.children:
             # only process nodes
             if not isinstance(n_child_node, NifFormat.NiNode):
                 continue
-            if n_child_node not in armature_space_bind_store and n_child_node in armature_space_pose_store:
+            if n_child_node not in self.bind_store and n_child_node in self.pose_store:
                 NifLog.debug(f"Calculating bind pose for non-skeletal bone {n_child_node.name}")
                 # get matrices for n_node (the parent) - fallback to getter if it is not in the store
-                n_armature_pose = armature_space_pose_store.get(n_node, n_node.get_transform(n_armature))
+                n_armature_pose = self.pose_store.get(n_node, n_node.get_transform(n_root))
                 # get bind of parent node or pose if it has no bind pose
-                n_armature_bind = armature_space_bind_store.get(n_node, n_armature_pose)
+                n_armature_bind = self.bind_store.get(n_node, n_armature_pose)
 
                 # the child must have a pose, no need for a fallback
-                n_child_armature_pose = armature_space_pose_store[n_child_node]
+                n_child_armature_pose = self.pose_store[n_child_node]
                 # get the relative transform of n_child_node from pose * inverted parent pose
                 n_child_local_pose = n_child_armature_pose * n_armature_pose.get_inverse(fast=False)
                 # get object space transform by multiplying with bind of parent bone
-                armature_space_bind_store[n_child_node] = n_child_local_pose * n_armature_bind
-
-            self.fix_pose(n_armature, n_child_node, armature_space_bind_store, armature_space_pose_store)
+                self.bind_store[n_child_node] = n_child_local_pose * n_armature_bind
+            # move down the hierarchy
+            self.fix_pose(n_child_node, n_root)
 
     def import_armature(self, n_armature):
         """Scans an armature hierarchy, and returns a whole armature.
@@ -162,12 +191,16 @@ class Armature:
         b_armature_obj = Object.create_b_obj(n_armature, b_armature_data)
         b_armature_obj.show_in_front = True
 
-        armature_space_bind_store, armature_space_pose_store = self.import_pose(n_armature)
+        # store the original pose & bind matrices for all nodes
+        self.pose_store = {}
+        self.bind_store = {}
+        self.store_pose_matrices(n_armature, n_armature)
+        self.store_bind_matrices(n_armature)
 
         # make armature editable and create bones
         bpy.ops.object.mode_set(mode='EDIT', toggle=False)
         for n_child in n_armature.children:
-            self.import_bone_bind(n_child, armature_space_bind_store, b_armature_data, n_armature)
+            self.import_bone_bind(n_child, b_armature_data, n_armature)
         self.fix_bone_lengths(b_armature_data)
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
@@ -185,7 +218,7 @@ class Armature:
 
         # import pose
         for b_name, n_block in self.name_to_block.items():
-            n_pose = armature_space_pose_store[n_block]
+            n_pose = self.pose_store[n_block]
             b_pose_bone = b_armature_obj.pose.bones[b_name]
             n_bind = mathutils.Matrix(n_pose.as_list()).transposed()
             b_pose_bone.matrix = math.nif_bind_to_blender_bind(n_bind)
@@ -194,7 +227,7 @@ class Armature:
 
         return b_armature_obj
 
-    def import_bone_bind(self, n_block, n_bind_store, b_armature_data, n_armature, b_parent_bone=None):
+    def import_bone_bind(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
         """Adds a bone to the armature in edit mode."""
         # check that n_block is indeed a bone
         if not self.is_bone(n_block):
@@ -206,21 +239,19 @@ class Armature:
         # store nif block for access from object mode
         self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = mathutils.Matrix(n_bind_store.get(n_block, NifFormat.Matrix44()).as_list()).transposed()
+        n_bind = mathutils.Matrix(self.bind_store.get(n_block, NifFormat.Matrix44()).as_list()).transposed()
         # get transformation in blender's coordinate space
         b_bind = math.nif_bind_to_blender_bind(n_bind)
 
-        # the following is a workaround because blender can no longer set matrices to bones directly
-        tail, roll = bpy.types.Bone.AxisRollFromMatrix(b_bind.to_3x3())
-        b_edit_bone.head = b_bind.to_translation()
-        b_edit_bone.tail = tail + b_edit_bone.head
-        b_edit_bone.roll = roll
+        # set the bone matrix - but set the tail first to prevent issues with zero-length bone
+        b_edit_bone.tail = mathutils.Vector([0, 0, 1])
+        b_edit_bone.matrix = b_bind
         # link to parent
         if b_parent_bone:
             b_edit_bone.parent = b_parent_bone
         # import and parent bone children
         for n_child in n_block.children:
-            self.import_bone_bind(n_child, n_bind_store, b_armature_data, n_armature, b_edit_bone)
+            self.import_bone_bind(n_child, b_armature_data, n_armature, b_edit_bone)
 
     def guess_orientation(self, n_armature):
         """Analyze all bones' translations to see what the nif considers the 'forward' axis"""
@@ -278,130 +309,28 @@ class Armature:
                     bone_length = b_edit_bone.parent.length
                 b_edit_bone.length = bone_length
 
-    def mark_armatures_bones(self, ni_block):
-        """Mark armatures and bones by peeking into NiSkinInstance blocks."""
-        # case where we import skeleton only,
-        # or importing an Oblivion or Fallout 3 skeleton:
-        # do all NiNode's as bones
-        if NifOp.props.process == "SKELETON_ONLY" or \
-                (NifData.data.version in (0x14000005, 0x14020007) and os.path.basename(NifOp.props.filepath).lower() in ('skeleton.nif', 'skeletonbeast.nif')):
-
-            if not isinstance(ni_block, NifFormat.NiNode):
-                raise io_scene_niftools.utils.logging.NifError("Cannot import skeleton: root is not a NiNode")
-
-            # for morrowind, take the Bip01 node to be the skeleton root
-            if NifData.data.version == 0x04000002:
-                skelroot = ni_block.find(block_name='Bip01', block_type=NifFormat.NiNode)
-                if not skelroot:
-                    skelroot = ni_block
-            else:
-                skelroot = ni_block
-            if skelroot not in self.dict_armatures:
-                self.dict_armatures[skelroot] = []
-            NifLog.info(f"Selecting node '{skelroot.name}' as skeleton root")
-            # add bones
-            self.populate_bone_tree(skelroot)
-            return  # done!
-
-        # attaching to selected armature -> first identify armature and bones
-        elif NifOp.props.process == "GEOMETRY_ONLY" and not self.dict_armatures:
-            b_armature_obj = bpy.context.selected_objects[0]
-            skelroot = ni_block.find(block_name=b_armature_obj.name)
-            if not skelroot:
-                skelroot = ni_block
-                # raise nif_utils.NifError(f"nif has no armature '{b_armature_obj.name}'")
-            NifLog.debug(f"Identified '{skelroot.name}' as armature")
-            self.dict_armatures[skelroot] = []
-            for bone_name in b_armature_obj.data.bones.keys():
-                # blender bone naming -> nif bone naming
-                nif_bone_name = block_store_export.get_bone_name_for_nif(bone_name)
-                # find a block with bone name
-                bone_block = skelroot.find(block_name=nif_bone_name)
-                # add it to the name list if there is a bone with that name
-                if bone_block:
-                    NifLog.info(f"Identified nif block '{nif_bone_name}' with bone '{bone_name}' in selected armature")
-                    self.dict_armatures[skelroot].append(bone_block)
-                    self.complete_bone_tree(bone_block, skelroot)
-
-        # search for all NiTriShape or NiTriStrips blocks...
-        if isinstance(ni_block, NifFormat.NiTriBasedGeom):
-            # yes, we found one, get its skin instance
-            if ni_block.is_skin():
-                NifLog.debug(f"Skin found on block '{ni_block.name}'")
-                # it has a skin instance, so get the skeleton root
-                # which is an armature only if it's not a skinning influence
-                # so mark the node to be imported as an armature
-                skininst = ni_block.skin_instance
-                skelroot = skininst.skeleton_root
-                if NifOp.props.process == "EVERYTHING":
-                    if skelroot not in self.dict_armatures:
-                        self.dict_armatures[skelroot] = []
-                        NifLog.debug(f"'{skelroot.name}' is an armature")
-                elif NifOp.props.process == "GEOMETRY_ONLY":
-                    if skelroot not in self.dict_armatures:
-                        raise io_scene_niftools.utils.logging.NifError(f"Nif structure incompatible with '{b_armature_obj.name}' as armature: node '{ni_block.name}' has '{skelroot.name}' as armature")
-
-                for boneBlock in skininst.bones:
-                    # boneBlock can be None; see pyffi issue #3114079
-                    if not boneBlock:
-                        continue
-                    if boneBlock not in self.dict_armatures[skelroot]:
-                        self.dict_armatures[skelroot].append(boneBlock)
-                        NifLog.debug(f"'{boneBlock.name}' is a bone of armature '{skelroot.name}'")
-                    # now we "attach" the bone to the armature:
-                    # we make sure all NiNodes from this bone all the way
-                    # down to the armature NiNode are marked as bones
-                    self.complete_bone_tree(boneBlock, skelroot)
-
-                # mark all nodes as bones
-                self.populate_bone_tree(skelroot)
-        # continue down the tree
-        for child in ni_block.get_refs():
-            if not isinstance(child, NifFormat.NiAVObject):
-                continue  # skip blocks that don't have transforms
-            self.mark_armatures_bones(child)
-
-    def populate_bone_tree(self, skelroot):
-        """Add all of skelroot's bones to its dict_armatures list."""
-        for bone in skelroot.tree():
-            if bone is skelroot:
-                continue
-            if not isinstance(bone, NifFormat.NiNode):
-                continue
-            if isinstance(bone, NifFormat.NiLODNode):
-                # LOD nodes are never bones
-                continue
-            if bone not in self.dict_armatures[skelroot]:
-                self.dict_armatures[skelroot].append(bone)
-                NifLog.debug(f"'{bone.name}' marked as extra bone of armature '{skelroot.name}'")
-
-    def complete_bone_tree(self, bone, skelroot):
-        """Make sure that the complete hierarchy from bone up to skelroot is marked in dict_armatures."""
-        # we must already have marked both as a bone
-        assert skelroot in self.dict_armatures  # debug
-        assert bone in self.dict_armatures[skelroot]  # debug
-        # get the node parent, this should be marked as an armature or as a bone
-        boneparent = bone._parent
-        if boneparent != skelroot:
-            # parent is not the skeleton root
-            if boneparent not in self.dict_armatures[skelroot]:
-                # neither is it marked as a bone: so mark the parent as a bone
-                self.dict_armatures[skelroot].append(boneparent)
-                # store the coordinates for realignement autodetection 
-                NifLog.debug(f"'{boneparent.name}' is a bone of armature '{skelroot.name}'")
-            # now the parent is marked as a bone
-            # recursion: complete the bone tree,
-            # this time starting from the parent bone
-            self.complete_bone_tree(boneparent, skelroot)
+    def check_for_skin(self, n_root):
+        """Checks all tri geometry for skinning, sets self.skinned accordingly"""
+        # set these here once per run
+        self.n_armature = None
+        self.skinned = False
+        for n_block in self.get_skinned_geometries(n_root):
+            self.skinned = True
+            NifLog.debug(f"{n_block.name} has skinning.")
+            # one is enough to require an armature, so stop
+            return
+        NifLog.debug(f"Found no skinned geometries.")
 
     def is_bone(self, ni_block):
         """Tests a NiNode to see if it has been marked as a bone."""
-        if ni_block:
-            for bones in self.dict_armatures.values():
-                if ni_block in bones:
-                    return True
-
-    def is_armature_root(self, ni_block):
-        """Tests a block to see if it's an armature."""
         if isinstance(ni_block, NifFormat.NiNode):
-            return ni_block in self.dict_armatures
+            return self.skinned
+
+    def is_armature_root(self, n_block):
+        """Tests a block to see if it's an armature."""
+        if isinstance(n_block, NifFormat.NiNode):
+            # we have skinning and are waiting for a suitable start node of the tree
+            if self.skinned and not self.n_armature:
+                # now store it as the nif armature's root
+                self.n_armature = n_block
+                return True
