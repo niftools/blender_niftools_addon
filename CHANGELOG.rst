@@ -1,3 +1,27 @@
+Version v0.0.12
+==============
+
+- #176 - Number of bones in a partition
+
+Version v0.0.11
+==============
+
+- #469 Shader flags and BSLightingShaderProperty updates, and minor fixes.
+ - Normals are not exported when using a face tint.
+ - Added hair tint import/export.
+ - Fixed export warning for negative scales.
+ - Performance improvement long texture path search.
+ - Fixed BSLightingShaderProperty slot 6 export to agree with import.
+ - Changed texture export to not strip file path when not in textures folder when the file is not found, and work with relative file paths.
+ - Changed imported object name generation to agree with expected name from the skeleton root field.
+ - Fixed issue where export would error if the root object was a mesh object.
+ - Changed shader flag UI/transference to be dynamic, rather than using hardcoded keys.
+ - Changed use of is in comparison with string literals.
+ - Changed armature export: no longer sets pose to bind pose, and pose gets exported.
+ - Tangent space converter is not added when model_space_normal shader flag is present in nif.
+ - Remove default=0 from collision_layer EnumProperty definition.
+    - Fixes #470 - Unable to import Skyrim SE NIFF on Blender 2.93.5 with version 0.0.10
+
 Version v0.0.10
 ==============
 

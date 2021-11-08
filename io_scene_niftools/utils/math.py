@@ -241,3 +241,4 @@ def mathutils_to_nifformat_matrix(b_matrix):
     n_matrix = NifFormat.Matrix44()
     n_matrix.set_rows(*b_matrix.transposed())
     return n_matrix
+
