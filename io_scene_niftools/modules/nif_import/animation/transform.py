@@ -143,11 +143,11 @@ class TransformAnimation(Animation):
             b_bone = b_armature_obj.data.bones[bone_name]
             # import bone priority
             b_bone.niftools.priority = controlledblock.priority
-            # ZT2
-            kfc = controlledblock.controller
             # fallout, Loki
+            kfc = controlledblock.interpolator
             if not kfc:
-                kfc = controlledblock.interpolator
+                # ZT2
+                kfc = controlledblock.controller
             if kfc:
                 self.import_keyframe_controller(kfc, b_armature_obj, bone_name)
         # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
@@ -198,6 +198,9 @@ class TransformAnimation(Animation):
                 scales = zip(times, scale_temp)
             # Bsplines are Bezier curves
             interp_rot = interp_loc = interp_scale = "BEZIER"
+        elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
+            # not sure what this is used for
+            return
         else:
             # ZT2 & Fallout
             n_kfd = n_kfc.data
@@ -284,3 +287,13 @@ class TransformAnimation(Animation):
             else:
                 self.create_action(b_obj, f"{b_obj.name}_Anim")
                 self.import_keyframe_controller(n_kfc, b_obj)
+
+    def import_controller_manager(self, n_block, b_obj, b_armature):
+        ctrlm = n_block.controller
+        if ctrlm and isinstance(ctrlm, NifFormat.NiControllerManager):
+            NifLog.debug(f'Importing NiControllerManager')
+            if b_armature:
+                self.get_bind_data(b_armature)
+            for ctrl in ctrlm.controller_sequences:
+                self.import_kf_root(ctrl, b_armature)
+
