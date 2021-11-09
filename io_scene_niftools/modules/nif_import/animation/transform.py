@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 import mathutils
 
 from functools import singledispatch
@@ -85,50 +86,64 @@ class TransformAnimation(Animation):
                 n_bind_scale, n_bind_rot, n_bind_trans = math.decompose_srt(math.get_object_bind(b_bone))
                 self.bind_data[b_bone.name] = (n_bind_rot.inverted(), n_bind_trans)
 
+    def get_target(self, b_armature_obj, n_name):
+        """Gets a target for an anim controller"""
+        b_name = block_registry.get_bone_name_for_blender(n_name)
+        # if we have an armature, get the pose bone
+        if b_armature_obj:
+            if b_name in b_armature_obj.pose.bones:
+                return b_armature_obj.pose.bones[b_name]
+        # try to find the object for animation
+        else:
+            return bpy.data.objects[b_name]
+
     def import_kf_root(self, kf_root, b_armature_obj):
         """Base method to warn user that this root type is not supported"""
         NifLog.warn(f"Unknown KF root block found : {safe_decode(kf_root.name)}")
         NifLog.warn(f"This type isn't currently supported: {type(kf_root)}")
 
-    def import_generic_kf_root(self, kf_root, b_armature_obj):
+    def import_generic_kf_root(self, kf_root):
         NifLog.debug(f'Importing {type(kf_root)}...')
-        return self.create_action(b_armature_obj, safe_decode(kf_root.name), retrieve=False)
+        return safe_decode(kf_root.name)
 
     def import_sequence_data(self, kf_root, b_armature_obj):
-        b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
-        self.import_text_keys(kf_root, b_action)
+        b_action_name = self.import_generic_kf_root(kf_root)
+        actions = set()
         for evaluator in kf_root.evaluators:
-            bone_name = block_registry.get_bone_name_for_blender(evaluator.node_name)
-            if bone_name not in b_armature_obj.data.bones:
-                continue
-            self.import_keyframe_controller(evaluator, b_armature_obj, bone_name)
-        if kf_root.cycle_type:
-            extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
-            self.set_extrapolation(extend, b_action.fcurves)
+            b_target = self.get_target(b_armature_obj, evaluator.node_name)
+            actions.add(self.import_keyframe_controller(evaluator, b_armature_obj, b_target, b_action_name))
+        for b_action in actions:
+            self.import_text_keys(kf_root, b_action)
+            if kf_root.cycle_type:
+                extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
+                self.set_extrapolation(extend, b_action.fcurves)
 
     def import_sequence_stream_helper(self, kf_root, b_armature_obj):
-        b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
+        b_action_name = self.import_generic_kf_root(kf_root)
+        actions = set()
         # import parallel trees of extra datas and keyframe controllers
         extra = kf_root.extra_data
         controller = kf_root.controller
+        textkeys = None
         while extra and controller:
             # textkeys in the stack do not specify node names, import as markers
             while isinstance(extra, NifFormat.NiTextKeyExtraData):
-                self.import_text_key_extra_data(extra, b_action)
+                textkeys = extra
                 extra = extra.next_extra_data
 
             # grabe the node name from string data
-            bone_name = None
             if isinstance(extra, NifFormat.NiStringExtraData):
-                bone_name = block_registry.get_bone_name_for_blender(extra.string_data)
-            self.import_keyframe_controller(controller, b_armature_obj, bone_name)
+                b_target = self.get_target(b_armature_obj, extra.string_data)
+                actions.add(self.import_keyframe_controller(controller, b_armature_obj, b_target, b_action_name))
             # grab next pair of extra and controller
             extra = extra.next_extra_data
             controller = controller.next_controller
+        for b_action in actions:
+            self.import_text_key_extra_data(textkeys, b_action)
 
     def import_controller_sequence(self, kf_root, b_armature_obj):
-        b_action = self.import_generic_kf_root(kf_root, b_armature_obj)
-        self.import_text_keys(kf_root, b_action)
+        b_action_name = self.import_generic_kf_root(kf_root)
+        actions = set()
         for controlledblock in kf_root.controlled_blocks:
             # get bone name
             # todo [pyffi] fixed get_node_name() is up, make release and clean up here
@@ -137,34 +152,40 @@ class TransformAnimation(Animation):
             # fallout (node_name) & Loki (StringPalette)
             if not n_name:
                 n_name = controlledblock.get_node_name()
-            bone_name = block_registry.get_bone_name_for_blender(n_name)
-            if bone_name not in b_armature_obj.data.bones:
-                continue
-            b_bone = b_armature_obj.data.bones[bone_name]
+            b_target = self.get_target(b_armature_obj, n_name)
+            # todo - temporarily disabled! should become a custom property on both object and pose bone, ideally
             # import bone priority
-            b_bone.niftools.priority = controlledblock.priority
+            # b_target.niftools.priority = controlledblock.priority
             # fallout, Loki
             kfc = controlledblock.interpolator
             if not kfc:
                 # ZT2
                 kfc = controlledblock.controller
             if kfc:
-                self.import_keyframe_controller(kfc, b_armature_obj, bone_name)
-        # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
-        if kf_root.cycle_type:
-            extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
-            self.set_extrapolation(extend, b_action.fcurves)
+                actions.add(self.import_keyframe_controller(kfc, b_armature_obj, b_target, b_action_name))
+        for b_action in actions:
+            self.import_text_keys(kf_root, b_action)
+            # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
+            if kf_root.cycle_type:
+                extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
+                self.set_extrapolation(extend, b_action.fcurves)
 
-    def import_keyframe_controller(self, n_kfc, b_obj, bone_name=None):
-        NifLog.debug(f'Importing keyframe controller for {b_obj.name}')
-        b_action = b_obj.animation_data.action
+    def import_keyframe_controller(self, n_kfc, b_armature, b_target, b_action_name):
+        """
+        b_target: either Object or PoseBone
+        """
+        NifLog.debug(f'Importing keyframe controller for {b_target.name}')
 
-        if bone_name:
-            b_obj = b_obj.pose.bones[bone_name]
-            if bone_name in self.bind_data:
-                n_bind_rot_inv, n_bind_trans = self.bind_data[bone_name]
-            else:
-                return
+        if b_armature and isinstance(b_target, bpy.types.PoseBone):
+            # action on armature, one per armature
+            b_action = self.create_action(b_armature, b_action_name)
+            if b_target.name in self.bind_data:
+                n_bind_rot_inv, n_bind_trans = self.bind_data[b_target.name]
+            bone_name = b_target.name
+        else:
+            # one action per object
+            b_action = self.create_action(b_target, f"{b_action_name}_{b_target.name}")
+            bone_name = None
 
         translations = []
         scales = []
@@ -184,7 +205,7 @@ class TransformAnimation(Animation):
             if isinstance(n_kfc, NifFormat.NiBSplineCompFloatInterpolator):
                 # pyffi lacks support for this, but the following gets float keys
                 # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
-                return
+                return b_action
             times = list(n_kfc.get_times())
             # just do these temp steps to avoid generating empty fcurves down the line
             trans_temp = [mathutils.Vector(tup) for tup in n_kfc.get_translations()]
@@ -200,7 +221,7 @@ class TransformAnimation(Animation):
             interp_rot = interp_loc = interp_scale = "BEZIER"
         elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
             # not sure what this is used for
-            return
+            return b_action
         else:
             # ZT2 & Fallout
             n_kfd = n_kfc.data
@@ -209,7 +230,7 @@ class TransformAnimation(Animation):
             interp_loc = self.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
             interp_scale = self.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
             if n_kfd.rotation_type == 4:
-                b_obj.rotation_mode = "XYZ"
+                b_target.rotation_mode = "XYZ"
                 # uses xyz rotation
                 if n_kfd.xyz_rotations[0].keys:
                     # euler keys need not be sampled at the same time in KFs
@@ -228,7 +249,7 @@ class TransformAnimation(Animation):
                     z_r = interpolate(times_all, times_z, [key.value for key in n_kfd.xyz_rotations[2].keys])
                 eulers = zip(times_all, zip(x_r, y_r, z_r))
             else:
-                b_obj.rotation_mode = "QUATERNION"
+                b_target.rotation_mode = "QUATERNION"
                 rotations = [(key.time, key.value) for key in n_kfd.quaternion_keys]
 
             if n_kfd.scales.keys:
@@ -274,6 +295,7 @@ class TransformAnimation(Animation):
             for t, val in scales:
                 key = (val, val, val)
                 self.add_key(fcurves, t, key, interp_scale)
+        return b_action
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""
@@ -282,11 +304,11 @@ class TransformAnimation(Animation):
         if n_kfc:
             # skeletal animation
             if bone_name:
-                self.import_keyframe_controller(n_kfc, b_obj, bone_name)
+                p_bone = b_obj.pose.bones[bone_name]
+                self.import_keyframe_controller(n_kfc, b_obj, p_bone, f"{b_obj.name}_Anim")
             # object-level animation
             else:
-                self.create_action(b_obj, f"{b_obj.name}_Anim")
-                self.import_keyframe_controller(n_kfc, b_obj)
+                self.import_keyframe_controller(n_kfc, None, b_obj, f"{b_obj.name}_Anim")
 
     def import_controller_manager(self, n_block, b_obj, b_armature):
         ctrlm = n_block.controller
