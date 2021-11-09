@@ -113,10 +113,11 @@ class TransformAnimation(Animation):
             b_target = self.get_target(b_armature_obj, evaluator.node_name)
             actions.add(self.import_keyframe_controller(evaluator, b_armature_obj, b_target, b_action_name))
         for b_action in actions:
-            self.import_text_keys(kf_root, b_action)
-            if kf_root.cycle_type:
-                extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
-                self.set_extrapolation(extend, b_action.fcurves)
+            if b_action:
+                self.import_text_keys(kf_root, b_action)
+                if kf_root.cycle_type:
+                    extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
+                    self.set_extrapolation(extend, b_action.fcurves)
 
     def import_sequence_stream_helper(self, kf_root, b_armature_obj):
         b_action_name = self.import_generic_kf_root(kf_root)
@@ -139,7 +140,8 @@ class TransformAnimation(Animation):
             extra = extra.next_extra_data
             controller = controller.next_controller
         for b_action in actions:
-            self.import_text_key_extra_data(textkeys, b_action)
+            if b_action:
+                self.import_text_key_extra_data(textkeys, b_action)
 
     def import_controller_sequence(self, kf_root, b_armature_obj):
         b_action_name = self.import_generic_kf_root(kf_root)
@@ -164,28 +166,20 @@ class TransformAnimation(Animation):
             if kfc:
                 actions.add(self.import_keyframe_controller(kfc, b_armature_obj, b_target, b_action_name))
         for b_action in actions:
-            self.import_text_keys(kf_root, b_action)
-            # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
-            if kf_root.cycle_type:
-                extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
-                self.set_extrapolation(extend, b_action.fcurves)
+            if b_action:
+                self.import_text_keys(kf_root, b_action)
+                # fallout: set global extrapolation mode here (older versions have extrapolation per controller)
+                if kf_root.cycle_type:
+                    extend = self.get_extend_from_cycle_type(kf_root.cycle_type)
+                    self.set_extrapolation(extend, b_action.fcurves)
 
     def import_keyframe_controller(self, n_kfc, b_armature, b_target, b_action_name):
         """
         b_target: either Object or PoseBone
         """
+        if not b_target:
+            return
         NifLog.debug(f'Importing keyframe controller for {b_target.name}')
-
-        if b_armature and isinstance(b_target, bpy.types.PoseBone):
-            # action on armature, one per armature
-            b_action = self.create_action(b_armature, b_action_name)
-            if b_target.name in self.bind_data:
-                n_bind_rot_inv, n_bind_trans = self.bind_data[b_target.name]
-            bone_name = b_target.name
-        else:
-            # one action per object
-            b_action = self.create_action(b_target, f"{b_action_name}_{b_target.name}")
-            bone_name = None
 
         translations = []
         scales = []
@@ -205,7 +199,7 @@ class TransformAnimation(Animation):
             if isinstance(n_kfc, NifFormat.NiBSplineCompFloatInterpolator):
                 # pyffi lacks support for this, but the following gets float keys
                 # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
-                return b_action
+                return
             times = list(n_kfc.get_times())
             # just do these temp steps to avoid generating empty fcurves down the line
             trans_temp = [mathutils.Vector(tup) for tup in n_kfc.get_translations()]
@@ -221,7 +215,7 @@ class TransformAnimation(Animation):
             interp_rot = interp_loc = interp_scale = "BEZIER"
         elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
             # not sure what this is used for
-            return b_action
+            return
         else:
             # ZT2 & Fallout
             n_kfd = n_kfc.data
@@ -264,6 +258,18 @@ class TransformAnimation(Animation):
         # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
         else:
             flags = None
+
+        # create or get the action
+        if b_armature and isinstance(b_target, bpy.types.PoseBone):
+            # action on armature, one per armature
+            b_action = self.create_action(b_armature, b_action_name)
+            if b_target.name in self.bind_data:
+                n_bind_rot_inv, n_bind_trans = self.bind_data[b_target.name]
+            bone_name = b_target.name
+        else:
+            # one action per object
+            b_action = self.create_action(b_target, f"{b_action_name}_{b_target.name}")
+            bone_name = None
 
         if eulers:
             NifLog.debug('Rotation keys..(euler)')
