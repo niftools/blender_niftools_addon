@@ -95,7 +95,8 @@ class TransformAnimation(Animation):
                 return b_armature_obj.pose.bones[b_name]
         # try to find the object for animation
         else:
-            return bpy.data.objects[b_name]
+            if b_name in bpy.data.objects:
+                return bpy.data.objects[b_name]
 
     def import_kf_root(self, kf_root, b_armature_obj):
         """Base method to warn user that this root type is not supported"""
@@ -181,6 +182,7 @@ class TransformAnimation(Animation):
         b_target: either Object or PoseBone
         b_action_name: name of the action that should be used; the actual imported name may differ due to suffixes
         """
+        # the target may not exist in the scene, in which case it is None here
         if not b_target:
             return
         NifLog.debug(f'Importing keyframe controller for {b_target.name}')

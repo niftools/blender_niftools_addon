@@ -64,15 +64,13 @@ class KfImport(NifCommon):
         try:
             dirname = os.path.dirname(NifOp.props.filepath)
             kf_files = [os.path.join(dirname, file.name) for file in NifOp.props.files if file.name.lower().endswith(".kf")]
+            # if an armature is present, prepare the bones for all actions
             b_armature = math.get_armature()
-            if not b_armature:
-                raise NifError("No armature was found in scene, can not import KF animation!")
-
-            # the axes used for bone correction depend on the armature in our scene
-            math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
-
-            # get nif space bind pose of armature here for all anims
-            self.transform_anim.get_bind_data(b_armature)
+            if b_armature:
+                # the axes used for bone correction depend on the armature in our scene
+                math.set_bone_orientation(b_armature.data.niftools.axis_forward, b_armature.data.niftools.axis_up)
+                # get nif space bind pose of armature here for all anims
+                self.transform_anim.get_bind_data(b_armature)
             for kf_file in kf_files:
                 kfdata = KFFile.load_kf(kf_file)
 
