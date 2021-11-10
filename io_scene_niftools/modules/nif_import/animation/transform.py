@@ -175,7 +175,11 @@ class TransformAnimation(Animation):
 
     def import_keyframe_controller(self, n_kfc, b_armature, b_target, b_action_name):
         """
+        Imports a keyframe controller as fcurves in an action, which is created if necessary.
+        n_kfc: some nif struct that has keyframe data, somewhere
+        b_armature: either None or Object (blender armature)
         b_target: either Object or PoseBone
+        b_action_name: name of the action that should be used; the actual imported name may differ due to suffixes
         """
         if not b_target:
             return
