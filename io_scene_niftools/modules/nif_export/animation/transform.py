@@ -44,8 +44,7 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import math
-from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils import math, consts
 from io_scene_niftools.utils.logging import NifError, NifLog
 
 
@@ -67,77 +66,57 @@ class TransformAnimation(Animation):
             yield frame, mathutilclass(key)
 
     def export_kf_root(self, b_armature=None):
-
+        """Creates and returns a KF root block and exports controllers for objects and bones"""
         scene = bpy.context.scene
-        # morrowind
-        if scene.niftools_scene.game in ('MORROWIND', 'FREEDOM_FORCE'):
-            # create kf root header
+        game = scene.niftools_scene.game
+        if game in ('MORROWIND', 'FREEDOM_FORCE'):
             kf_root = block_store.create_block("NiSequenceStreamHelper")
-        # kf_root.add_extra_data(anim_textextra)
-        # # reparent controller tree
-        # for node, ctrls in node_kfctrls.items():
-        #     for ctrl in ctrls:
-        #         # create node reference by name
-        #         nodename_extra = block_store.create_block("NiStringExtraData")
-        #         nodename_extra.bytes_remaining = len(node.name) + 4
-        #         nodename_extra.string_data = node.name
-
-        #         # break the controller chain
-        #         ctrl.next_controller = None
-
-        #         # add node reference and controller
-        #         kf_root.add_extra_data(nodename_extra)
-        #         kf_root.add_controller(ctrl)
-        #         # wipe controller target
-        #         ctrl.target = None
-
-        elif scene.niftools_scene.game in (
-                'SKYRIM', 'OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH'):
-
-            # create kf root header
+        elif game in (
+                'SKYRIM', 'OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH',
+                'MEGAMI_TENSEI_IMAGINE'):
             kf_root = block_store.create_block("NiControllerSequence")
-            targetname = "Scene Root"
-
-            # per-node animation
-            if b_armature:
-                b_action = self.get_active_action(b_armature)
-                for b_bone in b_armature.data.bones:
-                    self.export_transforms(kf_root, b_armature, b_action, b_bone)
-                if scene.niftools_scene.game in ('SKYRIM', ):
-                    targetname = "NPC Root [Root]"
-                else:
-                    # quick hack to set correct target name
-                    if "Bip01" in b_armature.data.bones:
-                        targetname = "Bip01"
-                    elif "Bip02" in b_armature.data.bones:
-                        targetname = "Bip02"
-
-            # per-object animation
-            else:
-                for b_obj in bpy.data.objects:
-                    b_action = self.get_active_action(b_obj)
-                    self.export_transforms(kf_root, b_obj, b_action)
-
-            anim_textextra = self.export_text_keys(b_action)
-
-            kf_root.name = b_action.name
-            kf_root.unknown_int_1 = 1
-            kf_root.weight = 1.0
-            kf_root.text_keys = anim_textextra
-            kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
-            kf_root.frequency = 1.0
-
-            if anim_textextra.num_text_keys > 0:
-                kf_root.start_time = anim_textextra.text_keys[0].time
-                kf_root.stop_time = anim_textextra.text_keys[anim_textextra.num_text_keys - 1].time
-            else:
-                kf_root.start_time = scene.frame_start / self.fps
-                kf_root.stop_time = scene.frame_end / self.fps
-
-            kf_root.target_name = targetname
         else:
-            raise NifError(
-                f"Keyframe export for '{bpy.context.scene.niftools_scene.game}' is not supported.")
+            raise NifError(f"Keyframe export for '{game}' is not supported.")
+
+        anim_textextra = self.create_text_keys(kf_root)
+        targetname = "Scene Root"
+
+        # per-node animation
+        if b_armature:
+            b_action = self.get_active_action(b_armature)
+            for b_bone in b_armature.data.bones:
+                self.export_transforms(kf_root, b_armature, b_action, b_bone)
+            if game in ('SKYRIM',):
+                targetname = "NPC Root [Root]"
+            else:
+                # quick hack to set correct target name
+                if "Bip01" in b_armature.data.bones:
+                    targetname = "Bip01"
+                elif "Bip02" in b_armature.data.bones:
+                    targetname = "Bip02"
+
+        # per-object animation
+        else:
+            for b_obj in bpy.data.objects:
+                b_action = self.get_active_action(b_obj)
+                self.export_transforms(kf_root, b_obj, b_action)
+
+        self.export_text_keys(b_action, anim_textextra)
+
+        kf_root.name = b_action.name
+        kf_root.unknown_int_1 = 1
+        kf_root.weight = 1.0
+        kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
+        kf_root.frequency = 1.0
+
+        if anim_textextra.num_text_keys > 0:
+            kf_root.start_time = anim_textextra.text_keys[0].time
+            kf_root.stop_time = anim_textextra.text_keys[anim_textextra.num_text_keys - 1].time
+        else:
+            kf_root.start_time = scene.frame_start / self.fps
+            kf_root.stop_time = scene.frame_end / self.fps
+
+        kf_root.target_name = targetname
         return kf_root
 
     def export_transforms(self, parent_block, b_obj, b_action, bone=None):
@@ -161,11 +140,11 @@ class TransformAnimation(Animation):
 
         # skeletal animation - with bone correction & coordinate corrections
         if bone and bone.name in b_action.groups:
-            # get bind matrix for bone or object
+            # get bind matrix for bone
             bind_matrix = math.get_object_bind(bone)
             exp_fcurves = b_action.groups[bone.name].channels
             # just for more detailed error reporting later on
-            bonestr = " in bone " + bone.name
+            bonestr = f" in bone {bone.name}"
             target_name = block_store.get_full_name(bone)
             priority = bone.niftools.priority
 
@@ -295,23 +274,20 @@ class TransformAnimation(Animation):
             key.time = frame / self.fps
             key.value = scale
 
-    def export_text_keys(self, b_action):
-        """Process b_action's pose markers and return an extra string data block."""
-        try:
-            if NifOp.props.animation == 'GEOM_NIF':
-                # animation group extra data is not present in geometry only files
-                return
-        except AttributeError:
-            # kf export has no animation mode
-            pass
-
-        NifLog.info("Exporting animation groups")
-
-        self.add_dummy_markers(b_action)
-
+    def create_text_keys(self, kf_root):
+        """Create the text keys before filling in the data so that the extra data hierarchy is correct"""
         # add a NiTextKeyExtraData block
-        n_text_extra = block_store.create_block("NiTextKeyExtraData", b_action.pose_markers)
+        n_text_extra = block_store.create_block("NiTextKeyExtraData", None)
+        if isinstance(kf_root, NifFormat.NiControllerSequence):
+            kf_root.text_keys = n_text_extra
+        elif isinstance(kf_root, NifFormat.NiSequenceStreamHelper):
+            kf_root.add_extra_data(n_text_extra)
+        return n_text_extra
 
+    def export_text_keys(self, b_action, n_text_extra):
+        """Process b_action's pose markers and populate the extra string data block."""
+        NifLog.info("Exporting animation groups")
+        self.add_dummy_markers(b_action)
         # create a text key for each frame descriptor
         n_text_extra.num_text_keys = len(b_action.pose_markers)
         n_text_extra.text_keys.update_size()
@@ -320,8 +296,19 @@ class TransformAnimation(Animation):
             f = marker.frame
             if (f < f0) or (f > f1):
                 NifLog.warn(f"Marker out of animated range ({f} not between [{f0}, {f1}])")
-
             key.time = f / self.fps
             key.value = marker.name.replace('/', '\r\n')
 
-        return n_text_extra
+    def add_dummy_controllers(self):
+        NifLog.info("Adding controllers and interpolators for skeleton")
+        # note: block_store.block_to_obj changes during iteration, so need list copy
+        for n_block in list(block_store.block_to_obj.keys()):
+            if isinstance(n_block, NifFormat.NiNode) and n_block.name.decode() == "Bip01":
+                for n_bone in n_block.tree(block_type=NifFormat.NiNode):
+                    n_kfc, n_kfi = self.transform_anim.create_controller(n_bone, n_bone.name.decode())
+                    # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
+                    n_kfc.flags = 12
+                    n_kfc.frequency = 1.0
+                    n_kfc.phase = 0.0
+                    n_kfc.start_time = consts.FLOAT_MAX
+                    n_kfc.stop_time = consts.FLOAT_MIN

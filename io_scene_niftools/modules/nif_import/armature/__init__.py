@@ -207,7 +207,7 @@ class Armature:
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes and store the bones' long names.
         if NifOp.props.animation:
-            self.transform_anim.create_action(b_armature_obj, armature_name + "-Anim")
+            self.transform_anim.get_bind_data(b_armature_obj)
 
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]
@@ -319,6 +319,9 @@ class Armature:
             NifLog.debug(f"{n_block.name} has skinning.")
             # one is enough to require an armature, so stop
             return
+        # force import of nodes as bones, even if no geometries are present
+        if NifOp.props.process == "SKELETON_ONLY":
+            self.skinned = True
         NifLog.debug(f"Found no skinned geometries.")
 
     def is_bone(self, ni_block):

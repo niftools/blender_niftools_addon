@@ -250,6 +250,9 @@ class NifImport(NifCommon):
             NiTypes.import_billboard(n_block, b_obj)
             NiTypes.import_range_lod_data(n_block, b_obj, b_children)
 
+            if NifOp.props.animation:
+                self.transform_anim.import_controller_manager(n_block, b_obj, b_armature)
+
             # set object transform, this must be done after all children objects have been parented to b_obj
             if isinstance(b_obj, bpy.types.Object):
                 # note: bones and this object's children already have their matrix set
