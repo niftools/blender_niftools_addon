@@ -193,7 +193,7 @@ def find_controller(n_block, controller_type):
     ctrl = n_block.controller
     while ctrl:
         if isinstance(ctrl, controller_type):
-            if ctrl.data:
+            if ctrl.data or ctrl.interpolator:
                 return ctrl
         ctrl = ctrl.next_controller
 
