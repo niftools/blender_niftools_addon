@@ -110,7 +110,7 @@ def nif_bind_to_blender_bind(nif_armature_space_matrix):
 
 def import_matrix(n_block, relative_to=None):
     """Retrieves a n_block's transform matrix as a Mathutil.Matrix."""
-    return mathutils.Matrix(n_block.get_transform(relative_to).as_list()).transposed()
+    return nifformat_to_mathutils_matrix(n_block.get_transform(relative_to))
 
 
 def decompose_srt(b_matrix):
@@ -241,4 +241,9 @@ def mathutils_to_nifformat_matrix(b_matrix):
     n_matrix = NifFormat.Matrix44()
     n_matrix.set_rows(*b_matrix.transposed())
     return n_matrix
+
+
+def nifformat_to_mathutils_matrix(n_matrix):
+    """Convert a NifFormat.Matrix44 to a blender matrix"""
+    return mathutils.Matrix(n_matrix.as_list()).transposed()
 
