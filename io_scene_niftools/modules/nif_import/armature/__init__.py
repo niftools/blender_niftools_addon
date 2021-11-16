@@ -220,9 +220,9 @@ class Armature:
         for b_name, n_block in self.name_to_block.items():
             n_pose = self.pose_store[n_block]
             b_pose_bone = b_armature_obj.pose.bones[b_name]
-            n_bind = mathutils.Matrix(n_pose.as_list()).transposed()
+            n_bind = math.nifformat_to_mathutils_matrix(n_pose)
             b_pose_bone.matrix = math.nif_bind_to_blender_bind(n_bind)
-            # force update is required to ensure the transforms are set properly in blender
+            # force update is required after each pbone to ensure the transforms are set properly in blender
             bpy.context.view_layer.update()
 
         return b_armature_obj
@@ -239,7 +239,7 @@ class Armature:
         # store nif block for access from object mode
         self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = mathutils.Matrix(self.bind_store.get(n_block, NifFormat.Matrix44()).as_list()).transposed()
+        n_bind = math.nifformat_to_mathutils_matrix(self.bind_store.get(n_block, NifFormat.Matrix44()))
         # get transformation in blender's coordinate space
         b_bind = math.nif_bind_to_blender_bind(n_bind)
 
