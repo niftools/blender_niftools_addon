@@ -48,6 +48,11 @@ class Animation:
     def __init__(self):
         self.show_pose_markers()
         self.fps = 30
+        # store the actions per run here
+        # we need to be able to map their names to blender actions
+        # to prevent overwriting existing animations from older imports
+        # and still be able to access existing actions from this run
+        self.actions = {}
 
     @staticmethod
     def show_pose_markers():
@@ -70,16 +75,16 @@ class Animation:
         # NifLog.warn(f"Unsupported interpolation mode ({n_ipol}) in nif, using quadratic/bezier.")
         return "BEZIER"
 
-    @staticmethod
-    def create_action(b_obj, action_name, retrieve=True):
+    def create_action(self, b_obj, action_name):
         """ Create or retrieve action and set it as active on the object. """
+        if action_name in self.actions:
+            b_action = self.actions[action_name]
+        else:
+            b_action = bpy.data.actions.new(action_name)
+            self.actions[action_name] = b_action
         # could probably skip this test and create always
         if not b_obj.animation_data:
             b_obj.animation_data_create()
-        if retrieve and action_name in bpy.data.actions:
-            b_action = bpy.data.actions[action_name]
-        else:
-            b_action = bpy.data.actions.new(action_name)
         # set as active action on object
         b_obj.animation_data.action = b_action
         return b_action

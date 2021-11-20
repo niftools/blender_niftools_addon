@@ -64,7 +64,7 @@ class MaterialAnimation(Animation):
     def import_material_alpha_controller(self, b_material, n_material):
         # find alpha controller
         n_alphactrl = math.find_controller(n_material, NifFormat.NiAlphaController)
-        if not (n_alphactrl and n_alphactrl.data):
+        if not n_alphactrl:
             return
         NifLog.info("Importing alpha controller")
 
@@ -97,7 +97,7 @@ class MaterialAnimation(Animation):
         """Import UV controller data."""
         # search for the block
         n_ctrl = math.find_controller(n_geom, NifFormat.NiUVController)
-        if not (n_ctrl and n_ctrl.data):
+        if not n_ctrl:
             return
         NifLog.info("Importing UV controller")
 

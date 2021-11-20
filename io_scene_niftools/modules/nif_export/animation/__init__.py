@@ -41,12 +41,9 @@ from abc import ABC
 import bpy
 from pyffi.formats.nif import NifFormat
 
-import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils.singleton import NifOp, NifData
-from io_scene_niftools.utils.logging import NifLog
-
-# FPS = 30
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class Animation(ABC):
@@ -110,8 +107,7 @@ class Animation(ABC):
                 node_kfctrls[node].append(ctrl)
         return node_kfctrls
 
-    @staticmethod
-    def create_controller(parent_block, target_name, priority=0):
+    def create_controller(self, parent_block, target_name, priority=0):
         # todo[anim] - make independent of global NifData.data.version, and move check for NifOp.props.animation outside
         n_kfi = None
         n_kfc = None
@@ -170,8 +166,17 @@ class Animation(ABC):
                 palette = controlled_block.string_palette.palette
                 controlled_block.node_name_offset = palette.add_string(controlled_block.node_name)
                 controlled_block.controller_type_offset = palette.add_string(controlled_block.controller_type)
+        # morrowind style
+        elif isinstance(parent_block, NifFormat.NiSequenceStreamHelper):
+            # create node reference by name
+            nodename_extra = block_store.create_block("NiStringExtraData")
+            nodename_extra.bytes_remaining = len(target_name) + 4
+            nodename_extra.string_data = target_name
+            # the controllers and extra datas form a chain down from the kf root
+            parent_block.add_extra_data(nodename_extra)
+            parent_block.add_controller(n_kfc)
         else:
-            raise io_scene_niftools.utils.logging.NifError("Unsupported KeyframeController parent!")
+            raise NifError("Unsupported KeyframeController parent!")
         
         return n_kfc, n_kfi
 
@@ -193,14 +198,6 @@ class Animation(ABC):
         # define a default animation group
         NifLog.info("Checking action pose markers.")
         if not b_action.pose_markers:
-            # has_controllers = False
-            # for block in block_store.block_to_obj:
-            #     # has it a controller field?
-            #     if isinstance(block, NifFormat.NiObjectNET):
-            #         if block.controller:
-            #             has_controllers = True
-            #             break
-            # if has_controllers:
             NifLog.info("Defining default action pose markers.")
             for frame, text in zip(b_action.frame_range, ("Idle: Start/Idle: Loop Start", "Idle: Loop Stop/Idle: Stop")):
                 marker = b_action.pose_markers.new(text)

@@ -207,7 +207,7 @@ class Armature:
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes and store the bones' long names.
         if NifOp.props.animation:
-            self.transform_anim.create_action(b_armature_obj, armature_name + "-Anim")
+            self.transform_anim.get_bind_data(b_armature_obj)
 
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]
@@ -220,9 +220,9 @@ class Armature:
         for b_name, n_block in self.name_to_block.items():
             n_pose = self.pose_store[n_block]
             b_pose_bone = b_armature_obj.pose.bones[b_name]
-            n_bind = mathutils.Matrix(n_pose.as_list()).transposed()
+            n_bind = math.nifformat_to_mathutils_matrix(n_pose)
             b_pose_bone.matrix = math.nif_bind_to_blender_bind(n_bind)
-            # force update is required to ensure the transforms are set properly in blender
+            # force update is required after each pbone to ensure the transforms are set properly in blender
             bpy.context.view_layer.update()
 
         return b_armature_obj
@@ -239,7 +239,7 @@ class Armature:
         # store nif block for access from object mode
         self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = mathutils.Matrix(self.bind_store.get(n_block, NifFormat.Matrix44()).as_list()).transposed()
+        n_bind = math.nifformat_to_mathutils_matrix(self.bind_store.get(n_block, NifFormat.Matrix44()))
         # get transformation in blender's coordinate space
         b_bind = math.nif_bind_to_blender_bind(n_bind)
 
@@ -319,6 +319,9 @@ class Armature:
             NifLog.debug(f"{n_block.name} has skinning.")
             # one is enough to require an armature, so stop
             return
+        # force import of nodes as bones, even if no geometries are present
+        if NifOp.props.process == "SKELETON_ONLY":
+            self.skinned = True
         NifLog.debug(f"Found no skinned geometries.")
 
     def is_bone(self, ni_block):

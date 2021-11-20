@@ -80,11 +80,22 @@ def export_keymat(rest_rot, key_matrix, bone):
         return rest_rot @ key_matrix
 
 
-def get_bind_matrix(bone):
-    """Get a nif armature-space matrix from a blender bone. """
+def _get_bone_bind(bone):
+    """Get a nif local-space matrix from a blender bone. """
     bind = bone.matrix_local @ correction
+    # make relative to parent
     if bone.parent:
         p_bind_restored = bone.parent.matrix_local @ correction
+        bind = p_bind_restored.inverted() @ bind
+    return bind
+
+
+def _get_bone_pose(bone):
+    """Get a nif local-space matrix from a blender pose bone. """
+    bind = bone.matrix @ correction
+    # make relative to parent
+    if bone.parent:
+        p_bind_restored = bone.parent.matrix @ correction
         bind = p_bind_restored.inverted() @ bind
     return bind
 
@@ -99,7 +110,7 @@ def nif_bind_to_blender_bind(nif_armature_space_matrix):
 
 def import_matrix(n_block, relative_to=None):
     """Retrieves a n_block's transform matrix as a Mathutil.Matrix."""
-    return mathutils.Matrix(n_block.get_transform(relative_to).as_list()).transposed()
+    return nifformat_to_mathutils_matrix(n_block.get_transform(relative_to))
 
 
 def decompose_srt(b_matrix):
@@ -136,17 +147,16 @@ def get_armature():
 
 def get_object_bind(b_obj):
     """Get the bind matrix of a blender object.
-
     Returns the final NIF matrix for the given blender object.
-    Blender space and axes order are corrected for the NIF.
+    Blender space and axes order are corrected for the NIF for bones.
     Returns a 4x4 mathutils.Matrix()
     """
 
     if isinstance(b_obj, bpy.types.Bone):
-        return get_bind_matrix(b_obj)
-
+        return _get_bone_bind(b_obj)
+    elif isinstance(b_obj, bpy.types.PoseBone):
+        return _get_bone_pose(b_obj)
     elif isinstance(b_obj, bpy.types.Object):
-
         # TODO [armature] Move to armaturehelper
         # if there is a bone parent then the object is parented then get the matrix relative to the bone parent head
         if b_obj.parent_bone:
@@ -183,9 +193,9 @@ def find_controller(n_block, controller_type):
     ctrl = n_block.controller
     while ctrl:
         if isinstance(ctrl, controller_type):
-            break
+            if ctrl.data or ctrl.interpolator:
+                return ctrl
         ctrl = ctrl.next_controller
-    return ctrl
 
 
 def find_extra(n_block, extratype):
@@ -231,3 +241,9 @@ def mathutils_to_nifformat_matrix(b_matrix):
     n_matrix = NifFormat.Matrix44()
     n_matrix.set_rows(*b_matrix.transposed())
     return n_matrix
+
+
+def nifformat_to_mathutils_matrix(n_matrix):
+    """Convert a NifFormat.Matrix44 to a blender matrix"""
+    return mathutils.Matrix(n_matrix.as_list()).transposed()
+
