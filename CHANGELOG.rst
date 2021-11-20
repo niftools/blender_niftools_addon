@@ -1,3 +1,10 @@
+Version v0.0.13
+==============
+
+- #75 Separate Normal data from Material code
+- #76 Separate UV import/export from Material code
+- #26 Refactor Material System : Texture/Geometry
+
 Version v0.0.12
 ==============
 
