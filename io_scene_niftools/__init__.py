@@ -52,7 +52,7 @@ bl_info = {
     "version": (0, 0, 13),  # can't read from VERSION, blender wants it hardcoded
     "api": 39257,
     "location": "File > Import-Export",
-    "warning": "Partially functional port from 2.49 series still in progress",
+    "warning": "Generally stable port of the Niftool's Blender NifScripts, many improvements, still work in progress",
     "wiki_url": "https://blender-niftools-addon.readthedocs.io/",
     "tracker_url": "https://github.com/niftools/blender_niftools_addon/issues",
     "support": "COMMUNITY",
