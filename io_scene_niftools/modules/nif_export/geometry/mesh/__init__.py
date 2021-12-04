@@ -532,7 +532,7 @@ class Mesh:
         for i, bone in enumerate(skininst.bones):
             bone_name = block_store.block_to_obj[bone].name
             pose_bone = b_obj_armature.pose.bones[bone_name]
-            n_bine = math.mathutils_to_nifformat_matrix(*math.blender_bind_to_nif_bind(pose_bone.matrix))
+            n_bind = math.mathutils_to_nifformat_matrix(math.blender_bind_to_nif_bind(pose_bone.matrix))
             # todo [armature] figure out the correct transform that works universally
             # inverse skin bind in nif armature space, relative to root / geom??
             skindata.bone_list[i].set_transform((n_bind * geomtransform).get_inverse(fast=False))
