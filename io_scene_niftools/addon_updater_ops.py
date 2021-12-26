@@ -1354,7 +1354,7 @@ def register(bl_info):
     # updater.addon = # define at top of module, MUST be done first
 
     # Website for manual addon download, optional but recommended to set
-    updater.website = "https://github.com/niftools/blender-niftools-addon/"
+    updater.website = "https://github.com/niftools/blender_niftools_addon/"
 
     # Addon subfolder path
     # "sample/path/to/addon"

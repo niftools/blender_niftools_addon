@@ -329,8 +329,8 @@ class NodesWrapper:
             group_links.new(combine_node.inputs[1], invert_node.outputs[0])
             group_links.new(combine_node.inputs[2], separate_node.outputs[2])
             # link the converting nodes to the input/output
-            group_links.new(separate_node.inputs[0], input_node.outputs['Input'])
-            group_links.new(output_node.inputs['Output'], combine_node.outputs[0])
+            group_links.new(separate_node.inputs[0], input_node.outputs[0])
+            group_links.new(output_node.inputs[0], combine_node.outputs[0])
             nodes_iterate(node_group, output_node)
         # add the group node to the main node tree and link it
         group_node = nodes.new('ShaderNodeGroup')

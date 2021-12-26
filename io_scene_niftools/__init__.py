@@ -49,10 +49,10 @@ bl_info = {
     "description": "Import and export files in the NetImmerse/Gamebryo formats (.nif, .kf, .egm)",
     "author": "Niftools team",
     "blender": (2, 82, 0),
-    "version": (0, 0, 12),  # can't read from VERSION, blender wants it hardcoded
+    "version": (0, 0, 13),  # can't read from VERSION, blender wants it hardcoded
     "api": 39257,
     "location": "File > Import-Export",
-    "warning": "Partially functional port from 2.49 series still in progress",
+    "warning": "Generally stable port of the Niftool's Blender NifScripts, many improvements, still work in progress",
     "wiki_url": "https://blender-niftools-addon.readthedocs.io/",
     "tracker_url": "https://github.com/niftools/blender_niftools_addon/issues",
     "support": "COMMUNITY",
@@ -119,5 +119,5 @@ def configure_autoupdater():
     addon_updater_ops.updater.remove_pre_update_patterns = ["*.py", "*.pyc", "*.xml", "*.exe", "*.rst", "VERSION", "*.xsd"]
     addon_updater_ops.updater.user = "niftools"
     addon_updater_ops.updater.repo = "blender_niftools_addon"
-    addon_updater_ops.updater.website = "https://github.com/niftools/blender-niftools-addon/"
+    addon_updater_ops.updater.website = "https://github.com/niftools/blender_niftools_addon/"
     addon_updater_ops.updater.version_min_update = (0, 0, 4)

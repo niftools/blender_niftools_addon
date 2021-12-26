@@ -117,7 +117,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (game == 'SKYRIM') and (b_mat.niftools_shader.bslsp_shaderobjtype in ('Skin Tint', 'Face Tint')):
+                if (game == 'SKYRIM') and b_mat.niftools_shader.slsf_1_model_space_normals:
                     mesh_hasnormals = False  # for proper lighting
 
             # create a trishape block
@@ -404,7 +404,7 @@ class Mesh:
 
                         for b_vert in b_mesh.vertices:
                             if len(b_vert.groups) == 0:  # check vert has weight_groups
-                                unweighted_vertices.append(b_vert)
+                                unweighted_vertices.append(b_vert.index)
                                 continue
 
                             for g in b_vert.groups:
@@ -422,7 +422,7 @@ class Mesh:
                             else:
                                 vert_norm[v[0]] = v[1]
 
-                    self.select_unweighted_vertices(unweighted_vertices)
+                    self.select_unweighted_vertices(b_obj, unweighted_vertices)
 
                     # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
                     # note: allocate memory for faster performance
@@ -532,8 +532,7 @@ class Mesh:
         for i, bone in enumerate(skininst.bones):
             bone_name = block_store.block_to_obj[bone].name
             pose_bone = b_obj_armature.pose.bones[bone_name]
-            n_bind = NifFormat.Matrix44()
-            n_bind.set_rows(*math.blender_bind_to_nif_bind(pose_bone.matrix).transposed())
+            n_bind = math.mathutils_to_nifformat_matrix(math.blender_bind_to_nif_bind(pose_bone.matrix))
             # todo [armature] figure out the correct transform that works universally
             # inverse skin bind in nif armature space, relative to root / geom??
             skindata.bone_list[i].set_transform((n_bind * geomtransform).get_inverse(fast=False))
@@ -625,21 +624,26 @@ class Mesh:
                     trishape.flags = 0x0005  # use triangles as bounding box + hide
 
     # todo [mesh] join code paths for those two?
-    def select_unweighted_vertices(self, unweighted_vertices):
+    def select_unweighted_vertices(self, b_obj, unweighted_vertices):
         # vertices must be assigned at least one vertex group lets be nice and display them for the user
         if len(unweighted_vertices) > 0:
             for b_scene_obj in bpy.context.scene.objects:
                 b_scene_obj.select_set(False)
 
-            b_obj = bpy.context.view_layer.objects.active
-            b_obj.select_set(True)
+            bpy.context.view_layer.objects.active = b_obj
 
-            # switch to edit mode and raise exception
+            # switch to edit mode to deselect everything in the mesh (not missing vertices or edges)
             bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-            # clear all currently selected vertices
+            bpy.context.tool_settings.mesh_select_mode = (True, False, False)
             bpy.ops.mesh.select_all(action='DESELECT')
-            # select unweighted vertices
-            bpy.ops.mesh.select_ungrouped(extend=False)
+
+            # select unweighted vertices - switch back to object mode to make per-vertex selection
+            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+            for vert_index in unweighted_vertices:
+                b_obj.data.vertices[vert_index].select = True
+
+            # switch back to edit mode to make the selection visible and raise exception
+            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
 
             raise NifError("Cannot export mesh with unweighted vertices. "
                            "The unweighted vertices have been selected in the mesh so they can easily be identified.")
