@@ -460,6 +460,24 @@ class Mesh:
 
                     if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
                         NifLog.info("Creating skin partition")
+
+                        # warn on bad config settings
+                        if game == 'OBLIVION':
+                            if NifOp.props.pad_bones:
+                                NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
+                        if game in ('OBLIVION', 'FALLOUT_3'):
+                            if NifOp.props.max_bones_per_partition < 18:
+                                NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
+                                            "Set it to 18 to get higher quality skin partitions.")
+                            elif NifOp.props.max_bones_per_partition > 18:
+                                NifLog.warn("Using more than 18 bones per partition on Oblivion/Fallout 3 export."
+                                            "This may cause issues in-game.")
+                        if game == 'SKYRIM':
+                            if NifOp.props.max_bones_per_partition < 24:
+                                NifLog.warn("Using less than 24 bones per partition on Skyrim export."
+                                            "Set it to 24 to get higher quality skin partitions.")
+                        # Skyrim Special Edition has a limit of 80 bones per partition, but export is not yet supported
+
                         part_order = [getattr(NifFormat.BSDismemberBodyPartType, face_map.name, None) for face_map in b_obj.face_maps]
                         part_order = [body_part for body_part in part_order if body_part is not None]
                         # override pyffi trishape.update_skin_partition with custom one (that allows ordering)
@@ -475,18 +493,6 @@ class Mesh:
                             maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
                             part_sort_order=part_order)
 
-                        # warn on bad config settings
-                        if game == 'OBLIVION':
-                            if NifOp.props.pad_bones:
-                                NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                        if game in ('OBLIVION', 'FALLOUT_3'):
-                            if NifOp.props.max_bones_per_partition < 18:
-                                NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
-                                            "Set it to 18 to get higher quality skin partitions.")
-                        if game == 'SKYRIM':
-                            if NifOp.props.max_bones_per_partition < 24:
-                                NifLog.warn("Using less than 24 bones per partition on Skyrim export."
-                                            "Set it to 24 to get higher quality skin partitions.")
                         if lostweight > NifOp.props.epsilon:
                             NifLog.warn(f"Lost {lostweight:f} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{trishape.name}')")
 
