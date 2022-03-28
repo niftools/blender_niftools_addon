@@ -65,7 +65,7 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
     animation: bpy.props.BoolProperty(
         name="Animation",
         description="Import animation",
-        default=False)
+        default=True)
 
     # Merge skeleton roots.
     merge_skeleton_roots: bpy.props.BoolProperty(
