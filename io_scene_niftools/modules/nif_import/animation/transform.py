@@ -280,37 +280,51 @@ class TransformAnimation(Animation):
 
         start_time = time.time()
         if eulers:
-            NifLog.debug('Rotation keys..(euler)')
-            fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
-            for t, val in eulers:
-                key = mathutils.Euler(val)
-                if bone_name:
-                    key = math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
-                self.add_key(fcurves, t, key, interp_rot)
+            self.import_eulers(b_action, bone_name, eulers, flags, interp_rot, n_bind_rot_inv)
         elif rotations:
-            NifLog.debug('Rotation keys...(quaternions)')
-            fcurves = self.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
-            for t, val in rotations:
-                key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
-                if bone_name:
-                    key = math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
-                self.add_key(fcurves, t, key, interp_rot)
+            self.import_rotations(b_action, bone_name, flags, interp_rot, n_bind_rot_inv, rotations)
         if translations:
-            NifLog.debug('Translation keys...')
-            fcurves = self.create_fcurves(b_action, "location", range(3), flags, bone_name)
-            for t, val in translations:
-                key = mathutils.Vector([val.x, val.y, val.z])
-                if bone_name:
-                    key = math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
-                self.add_key(fcurves, t, key, interp_loc)
+            self.import_translations(b_action, bone_name, flags, interp_loc, n_bind_rot_inv, n_bind_trans, translations)
         if scales:
-            NifLog.debug('Scale keys...')
-            fcurves = self.create_fcurves(b_action, "scale", range(3), flags, bone_name)
-            for t, val in scales:
-                key = (val, val, val)
-                self.add_key(fcurves, t, key, interp_scale)
+            self.import_scale(b_action, bone_name, flags, interp_scale, scales)
         NifLog.debug(f'Keys for {b_target.name} imported in {time.time()-start_time:0.3f} seconds')
         return b_action
+
+    def import_scale(self, b_action, bone_name, flags, interp_scale, scales):
+        NifLog.debug('Scale keys...')
+        times = [t for t, val in scales]
+        keys = [(val, val, val) for t, val in scales]
+        fcurves = self.create_fcurves(b_action, "scale", range(3), flags, bone_name)
+        self.add_keys(fcurves, times, keys, interp_scale)
+
+    def import_translations(self, b_action, bone_name, flags, interp_loc, n_bind_rot_inv, n_bind_trans, translations):
+        NifLog.debug('Translation keys...')
+        times = [t for t, val in translations]
+        keys = [mathutils.Vector([val.x, val.y, val.z]) for t, val in translations]
+        if bone_name:
+            keys = [
+                math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
+                for key in keys]
+        fcurves = self.create_fcurves(b_action, "location", range(3), flags, bone_name)
+        self.add_keys(fcurves, times, keys, interp_loc)
+
+    def import_rotations(self, b_action, bone_name, flags, interp_rot, n_bind_rot_inv, rotations):
+        NifLog.debug('Rotation keys...(quaternions)')
+        times = [t for t, val in rotations]
+        keys = [mathutils.Quaternion([val.w, val.x, val.y, val.z]) for t, val in rotations]
+        if bone_name:
+            keys = [math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion() for key in keys]
+        fcurves = self.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
+        self.add_keys(fcurves, times, keys, interp_rot)
+
+    def import_eulers(self, b_action, bone_name, eulers, flags, interp_rot, n_bind_rot_inv):
+        NifLog.debug('Rotation keys..(euler)')
+        times = [t for t, val in eulers]
+        keys = [mathutils.Euler(val) for t, val in eulers]
+        if bone_name:
+            keys = [math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler() for key in keys]
+        fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
+        self.add_keys(fcurves, times, keys, interp_rot)
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""

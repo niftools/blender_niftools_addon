@@ -141,6 +141,25 @@ class Animation:
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
 
+    def add_keys(self, fcurves, times, keys, interp):
+        """
+        Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
+        """
+        samples = [round(t * self.fps) for t in times]
+        assert len(samples) == len(keys)
+        # get interpolation enum representation
+        ipo = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items[interp].value
+        interpolations = [ipo for _ in range(len(samples))]
+        # import the keys
+        for fcurve, fcu_keys in zip(fcurves, zip(*keys)):
+            # add new points
+            fcurve.keyframe_points.add(count=len(fcu_keys))
+            # populate points with keys for this curve
+            fcurve.keyframe_points.foreach_set("co", [x for co in zip(samples, fcu_keys) for x in co])
+            fcurve.keyframe_points.foreach_set("interpolation", interpolations)
+            # update
+            fcurve.update()
+
     def add_key(self, fcurves, t, key, interp):
         """
         Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
