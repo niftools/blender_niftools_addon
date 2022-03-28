@@ -188,11 +188,21 @@ class TransformAnimation(Animation):
             return
         NifLog.debug(f'Importing keyframe controller for {b_target.name}')
 
-        translations = []
-        scales = []
-        rotations = []
-        eulers = []
         n_kfd = None
+        # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
+        flags = None
+
+        # create or get the action
+        if b_armature and isinstance(b_target, bpy.types.PoseBone):
+            # action on armature, one per armature
+            b_action = self.create_action(b_armature, b_action_name)
+            if b_target.name in self.bind_data:
+                n_bind_rot_inv, n_bind_trans = self.bind_data[b_target.name]
+            bone_name = b_target.name
+        else:
+            # one action per object
+            b_action = self.create_action(b_target, f"{b_action_name}_{b_target.name}")
+            bone_name = None
 
         # transform controllers (dartgun.nif)
         if isinstance(n_kfc, NifFormat.NiTransformController):
@@ -200,6 +210,8 @@ class TransformAnimation(Animation):
                 n_kfd = n_kfc.interpolator.data
         # B-spline curve import
         elif isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
+            # Bsplines are Bezier curves
+            interp_rot = interp_loc = interp_scale = "BEZIER"
             # used by WLP2 (tiger.kf), but only for non-LocRotScale data
             # eg. bone stretching - see controlledblock.get_variable_1()
             # do not support this for now, no good representation in Blender
@@ -208,24 +220,21 @@ class TransformAnimation(Animation):
                 # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
                 return
             times = list(n_kfc.get_times())
-            # just do these temp steps to avoid generating empty fcurves down the line
-            trans_temp = [mathutils.Vector(tup) for tup in n_kfc.get_translations()]
-            if trans_temp:
-                translations = zip(times, trans_temp)
-            rot_temp = [mathutils.Quaternion(tup) for tup in n_kfc.get_rotations()]
-            if rot_temp:
-                rotations = zip(times, rot_temp)
-            scale_temp = list(n_kfc.get_scales())
-            if scale_temp:
-                scales = zip(times, scale_temp)
-            # Bsplines are Bezier curves
-            interp_rot = interp_loc = interp_scale = "BEZIER"
+            keys = list(n_kfc.get_translations())
+            self.import_translations(b_action, bone_name, times, keys, flags, interp_loc, n_bind_rot_inv, n_bind_trans)
+            keys = list(n_kfc.get_rotations())
+            self.import_quats(b_action, bone_name, times, keys, flags, interp_rot, n_bind_rot_inv)
+            keys = list(n_kfc.get_scales())
+            self.import_scales(b_action, bone_name, times, keys, flags, interp_scale)
         elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
             # not sure what this is used for
             return
         else:
             # ZT2 & Fallout
             n_kfd = n_kfc.data
+        # ZT2 - get extrapolation for every kfc
+        if isinstance(n_kfc, NifFormat.NiKeyframeController):
+            flags = n_kfc.flags
         if isinstance(n_kfd, NifFormat.NiKeyframeData):
             interp_rot = self.get_b_interp_from_n_interp(n_kfd.rotation_type)
             interp_loc = self.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
@@ -248,59 +257,36 @@ class TransformAnimation(Animation):
                     x_r = interpolate(times_all, times_x, [key.value for key in n_kfd.xyz_rotations[0].keys])
                     y_r = interpolate(times_all, times_y, [key.value for key in n_kfd.xyz_rotations[1].keys])
                     z_r = interpolate(times_all, times_z, [key.value for key in n_kfd.xyz_rotations[2].keys])
-                eulers = zip(times_all, zip(x_r, y_r, z_r))
+                    self.import_eulers(b_action, bone_name, times_all, zip(x_r, y_r, z_r), flags, interp_rot, n_bind_rot_inv)
             else:
                 b_target.rotation_mode = "QUATERNION"
-                rotations = [(key.time, key.value) for key in n_kfd.quaternion_keys]
+                times = [key.time for key in n_kfd.quaternion_keys]
+                keys = [key.value for key in n_kfd.quaternion_keys]
+                self.import_quats(b_action, bone_name, times, keys, flags, interp_rot, n_bind_rot_inv)
 
-            if n_kfd.scales.keys:
-                scales = [(key.time, key.value) for key in n_kfd.scales.keys]
+            times = [key.time for key in n_kfd.scales.keys]
+            keys = [key.value for key in n_kfd.scales.keys]
+            self.import_scales(b_action, bone_name, times, keys, flags, interp_scale)
+            times = [key.time for key in n_kfd.translations.keys]
+            keys = [key.value for key in n_kfd.translations.keys]
+            self.import_translations(b_action, bone_name, times, keys, flags, interp_loc, n_bind_rot_inv, n_bind_trans)
 
-            if n_kfd.translations.keys:
-                translations = [(key.time, key.value) for key in n_kfd.translations.keys]
-
-        # ZT2 - get extrapolation for every kfc
-        if isinstance(n_kfc, NifFormat.NiKeyframeController):
-            flags = n_kfc.flags
-        # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
-        else:
-            flags = None
-
-        # create or get the action
-        if b_armature and isinstance(b_target, bpy.types.PoseBone):
-            # action on armature, one per armature
-            b_action = self.create_action(b_armature, b_action_name)
-            if b_target.name in self.bind_data:
-                n_bind_rot_inv, n_bind_trans = self.bind_data[b_target.name]
-            bone_name = b_target.name
-        else:
-            # one action per object
-            b_action = self.create_action(b_target, f"{b_action_name}_{b_target.name}")
-            bone_name = None
-
-        start_time = time.time()
-        if eulers:
-            self.import_eulers(b_action, bone_name, eulers, flags, interp_rot, n_bind_rot_inv)
-        elif rotations:
-            self.import_rotations(b_action, bone_name, flags, interp_rot, n_bind_rot_inv, rotations)
-        if translations:
-            self.import_translations(b_action, bone_name, flags, interp_loc, n_bind_rot_inv, n_bind_trans, translations)
-        if scales:
-            self.import_scale(b_action, bone_name, flags, interp_scale, scales)
-        NifLog.debug(f'Keys for {b_target.name} imported in {time.time()-start_time:0.3f} seconds')
         return b_action
 
-    def import_scale(self, b_action, bone_name, flags, interp_scale, scales):
+    def import_scales(self, b_action, bone_name, times, keys, flags, interp_scale):
+        if not keys:
+            return
         NifLog.debug('Scale keys...')
-        times = [t for t, val in scales]
-        keys = [(val, val, val) for t, val in scales]
+        # make 3D
+        keys = [(val, val, val) for t, val in keys]
         fcurves = self.create_fcurves(b_action, "scale", range(3), flags, bone_name)
         self.add_keys(fcurves, times, keys, interp_scale)
 
-    def import_translations(self, b_action, bone_name, flags, interp_loc, n_bind_rot_inv, n_bind_trans, translations):
+    def import_translations(self, b_action, bone_name, times, keys, flags, interp_loc, n_bind_rot_inv, n_bind_trans):
+        if not keys:
+            return
         NifLog.debug('Translation keys...')
-        times = [t for t, val in translations]
-        keys = [mathutils.Vector([val.x, val.y, val.z]) for t, val in translations]
+        keys = [mathutils.Vector([val.x, val.y, val.z]) for val in keys]
         if bone_name:
             keys = [
                 math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
@@ -308,19 +294,21 @@ class TransformAnimation(Animation):
         fcurves = self.create_fcurves(b_action, "location", range(3), flags, bone_name)
         self.add_keys(fcurves, times, keys, interp_loc)
 
-    def import_rotations(self, b_action, bone_name, flags, interp_rot, n_bind_rot_inv, rotations):
+    def import_quats(self, b_action, bone_name, times, keys, flags, interp_rot, n_bind_rot_inv):
+        if not keys:
+            return
         NifLog.debug('Rotation keys...(quaternions)')
-        times = [t for t, val in rotations]
-        keys = [mathutils.Quaternion([val.w, val.x, val.y, val.z]) for t, val in rotations]
+        keys = [mathutils.Quaternion([val.w, val.x, val.y, val.z]) for val in keys]
         if bone_name:
             keys = [math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion() for key in keys]
         fcurves = self.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
         self.add_keys(fcurves, times, keys, interp_rot)
 
-    def import_eulers(self, b_action, bone_name, eulers, flags, interp_rot, n_bind_rot_inv):
+    def import_eulers(self, b_action, bone_name, times, keys, flags, interp_rot, n_bind_rot_inv):
+        if not keys:
+            return
         NifLog.debug('Rotation keys..(euler)')
-        times = [t for t, val in eulers]
-        keys = [mathutils.Euler(val) for t, val in eulers]
+        keys = [mathutils.Euler(val) for val in keys]
         if bone_name:
             keys = [math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler() for key in keys]
         fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
