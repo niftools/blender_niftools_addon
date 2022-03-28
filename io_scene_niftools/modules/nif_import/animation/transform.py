@@ -39,6 +39,7 @@
 
 import bpy
 import mathutils
+import time
 
 from functools import singledispatch
 from bisect import bisect_left
@@ -277,6 +278,7 @@ class TransformAnimation(Animation):
             b_action = self.create_action(b_target, f"{b_action_name}_{b_target.name}")
             bone_name = None
 
+        start_time = time.time()
         if eulers:
             NifLog.debug('Rotation keys..(euler)')
             fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
@@ -307,6 +309,7 @@ class TransformAnimation(Animation):
             for t, val in scales:
                 key = (val, val, val)
                 self.add_key(fcurves, t, key, interp_scale)
+        NifLog.debug(f'Keys for {b_target.name} imported in {time.time()-start_time:0.3f} seconds')
         return b_action
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
