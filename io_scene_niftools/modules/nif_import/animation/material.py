@@ -101,7 +101,7 @@ class MaterialAnimation(Animation):
         if not any(n_uvgroup.keys for n_uvgroup in n_ctrl.data.uv_groups):
             return
 
-        b_mat_action = self.create_action(b_material, "MaterialAction")
+        b_mat_action = self.create_action(b_material.node_tree, "MaterialAction")
 
         tree = b_material.node_tree
         transform = tree.nodes.new('ShaderNodeMapping')
@@ -121,15 +121,15 @@ class MaterialAnimation(Animation):
             tree.links.new(transform.outputs[0], to_socket)
 
         # loc U, loc V, scale U, scale V
-        dtypes = (1, 0), (1, 1), (3, 0), (3, 1)
+        LOC_DP = 1
+        SCALE_DP = 3
+        dtypes = (LOC_DP, 0), (LOC_DP, 1), (SCALE_DP, 0), (SCALE_DP, 1)
         for n_uvgroup, (data_path, array_ind) in zip(n_ctrl.data.uv_groups, dtypes):
             if n_uvgroup.keys:
                 interp = self.get_b_interp_from_n_interp(n_uvgroup.interpolation)
                 times, keys = self.get_keys_values(n_uvgroup.keys)
                 # UV V coordinate is inverted in blender
-                if 1 == data_path and array_ind == 1:
+                if 1 == LOC_DP and array_ind == 1:
                     keys = [-key for key in keys]
-                # todo - this does not register as keyframed visually, but animates the value
-                # bpy.data.materials["Material"].node_tree.nodes["Mapping.001"].inputs[1].default_value[0]
-                self.add_keys(b_mat_action, f'node_tree.nodes["{transform.name}"].inputs[{data_path}].default_value', (array_ind,), n_ctrl.flags, times, keys, interp)
+                self.add_keys(b_mat_action, f'nodes["{transform.name}"].inputs[{data_path}].default_value', (array_ind,), n_ctrl.flags, times, keys, interp)
 
