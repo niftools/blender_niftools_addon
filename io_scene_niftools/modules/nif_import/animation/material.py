@@ -43,6 +43,7 @@ from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.consts import LOC, SCALE
 
 
 class MaterialAnimation(Animation):
@@ -97,19 +98,42 @@ class MaterialAnimation(Animation):
             return
         NifLog.info("Importing UV controller")
 
+        if not any(n_uvgroup.keys for n_uvgroup in n_ctrl.data.uv_groups):
+            return
+
         b_mat_action = self.create_action(b_material, "MaterialAction")
 
-        dtypes = ("offset", 0), ("offset", 1), ("scale", 0), ("scale", 1)
+        tree = b_material.node_tree
+        transform = tree.nodes.new('ShaderNodeMapping')
+        uv_index = 0
+        uv_name = f"TexCoordIndex{uv_index}"
+        uv_node = tree.nodes.get(uv_name)
+        # get previous links
+        used_links = []
+        for link in tree.links:
+            # todo - think about a better method, maybe by type
+            if link.from_node == uv_node:
+                # print("found")
+                used_links.append(link)
+
+        # link the node between previous uv node and texture node
+        for link in used_links:
+            from_socket = link.from_socket
+            to_socket = link.to_socket
+            tree.links.remove(link)
+            tree.links.new(from_socket, transform.inputs[0])
+            tree.links.new(transform.outputs[0], to_socket)
+
+        # loc U, loc V, scale U, scale V
+        dtypes = (1, 0), (1, 1), (3, 0), (3, 1)
         for n_uvgroup, (data_path, array_ind) in zip(n_ctrl.data.uv_groups, dtypes):
             if n_uvgroup.keys:
                 interp = self.get_b_interp_from_n_interp(n_uvgroup.interpolation)
-                # in blender, UV offset is stored per n_texture slot
-                # so we have to repeat the import for each used tex slot
-                for i, texture_slot in enumerate(b_material.texture_slots):
-                    if texture_slot:
-                        times, keys = self.get_keys_values(n_uvgroup.keys)
-                        # UV V coordinate is inverted
-                        if "offset" in data_path and array_ind == 1:
-                            keys = [-key for key in keys]
-                        self.add_keys(b_mat_action, f"texture_slots[{i}].{data_path}", (array_ind,), n_ctrl.flags, times, keys, interp)
+                times, keys = self.get_keys_values(n_uvgroup.keys)
+                # UV V coordinate is inverted in blender
+                if 1 == data_path and array_ind == 1:
+                    keys = [-key for key in keys]
+                # todo - this does not register as keyframed visually, but animates the value
+                # bpy.data.materials["Material"].node_tree.nodes["Mapping.001"].inputs[1].default_value[0]
+                self.add_keys(b_mat_action, f'node_tree.nodes["{transform.name}"].inputs[{data_path}].default_value', (array_ind,), n_ctrl.flags, times, keys, interp)
 
