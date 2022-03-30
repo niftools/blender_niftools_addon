@@ -102,7 +102,7 @@ class MorphAnimation(Animation):
                             continue
                         
                     # get the interpolation mode
-                    interp = self.get_b_interp_from_n_interp( morph_data.interpolation)
+                    interp = self.get_b_interp_from_n_interp(morph_data.interpolation)
                     fcu = self.create_fcurves(shape_action, "value", (0,), flags=n_morphCtrl.flags, keyname=shape_key.name)
                     
                     # set keyframes
