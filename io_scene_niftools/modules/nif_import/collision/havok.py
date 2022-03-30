@@ -197,7 +197,8 @@ class BhkCollision(Collision):
             b_r_body.deactivate_angular_velocity = mathutils.Vector([ang_vel.w, ang_vel.x, ang_vel.y, ang_vel.z]).magnitude
 
             # Custom Niftools properties
-            b_col_obj.collision.permeability = bhkshape.penetration_depth
+            # no longer available in blender 3.1
+            # b_col_obj.collision.permeability = bhkshape.penetration_depth
             b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
             b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
             b_col_obj.nifcollision.max_linear_velocity = bhkshape.max_linear_velocity
