@@ -43,7 +43,6 @@ from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
-from io_scene_niftools.utils.consts import LOC, SCALE
 
 
 class MaterialAnimation(Animation):
