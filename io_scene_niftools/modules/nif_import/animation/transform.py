@@ -272,16 +272,16 @@ class TransformAnimation(Animation):
         """Returns list of times and keys for an array 'items' with key elements having 'time' and 'value' attributes"""
         return [key.time for key in items], [key.value for key in items]
 
-    def import_scales(self, b_action, bone_name, times, keys, flags, interp_scale):
+    def import_scales(self, b_action, bone_name, times, keys, flags, interp):
         if not keys:
             return
         NifLog.debug('Scale keys...')
         # make 3D
         keys = [(val, val, val) for val in keys]
         fcurves = self.create_fcurves(b_action, "scale", range(3), flags, bone_name)
-        self.add_keys(fcurves, times, keys, interp_scale)
+        self.add_keys(fcurves, times, keys, interp)
 
-    def import_translations(self, b_action, bone_name, times, keys, flags, interp_loc, n_bind_rot_inv, n_bind_trans):
+    def import_translations(self, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans):
         if not keys:
             return
         NifLog.debug('Translation keys...')
@@ -291,9 +291,9 @@ class TransformAnimation(Animation):
                 math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
                 for key in keys]
         fcurves = self.create_fcurves(b_action, "location", range(3), flags, bone_name)
-        self.add_keys(fcurves, times, keys, interp_loc)
+        self.add_keys(fcurves, times, keys, interp)
 
-    def import_quats(self, b_action, bone_name, times, keys, flags, interp_rot, n_bind_rot_inv):
+    def import_quats(self, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv):
         if not keys:
             return
         NifLog.debug('Rotation keys...(quaternions)')
@@ -301,9 +301,9 @@ class TransformAnimation(Animation):
         if bone_name:
             keys = [math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion() for key in keys]
         fcurves = self.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
-        self.add_keys(fcurves, times, keys, interp_rot)
+        self.add_keys(fcurves, times, keys, interp)
 
-    def import_eulers(self, b_action, bone_name, times, keys, flags, interp_rot, n_bind_rot_inv):
+    def import_eulers(self, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv):
         if not keys:
             return
         NifLog.debug('Rotation keys..(euler)')
@@ -311,7 +311,7 @@ class TransformAnimation(Animation):
         if bone_name:
             keys = [math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler() for key in keys]
         fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
-        self.add_keys(fcurves, times, keys, interp_rot)
+        self.add_keys(fcurves, times, keys, interp)
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""
