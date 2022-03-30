@@ -91,7 +91,7 @@ class MaterialAnimation(Animation):
         self.add_keys(b_mat_action, b_channel, range(3), n_ctrl.flags, times, keys, interp)
 
     def import_material_uv_controller(self, b_material, n_geom):
-        """Import UV controller data."""
+        """Import UV controller data as a mapping node with animated values."""
         # search for the block
         n_ctrl = math.find_controller(n_geom, NifFormat.NiUVController)
         if not n_ctrl:
@@ -105,15 +105,11 @@ class MaterialAnimation(Animation):
 
         tree = b_material.node_tree
         transform = tree.nodes.new('ShaderNodeMapping')
-        uv_index = 0
-        uv_name = f"TexCoordIndex{uv_index}"
-        uv_node = tree.nodes.get(uv_name)
         # get previous links
         used_links = []
         for link in tree.links:
-            # todo - think about a better method, maybe by type
-            if link.from_node == uv_node:
-                # print("found")
+            # get uv nodes
+            if link.from_node.type == "UVMAP":
                 used_links.append(link)
 
         # link the node between previous uv node and texture node
