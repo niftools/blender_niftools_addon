@@ -63,35 +63,31 @@ class MaterialAnimation(Animation):
 
     def import_material_alpha_controller(self, b_material, n_material):
         # find alpha controller
-        n_alphactrl = math.find_controller(n_material, NifFormat.NiAlphaController)
-        if not n_alphactrl:
+        n_ctrl = math.find_controller(n_material, NifFormat.NiAlphaController)
+        if not n_ctrl:
             return
         NifLog.info("Importing alpha controller")
 
         b_mat_action = self.create_action(b_material, "MaterialAction")
-        fcurves = self.create_fcurves(b_mat_action, "niftools.emissive_alpha", range(3), n_alphactrl.flags)
-        interp = self.get_b_interp_from_n_interp(n_alphactrl.data.data.interpolation)
-        for key in n_alphactrl.data.data.keys:
-            self.add_key(fcurves, key.time, (key.value, key.value, key.value), interp)
+        interp = self.get_b_interp_from_n_interp(n_ctrl.data.data.interpolation)
+        times, keys = self.get_keys_values(n_ctrl.data.data.keys)
+        # key needs to be RGB due to current representation in blender
+        keys = [(v, v, v) for v in keys]
+        self.add_keys(b_mat_action, "niftools.emissive_alpha", range(3), n_ctrl.flags, times, keys, interp)
 
     def import_material_color_controller(self, b_material, n_material, b_channel, n_target_color):
         # find material color controller with matching target color
-        for ctrl in n_material.get_controllers():
-            if isinstance(ctrl, NifFormat.NiMaterialColorController):
-                if ctrl.get_target_color() == n_target_color:
-                    n_matcolor_ctrl = ctrl
+        for n_ctrl in n_material.get_controllers():
+            if isinstance(n_ctrl, NifFormat.NiMaterialColorController):
+                if n_ctrl.get_target_color() == n_target_color:
                     break
         else:
             return
         NifLog.info(f"Importing material color controller for target color {n_target_color} into blender channel {b_channel}")
-
-        # import data as curves
         b_mat_action = self.create_action(b_material, "MaterialAction")
-
-        fcurves = self.create_fcurves(b_mat_action, b_channel, range(3), n_matcolor_ctrl.flags)
-        interp = self.get_b_interp_from_n_interp(n_matcolor_ctrl.data.data.interpolation)
-        for key in n_matcolor_ctrl.data.data.keys:
-            self.add_key(fcurves, key.time, key.value.as_list(), interp)
+        interp = self.get_b_interp_from_n_interp(n_ctrl.data.data.interpolation)
+        times, keys = self.get_keys_values(n_ctrl.data.data.keys)
+        self.add_keys(b_mat_action, b_channel, range(3), n_ctrl.flags, times, keys, interp)
 
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
@@ -111,10 +107,9 @@ class MaterialAnimation(Animation):
                 # so we have to repeat the import for each used tex slot
                 for i, texture_slot in enumerate(b_material.texture_slots):
                     if texture_slot:
-                        fcurves = self.create_fcurves(b_mat_action, f"texture_slots[{i}].{data_path}", (array_ind,), n_ctrl.flags)
-                        for key in n_uvgroup.keys:
-                            if "offset" in data_path:
-                                self.add_key(fcurves, key.time, (-key.value,), interp)
-                            else:
-                                self.add_key(fcurves, key.time, (key.value,), interp)
+                        times, keys = self.get_keys_values(n_uvgroup.keys)
+                        # UV V coordinate is inverted
+                        if "offset" in data_path and array_ind == 1:
+                            keys = [-key for key in keys]
+                        self.add_keys(b_mat_action, f"texture_slots[{i}].{data_path}", (array_ind,), n_ctrl.flags, times, keys, interp)
 
