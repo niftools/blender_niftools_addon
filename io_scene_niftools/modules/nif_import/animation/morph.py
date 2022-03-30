@@ -98,16 +98,13 @@ class MorphAnimation(Animation):
                             elif n_morphCtrl.interpolator_weights:
                                 morph_data = n_morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
                         except KeyError:
-                            NifLog.info(f"Unsupported interpolator \"{type(n_morphCtrl.interpolator_weights['idxMorph'].interpolator)}\"")
+                            NifLog.info(f"Unsupported interpolator '{type(n_morphCtrl.interpolator_weights['idxMorph'].interpolator)}'")
                             continue
                         
                     # get the interpolation mode
                     interp = self.get_b_interp_from_n_interp(morph_data.interpolation)
-                    fcu = self.create_fcurves(shape_action, "value", (0,), flags=n_morphCtrl.flags, keyname=shape_key.name)
-                    
-                    # set keyframes
-                    for key in morph_data.keys:
-                        self.add_key(fcu, key.time, (key.value,), interp)
+                    times, keys = self.get_keys_values(morph_data.keys)
+                    self.add_keys(shape_action, "value", (0,), n_morphCtrl.flags, times, keys, interp, key_name=shape_key.name)
 
     def import_egm_morphs(self, b_obj):
         """Import all EGM morphs as shape keys for blender object."""
@@ -129,8 +126,7 @@ class MorphAnimation(Animation):
             # convert tuples into vector here so we can simply add in morph_mesh()
             for b_v_index, (bv, mv) in enumerate(zip(base_verts, morph_verts)):
                 b_mesh.vertices[b_v_index].co = bv + mathutils.Vector(mv)
-            # TODO [animation] unused variable is it required
-            shape_key = b_obj.shape_key_add(name=key_name, from_mix=False)
+            b_obj.shape_key_add(name=key_name, from_mix=False)
 
     def morph_mesh(self, b_mesh, baseverts, morphverts):
         """Transform a mesh to be in the shape given by morphverts."""

@@ -321,7 +321,7 @@ class TransformAnimation(Animation):
         # correct for bone space if target is an armature bone
         if bone_name:
             keys = [key_corrector(key, n_bind_rot_inv, n_bind_trans) for key in keys]
-        self.add_keys(b_action, key_type, range(key_dim), flags, bone_name, times, keys, interp)
+        self.add_keys(b_action, key_type, range(key_dim), flags, times, keys, interp, bone_name=bone_name)
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""

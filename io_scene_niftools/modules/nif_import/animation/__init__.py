@@ -95,17 +95,17 @@ class Animation:
         b_obj.animation_data.action = b_action
         return b_action
 
-    def create_fcurves(self, action, dtype, drange, flags=None, bonename=None, keyname=None):
+    def create_fcurves(self, action, dtype, drange, flags, bone_name, key_name):
         """ Create fcurves in action for desired conditions. """
         # armature pose bone animation
-        if bonename:
+        if bone_name:
             fcurves = [
-                action.fcurves.new(data_path=f'pose.bones["{bonename}"].{dtype}', index=i, action_group=bonename)
+                action.fcurves.new(data_path=f'pose.bones["{bone_name}"].{dtype}', index=i, action_group=bone_name)
                 for i in drange]
         # shapekey pose bone animation
-        elif keyname:
+        elif key_name:
             fcurves = [
-                action.fcurves.new(data_path=f'key_blocks["{keyname}"].{dtype}', index=0,)
+                action.fcurves.new(data_path=f'key_blocks["{key_name}"].{dtype}', index=0,)
             ]
         else:
             # Object animation (non-skeletal) is lumped into the "LocRotScale" action_group
@@ -147,7 +147,7 @@ class Animation:
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
 
-    def add_keys(self, b_action, key_type, key_range, flags, bone_name, times, keys, interp):
+    def add_keys(self, b_action, key_type, key_range, flags, times, keys, interp, bone_name=None, key_name=None):
         """
         Create needed fcurves and add a list of keys to an action.
         """
@@ -157,8 +157,13 @@ class Animation:
         ipo = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items[interp].value
         interpolations = [ipo for _ in range(len(samples))]
         # import the keys
-        fcurves = self.create_fcurves(b_action, key_type, key_range, flags, bone_name)
-        for fcurve, fcu_keys in zip(fcurves, zip(*keys)):
+        fcurves = self.create_fcurves(b_action, key_type, key_range, flags, bone_name, key_name)
+        if len(key_range) == 1:
+            # flat key - make it zippable
+            key_per_fcurve = [keys]
+        else:
+            key_per_fcurve = zip(*keys)
+        for fcurve, fcu_keys in zip(fcurves, key_per_fcurve):
             # add new points
             fcurve.keyframe_points.add(count=len(fcu_keys))
             # populate points with keys for this curve
