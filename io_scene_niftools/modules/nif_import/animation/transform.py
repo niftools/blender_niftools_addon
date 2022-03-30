@@ -51,6 +51,51 @@ from io_scene_niftools.utils import math
 from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.logging import NifLog
 
+QUAT = "rotation_quaternion"
+EULER = "rotation_euler"
+LOC = "location"
+SCALE = "scale"
+
+
+def as_b_quat(n_val):
+    return mathutils.Quaternion([n_val.w, n_val.x, n_val.y, n_val.z])
+
+
+def as_b_loc(n_val):
+    return mathutils.Vector([n_val.x, n_val.y, n_val.z])
+
+
+def as_b_scale(n_val):
+    return n_val, n_val, n_val
+
+
+def as_b_euler(n_val):
+    return mathutils.Euler(n_val)
+
+
+def correct_loc(key, n_bind_rot_inv, n_bind_trans):
+    return math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
+
+
+def correct_quat(key, n_bind_rot_inv, n_bind_trans):
+    return math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
+
+
+def correct_euler(key, n_bind_rot_inv, n_bind_trans):
+    return math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
+
+
+def correct_scale(key, n_bind_rot_inv, n_bind_trans):
+    return key
+
+
+key_lut = {
+    QUAT: (as_b_quat, correct_quat, 4),
+    EULER: (as_b_euler, correct_euler, 3),
+    LOC: (as_b_loc, correct_loc, 3),
+    SCALE: (as_b_scale, correct_scale, 3),
+}
+
 
 def interpolate(x_out, x_in, y_in):
     """
@@ -222,11 +267,11 @@ class TransformAnimation(Animation):
                 return
             times = list(n_kfc.get_times())
             keys = list(n_kfc.get_translations())
-            self.import_translations(b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+            self.import_keys(LOC, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
             keys = list(n_kfc.get_rotations())
-            self.import_quats(b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv)
+            self.import_keys(QUAT, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
             keys = list(n_kfc.get_scales())
-            self.import_scales(b_action, bone_name, times, keys, flags, interp)
+            self.import_keys(SCALE, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
         elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
             # not sure what this is used for
             return
@@ -252,18 +297,19 @@ class TransformAnimation(Animation):
                 keys_res = [interpolate(times_all, times, keys) for times, keys in times_keys]
                 # for eulers, the actual interpolation type is apparently stored per channel
                 interp = self.get_b_interp_from_n_interp(n_kfd.xyz_rotations[0].interpolation)
-                self.import_eulers(b_action, bone_name, times_all, zip(*keys_res), flags, interp, n_bind_rot_inv)
+                self.import_keys(EULER, b_action, bone_name, times_all, zip(*keys_res), flags, interp, n_bind_rot_inv, n_bind_trans)
             else:
                 b_target.rotation_mode = "QUATERNION"
                 times, keys = self.get_keys_values(n_kfd.quaternion_keys)
                 interp = self.get_b_interp_from_n_interp(n_kfd.rotation_type)
-                self.import_quats(b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv)
+                self.import_keys(QUAT, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
             times, keys = self.get_keys_values(n_kfd.scales.keys)
             interp = self.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
-            self.import_scales(b_action, bone_name, times, keys, flags, interp)
+            self.import_keys(SCALE, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+
             times, keys = self.get_keys_values(n_kfd.translations.keys)
             interp = self.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
-            self.import_translations(b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+            self.import_keys(LOC, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
 
         return b_action
 
@@ -272,45 +318,19 @@ class TransformAnimation(Animation):
         """Returns list of times and keys for an array 'items' with key elements having 'time' and 'value' attributes"""
         return [key.time for key in items], [key.value for key in items]
 
-    def import_scales(self, b_action, bone_name, times, keys, flags, interp):
+    def import_keys(self, key_type, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans):
+        """Imports key frames according to the specified key_type"""
         if not keys:
             return
-        NifLog.debug('Scale keys...')
-        # make 3D
-        keys = [(val, val, val) for val in keys]
-        fcurves = self.create_fcurves(b_action, "scale", range(3), flags, bone_name)
-        self.add_keys(fcurves, times, keys, interp)
-
-    def import_translations(self, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans):
-        if not keys:
-            return
-        NifLog.debug('Translation keys...')
-        keys = [mathutils.Vector([val.x, val.y, val.z]) for val in keys]
+        # look up conventions by key type
+        key_func, key_corrector, key_dim = key_lut[key_type]
+        NifLog.debug(f'{key_type} keys...')
+        # convert nif keys to proper key type for blender
+        keys = [key_func(val) for val in keys]
+        # correct for bone space if target is an armature bone
         if bone_name:
-            keys = [
-                math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
-                for key in keys]
-        fcurves = self.create_fcurves(b_action, "location", range(3), flags, bone_name)
-        self.add_keys(fcurves, times, keys, interp)
-
-    def import_quats(self, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv):
-        if not keys:
-            return
-        NifLog.debug('Rotation keys...(quaternions)')
-        keys = [mathutils.Quaternion([val.w, val.x, val.y, val.z]) for val in keys]
-        if bone_name:
-            keys = [math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion() for key in keys]
-        fcurves = self.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
-        self.add_keys(fcurves, times, keys, interp)
-
-    def import_eulers(self, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv):
-        if not keys:
-            return
-        NifLog.debug('Rotation keys..(euler)')
-        keys = [mathutils.Euler(val) for val in keys]
-        if bone_name:
-            keys = [math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler() for key in keys]
-        fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
+            keys = [key_corrector(key, n_bind_rot_inv, n_bind_trans) for key in keys]
+        fcurves = self.create_fcurves(b_action, key_type, range(key_dim), flags, bone_name)
         self.add_keys(fcurves, times, keys, interp)
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
