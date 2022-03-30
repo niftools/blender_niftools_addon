@@ -211,7 +211,7 @@ class TransformAnimation(Animation):
         # B-spline curve import
         elif isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
             # Bsplines are Bezier curves
-            interp_rot = interp_loc = interp_scale = "BEZIER"
+            interp = "BEZIER"
             # used by WLP2 (tiger.kf), but only for non-LocRotScale data
             # eg. bone stretching - see controlledblock.get_variable_1()
             # do not support this for now, no good representation in Blender
@@ -221,11 +221,11 @@ class TransformAnimation(Animation):
                 return
             times = list(n_kfc.get_times())
             keys = list(n_kfc.get_translations())
-            self.import_translations(b_action, bone_name, times, keys, flags, interp_loc, n_bind_rot_inv, n_bind_trans)
+            self.import_translations(b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
             keys = list(n_kfc.get_rotations())
-            self.import_quats(b_action, bone_name, times, keys, flags, interp_rot, n_bind_rot_inv)
+            self.import_quats(b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv)
             keys = list(n_kfc.get_scales())
-            self.import_scales(b_action, bone_name, times, keys, flags, interp_scale)
+            self.import_scales(b_action, bone_name, times, keys, flags, interp)
         elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
             # not sure what this is used for
             return
@@ -236,49 +236,46 @@ class TransformAnimation(Animation):
         if isinstance(n_kfc, NifFormat.NiKeyframeController):
             flags = n_kfc.flags
         if isinstance(n_kfd, NifFormat.NiKeyframeData):
-            interp_rot = self.get_b_interp_from_n_interp(n_kfd.rotation_type)
-            interp_loc = self.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
-            interp_scale = self.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
             if n_kfd.rotation_type == 4:
                 b_target.rotation_mode = "XYZ"
-                # uses xyz rotation
-                if n_kfd.xyz_rotations[0].keys:
-                    # euler keys need not be sampled at the same time in KFs
-                    # but we need complete key sets to do the space conversion
-                    # so perform linear interpolation to import all keys properly
+                # euler keys need not be sampled at the same time in KFs
+                # but we need complete key sets to do the space conversion
+                # so perform linear interpolation to import all keys properly
 
-                    # get all the keys' times
-                    times_x = [key.time for key in n_kfd.xyz_rotations[0].keys]
-                    times_y = [key.time for key in n_kfd.xyz_rotations[1].keys]
-                    times_z = [key.time for key in n_kfd.xyz_rotations[2].keys]
-                    # the unique time stamps we have to sample all curves at
-                    times_all = sorted(set(times_x + times_y + times_z))
-                    # the actual resampling
-                    x_r = interpolate(times_all, times_x, [key.value for key in n_kfd.xyz_rotations[0].keys])
-                    y_r = interpolate(times_all, times_y, [key.value for key in n_kfd.xyz_rotations[1].keys])
-                    z_r = interpolate(times_all, times_z, [key.value for key in n_kfd.xyz_rotations[2].keys])
-                    self.import_eulers(b_action, bone_name, times_all, zip(x_r, y_r, z_r), flags, interp_rot, n_bind_rot_inv)
+                # get all the times and keys for each coordinate
+                times_keys = [self.get_keys_values(euler.keys) for euler in n_kfd.xyz_rotations]
+                # the unique time stamps we have to sample all curves at
+                times_all = sorted(set(times_keys[0][0] + times_keys[1][0] + times_keys[2][0]))
+                # todo - this assumes that all three channels are keyframed, but it seems like this need not be the case
+                # resample each coordinate for all times
+                keys_res = [interpolate(times_all, times, keys) for times, keys in times_keys]
+                # for eulers, the actual rotation type is apparently stored per channel
+                interp = self.get_b_interp_from_n_interp(n_kfd.xyz_rotations[0].rotation_type)
+                self.import_eulers(b_action, bone_name, times_all, zip(*keys_res), flags, interp, n_bind_rot_inv)
             else:
                 b_target.rotation_mode = "QUATERNION"
-                times = [key.time for key in n_kfd.quaternion_keys]
-                keys = [key.value for key in n_kfd.quaternion_keys]
-                self.import_quats(b_action, bone_name, times, keys, flags, interp_rot, n_bind_rot_inv)
-
-            times = [key.time for key in n_kfd.scales.keys]
-            keys = [key.value for key in n_kfd.scales.keys]
-            self.import_scales(b_action, bone_name, times, keys, flags, interp_scale)
-            times = [key.time for key in n_kfd.translations.keys]
-            keys = [key.value for key in n_kfd.translations.keys]
-            self.import_translations(b_action, bone_name, times, keys, flags, interp_loc, n_bind_rot_inv, n_bind_trans)
+                times, keys = self.get_keys_values(n_kfd.quaternion_keys)
+                interp = self.get_b_interp_from_n_interp(n_kfd.rotation_type)
+                self.import_quats(b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv)
+            times, keys = self.get_keys_values(n_kfd.scales.keys)
+            interp = self.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
+            self.import_scales(b_action, bone_name, times, keys, flags, interp)
+            times, keys = self.get_keys_values(n_kfd.translations.keys)
+            interp = self.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
+            self.import_translations(b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
 
         return b_action
+
+    @staticmethod
+    def get_keys_values(items):
+        return [key.time for key in items], [key.value for key in items]
 
     def import_scales(self, b_action, bone_name, times, keys, flags, interp_scale):
         if not keys:
             return
         NifLog.debug('Scale keys...')
         # make 3D
-        keys = [(val, val, val) for t, val in keys]
+        keys = [(val, val, val) for val in keys]
         fcurves = self.create_fcurves(b_action, "scale", range(3), flags, bone_name)
         self.add_keys(fcurves, times, keys, interp_scale)
 
