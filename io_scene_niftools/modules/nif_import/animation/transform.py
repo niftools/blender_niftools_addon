@@ -191,6 +191,7 @@ class TransformAnimation(Animation):
         n_kfd = None
         # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
         flags = None
+        n_bind_rot_inv = n_bind_trans = None
 
         # create or get the action
         if b_armature and isinstance(b_target, bpy.types.PoseBone):
