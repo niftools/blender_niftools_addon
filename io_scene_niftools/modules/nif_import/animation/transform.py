@@ -250,7 +250,7 @@ class TransformAnimation(Animation):
                 # resample each coordinate for all times
                 keys_res = [interpolate(times_all, times, keys) for times, keys in times_keys]
                 # for eulers, the actual rotation type is apparently stored per channel
-                interp = self.get_b_interp_from_n_interp(n_kfd.xyz_rotations[0].rotation_type)
+                interp = self.get_b_interp_from_n_interp(n_kfd.xyz_rotations[0].interpolation)
                 self.import_eulers(b_action, bone_name, times_all, zip(*keys_res), flags, interp, n_bind_rot_inv)
             else:
                 b_target.rotation_mode = "QUATERNION"
