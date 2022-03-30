@@ -173,7 +173,7 @@ class BhkCollision(Collision):
         n_r_body.restitution = b_r_body.restitution
         n_r_body.max_linear_velocity = b_obj.nifcollision.max_linear_velocity
         n_r_body.max_angular_velocity = b_obj.nifcollision.max_angular_velocity
-        # no longer available in blender 3.1
+        # todo - no longer available in blender 3.1, add to nifcollision
         # n_r_body.penetration_depth = b_obj.collision.permeability
         n_r_body.motion_system = b_obj.nifcollision.motion_system
         n_r_body.deactivator_type = b_obj.nifcollision.deactivator_type
