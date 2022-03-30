@@ -213,10 +213,10 @@ class TransformAnimation(Animation):
         elif isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
             # Bsplines are Bezier curves
             interp = "BEZIER"
-            # used by WLP2 (tiger.kf), but only for non-LocRotScale data
-            # eg. bone stretching - see controlledblock.get_variable_1()
-            # do not support this for now, no good representation in Blender
             if isinstance(n_kfc, NifFormat.NiBSplineCompFloatInterpolator):
+                # used by WLP2 (tiger.kf), but only for non-LocRotScale data
+                # eg. bone stretching - see controlledblock.get_variable_1()
+                # do not support this for now, no good representation in Blender
                 # pyffi lacks support for this, but the following gets float keys
                 # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
                 return
@@ -250,7 +250,7 @@ class TransformAnimation(Animation):
                 # todo - this assumes that all three channels are keyframed, but it seems like this need not be the case
                 # resample each coordinate for all times
                 keys_res = [interpolate(times_all, times, keys) for times, keys in times_keys]
-                # for eulers, the actual rotation type is apparently stored per channel
+                # for eulers, the actual interpolation type is apparently stored per channel
                 interp = self.get_b_interp_from_n_interp(n_kfd.xyz_rotations[0].interpolation)
                 self.import_eulers(b_action, bone_name, times_all, zip(*keys_res), flags, interp, n_bind_rot_inv)
             else:
@@ -269,6 +269,7 @@ class TransformAnimation(Animation):
 
     @staticmethod
     def get_keys_values(items):
+        """Returns list of times and keys for an array 'items' with key elements having 'time' and 'value' attributes"""
         return [key.time for key in items], [key.value for key in items]
 
     def import_scales(self, b_action, bone_name, times, keys, flags, interp_scale):
