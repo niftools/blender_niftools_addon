@@ -309,11 +309,6 @@ class TransformAnimation(Animation):
 
         return b_action
 
-    @staticmethod
-    def get_keys_values(items):
-        """Returns list of times and keys for an array 'items' with key elements having 'time' and 'value' attributes"""
-        return [key.time for key in items], [key.value for key in items]
-
     def import_keys(self, key_type, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans):
         """Imports key frames according to the specified key_type"""
         if not keys:
@@ -326,8 +321,7 @@ class TransformAnimation(Animation):
         # correct for bone space if target is an armature bone
         if bone_name:
             keys = [key_corrector(key, n_bind_rot_inv, n_bind_trans) for key in keys]
-        fcurves = self.create_fcurves(b_action, key_type, range(key_dim), flags, bone_name)
-        self.add_keys(fcurves, times, keys, interp)
+        self.add_keys(b_action, key_type, range(key_dim), flags, bone_name, times, keys, interp)
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""

@@ -56,6 +56,11 @@ class Animation:
         self.actions = {}
 
     @staticmethod
+    def get_keys_values(items):
+        """Returns list of times and keys for an array 'items' with key elements having 'time' and 'value' attributes"""
+        return [key.time for key in items], [key.value for key in items]
+
+    @staticmethod
     def show_pose_markers():
         """Helper function to ensure that pose markers are shown"""
         for screen in bpy.data.screens:
@@ -142,9 +147,9 @@ class Animation:
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
 
-    def add_keys(self, fcurves, times, keys, interp):
+    def add_keys(self, b_action, key_type, key_range, flags, bone_name, times, keys, interp):
         """
-        Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
+        Create needed fcurves and add a list of keys to an action.
         """
         samples = [round(t * self.fps) for t in times]
         assert len(samples) == len(keys)
@@ -152,6 +157,7 @@ class Animation:
         ipo = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items[interp].value
         interpolations = [ipo for _ in range(len(samples))]
         # import the keys
+        fcurves = self.create_fcurves(b_action, key_type, key_range, flags, bone_name)
         for fcurve, fcu_keys in zip(fcurves, zip(*keys)):
             # add new points
             fcurve.keyframe_points.add(count=len(fcu_keys))
