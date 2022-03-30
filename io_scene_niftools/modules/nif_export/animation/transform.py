@@ -46,6 +46,7 @@ from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import math, consts
 from io_scene_niftools.utils.logging import NifError, NifLog
+from io_scene_niftools.utils.consts import QUAT, EULER, LOC, SCALE
 
 
 class TransformAnimation(Animation):
@@ -166,7 +167,7 @@ class TransformAnimation(Animation):
             # matrix_local = matrix_parent_inverse * matrix_basis
             bind_matrix = b_obj.matrix_parent_inverse
             exp_fcurves = [fcu for fcu in b_action.fcurves if
-                           fcu.data_path in ("rotation_quaternion", "rotation_euler", "location", "scale")]
+                           fcu.data_path in (QUAT, EULER, LOC, SCALE)]
 
         else:
             # bone isn't keyframed in this action, nothing to do here

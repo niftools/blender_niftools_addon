@@ -41,6 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.consts import QUAT, EULER, LOC, SCALE
 
 
 class Animation:
@@ -103,7 +104,7 @@ class Animation:
             ]
         else:
             # Object animation (non-skeletal) is lumped into the "LocRotScale" action_group
-            if dtype in ("rotation_euler", "rotation_quaternion", "location", "scale"):
+            if dtype in (QUAT, EULER, LOC, SCALE):
                 action_group = "LocRotScale"
             # Non-transformaing animations (eg. visibility or material anims) use no action groups
             else:
@@ -231,3 +232,4 @@ class Animation:
         self.fps = fps
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
+

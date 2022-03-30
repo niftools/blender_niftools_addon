@@ -50,11 +50,7 @@ from io_scene_niftools.modules.nif_import.object import block_registry
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.logging import NifLog
-
-QUAT = "rotation_quaternion"
-EULER = "rotation_euler"
-LOC = "location"
-SCALE = "scale"
+from io_scene_niftools.utils.consts import QUAT, EULER, LOC, SCALE
 
 
 def as_b_quat(n_val):
