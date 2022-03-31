@@ -85,25 +85,6 @@ class NodesWrapper:
             else:
                 uv = existing_node
             self.tree.links.new(uv.outputs[0], b_texture_node.inputs[0])
-            # todo [texture/anim] if present in nifs, support it and move to anim sys
-            # if tex_transform or tex_anim:
-            #     transform = tree.nodes.new('ShaderNodeMapping')
-            #     # todo [texture] negate V coordinate
-            #     if tex_transform:
-            #         matrix_4x4 = mathutils.Matrix(tex_transform)
-            #         transform.scale = matrix_4x4.to_scale()
-            #         transform.rotation = matrix_4x4.to_euler()
-            #         transform.translation = matrix_4x4.to_translation()
-            #         transform.name = "TextureTransform" + str(i)
-            #     if tex_anim:
-            #         for j, dtype in enumerate(("offsetu", "offsetv")):
-            #             for key in tex_anim[dtype]:
-            #                 transform.translation[j] = key[1]
-            #                 # note that since we are dealing with UV coordinates, V has to be negated
-            #                 if j == 1: transform.translation[j] *= -1
-            #                 transform.keyframe_insert("translation", index=j, frame=int(key[0] * fps))
-            #     tree.links.new(uv.outputs[0], transform.inputs[0])
-            #     tree.links.new(transform.outputs[0], tex.inputs[0])
 
     def global_uv_offset_scale(self, x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y):
         # get all uv nodes (by name, since we are importing they have the predefined name
