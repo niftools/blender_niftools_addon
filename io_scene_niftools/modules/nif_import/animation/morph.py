@@ -64,41 +64,42 @@ class MorphAnimation(Animation):
             morphData = n_morphCtrl.data
             if morphData.num_morphs:
                 # get name for base key
-                keyname = morphData.morphs[0].frame_name.decode()
+                morph_data = morphData.morphs[0]
+                keyname = morph_data.frame_name.decode()
                 if not keyname:
                     keyname = 'Base'
 
-                # insert base key at frame 1, using relative keys
+                # insert base key, using relative keys
                 sk_basis = b_obj.shape_key_add(name=keyname)
 
                 # get base vectors and import all morphs
-                baseverts = morphData.morphs[0].vectors
+                baseverts = morph_data.vectors
 
-                shape_action = self.create_action(b_obj.data.shape_keys, b_obj.name + "-Morphs")
+                shape_action = self.create_action(b_obj.data.shape_keys, f"{b_obj.name}-Morphs")
                 
-                for idxMorph in range(1, morphData.num_morphs):
+                for morph_i in range(1, morphData.num_morphs):
+                    morph_data = morphData.morphs[morph_i]
                     # get name for key
-                    keyname = morphData.morphs[idxMorph].frame_name.decode()
+                    keyname = morph_data.frame_name.decode()
                     if not keyname:
-                        keyname = f'Key {idxMorph}'
+                        keyname = f'Key {morph_i}'
                     NifLog.info(f"Inserting key '{keyname}'")
                     # get vectors
-                    morph_verts = morphData.morphs[idxMorph].vectors
+                    morph_verts = morph_data.vectors
                     self.morph_mesh(b_mesh, baseverts, morph_verts)
                     shape_key = b_obj.shape_key_add(name=keyname, from_mix=False)
 
-                    # first find the keys
+                    # find the keys
                     # older versions store keys in the morphData
-                    morph_data = morphData.morphs[idxMorph]
                     # newer versions store keys in the controller
                     if not morph_data.keys:
                         try:
                             if n_morphCtrl.interpolators:
-                                morph_data = n_morphCtrl.interpolators[idxMorph].data.data
+                                morph_data = n_morphCtrl.interpolators[morph_i].data.data
                             elif n_morphCtrl.interpolator_weights:
-                                morph_data = n_morphCtrl.interpolator_weights[idxMorph].interpolator.data.data
+                                morph_data = n_morphCtrl.interpolator_weights[morph_i].interpolator.data.data
                         except KeyError:
-                            NifLog.info(f"Unsupported interpolator '{type(n_morphCtrl.interpolator_weights['idxMorph'].interpolator)}'")
+                            NifLog.info(f"Unsupported interpolator '{type(n_morphCtrl.interpolator_weights[morph_i].interpolator)}'")
                             continue
                         
                     # get the interpolation mode

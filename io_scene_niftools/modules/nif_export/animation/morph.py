@@ -55,10 +55,11 @@ class MorphAnimation(Animation):
         EGMData.data = None
 
     def export_morph(self, b_mesh, n_trishape, vertmap):
-        # shape b_key morphing
+        NifLog.debug(f"Checking {b_mesh.name} for shape keys")
+        # shape keys are only present on non-evaluated meshes!
         b_key = b_mesh.shape_keys
         if b_key and len(b_key.key_blocks) > 1:
-            
+            NifLog.debug(f"{b_mesh.name} has shape keys")
             # yes, there is a b_key object attached
             # export as egm, or as morph_data?
             if b_key.key_blocks[1].name.startswith("EGM"):

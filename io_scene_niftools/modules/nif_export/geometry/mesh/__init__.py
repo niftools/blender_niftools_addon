@@ -78,21 +78,22 @@ class Mesh:
 
         assert (b_obj.type == 'MESH')
 
-        # get mesh from b_obj
-        b_mesh = self.get_triangulated_mesh(b_obj)
-        b_mesh.calc_normals_split()
+        # get mesh from b_obj, and evaluate the mesh with modifiers applied, too
+        b_mesh = b_obj.data
+        eval_mesh = self.get_triangulated_mesh(b_obj)
+        eval_mesh.calc_normals_split()
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
         # so quickly catch this (rare!) case
-        if not b_mesh.vertices:
+        if not eval_mesh.vertices:
             # do not export anything
             NifLog.warn(f"{b_obj} has no vertices, skipped.")
             return
 
         # get the mesh's materials, this updates the mesh material list
         if not isinstance(n_parent, NifFormat.RootCollisionNode):
-            mesh_materials = b_mesh.materials
+            mesh_materials = eval_mesh.materials
         else:
             # ignore materials on collision trishapes
             mesh_materials = []
@@ -102,9 +103,9 @@ class Mesh:
             mesh_materials = [None]
 
         # vertex color check
-        mesh_hasvcol = b_mesh.vertex_colors
+        mesh_hasvcol = eval_mesh.vertex_colors
         # list of body part (name, index, vertices) in this mesh
-        polygon_parts = self.get_polygon_parts(b_obj, b_mesh)
+        polygon_parts = self.get_polygon_parts(b_obj, eval_mesh)
         game = bpy.context.scene.niftools_scene.game
 
         # Non-textured materials, vertex colors are used to color the mesh
@@ -188,9 +189,9 @@ class Mesh:
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
-            mesh_uv_layers = b_mesh.uv_layers
+            mesh_uv_layers = eval_mesh.uv_layers
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
-            vertex_map = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
+            vertex_map = [None for _ in range(len(eval_mesh.vertices))]  # blender vertex -> nif vertices
             vertex_positions = []
             normals = []
             vertex_colors = []
@@ -200,21 +201,21 @@ class Mesh:
             bodypartfacemap = []
             polygons_without_bodypart = []
 
-            if b_mesh.polygons:
+            if eval_mesh.polygons:
                 if mesh_uv_layers:
                     # if we have uv coordinates double check that we have uv data
-                    if not b_mesh.uv_layer_stencil:
-                        NifLog.warn(f"No UV map for texture associated with selected mesh '{b_mesh.name}'.")
+                    if not eval_mesh.uv_layer_stencil:
+                        NifLog.warn(f"No UV map for texture associated with selected mesh '{eval_mesh.name}'.")
 
             use_tangents = False
             if mesh_uv_layers and mesh_hasnormals:
                 if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
-                    b_mesh.calc_tangents(uvmap=mesh_uv_layers[0].name)
+                    eval_mesh.calc_tangents(uvmap=mesh_uv_layers[0].name)
                     tangents = []
                     bitangent_signs = []
 
-            for poly in b_mesh.polygons:
+            for poly in eval_mesh.polygons:
 
                 # does the face belong to this trishape?
                 if b_mat is not None and poly.material_index != materialIndex:
@@ -230,25 +231,25 @@ class Mesh:
                 f_index = [-1] * f_numverts
                 for i, loop_index in enumerate(poly.loop_indices):
 
-                    fv_index = b_mesh.loops[loop_index].vertex_index
-                    vertex = b_mesh.vertices[fv_index]
+                    fv_index = eval_mesh.loops[loop_index].vertex_index
+                    vertex = eval_mesh.vertices[fv_index]
                     vertex_index = vertex.index
                     fv = vertex.co
 
                     # smooth = vertex normal, non-smooth = face normal)
                     if mesh_hasnormals:
                         if poly.use_smooth:
-                            fn = b_mesh.loops[loop_index].normal
+                            fn = eval_mesh.loops[loop_index].normal
                         else:
                             fn = poly.normal
                     else:
                         fn = None
 
-                    fuv = [uv_layer.data[loop_index].uv for uv_layer in b_mesh.uv_layers]
+                    fuv = [uv_layer.data[loop_index].uv for uv_layer in eval_mesh.uv_layers]
 
                     # TODO [geomotry][mesh] Need to map b_verts -> n_verts
                     if mesh_hasvcol:
-                        f_col = list(b_mesh.vertex_colors[0].data[loop_index].color)
+                        f_col = list(eval_mesh.vertex_colors[0].data[loop_index].color)
                     else:
                         f_col = None
 
@@ -282,8 +283,8 @@ class Mesh:
                         if mesh_hasnormals:
                             normals.append(vertquad[2])
                         if use_tangents:
-                            tangents.append(b_mesh.loops[loop_index].tangent)
-                            bitangent_signs.append([b_mesh.loops[loop_index].bitangent_sign])
+                            tangents.append(eval_mesh.loops[loop_index].tangent)
+                            bitangent_signs.append([eval_mesh.loops[loop_index].bitangent_sign])
                         if mesh_hasvcol:
                             vertex_colors.append(vertquad[3])
                         if mesh_uv_layers:
@@ -312,7 +313,7 @@ class Mesh:
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
-                self.select_unassigned_polygons(b_mesh, b_obj, polygons_without_bodypart)
+                self.select_unassigned_polygons(eval_mesh, b_obj, polygons_without_bodypart)
 
             if len(triangles) > 65535:
                 raise NifError("Too many polygons. Decimate your mesh and try again.")
@@ -402,7 +403,7 @@ class Mesh:
                         b_list_weight = []
                         b_vert_group = b_obj.vertex_groups[bone_group]
 
-                        for b_vert in b_mesh.vertices:
+                        for b_vert in eval_mesh.vertices:
                             if len(b_vert.groups) == 0:  # check vert has weight_groups
                                 unweighted_vertices.append(b_vert.index)
                                 continue
@@ -504,6 +505,7 @@ class Mesh:
             tridata.consistency_flags = b_obj.niftools.consistency_flags
 
             # export EGM or NiGeomMorpherController animation
+            # shape keys are only present on the raw, unevaluated mesh
             self.morph_anim.export_morph(b_mesh, trishape, vertex_map)
         return trishape
 
