@@ -147,46 +147,10 @@ class ObjectProperty(PropertyGroup):
     )
 
 
-class BsInventoryMarker(PropertyGroup):
-
-    name: StringProperty(
-        name="",
-        default='INV'
-    )
-
-    bs_inv_x: FloatProperty(
-        name="Inv X value",
-        description="Rotation of object in inventory around the x axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_y: FloatProperty(
-        name="Inv Y value",
-        description="Rotation of object in inventory around the y axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_z: FloatProperty(
-        name="Inv Z value",
-        description="Rotation of object in inventory around the z axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_zoom: FloatProperty(
-        name="Inv Zoom Value",
-        description="Inventory object Zoom level",
-        default=1
-    )
-
-
 CLASSES = [
     ExtraData,
     ExtraDataStore,
     ObjectProperty,
-    BsInventoryMarker
 ]
 
 
@@ -194,12 +158,12 @@ def register():
     register_classes(CLASSES, __name__)
 
     bpy.types.Object.niftools = bpy.props.PointerProperty(type=ObjectProperty)
-    bpy.types.Object.niftools_bs_invmarker = bpy.props.CollectionProperty(type=BsInventoryMarker)
+    # bpy.types.scene.bs_inv_marker = bpy.props.CollectionProperty(type=BsInventoryMarker)
 
 
 def unregister():
     del bpy.types.Object.niftools
-    del bpy.types.Object.niftools_bs_invmarker
+    # del bpy.types.scene.bs_inv_marker
 
     unregister_classes(CLASSES, __name__)
 

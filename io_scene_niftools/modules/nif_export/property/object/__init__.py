@@ -223,17 +223,17 @@ class ObjectDataProperty:
     def export_inventory_marker(n_root, root_objects):
         if bpy.context.scene.niftools_scene.game in ('SKYRIM',):
             for root_object in root_objects:
-                if root_object.niftools_bs_invmarker:
+                if root_scene.bs_inv_marker:
                     for extra_item in n_root.extra_data_list:
                         if isinstance(extra_item, NifFormat.BSInvMarker):
                             raise NifError("Multiple Items have Inventory marker data only one item may contain this data")
                     else:
                         n_extra_list = NifFormat.BSInvMarker()
-                        n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
-                        n_extra_list.rotation_x = (-root_object.niftools_bs_invmarker[0].bs_inv_x % (2 * pi)) * 1000
-                        n_extra_list.rotation_y = (-root_object.niftools_bs_invmarker[0].bs_inv_y % (2 * pi)) * 1000
-                        n_extra_list.rotation_z = (-root_object.niftools_bs_invmarker[0].bs_inv_z % (2 * pi)) * 1000
-                        n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
+                        n_extra_list.name = root_scene.bs_inv_marker[0].name.encode()
+                        n_extra_list.rotation_x = (-root_scene.bs_inv_marker[0].bs_inv_x % (2 * pi)) * 1000
+                        n_extra_list.rotation_y = (-root_scene.bs_inv_marker[0].bs_inv_y % (2 * pi)) * 1000
+                        n_extra_list.rotation_z = (-root_scene.bs_inv_marker[0].bs_inv_z % (2 * pi)) * 1000
+                        n_extra_list.zoom = root_scene.bs_inv_marker[0].bs_inv_zoom
                         n_root.add_extra_data(n_extra_list)
 
     # TODO [object][property] Move to new object type

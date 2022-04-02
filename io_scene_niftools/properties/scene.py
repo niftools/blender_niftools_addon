@@ -39,7 +39,7 @@
 
 
 import bpy
-from bpy.props import PointerProperty, IntProperty, EnumProperty
+from bpy.props import PointerProperty, IntProperty, EnumProperty, StringProperty, FloatProperty, CollectionProperty
 from bpy.types import PropertyGroup
 
 from pyffi.formats.nif import NifFormat
@@ -62,8 +62,41 @@ def update_version_from_game(self, context):
     self.user_version_2 = self.USER_VERSION_2.get(self.game, 0)
 
 
-class Scene(PropertyGroup):
+class BsInventoryMarker(PropertyGroup):
+    name: StringProperty(
+        name="",
+        default='INV'
+    )
 
+    bs_inv_x: FloatProperty(
+        name="Inv X value",
+        description="Rotation of object in inventory around the x axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    bs_inv_y: FloatProperty(
+        name="Inv Y value",
+        description="Rotation of object in inventory around the y axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    bs_inv_z: FloatProperty(
+        name="Inv Z value",
+        description="Rotation of object in inventory around the z axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    bs_inv_zoom: FloatProperty(
+        name="Inv Zoom Value",
+        description="Inventory object Zoom level",
+        default=1
+    )
+
+
+class Scene(PropertyGroup):
     nif_version: IntProperty(
         name='Version',
         description="The Gamebryo Engine version used",
@@ -128,8 +161,11 @@ class Scene(PropertyGroup):
         default=0.1,
         min=0.001, max=100.0, precision=2)
 
+    bs_inv: bpy.props.CollectionProperty(type=BsInventoryMarker)
+
 
 CLASSES = [
+    BsInventoryMarker,
     Scene
 ]
 
@@ -138,6 +174,7 @@ def register():
     register_classes(CLASSES, __name__)
 
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=Scene)
+    # bpy.types.Scene.niftools_bs_inv = bpy.props.CollectionProperty(type=BsInventoryMarker)
 
 
 def unregister():

@@ -138,39 +138,7 @@ class ObjectExtraDataList(UIList):
         split.prop(item, "data", text="", emboss=False, translate=False, icon='BORDERMOVE')
 
 
-class ObjectBSInvMarkerPanel(Panel):
-    bl_label = "Niftools BS Inv Marker"
-    bl_idname = "NIFTOOLS_PT_ObjectBSInvMarker"
-
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
-
-    # noinspection PyUnusedLocal
-    @classmethod
-    def poll(cls, context):
-        return True
-
-    def draw(self, context):
-        layout = self.layout
-        nif_bsinv_props = context.object.niftools_bs_invmarker
-
-        row = layout.row()
-        if not context.object.niftools_bs_invmarker:
-            row.operator("object.niftools_bs_invmarker_add", icon='ZOOM_IN', text="")
-        if context.object.niftools_bs_invmarker:
-            row.operator("object.niftools_bs_invmarker_remove", icon='ZOOM_OUT', text="")
-
-        col = row.column(align=True)
-        for i, x in enumerate(nif_bsinv_props):
-            col.prop(nif_bsinv_props[i], "bs_inv_x", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_y", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_z", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_zoom", index=i)
-
-
 classes = [
-    ObjectBSInvMarkerPanel,
     ObjectExtraDataList,
     ObjectExtraDataType,
     ObjectExtraData,

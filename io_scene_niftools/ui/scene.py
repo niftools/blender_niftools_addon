@@ -44,13 +44,13 @@ from pyffi.formats.nif import NifFormat
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-class SceneButtonsPanel:
+class SceneButtonsPanel(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
 
 
-class ScenePanel(SceneButtonsPanel, Panel):
+class ScenePanel(SceneButtonsPanel):
     bl_label = "Niftools Scene Panel"
     bl_idname = "NIFTOOLS_PT_scene"
 
@@ -68,7 +68,7 @@ class ScenePanel(SceneButtonsPanel, Panel):
         row.prop(nif_scene_props, "rootnode")
 
 
-class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
+class SceneVersionInfoPanel(SceneButtonsPanel):
     bl_label = "Nif Version Info"
     bl_idname = "NIFTOOLS_PT_scene_version_info"
     bl_parent_id = "NIFTOOLS_PT_scene"
@@ -90,6 +90,33 @@ class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
 
         col = flow.column()
         col.prop(nif_scene_props, "user_version_2")
+
+
+class SceneBSInvMarkerPanel(SceneButtonsPanel):
+    bl_label = "Niftools BS Inv Marker"
+    bl_idname = "NIFTOOLS_PT_ObjectBSInvMarker"
+    bl_parent_id = "NIFTOOLS_PT_scene"
+
+    # noinspection PyUnusedLocal
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        bs_inv = context.scene.niftools_scene.bs_inv
+        if not bs_inv:
+            row.operator("scene.bs_inv_marker_add", icon='ZOOM_IN', text="")
+        else:
+            row.operator("scene.bs_inv_marker_remove", icon='ZOOM_OUT', text="")
+        col = row.column(align=True)
+        for i, x in enumerate(bs_inv):
+            col.prop(bs_inv[i], "bs_inv_x", index=i)
+            col.prop(bs_inv[i], "bs_inv_y", index=i)
+            col.prop(bs_inv[i], "bs_inv_z", index=i)
+            col.prop(bs_inv[i], "bs_inv_zoom", index=i)
+
 
 # class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):
 #     bl_label = "Nif Author Info"
@@ -115,6 +142,7 @@ class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
 classes = [
     ScenePanel,
     SceneVersionInfoPanel,
+    SceneBSInvMarkerPanel,
 ]
 
 
