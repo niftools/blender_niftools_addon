@@ -97,7 +97,7 @@ class Object:
     def export_root_node(self, root_objects, filebase):
         """ Exports a nif's root node; use blender root if there is only one, else create a meta root """
         # TODO [collsion] detect root collision -> root collision node (can be mesh or empty)
-        #     self.nif_export.collisionhelper.export_collision(b_obj, n_parent)
+        #     self.export_collision(b_obj, n_parent)
         #     return None  # done; stop here
         self.n_root = None
         # there is only one root object so that will be our final root
@@ -221,17 +221,12 @@ class Object:
 
     def export_children(self, b_parent, n_parent):
         """Export all children of blender object b_parent as children of n_parent."""
-        # loop over all obj's children
         for b_child in b_parent.children:
-            temp_parent = n_parent
             # special case: objects parented to armature bones - find the nif parent bone
             if b_parent.type == 'ARMATURE' and b_child.parent_bone != "":
-                parent_bone = b_parent.data.bones[b_child.parent_bone]
-                assert (parent_bone in block_store.block_to_obj.values())
-                for temp_parent, obj in block_store.block_to_obj.items():
-                    if obj == parent_bone:
-                        break
-            self.export_node(b_child, temp_parent)
+                b_parent_bone = b_parent.data.bones[b_child.parent_bone]
+                n_parent = block_store.block_to_obj[b_parent_bone]
+            self.export_node(b_child, n_parent)
 
     def export_collision(self, b_obj, n_parent):
         """Main function for adding collision object b_obj to a node.
@@ -259,7 +254,7 @@ class Object:
             else:
                 # all nodes failed so add new one
                 node = types.create_ninode(b_obj)
-                node.name = 'collisiondummy{:d}'.format(n_parent.num_children)
+                node.name = f'collisiondummy{n_parent.num_children}'
                 if b_obj.niftools.flags != 0:
                     node_flag_hex = hex(b_obj.niftools.flags)
                 else:
