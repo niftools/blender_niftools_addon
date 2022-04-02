@@ -112,10 +112,10 @@ class SceneBSInvMarkerPanel(SceneButtonsPanel):
             row.operator("scene.bs_inv_marker_remove", icon='ZOOM_OUT', text="")
         col = row.column(align=True)
         for i, x in enumerate(bs_inv):
-            col.prop(bs_inv[i], "bs_inv_x", index=i)
-            col.prop(bs_inv[i], "bs_inv_y", index=i)
-            col.prop(bs_inv[i], "bs_inv_z", index=i)
-            col.prop(bs_inv[i], "bs_inv_zoom", index=i)
+            col.prop(bs_inv[i], "x", index=i)
+            col.prop(bs_inv[i], "y", index=i)
+            col.prop(bs_inv[i], "z", index=i)
+            col.prop(bs_inv[i], "zoom", index=i)
 
 
 # class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):

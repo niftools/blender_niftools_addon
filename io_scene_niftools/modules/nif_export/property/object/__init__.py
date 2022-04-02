@@ -220,21 +220,18 @@ class ObjectDataProperty:
 
     # TODO [object][property] Move to object property
     @staticmethod
-    def export_inventory_marker(n_root, root_objects):
-        if bpy.context.scene.niftools_scene.game in ('SKYRIM',):
-            for root_object in root_objects:
-                if root_scene.bs_inv_marker:
-                    for extra_item in n_root.extra_data_list:
-                        if isinstance(extra_item, NifFormat.BSInvMarker):
-                            raise NifError("Multiple Items have Inventory marker data only one item may contain this data")
-                    else:
-                        n_extra_list = NifFormat.BSInvMarker()
-                        n_extra_list.name = root_scene.bs_inv_marker[0].name.encode()
-                        n_extra_list.rotation_x = (-root_scene.bs_inv_marker[0].bs_inv_x % (2 * pi)) * 1000
-                        n_extra_list.rotation_y = (-root_scene.bs_inv_marker[0].bs_inv_y % (2 * pi)) * 1000
-                        n_extra_list.rotation_z = (-root_scene.bs_inv_marker[0].bs_inv_z % (2 * pi)) * 1000
-                        n_extra_list.zoom = root_scene.bs_inv_marker[0].bs_inv_zoom
-                        n_root.add_extra_data(n_extra_list)
+    def export_inventory_marker(n_root):
+        """Attaches a BSInvMarker to n_root if desired and fill in its values"""
+        niftools_scene = bpy.context.scene.niftools_scene
+        if niftools_scene.game in ('SKYRIM',) and niftools_scene.bs_inv:
+            bs_inv = niftools_scene.bs_inv[0]
+            n_bs_inv_marker = NifFormat.BSInvMarker()
+            n_bs_inv_marker.name = bs_inv.name.encode()
+            n_bs_inv_marker.rotation_x = (-bs_inv.x % (2 * pi)) * 1000
+            n_bs_inv_marker.rotation_y = (-bs_inv.y % (2 * pi)) * 1000
+            n_bs_inv_marker.rotation_z = (-bs_inv.z % (2 * pi)) * 1000
+            n_bs_inv_marker.zoom = bs_inv.zoom
+            n_root.add_extra_data(n_bs_inv_marker)
 
     # TODO [object][property] Move to new object type
     def export_weapon_location(self, n_root, root_obj):

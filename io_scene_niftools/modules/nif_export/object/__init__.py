@@ -117,7 +117,7 @@ class Object:
         # various extra datas
         object_property = ObjectDataProperty()
         object_property.export_bsxflags_upb(self.n_root, root_objects)
-        object_property.export_inventory_marker(self.n_root, root_objects)
+        object_property.export_inventory_marker(self.n_root)
         object_property.export_weapon_location(self.n_root, b_obj)
         types.export_furniture_marker(self.n_root, filebase)
         return self.n_root

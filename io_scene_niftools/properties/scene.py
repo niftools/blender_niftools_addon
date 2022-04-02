@@ -68,29 +68,29 @@ class BsInventoryMarker(PropertyGroup):
         default='INV'
     )
 
-    bs_inv_x: FloatProperty(
-        name="Inv X value",
+    x: FloatProperty(
+        name="X Rotation",
         description="Rotation of object in inventory around the x axis",
         default=0,
         subtype="ANGLE"
     )
 
-    bs_inv_y: FloatProperty(
-        name="Inv Y value",
+    y: FloatProperty(
+        name="Y Rotation",
         description="Rotation of object in inventory around the y axis",
         default=0,
         subtype="ANGLE"
     )
 
-    bs_inv_z: FloatProperty(
-        name="Inv Z value",
+    z: FloatProperty(
+        name="Z Rotation",
         description="Rotation of object in inventory around the z axis",
         default=0,
         subtype="ANGLE"
     )
 
-    bs_inv_zoom: FloatProperty(
-        name="Inv Zoom Value",
+    zoom: FloatProperty(
+        name="Zoom",
         description="Inventory object Zoom level",
         default=1
     )
