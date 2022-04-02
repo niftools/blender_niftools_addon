@@ -47,16 +47,14 @@ class NiTypes:
 
     @staticmethod
     def import_root_collision(n_node, b_obj):
-        """ Import a RootCollisionNode """
+        """ Import a RootCollisionNode, which is usually attached to a root node and holds a NiTriShape"""
         if isinstance(n_node, NifFormat.RootCollisionNode):
             b_obj["type"] = "RootCollisionNode"
             b_obj.name = "RootCollisionNode"
-            b_obj.display_type = 'BOUNDS'
-            b_obj.show_wire = True
-            b_obj.display_bounds_type = 'BOX'
-            # b_obj.game.use_collision_bounds = True
-            # b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             b_obj.niftools.flags = n_node.flags
+            for b_child in b_obj.children:
+                b_child.display_type = 'WIRE'
+
 
     @staticmethod
     def import_range_lod_data(n_node, b_obj, b_children):
@@ -97,6 +95,4 @@ class NiTypes:
     def import_empty(n_block):
         """Creates and returns a grouping empty."""
         b_empty = Object.create_b_obj(n_block, None)
-        # TODO [flags] Move out to generic processing
-        b_empty.niftools.flags = n_block.flags
         return b_empty
