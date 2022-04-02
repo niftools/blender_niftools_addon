@@ -100,27 +100,19 @@ class Object:
         #     self.export_collision(b_obj, n_parent)
         #     return None  # done; stop here
         self.n_root = None
+        node_type = bpy.context.scene.niftools_scene.rootnode
         # there is only one root object so that will be our final root
         if len(root_objects) == 1:
             b_obj = root_objects[0]
-            self.export_node(b_obj, None)
+            self.export_node(b_obj, None, n_node_type=node_type)
 
         # there is more than one root object so we create a meta root
         else:
-            NifLog.info("Created meta root because blender scene had multiple root objects")
-            self.n_root = types.create_ninode()
+            NifLog.info(f"Created meta root because blender scene had {len(root_objects)} root objects")
+            self.n_root = types.create_ninode(n_node_type=node_type)
             self.n_root.name = "Scene Root"
             for b_obj in root_objects:
                 self.export_node(b_obj, self.n_root)
-
-        # TODO [object] How dow we know we are selecting the right node in the case of multi-root?
-        # making root block a fade node
-        root_type = bpy.context.scene.niftools_scene.rootnode
-        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and root_type == 'BSFadeNode':
-            NifLog.info("Making root block a BSFadeNode")
-            fade_root_block = NifFormat.BSFadeNode().deepcopy(self.n_root)
-            fade_root_block.replace_global_node(self.n_root, fade_root_block)
-            self.n_root = fade_root_block
 
         # various extra datas
         object_property = ObjectDataProperty()
@@ -147,7 +139,7 @@ class Object:
             else:
                 n_node.flags = 0x000C  # morrowind
 
-    def export_node(self, b_obj, n_parent):
+    def export_node(self, b_obj, n_parent, n_node_type=None):
         """Export a mesh/armature/empty object b_obj as child of n_parent.
         Export also all children of b_obj.
 
@@ -190,7 +182,7 @@ class Object:
                     b_action = False
 
         # -> everything else (empty/armature) is a (more or less regular) node
-        node = types.create_ninode(b_obj)
+        node = types.create_ninode(b_obj, n_node_type=n_node_type)
         # set parenting here so that it can be accessed
         if not self.n_root:
             self.n_root = node
@@ -213,20 +205,21 @@ class Object:
         # if it is an armature, export the bones as ninode children of this ninode
         elif b_obj.type == 'ARMATURE':
             self.armaturehelper.export_bones(b_obj, node)
-
-        # export all children of this b_obj as children of this NiNode
-        self.export_children(b_obj, node)
+            # special case: objects parented to armature bones
+            for b_child in b_obj.children:
+                # find and attach to the right bone
+                if b_child.parent_bone:
+                    b_obj_bone = b_obj.data.bones[b_child.parent_bone]
+                    self.export_node(b_child, block_store.block_to_obj[b_obj_bone])
+                # just child of the armature itself, so attach to armature root
+                else:
+                    self.export_node(b_child, node)
+        else:
+            # export all children of this empty object as children of this node
+            for b_child in b_obj.children:
+                self.export_node(b_child, node)
 
         return node
-
-    def export_children(self, b_parent, n_parent):
-        """Export all children of blender object b_parent as children of n_parent."""
-        for b_child in b_parent.children:
-            # special case: objects parented to armature bones - find the nif parent bone
-            if b_parent.type == 'ARMATURE' and b_child.parent_bone != "":
-                b_parent_bone = b_parent.data.bones[b_child.parent_bone]
-                n_parent = block_store.block_to_obj[b_parent_bone]
-            self.export_node(b_child, n_parent)
 
     def export_collision(self, b_obj, n_parent):
         """Main function for adding collision object b_obj to a node.

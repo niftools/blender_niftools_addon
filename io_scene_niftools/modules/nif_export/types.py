@@ -45,21 +45,22 @@ from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
 
 
-def create_ninode(b_obj=None):
+def create_ninode(b_obj=None, n_node_type=None):
     """Essentially a wrapper around create_block() that creates nodes of the right type"""
-    # when no b_obj is passed, it means we create a root node
+    # when no b_obj is passed, use the passed n_node_type
     if not b_obj:
-        return block_store.create_block("NiNode")
-
+        if n_node_type is None:
+            n_node_type = "NiNode"
     # get node type - some are stored as custom property of the b_obj
-    try:
-        n_node_type = b_obj["type"]
-    except KeyError:
-        n_node_type = "NiNode"
+    else:
+        try:
+            n_node_type = b_obj["type"]
+        except KeyError:
+            n_node_type = "NiNode"
 
-    # ...others by presence of constraints
-    if has_track(b_obj):
-        n_node_type = "NiBillboardNode"
+        # ...others by presence of constraints
+        if has_track(b_obj):
+            n_node_type = "NiBillboardNode"
 
     # now create the node
     n_node = block_store.create_block(n_node_type, b_obj)
