@@ -39,7 +39,7 @@
 
 
 import bpy
-from bpy.props import PointerProperty, IntProperty
+from bpy.props import PointerProperty, IntProperty, EnumProperty
 from bpy.types import PropertyGroup
 
 from pyffi.formats.nif import NifFormat
@@ -93,6 +93,15 @@ class Scene(PropertyGroup):
         description="For which game to export",
         default='NONE',
         update=update_version_from_game)
+
+    rootnode: EnumProperty(
+        name='Root Node',
+        description='Type of property used to display meshes',
+        items=(
+            ('NiNode', 'NiNode', "", 0),
+            ('BSFadeNode', 'BSFadeNode', "", 1)),
+        default='NiNode',
+    )
 
     # Map game enum to nif version.
     VERSION = {

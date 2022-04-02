@@ -99,15 +99,6 @@ class ExtraDataStore(PropertyGroup):
 
 class ObjectProperty(PropertyGroup):
 
-    rootnode: EnumProperty(
-        name='Nif Root Node',
-        description='Type of property used to display meshes',
-        items=(
-            ('NiNode', 'NiNode', "", 0),
-            ('BSFadeNode', 'BSFadeNode', "", 1)),
-        default='NiNode',
-    )
-
     prn_location: EnumProperty(
         name='Weapon Location',
         description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',

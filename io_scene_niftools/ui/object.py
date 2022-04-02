@@ -61,7 +61,6 @@ class ObjectPanel(Panel):
 
         layout = self.layout
         row = layout.column()
-        row.prop(nif_obj_props, "rootnode")
         row.prop(nif_obj_props, "prn_location")
         row.prop(nif_obj_props, "upb")
         row.prop(nif_obj_props, "bsxflags")

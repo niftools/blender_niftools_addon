@@ -50,9 +50,7 @@ class ObjectProperty:
         """ Only to be called on nif and blender root objects! """
         # store type of root node
         if isinstance(root_block, NifFormat.BSFadeNode):
-            b_obj.niftools.rootnode = 'BSFadeNode'
-        else:
-            b_obj.niftools.rootnode = 'NiNode'
+            bpy.context.scene.niftools_scene.rootnode = 'BSFadeNode'
         # store its flags
         b_obj.niftools.flags = root_block.flags
         # store extra datas

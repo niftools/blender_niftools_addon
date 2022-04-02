@@ -115,7 +115,7 @@ class Object:
 
         # TODO [object] How dow we know we are selecting the right node in the case of multi-root?
         # making root block a fade node
-        root_type = b_obj.niftools.rootnode
+        root_type = bpy.context.scene.niftools_scene.rootnode
         if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and root_type == 'BSFadeNode':
             NifLog.info("Making root block a BSFadeNode")
             fade_root_block = NifFormat.BSFadeNode().deepcopy(self.n_root)
