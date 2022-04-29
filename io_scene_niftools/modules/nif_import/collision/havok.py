@@ -269,7 +269,11 @@ class BhkCollision(Collision):
         # find vertices (and fix scale)
         scaled_verts = [(self.HAVOK_SCALE * n_vert.x, self.HAVOK_SCALE * n_vert.y, self.HAVOK_SCALE * n_vert.z)
                         for n_vert in bhk_shape.vertices]
-        verts, faces = qhull3d(scaled_verts)
+        if scaled_verts:
+            verts, faces = qhull3d(scaled_verts)
+        else:
+            verts = []
+            faces = []
 
         b_obj = Object.mesh_from_data("convexpoly", verts, faces)
         radius = bhk_shape.radius * self.HAVOK_SCALE
