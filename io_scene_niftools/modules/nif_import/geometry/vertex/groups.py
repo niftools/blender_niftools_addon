@@ -164,8 +164,14 @@ class VertexGroup:
                                 v_group.add([vert], w, 'REPLACE')
 
         # import body parts as face maps
-        # get faces (triangles) as map of tuples to index
-        tri_map = {frozenset(polygon.vertices): polygon.index for polygon in b_obj.data.polygons}
+        # get faces (triangles) as map of unordered vertices to list of indices
+        tri_map = {}
+        for polygon in b_obj.data.polygons:
+            vertices = frozenset(polygon.vertices)
+            if vertices in tri_map:
+                tri_map[vertices].append(polygon.index)
+            else:
+                tri_map[vertices] = [polygon.index]
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
             skinpart = ni_block.get_skin_partition()
             for bodypart, skinpartblock in zip(skininst.partitions, skinpart.skin_partition_blocks):
@@ -178,4 +184,5 @@ class VertexGroup:
                     f_group = b_obj.face_maps.new(name=group_name)
 
                 # add the triangles to the face map
-                f_group.add([tri_map[frozenset(vertices)] for vertices in skinpartblock.get_mapped_triangles()])
+                for vertices in skinpartblock.get_mapped_triangles():
+                    f_group.add(tri_map[frozenset(vertices)])

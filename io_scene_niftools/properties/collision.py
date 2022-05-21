@@ -82,6 +82,12 @@ class CollisionProperty(PropertyGroup):
         items=game_specific_col_layer_items,
     )
 
+    penetration_depth: FloatProperty(
+        name='Penetration Depth',
+        description='The maximum allowed penetration for this object.',
+        default=0.15
+    )
+
     deactivator_type: EnumProperty(
         name='Deactivator Type',
         description='Motion deactivation setting',

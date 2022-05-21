@@ -197,7 +197,7 @@ class BhkCollision(Collision):
             b_r_body.deactivate_angular_velocity = mathutils.Vector([ang_vel.w, ang_vel.x, ang_vel.y, ang_vel.z]).magnitude
 
             # Custom Niftools properties
-            b_col_obj.collision.permeability = bhkshape.penetration_depth
+            b_col_obj.nifcollision.penetration_depth = bhkshape.penetration_depth
             b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
             b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
             b_col_obj.nifcollision.max_linear_velocity = bhkshape.max_linear_velocity
@@ -269,7 +269,11 @@ class BhkCollision(Collision):
         # find vertices (and fix scale)
         scaled_verts = [(self.HAVOK_SCALE * n_vert.x, self.HAVOK_SCALE * n_vert.y, self.HAVOK_SCALE * n_vert.z)
                         for n_vert in bhk_shape.vertices]
-        verts, faces = qhull3d(scaled_verts)
+        if scaled_verts:
+            verts, faces = qhull3d(scaled_verts)
+        else:
+            verts = []
+            faces = []
 
         b_obj = Object.mesh_from_data("convexpoly", verts, faces)
         radius = bhk_shape.radius * self.HAVOK_SCALE

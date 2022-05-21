@@ -1,3 +1,16 @@
+Version v0.0.14
+===============
+
+- #512 Two small Collision fixes
+    - Fix for importing an empty (convex) collision shape
+    - Closes #499 by moving it to a setting rather than using the collision physics property.
+    - Closes #511 Blender 3.1 python errors importing and exporting collisions
+- #497 Slight fix for triangle assignment to bodypart on partition import
+    - Added warning for too many bones per partition (since some games will crash with that
+    - Closes #496 "Some polygons of Parthurnax not assigned to any body part." error on unmodified model
+- #505 Import animation by default
+
+
 Version v0.0.13
 ==============
 
