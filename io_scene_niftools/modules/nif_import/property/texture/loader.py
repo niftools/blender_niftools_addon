@@ -221,8 +221,8 @@ class TextureLoader:
     def generate_image_name():
         """Find a file name (but avoid overwriting)"""
         n = 0
-        while n < 1000:
-            fn = "image{:0>3d}.dds".format(n)
+        while n < 10000:
+            fn = f"image{n:0>4d}.dds"
             tex = os.path.join(os.path.dirname(NifOp.props.filepath), fn)
             if not os.path.exists(tex):
                 break
