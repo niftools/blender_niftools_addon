@@ -69,6 +69,10 @@ class NodesWrapper:
         self.diffuse_texture = None
         self.vcol = None
 
+    @staticmethod
+    def uv_node_name(uv_index):
+        return f"TexCoordIndex_{uv_index}"
+
     def set_uv_map(self, b_texture_node, uv_index=0, reflective=False):
         """Attaches a vector node describing the desired coordinate transforms to the texture node's UV input."""
         if reflective:
@@ -76,7 +80,7 @@ class NodesWrapper:
             self.tree.links.new(uv.outputs[6], b_texture_node.inputs[0])
         # use supplied UV maps for everything else, if present
         else:
-            uv_name = f"TexCoordIndex{uv_index}"
+            uv_name = self.uv_node_name(uv_index)
             existing_node = self.tree.nodes.get(uv_name)
             if not existing_node:
                 uv = self.tree.nodes.new('ShaderNodeUVMap')
@@ -90,29 +94,29 @@ class NodesWrapper:
         # get all uv nodes (by name, since we are importing they have the predefined name
         # and then we don't have to loop through every node
         uv_nodes = {}
-        i = 0
+        uv_index = 0
         while True:
-            uv_name = "TexCoordIndex" + str(i)
+            uv_name = self.uv_node_name(uv_index)
             uv_node = self.tree.nodes.get(uv_name)
             if uv_node and isinstance(uv_node, bpy.types.ShaderNodeUVMap):
-                uv_nodes[uv_name] = uv_node
-                i += 1
+                uv_nodes[uv_index] = uv_node
+                uv_index += 1
             else:
                 break
 
         clip_texture = clamp_x and clamp_y
 
-        for uv_name, uv_node in uv_nodes.items():
+        for uv_index, uv_node in uv_nodes.items():
             # for each of those, create a new uv output node and relink
             split_node = self.tree.nodes.new("ShaderNodeSeparateXYZ")
-            split_node.name = "Separate UV" + uv_name[-1]
+            split_node.name = f"Separate UV{uv_index}"
             split_node.label = split_node.name
             combine_node = self.tree.nodes.new("ShaderNodeCombineXYZ")
-            combine_node.name = "Combine UV" + uv_name[-1]
+            combine_node.name = f"Combine UV{uv_index}"
             combine_node.label = combine_node.name
 
             x_node = self.tree.nodes.new("ShaderNodeMath")
-            x_node.name = "X offset and scale UV" + uv_name[-1]
+            x_node.name = f"X offset and scale UV{uv_index}"
             x_node.label = x_node.name
             x_node.operation = 'MULTIPLY_ADD'
             # only clamp on the math node when we're not clamping on both directions
@@ -124,7 +128,7 @@ class NodesWrapper:
             self.tree.links.new(x_node.outputs[0], combine_node.inputs[0])
 
             y_node = self.tree.nodes.new("ShaderNodeMath")
-            y_node.name = "Y offset and scale UV" + uv_name[-1]
+            y_node.name = f"Y offset and scale UV{uv_index}"
             y_node.label = y_node.name
             y_node.operation = 'MULTIPLY_ADD'
             y_node.use_clamp = clamp_y and not clip_texture
