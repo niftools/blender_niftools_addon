@@ -117,8 +117,6 @@ class MorphAnimation(Animation):
         sk_basis = b_obj.shape_key_add(name="Basis")
         b_mesh.shape_keys.use_relative = False
 
-        # TODO: I'm not entirely sure that changing the morphs to f-strings won't
-        # TODO: break anything. They _shouldn't_.
         morphs = ([(morph, f"EGM SYM {i}") for i, morph in enumerate(sym_morphs)] +
                   [(morph, f"EGM ASYM {i}") for i, morph in enumerate(asym_morphs)])
 

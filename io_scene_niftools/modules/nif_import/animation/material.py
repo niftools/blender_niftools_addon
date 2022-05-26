@@ -69,8 +69,9 @@ class MaterialAnimation(Animation):
         NifLog.info("Importing alpha controller")
 
         b_mat_action = self.create_action(b_material, "MaterialAction")
-        interp = self.get_b_interp_from_n_interp(n_ctrl.data.data.interpolation)
-        times, keys = self.get_keys_values(n_ctrl.data.data.keys)
+        n_ctrl_data = self.get_controller_data(n_ctrl)
+        interp = self.get_b_interp_from_n_interp(n_ctrl_data.interpolation)
+        times, keys = self.get_keys_values(n_ctrl_data.keys)
         # key needs to be RGB due to current representation in blender
         keys = [(v, v, v) for v in keys]
         self.add_keys(b_mat_action, "niftools.emissive_alpha", range(3), n_ctrl.flags, times, keys, interp)
@@ -85,8 +86,9 @@ class MaterialAnimation(Animation):
             return
         NifLog.info(f"Importing material color controller for target color {n_target_color} into blender channel {b_channel}")
         b_mat_action = self.create_action(b_material, "MaterialAction")
-        interp = self.get_b_interp_from_n_interp(n_ctrl.data.data.interpolation)
-        times, keys = self.get_keys_values(n_ctrl.data.data.keys)
+        n_ctrl_data = self.get_controller_data(n_ctrl)
+        interp = self.get_b_interp_from_n_interp(n_ctrl_data.interpolation)
+        times, keys = self.get_keys_values(n_ctrl_data.keys)
         self.add_keys(b_mat_action, b_channel, range(3), n_ctrl.flags, times, keys, interp)
 
     def import_material_uv_controller(self, b_material, n_geom):
@@ -97,7 +99,8 @@ class MaterialAnimation(Animation):
             return
         NifLog.info("Importing UV controller")
 
-        if not any(n_uvgroup.keys for n_uvgroup in n_ctrl.data.uv_groups):
+        n_ctrl_data = self.get_controller_data(n_ctrl)
+        if not any(n_uvgroup.keys for n_uvgroup in n_ctrl_data.uv_groups):
             return
 
         b_mat_action = self.create_action(b_material.node_tree, "MaterialAction")

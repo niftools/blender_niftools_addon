@@ -246,12 +246,8 @@ class TransformAnimation(Animation):
             b_action = self.create_action(b_target, f"{b_action_name}_{b_target.name}")
             bone_name = None
 
-        # transform controllers (dartgun.nif)
-        if isinstance(n_kfc, NifFormat.NiTransformController):
-            if n_kfc.interpolator:
-                n_kfd = n_kfc.interpolator.data
         # B-spline curve import
-        elif isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
+        if isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
             # Bsplines are Bezier curves
             interp = "BEZIER"
             if isinstance(n_kfc, NifFormat.NiBSplineCompFloatInterpolator):
@@ -271,9 +267,7 @@ class TransformAnimation(Animation):
         elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
             # not sure what this is used for
             return
-        else:
-            # ZT2 & Fallout
-            n_kfd = n_kfc.data
+        n_kfd = self.get_controller_data(n_kfc)
         # ZT2 - get extrapolation for every kfc
         if isinstance(n_kfc, NifFormat.NiKeyframeController):
             flags = n_kfc.flags

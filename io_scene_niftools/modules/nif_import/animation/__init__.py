@@ -56,6 +56,18 @@ class Animation:
         self.actions = {}
 
     @staticmethod
+    def get_controller_data(ctrl):
+        """Return data for ctrl, look in interpolator (for newer games) or directly on ctrl"""
+        if ctrl.interpolator:
+            data = ctrl.interpolator.data
+        else:
+            data = ctrl.data
+        # these have their data set as a KeyGroup on data
+        if isinstance(data, (NifFormat.NiBoolData, NifFormat.NiFloatData, NifFormat.NiPosData)):
+            return data.data
+        return data
+
+    @staticmethod
     def get_keys_values(items):
         """Returns list of times and keys for an array 'items' with key elements having 'time' and 'value' attributes"""
         return [key.time for key in items], [key.value for key in items]

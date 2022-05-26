@@ -54,5 +54,7 @@ class ObjectAnimation(Animation):
             return
         NifLog.info("Importing vis controller")
         b_obj_action = self.create_action(b_obj, f"{b_obj.name}-Anim")
-        times, keys = self.get_keys_values(n_vis_ctrl.data.keys)
+
+        n_ctrl_data = self.get_controller_data(n_vis_ctrl)
+        times, keys = self.get_keys_values(n_ctrl_data.keys)
         self.add_keys(b_obj_action, "hide_viewport", (0,), n_vis_ctrl.flags, times, keys, "CONSTANT")
