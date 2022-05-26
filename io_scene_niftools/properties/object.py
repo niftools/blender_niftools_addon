@@ -97,6 +97,40 @@ class ExtraDataStore(PropertyGroup):
     )
 
 
+class BsInventoryMarker(PropertyGroup):
+    name: StringProperty(
+        name="",
+        default='INV'
+    )
+
+    x: FloatProperty(
+        name="X Rotation",
+        description="Rotation of object in inventory around the x axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    y: FloatProperty(
+        name="Y Rotation",
+        description="Rotation of object in inventory around the y axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    z: FloatProperty(
+        name="Z Rotation",
+        description="Rotation of object in inventory around the z axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    zoom: FloatProperty(
+        name="Zoom",
+        description="Inventory object Zoom level",
+        default=1
+    )
+
+
 class ObjectProperty(PropertyGroup):
 
     prn_location: EnumProperty(
@@ -146,8 +180,11 @@ class ObjectProperty(PropertyGroup):
         description="The bone that acts as the root of the SkinInstance",
     )
 
+    bs_inv: bpy.props.CollectionProperty(type=BsInventoryMarker)
+
 
 CLASSES = [
+    BsInventoryMarker,
     ExtraData,
     ExtraDataStore,
     ObjectProperty,
@@ -158,12 +195,10 @@ def register():
     register_classes(CLASSES, __name__)
 
     bpy.types.Object.niftools = bpy.props.PointerProperty(type=ObjectProperty)
-    # bpy.types.scene.bs_inv_marker = bpy.props.CollectionProperty(type=BsInventoryMarker)
 
 
 def unregister():
     del bpy.types.Object.niftools
-    # del bpy.types.scene.bs_inv_marker
 
     unregister_classes(CLASSES, __name__)
 

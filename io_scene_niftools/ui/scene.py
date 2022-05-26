@@ -92,32 +92,6 @@ class SceneVersionInfoPanel(SceneButtonsPanel):
         col.prop(nif_scene_props, "user_version_2")
 
 
-class SceneBSInvMarkerPanel(SceneButtonsPanel):
-    bl_label = "Niftools BS Inv Marker"
-    bl_idname = "NIFTOOLS_PT_ObjectBSInvMarker"
-    bl_parent_id = "NIFTOOLS_PT_scene"
-
-    # noinspection PyUnusedLocal
-    @classmethod
-    def poll(cls, context):
-        return True
-
-    def draw(self, context):
-        layout = self.layout
-        row = layout.row()
-        bs_inv = context.scene.niftools_scene.bs_inv
-        if not bs_inv:
-            row.operator("scene.bs_inv_marker_add", icon='ZOOM_IN', text="")
-        else:
-            row.operator("scene.bs_inv_marker_remove", icon='ZOOM_OUT', text="")
-        col = row.column(align=True)
-        for i, x in enumerate(bs_inv):
-            col.prop(bs_inv[i], "x", index=i)
-            col.prop(bs_inv[i], "y", index=i)
-            col.prop(bs_inv[i], "z", index=i)
-            col.prop(bs_inv[i], "zoom", index=i)
-
-
 # class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):
 #     bl_label = "Nif Author Info"
 #     bl_idname = "NIFTOOLS_PT_scene_author_info"
@@ -142,7 +116,6 @@ class SceneBSInvMarkerPanel(SceneButtonsPanel):
 classes = [
     ScenePanel,
     SceneVersionInfoPanel,
-    SceneBSInvMarkerPanel,
 ]
 
 

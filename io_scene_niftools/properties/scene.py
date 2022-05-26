@@ -62,40 +62,6 @@ def update_version_from_game(self, context):
     self.user_version_2 = self.USER_VERSION_2.get(self.game, 0)
 
 
-class BsInventoryMarker(PropertyGroup):
-    name: StringProperty(
-        name="",
-        default='INV'
-    )
-
-    x: FloatProperty(
-        name="X Rotation",
-        description="Rotation of object in inventory around the x axis",
-        default=0,
-        subtype="ANGLE"
-    )
-
-    y: FloatProperty(
-        name="Y Rotation",
-        description="Rotation of object in inventory around the y axis",
-        default=0,
-        subtype="ANGLE"
-    )
-
-    z: FloatProperty(
-        name="Z Rotation",
-        description="Rotation of object in inventory around the z axis",
-        default=0,
-        subtype="ANGLE"
-    )
-
-    zoom: FloatProperty(
-        name="Zoom",
-        description="Inventory object Zoom level",
-        default=1
-    )
-
-
 class Scene(PropertyGroup):
     nif_version: IntProperty(
         name='Version',
@@ -161,11 +127,8 @@ class Scene(PropertyGroup):
         default=0.1,
         min=0.001, max=100.0, precision=2)
 
-    bs_inv: bpy.props.CollectionProperty(type=BsInventoryMarker)
-
 
 CLASSES = [
-    BsInventoryMarker,
     Scene
 ]
 
@@ -174,7 +137,6 @@ def register():
     register_classes(CLASSES, __name__)
 
     bpy.types.Scene.niftools_scene = bpy.props.PointerProperty(type=Scene)
-    # bpy.types.Scene.niftools_bs_inv = bpy.props.CollectionProperty(type=BsInventoryMarker)
 
 
 def unregister():

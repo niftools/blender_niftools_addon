@@ -45,12 +45,12 @@ from io_scene_niftools.utils.decorators import register_classes, unregister_clas
 
 class BsInvMarkerAdd(Operator):
     """Adds BsInvMarker set"""
-    bl_idname = "scene.bs_inv_marker_add"
+    bl_idname = "object.bs_inv_marker_add"
     bl_label = "Add Inventory Marker"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        bs_inv = context.scene.niftools_scene.bs_inv
+        bs_inv = context.object.niftools.bs_inv
         bs_inv_item = bs_inv.add()
         bs_inv_item.name = "INV"
         bs_inv_item.bs_inv_x = 0
@@ -62,12 +62,12 @@ class BsInvMarkerAdd(Operator):
 
 class BsInvMarkerRemove(bpy.types.Operator):
     """Removes BsInvMarker set"""
-    bl_idname = "scene.bs_inv_marker_remove"
+    bl_idname = "object.bs_inv_marker_remove"
     bl_label = "Remove Inventory Marker"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        bs_inv = context.scene.niftools_scene.bs_inv
+        bs_inv = context.object.niftools.bs_inv
         item = len(bs_inv) - 1
         bs_inv.remove(item)
         return {'FINISHED'}

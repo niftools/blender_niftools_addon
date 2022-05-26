@@ -220,11 +220,12 @@ class ObjectDataProperty:
 
     # TODO [object][property] Move to object property
     @staticmethod
-    def export_inventory_marker(n_root):
+    def export_inventory_marker(n_root, b_obj):
         """Attaches a BSInvMarker to n_root if desired and fill in its values"""
         niftools_scene = bpy.context.scene.niftools_scene
-        if niftools_scene.game in ('SKYRIM',) and niftools_scene.bs_inv:
-            bs_inv = niftools_scene.bs_inv[0]
+        bs_inv_store = b_obj.niftools.bs_inv
+        if niftools_scene.game in ('SKYRIM',) and bs_inv_store:
+            bs_inv = bs_inv_store[0]
             n_bs_inv_marker = NifFormat.BSInvMarker()
             n_bs_inv_marker.name = bs_inv.name.encode()
             n_bs_inv_marker.rotation_x = (-bs_inv.x % (2 * pi)) * 1000

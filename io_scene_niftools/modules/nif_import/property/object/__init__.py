@@ -42,6 +42,8 @@ from pyffi.formats.nif import NifFormat
 from io_scene_niftools.properties.object import PRN_DICT
 from math import pi
 
+from io_scene_niftools.utils.blocks import safe_decode
+
 
 class ObjectProperty:
 
@@ -82,8 +84,8 @@ class ObjectProperty:
             elif isinstance(n_extra, NifFormat.BSXFlags):
                 b_obj.niftools.bsxflags = n_extra.integer_data
             elif isinstance(n_extra, NifFormat.BSInvMarker):
-                bs_inv_item = niftools_scene.bs_inv.add()
-                bs_inv_item.name = n_extra.name.decode()
+                bs_inv_item = b_obj.niftools.bs_inv.add()
+                bs_inv_item.name = safe_decode(n_extra.name)
                 bs_inv_item.x = (-n_extra.rotation_x / 1000) % (2 * pi)
                 bs_inv_item.y = (-n_extra.rotation_y / 1000) % (2 * pi)
                 bs_inv_item.z = (-n_extra.rotation_z / 1000) % (2 * pi)
