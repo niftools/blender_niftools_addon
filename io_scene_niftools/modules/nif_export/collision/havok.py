@@ -522,14 +522,14 @@ class BhkCollision(Collision):
         transform = math.get_object_bind(b_obj)
         rotation = transform.decompose()[1]
 
-        vertices = [vert.co * transform for vert in b_mesh.vertices]
+        vertices = [vert.co @ transform for vert in b_mesh.vertices]
         triangles = []
         normals = []
         for face in b_mesh.polygons:
             if len(face.vertices) < 3:
                 continue  # ignore degenerate polygons
             triangles.append([face.vertices[i] for i in (0, 1, 2)])
-            normals.append(rotation * face.normal)
+            normals.append(rotation @ face.normal)
             if len(face.vertices) == 4:
                 triangles.append([face.vertices[i] for i in (0, 2, 3)])
                 normals.append(rotation * face.normal)
