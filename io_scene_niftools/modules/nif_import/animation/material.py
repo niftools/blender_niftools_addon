@@ -44,6 +44,11 @@ from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
 
+# indices for blender ShaderNodeMapping node
+LOC_DP = 1
+SCALE_DP = 3
+MAPPING = "ShaderNodeMapping"
+
 
 class MaterialAnimation(Animation):
 
@@ -59,7 +64,8 @@ class MaterialAnimation(Animation):
                                               ("specular_color", NifFormat.TargetColor.TC_SPECULAR)):
                 self.import_material_color_controller(b_material, n_material, b_channel, n_target_color)
 
-        self.import_material_uv_controller(b_material, n_geom)
+        self.import_uv_controller(b_material, n_geom)
+        self.import_tex_transform_controller(b_material, n_geom)
 
     def import_material_alpha_controller(self, b_material, n_material):
         # find alpha controller
@@ -91,7 +97,7 @@ class MaterialAnimation(Animation):
         times, keys = self.get_keys_values(n_ctrl_data.keys)
         self.add_keys(b_mat_action, b_channel, range(3), n_ctrl.flags, times, keys, interp)
 
-    def import_material_uv_controller(self, b_material, n_geom):
+    def import_uv_controller(self, b_material, n_geom):
         """Import UV controller data as a mapping node with animated values."""
         # search for the block
         n_ctrl = math.find_controller(n_geom, NifFormat.NiUVController)
@@ -103,28 +109,9 @@ class MaterialAnimation(Animation):
         if not any(n_uvgroup.keys for n_uvgroup in n_ctrl_data.uv_groups):
             return
 
-        b_mat_action = self.create_action(b_material.node_tree, "MaterialAction")
-
-        tree = b_material.node_tree
-        transform = tree.nodes.new('ShaderNodeMapping')
-        # get previous links
-        used_links = []
-        for link in tree.links:
-            # get uv nodes
-            if link.from_node.type == "UVMAP":
-                used_links.append(link)
-
-        # link the node between previous uv node and texture node
-        for link in used_links:
-            from_socket = link.from_socket
-            to_socket = link.to_socket
-            tree.links.remove(link)
-            tree.links.new(from_socket, transform.inputs[0])
-            tree.links.new(transform.outputs[0], to_socket)
+        b_mat_action, transform = self.insert_mapping_node(b_material)
 
         # loc U, loc V, scale U, scale V
-        LOC_DP = 1
-        SCALE_DP = 3
         dtypes = (LOC_DP, 0), (LOC_DP, 1), (SCALE_DP, 0), (SCALE_DP, 1)
         for n_uvgroup, (data_path, array_ind) in zip(n_ctrl.data.uv_groups, dtypes):
             if n_uvgroup.keys:
@@ -134,4 +121,73 @@ class MaterialAnimation(Animation):
                 if 1 == LOC_DP and array_ind == 1:
                     keys = [-key for key in keys]
                 self.add_keys(b_mat_action, f'nodes["{transform.name}"].inputs[{data_path}].default_value', (array_ind,), n_ctrl.flags, times, keys, interp)
+
+    def import_tex_transform_controller(self, b_material, n_geom):
+        """Import UV controller data as a mapping node with animated values."""
+        # search for the block
+        n_tex_prop = math.find_property(n_geom, NifFormat.NiTexturingProperty)
+        if not n_tex_prop:
+            return
+        for n_ctrl in math.controllers_iter(n_tex_prop, NifFormat.NiTextureTransformController):
+            NifLog.info("Importing Texture Transform controller")
+
+            n_ctrl_data = self.get_controller_data(n_ctrl)
+            if not n_ctrl_data.keys:
+                return
+            # todo [material] get the mapping from enum to node, and standardize texture slot names everywhere
+            # the whole node logic needs to be refactored to seamlessly integrate this
+            # get tex slot
+            tex_slot = n_ctrl.texture_slot
+            times, keys = self.get_keys_values(n_ctrl_data.keys)
+            # get operation
+            operation = n_ctrl.operation
+            if operation == NifFormat.TexTransform.TT_TRANSLATE_U:
+                data_path = LOC_DP
+                array_ind = 0
+            elif operation == NifFormat.TexTransform.TT_TRANSLATE_V:
+                data_path = LOC_DP
+                array_ind = 1
+                # UV V coordinate is inverted in blender
+                keys = [-key for key in keys]
+            elif operation == NifFormat.TexTransform.TT_ROTATE:
+                # not sure, need example nif
+                NifLog.warn("Rotation in Texture Transform is not supported")
+                return
+            elif operation == NifFormat.TexTransform.TT_SCALE_U:
+                data_path = SCALE_DP
+                array_ind = 0
+            elif operation == NifFormat.TexTransform.TT_SCALE_V:
+                data_path = SCALE_DP
+                array_ind = 1
+
+            # in example nif, no node tree exists, so this doesn't link the transform node
+            b_mat_action, transform = self.insert_mapping_node(b_material)
+
+            interp = self.get_b_interp_from_n_interp(n_ctrl_data.interpolation)
+            self.add_keys(b_mat_action, f'nodes["{transform.name}"].inputs[{data_path}].default_value', (array_ind,), n_ctrl.flags, times, keys, interp)
+
+    def insert_mapping_node(self, b_material):
+        b_mat_action = self.create_action(b_material.node_tree, "MaterialAction")
+        tree = b_material.node_tree
+        # reuse mapping node if one had been added before
+        for node in tree.nodes:
+            if node.type == "MAPPING":
+                transform = node
+                break
+        else:
+            transform = tree.nodes.new(MAPPING)
+        # get previous links
+        used_links = []
+        for link in tree.links:
+            # get uv nodes
+            if link.from_node.type == "UVMAP":
+                used_links.append(link)
+        # link the node between previous uv node and texture node
+        for link in used_links:
+            from_socket = link.from_socket
+            to_socket = link.to_socket
+            tree.links.remove(link)
+            tree.links.new(from_socket, transform.inputs[0])
+            tree.links.new(transform.outputs[0], to_socket)
+        return b_mat_action, transform
 
