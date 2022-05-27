@@ -98,7 +98,7 @@ class Mesh:
             # ignore materials on collision trishapes
             mesh_materials = []
 
-        # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
+        # if mesh has no materials, all face material indices should be 0, so fake one material in the material list
         if not mesh_materials:
             mesh_materials = [None]
 
@@ -124,8 +124,10 @@ class Mesh:
             # create a n_geom block
             if not NifOp.props.stripify:
                 n_geom = block_store.create_block("NiTriShape", b_obj)
+                n_geom.data = block_store.create_block("NiTriShapeData", b_obj)
             else:
                 n_geom = block_store.create_block("NiTriStrips", b_obj)
+                n_geom.data = block_store.create_block("NiTriStripsData", b_obj)
 
             # fill in the NiTriShape's non-trivial values
             if isinstance(n_parent, NifFormat.RootCollisionNode):
@@ -189,7 +191,7 @@ class Mesh:
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
-            mesh_uv_layers = eval_mesh.uv_layers
+            b_uv_layers = eval_mesh.uv_layers
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
             vertex_map = [None for _ in range(len(eval_mesh.vertices))]  # blender vertex -> nif vertices
             vertex_positions = []
@@ -202,18 +204,22 @@ class Mesh:
             polygons_without_bodypart = []
 
             if eval_mesh.polygons:
-                if mesh_uv_layers:
+                if b_uv_layers:
                     # if we have uv coordinates double check that we have uv data
                     if not eval_mesh.uv_layer_stencil:
                         NifLog.warn(f"No UV map for texture associated with selected mesh '{eval_mesh.name}'.")
 
             use_tangents = False
-            if mesh_uv_layers and mesh_hasnormals:
+            if b_uv_layers and mesh_hasnormals:
                 if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
-                    eval_mesh.calc_tangents(uvmap=mesh_uv_layers[0].name)
+                    eval_mesh.calc_tangents(uvmap=b_uv_layers[0].name)
                     tangents = []
                     bitangent_signs = []
+
+            if game in ('FALLOUT_3', 'SKYRIM'):
+                if len(b_uv_layers) > 1:
+                    raise NifError(f"{game} does not support multiple UV layers.")
 
             for poly in eval_mesh.polygons:
 
@@ -287,7 +293,7 @@ class Mesh:
                             bitangent_signs.append([eval_mesh.loops[loop_index].bitangent_sign])
                         if mesh_hasvcol:
                             vertex_colors.append(vertquad[3])
-                        if mesh_uv_layers:
+                        if b_uv_layers:
                             uv_coords.append(vertquad[1])
 
                 # now add the (hopefully, convex) face, in triangles
@@ -320,58 +326,17 @@ class Mesh:
             if len(vertex_positions) == 0:
                 continue  # m_4444x: skip 'empty' material indices
 
-            # add NiTriShape's data
-            if isinstance(n_geom, NifFormat.NiTriShape):
-                tridata = block_store.create_block("NiTriShapeData", b_obj)
-            else:
-                tridata = block_store.create_block("NiTriStripsData", b_obj)
-            n_geom.data = tridata
-
-            # data
-            tridata.num_vertices = len(vertex_positions)
-            tridata.has_vertices = True
-            tridata.vertices.update_size()
-            for i, v in enumerate(tridata.vertices):
-                v.x, v.y, v.z = vertex_positions[i]
-            tridata.update_center_radius()
-
-            if mesh_hasnormals:
-                tridata.has_normals = True
-                tridata.normals.update_size()
-                for i, v in enumerate(tridata.normals):
-                    v.x, v.y, v.z = normals[i]
-
-            if mesh_hasvcol:
-                tridata.has_vertex_colors = True
-                tridata.vertex_colors.update_size()
-                for i, v in enumerate(tridata.vertex_colors):
-                    v.r, v.g, v.b, v.a = vertex_colors[i]
-
-            if mesh_uv_layers:
-                if game in ('FALLOUT_3', 'SKYRIM'):
-                    if len(mesh_uv_layers) > 1:
-                        raise NifError(f"{game} does not support multiple UV layers.")
-                tridata.num_uv_sets = len(mesh_uv_layers)
-                tridata.bs_num_uv_sets = len(mesh_uv_layers)
-                tridata.has_uv = True
-                tridata.uv_sets.update_size()
-                for j, uv_layer in enumerate(mesh_uv_layers):
-                    for i, uv in enumerate(tridata.uv_sets[j]):
-                        if len(uv_coords[i]) == 0:
-                            continue  # skip non-uv textures
-                        uv.u = uv_coords[i][j][0]
-                        # NIF flips the texture V-coordinate (OpenGL standard)
-                        uv.v = 1.0 - uv_coords[i][j][1]  # opengl standard
+            self.set_geom_data(n_geom, vertex_positions, normals, vertex_colors, uv_coords, b_uv_layers)
 
             # set triangles stitch strips for civ4
-            tridata.set_triangles(triangles, stitchstrips=NifOp.props.stitch_strips)
+            n_geom.data.set_triangles(triangles, stitchstrips=NifOp.props.stitch_strips)
 
-            # update tangent space (as binary extra data only for Oblivion)
+            # update tangent space
             # for extra shader texture games, only export it if those textures are actually exported
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if use_tangents:
                 if game == 'SKYRIM':
-                    tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
+                    n_geom.data.bs_num_uv_sets = n_geom.data.bs_num_uv_sets + 4096
                 # calculate the bitangents using the normals, tangent list and bitangent sign
                 bitangents = bitangent_signs * np.cross(normals, tangents)
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
@@ -379,7 +344,7 @@ class Mesh:
                 self.add_defined_tangents(n_geom,
                                           tangents=-bitangents,
                                           bitangents=tangents,
-                                          as_extra_data=(game == 'OBLIVION'))
+                                          as_extra_data=(game == 'OBLIVION'))  # as binary extra data only for Oblivion
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any
@@ -425,13 +390,8 @@ class Mesh:
 
                     self.select_unweighted_vertices(b_obj, unweighted_vertices)
 
-                    # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
-                    # note: allocate memory for faster performance
-                    vert_added = [False for _ in range(len(vertex_positions))]
+                    # for each bone, get the vertex weights and add its n_node to the NiSkinData
                     for b_bone_name in boneinfluences:
-                        # find bone in exported blocks
-                        bone_block = self.get_bone_block(b_obj_armature.data.bones[b_bone_name])
-
                         # find vertex weights
                         vert_weights = {}
                         for v in vert_list[b_bone_name]:
@@ -446,10 +406,14 @@ class Mesh:
                             if vertex_map[v[0]] and vert_norm[v[0]]:
                                 for vert_index in vertex_map[v[0]]:
                                     vert_weights[vert_index] = v[1] / vert_norm[v[0]]
-                                    vert_added[vert_index] = True
                         # add bone as influence, but only if there were actually any vertices influenced by the bone
                         if vert_weights:
-                            n_geom.add_bone(bone_block, vert_weights)
+                            # find bone in exported blocks
+                            n_node = self.get_bone_block(b_obj_armature.data.bones[b_bone_name])
+                            n_geom.add_bone(n_node, vert_weights)
+
+                    # clean up
+                    del vert_weights
 
                     # update bind position skinning data
                     # n_geom.update_bind_position()
@@ -461,17 +425,46 @@ class Mesh:
 
                     self.export_skin_partition(b_obj, bodypartfacemap, triangles, n_geom)
 
-                    # clean up
-                    del vert_weights
-                    del vert_added
 
             # fix data consistency type
-            tridata.consistency_flags = b_obj.niftools.consistency_flags
+            n_geom.data.consistency_flags = b_obj.niftools.consistency_flags
 
             # export EGM or NiGeomMorpherController animation
             # shape keys are only present on the raw, unevaluated mesh
             self.morph_anim.export_morph(b_mesh, n_geom, vertex_map)
         return n_geom
+
+    def set_geom_data(self, n_geom, vertex_positions, normals, vertex_colors, uv_coords, b_uv_layers):
+        """Sets flat lists of per-vertex data to n_geom"""
+        # coords
+        n_geom.data.num_vertices = len(vertex_positions)
+        n_geom.data.has_vertices = True
+        n_geom.data.vertices.update_size()
+        for n_v, b_v in zip(n_geom.data.vertices, vertex_positions):
+            n_v.x, n_v.y, n_v.z = b_v
+        n_geom.data.update_center_radius()
+        # normals
+        n_geom.data.has_normals = bool(normals)
+        n_geom.data.normals.update_size()
+        for n_v, b_v in zip(n_geom.data.normals, normals):
+            n_v.x, n_v.y, n_v.z = b_v
+        # vertex_colors
+        n_geom.data.has_vertex_colors = bool(vertex_colors)
+        n_geom.data.vertex_colors.update_size()
+        for n_v, b_v in zip(n_geom.data.vertex_colors, vertex_colors):
+            n_v.r, n_v.g, n_v.b, n_v.a = b_v
+        # uv_sets
+        n_geom.data.has_uv = bool(b_uv_layers)
+        n_geom.data.num_uv_sets = len(b_uv_layers)
+        n_geom.data.bs_num_uv_sets = len(b_uv_layers)
+        n_geom.data.uv_sets.update_size()
+        for j, n_uv_set in enumerate(n_geom.data.uv_sets):
+            for i, n_uv in enumerate(n_uv_set):
+                if len(uv_coords[i]) == 0:
+                    continue  # skip non-uv textures
+                n_uv.u = uv_coords[i][j][0]
+                # NIF flips the texture V-coordinate (OpenGL standard)
+                n_uv.v = 1.0 - uv_coords[i][j][1]  # opengl standard
 
     def export_skin_partition(self, b_obj, bodypartfacemap, triangles, n_geom):
         """Attaches a skin partition to n_geom if needed"""

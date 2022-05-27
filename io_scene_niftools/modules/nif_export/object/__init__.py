@@ -207,10 +207,13 @@ class Object:
             self.armaturehelper.export_bones(b_obj, node)
             # special case: objects parented to armature bones
             for b_child in b_obj.children:
-                # find and attach to the right bone
+                # find and attach to the right node
                 if b_child.parent_bone:
                     b_obj_bone = b_obj.data.bones[b_child.parent_bone]
-                    self.export_node(b_child, block_store.block_to_obj[b_obj_bone])
+                    # find the correct n_node
+                    # todo [object] this is essentially the same as Mesh.get_bone_block()
+                    n_node = [k for k, v in block_store.block_to_obj.items() if v == b_obj_bone][0]
+                    self.export_node(b_child, n_node)
                 # just child of the armature itself, so attach to armature root
                 else:
                     self.export_node(b_child, node)
