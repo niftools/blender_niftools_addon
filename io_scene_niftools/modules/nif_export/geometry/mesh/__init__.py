@@ -411,8 +411,6 @@ class Mesh:
                             # find bone in exported blocks
                             n_node = self.get_bone_block(b_obj_armature.data.bones[b_bone_name])
                             n_geom.add_bone(n_node, vert_weights)
-
-                    # clean up
                     del vert_weights
 
                     # update bind position skinning data
@@ -424,7 +422,6 @@ class Mesh:
                     n_geom.update_skin_center_radius()
 
                     self.export_skin_partition(b_obj, bodypartfacemap, triangles, n_geom)
-
 
             # fix data consistency type
             n_geom.data.consistency_flags = b_obj.niftools.consistency_flags
