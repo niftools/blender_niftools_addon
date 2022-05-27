@@ -69,7 +69,7 @@ class Mesh:
         n_parent, as NiTriShape and NiTriShapeData blocks, possibly
         along with some NiTexturingProperty, NiSourceTexture,
         NiMaterialProperty, and NiAlphaProperty blocks. We export one
-        trishape block per mesh material. We also export vertex weights.
+        n_geom block per mesh material. We also export vertex weights.
 
         The parameter trishape_name passes on the name for meshes that
         should be exported as a single mesh.
@@ -111,7 +111,7 @@ class Mesh:
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
 
-        # let's now export one trishape for every mesh material
+        # let's now export one n_geom for every mesh material
         # TODO [material] needs refactoring - move material, texture, etc. to separate function
         for materialIndex, b_mat in enumerate(mesh_materials):
 
@@ -121,53 +121,53 @@ class Mesh:
                 if (game == 'SKYRIM') and b_mat.niftools_shader.slsf_1_model_space_normals:
                     mesh_hasnormals = False  # for proper lighting
 
-            # create a trishape block
+            # create a n_geom block
             if not NifOp.props.stripify:
-                trishape = block_store.create_block("NiTriShape", b_obj)
+                n_geom = block_store.create_block("NiTriShape", b_obj)
             else:
-                trishape = block_store.create_block("NiTriStrips", b_obj)
+                n_geom = block_store.create_block("NiTriStrips", b_obj)
 
             # fill in the NiTriShape's non-trivial values
             if isinstance(n_parent, NifFormat.RootCollisionNode):
-                trishape.name = ""
+                n_geom.name = ""
             else:
                 if not trishape_name:
                     if n_parent.name:
-                        trishape.name = "Tri " + n_parent.name.decode()
+                        n_geom.name = "Tri " + n_parent.name.decode()
                     else:
-                        trishape.name = "Tri " + b_obj.name.decode()
+                        n_geom.name = "Tri " + b_obj.name.decode()
                 else:
-                    trishape.name = trishape_name
+                    n_geom.name = trishape_name
 
                 # multimaterial meshes: add material index (Morrowind's child naming convention)
                 if len(mesh_materials) > 1:
-                    trishape.name = f"{trishape.name.decode()}: {materialIndex}"
+                    n_geom.name = f"{n_geom.name.decode()}: {materialIndex}"
                 else:
-                    trishape.name = block_store.get_full_name(trishape)
+                    n_geom.name = block_store.get_full_name(n_geom)
 
-            self.set_mesh_flags(b_obj, trishape)
+            self.set_mesh_flags(b_obj, n_geom)
 
             # extra shader for Sid Meier's Railroads
             if game == 'SID_MEIER_S_RAILROADS':
-                trishape.has_shader = True
-                trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
-                trishape.unknown_integer = -1  # default
+                n_geom.has_shader = True
+                n_geom.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
+                n_geom.unknown_integer = -1  # default
 
             # if we have an animation of a blender mesh
             # an intermediate NiNode has been created which holds this b_obj's transform
-            # the trishape itself then needs identity transform (default)
+            # the n_geom itself then needs identity transform (default)
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
-                math.set_object_matrix(b_obj, trishape)
+                math.set_object_matrix(b_obj, n_geom)
 
             # check if there is a parent
             if n_parent:
-                # add texture effect block (must be added as parent of the trishape)
+                # add texture effect block (must be added as parent of the n_geom)
                 n_parent = self.export_texture_effect(n_parent, b_mat)
                 # refer to this mesh in the parent's children list
-                n_parent.add_child(trishape)
+                n_parent.add_child(n_geom)
 
-            self.object_property.export_properties(b_obj, b_mat, trishape)
+            self.object_property.export_properties(b_obj, b_mat, n_geom)
 
             # -> now comes the real export
 
@@ -217,7 +217,7 @@ class Mesh:
 
             for poly in eval_mesh.polygons:
 
-                # does the face belong to this trishape?
+                # does the face belong to this n_geom?
                 if b_mat is not None and poly.material_index != materialIndex:
                     # we have a material but this face has another material, so skip
                     continue
@@ -321,11 +321,11 @@ class Mesh:
                 continue  # m_4444x: skip 'empty' material indices
 
             # add NiTriShape's data
-            if isinstance(trishape, NifFormat.NiTriShape):
+            if isinstance(n_geom, NifFormat.NiTriShape):
                 tridata = block_store.create_block("NiTriShapeData", b_obj)
             else:
                 tridata = block_store.create_block("NiTriStripsData", b_obj)
-            trishape.data = tridata
+            n_geom.data = tridata
 
             # data
             tridata.num_vertices = len(vertex_positions)
@@ -376,7 +376,7 @@ class Mesh:
                 bitangents = bitangent_signs * np.cross(normals, tangents)
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
                 # moreover, N_v = 1 - B_v, so d(B_v) = - d(N_v), therefore N_tan = -B_bit and N_bit = B_tan
-                self.add_defined_tangents(trishape,
+                self.add_defined_tangents(n_geom,
                                           tangents=-bitangents,
                                           bitangents=tangents,
                                           as_extra_data=(game == 'OBLIVION'))
@@ -392,7 +392,7 @@ class Mesh:
                 if boneinfluences:  # yes we have skinning!
                     # create new skinning instance block and link it
                     skininst, skindata = self.create_skin_inst_data(b_obj, b_obj_armature, polygon_parts)
-                    trishape.skin_instance = skininst
+                    n_geom.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
                     vert_list = {}
@@ -449,53 +449,17 @@ class Mesh:
                                     vert_added[vert_index] = True
                         # add bone as influence, but only if there were actually any vertices influenced by the bone
                         if vert_weights:
-                            trishape.add_bone(bone_block, vert_weights)
+                            n_geom.add_bone(bone_block, vert_weights)
 
                     # update bind position skinning data
-                    # trishape.update_bind_position()
-                    # override pyffi trishape.update_bind_position with custom one that is relative to the nif root
-                    self.update_bind_position(trishape, n_root, b_obj_armature)
+                    # n_geom.update_bind_position()
+                    # override pyffi n_geom.update_bind_position with custom one that is relative to the nif root
+                    self.update_bind_position(n_geom, n_root, b_obj_armature)
 
                     # calculate center and radius for each skin bone data block
-                    trishape.update_skin_center_radius()
+                    n_geom.update_skin_center_radius()
 
-                    if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
-                        NifLog.info("Creating skin partition")
-
-                        # warn on bad config settings
-                        if game == 'OBLIVION':
-                            if NifOp.props.pad_bones:
-                                NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                        if game in ('OBLIVION', 'FALLOUT_3'):
-                            if NifOp.props.max_bones_per_partition < 18:
-                                NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
-                                            "Set it to 18 to get higher quality skin partitions.")
-                            elif NifOp.props.max_bones_per_partition > 18:
-                                NifLog.warn("Using more than 18 bones per partition on Oblivion/Fallout 3 export."
-                                            "This may cause issues in-game.")
-                        if game == 'SKYRIM':
-                            if NifOp.props.max_bones_per_partition < 24:
-                                NifLog.warn("Using less than 24 bones per partition on Skyrim export."
-                                            "Set it to 24 to get higher quality skin partitions.")
-                        # Skyrim Special Edition has a limit of 80 bones per partition, but export is not yet supported
-
-                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, face_map.name, None) for face_map in b_obj.face_maps]
-                        part_order = [body_part for body_part in part_order if body_part is not None]
-                        # override pyffi trishape.update_skin_partition with custom one (that allows ordering)
-                        trishape.update_skin_partition = update_skin_partition.__get__(trishape)
-                        lostweight = trishape.update_skin_partition(
-                            maxbonesperpartition=NifOp.props.max_bones_per_partition,
-                            maxbonespervertex=NifOp.props.max_bones_per_vertex,
-                            stripify=NifOp.props.stripify,
-                            stitchstrips=NifOp.props.stitch_strips,
-                            padbones=NifOp.props.pad_bones,
-                            triangles=triangles,
-                            trianglepartmap=bodypartfacemap,
-                            maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
-                            part_sort_order=part_order)
-
-                        if lostweight > NifOp.props.epsilon:
-                            NifLog.warn(f"Lost {lostweight:f} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{trishape.name}')")
+                    self.export_skin_partition(b_obj, bodypartfacemap, triangles, n_geom)
 
                     # clean up
                     del vert_weights
@@ -506,8 +470,51 @@ class Mesh:
 
             # export EGM or NiGeomMorpherController animation
             # shape keys are only present on the raw, unevaluated mesh
-            self.morph_anim.export_morph(b_mesh, trishape, vertex_map)
-        return trishape
+            self.morph_anim.export_morph(b_mesh, n_geom, vertex_map)
+        return n_geom
+
+    def export_skin_partition(self, b_obj, bodypartfacemap, triangles, n_geom):
+        """Attaches a skin partition to n_geom if needed"""
+        game = bpy.context.scene.niftools_scene.game
+        if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
+            NifLog.info("Creating skin partition")
+
+            # warn on bad config settings
+            if game == 'OBLIVION':
+                if NifOp.props.pad_bones:
+                    NifLog.warn(
+                        "Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
+
+            # Skyrim Special Edition has a limit of 80 bones per partition, but export is not yet supported
+            bones_per_partition_lut = {"OBLIVION": 18, "FALLOUT_3": 18, "SKYRIM": 24}
+            rec_bones = bones_per_partition_lut.get(game, None)
+            if rec_bones is not None:
+                if NifOp.props.max_bones_per_partition < rec_bones:
+                    NifLog.warn(f"Using less than {rec_bones} bones per partition on {game} export."
+                                f"Set it to {rec_bones} to get higher quality skin partitions.")
+                elif NifOp.props.max_bones_per_partition > rec_bones:
+                    NifLog.warn(f"Using more than {rec_bones} bones per partition on {game} export."
+                                f"This may cause issues in-game.")
+
+            part_order = [getattr(NifFormat.BSDismemberBodyPartType, face_map.name, None) for face_map in
+                          b_obj.face_maps]
+            part_order = [body_part for body_part in part_order if body_part is not None]
+            # override pyffi n_geom.update_skin_partition with custom one (that allows ordering)
+            n_geom.update_skin_partition = update_skin_partition.__get__(n_geom)
+            lostweight = n_geom.update_skin_partition(
+                maxbonesperpartition=NifOp.props.max_bones_per_partition,
+                maxbonespervertex=NifOp.props.max_bones_per_vertex,
+                stripify=NifOp.props.stripify,
+                stitchstrips=NifOp.props.stitch_strips,
+                padbones=NifOp.props.pad_bones,
+                triangles=triangles,
+                trianglepartmap=bodypartfacemap,
+                maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
+                part_sort_order=part_order)
+
+            if lostweight > NifOp.props.epsilon:
+                NifLog.warn(
+                    f"Lost {lostweight:f} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{n_geom.name}')")
 
     def update_bind_position(self, n_geom, n_root, b_obj_armature):
         """Transfer the Blender bind position to the nif bind position.
@@ -730,7 +737,7 @@ class Mesh:
             extra_node.rotation.set_identity()
             extra_node.scale = 1.0
             extra_node.flags = 0x000C  # morrowind
-            # create texture effect block and parent the texture effect and trishape to it
+            # create texture effect block and parent the texture effect and n_geom to it
             texeff = self.texture_helper.export_texture_effect(ref_mtex)
             extra_node.add_child(texeff)
             extra_node.add_effect(texeff)

@@ -199,7 +199,7 @@ class Object:
         # export object animation
         self.transform_anim.export_transforms(node, b_obj, b_action)
         self.object_anim.export_visibility(node, b_action)
-        # if it is a mesh, export the mesh as trishape children of this ninode
+        # if it is a mesh, export the mesh as n_geom children of this ninode
         if b_obj.type == 'MESH':
             return self.mesh_helper.export_tri_shapes(b_obj, node, self.n_root)
         # if it is an armature, export the bones as ninode children of this ninode
