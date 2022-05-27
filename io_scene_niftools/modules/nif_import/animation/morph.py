@@ -57,55 +57,55 @@ class MorphAnimation(Animation):
     def import_morph_controller(self, n_node, b_obj):
         """Import NiGeomMorpherController as shape keys for blender object."""
 
-        n_morphCtrl = math.find_controller(n_node, NifFormat.NiGeomMorpherController)
-        if n_morphCtrl:
+        n_morph_ctrl = math.find_controller(n_node, NifFormat.NiGeomMorpherController)
+        if n_morph_ctrl:
             NifLog.debug("NiGeomMorpherController processed")
             b_mesh = b_obj.data
-            morphData = n_morphCtrl.data
-            if morphData.num_morphs:
+            morph_data = n_morph_ctrl.data
+            if morph_data.num_morphs:
                 # get name for base key
-                morph_data = morphData.morphs[0]
-                keyname = morph_data.frame_name.decode()
-                if not keyname:
-                    keyname = 'Base'
+                morph = morph_data.morphs[0]
+                key_name = morph.frame_name.decode()
+                if not key_name:
+                    key_name = 'Base'
 
                 # insert base key, using relative keys
-                sk_basis = b_obj.shape_key_add(name=keyname)
+                sk_basis = b_obj.shape_key_add(name=key_name)
 
                 # get base vectors and import all morphs
-                baseverts = morph_data.vectors
+                base_verts = morph.vectors
 
                 shape_action = self.create_action(b_obj.data.shape_keys, f"{b_obj.name}-Morphs")
                 
-                for morph_i in range(1, morphData.num_morphs):
-                    morph_data = morphData.morphs[morph_i]
+                for morph_i in range(1, morph_data.num_morphs):
+                    morph = morph_data.morphs[morph_i]
                     # get name for key
-                    keyname = morph_data.frame_name.decode()
-                    if not keyname:
-                        keyname = f'Key {morph_i}'
-                    NifLog.info(f"Inserting key '{keyname}'")
+                    key_name = morph.frame_name.decode()
+                    if not key_name:
+                        key_name = f'Key {morph_i}'
+                    NifLog.info(f"Inserting key '{key_name}'")
                     # get vectors
-                    morph_verts = morph_data.vectors
-                    self.morph_mesh(b_mesh, baseverts, morph_verts)
-                    shape_key = b_obj.shape_key_add(name=keyname, from_mix=False)
+                    morph_verts = morph.vectors
+                    self.morph_mesh(b_mesh, base_verts, morph_verts)
+                    shape_key = b_obj.shape_key_add(name=key_name, from_mix=False)
 
                     # find the keys
-                    # older versions store keys in the morphData
+                    # older versions store keys in the morph_data
                     # newer versions store keys in the controller
-                    if not morph_data.keys:
+                    if not morph.keys:
                         try:
-                            if n_morphCtrl.interpolators:
-                                morph_data = n_morphCtrl.interpolators[morph_i].data.data
-                            elif n_morphCtrl.interpolator_weights:
-                                morph_data = n_morphCtrl.interpolator_weights[morph_i].interpolator.data.data
+                            if n_morph_ctrl.interpolators:
+                                morph = n_morph_ctrl.interpolators[morph_i].data.data
+                            elif n_morph_ctrl.interpolator_weights:
+                                morph = n_morph_ctrl.interpolator_weights[morph_i].interpolator.data.data
                         except KeyError:
-                            NifLog.info(f"Unsupported interpolator '{type(n_morphCtrl.interpolator_weights[morph_i].interpolator)}'")
+                            NifLog.info(f"Unsupported interpolator '{type(n_morph_ctrl.interpolator_weights[morph_i].interpolator)}'")
                             continue
                         
                     # get the interpolation mode
-                    interp = self.get_b_interp_from_n_interp(morph_data.interpolation)
-                    times, keys = self.get_keys_values(morph_data.keys)
-                    self.add_keys(shape_action, "value", (0,), n_morphCtrl.flags, times, keys, interp, key_name=shape_key.name)
+                    interp = self.get_b_interp_from_n_interp(morph.interpolation)
+                    times, keys = self.get_keys_values(morph.keys)
+                    self.add_keys(shape_action, "value", (0,), n_morph_ctrl.flags, times, keys, interp, key_name=shape_key.name)
 
     def import_egm_morphs(self, b_obj):
         """Import all EGM morphs as shape keys for blender object."""
