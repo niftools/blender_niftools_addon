@@ -167,15 +167,13 @@ class MaterialAnimation(Animation):
             self.add_keys(b_mat_action, f'nodes["{transform.name}"].inputs[{data_path}].default_value', (array_ind,), n_ctrl.flags, times, keys, interp)
 
     def insert_mapping_node(self, b_material):
-        b_mat_action = self.create_action(b_material.node_tree, "MaterialAction")
+        b_mat_action = self.create_action(b_material.node_tree, f"{b_material.name}-MaterialNodesAction")
         tree = b_material.node_tree
         # reuse mapping node if one had been added before
         for node in tree.nodes:
             if node.type == "MAPPING":
-                transform = node
-                break
-        else:
-            transform = tree.nodes.new(MAPPING)
+                return b_mat_action, node
+        transform = tree.nodes.new(MAPPING)
         # get previous links
         used_links = []
         for link in tree.links:

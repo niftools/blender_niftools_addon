@@ -169,28 +169,24 @@ class Animation:
         ipo = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items[interp].value
         interpolations = [ipo for _ in range(len(samples))]
         # import the keys
-        fcurves = self.create_fcurves(b_action, key_type, key_range, flags, bone_name, key_name)
-        if len(key_range) == 1:
-            # flat key - make it zippable
-            key_per_fcurve = [keys]
-        else:
-            key_per_fcurve = zip(*keys)
-        for fcurve, fcu_keys in zip(fcurves, key_per_fcurve):
-            # add new points
-            fcurve.keyframe_points.add(count=len(fcu_keys))
-            # populate points with keys for this curve
-            fcurve.keyframe_points.foreach_set("co", [x for co in zip(samples, fcu_keys) for x in co])
-            fcurve.keyframe_points.foreach_set("interpolation", interpolations)
-            # update
-            fcurve.update()
-
-    def add_key(self, fcurves, t, key, interp):
-        """
-        Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
-        """
-        frame = round(t * self.fps)
-        for fcurve, k in zip(fcurves, key):
-            fcurve.keyframe_points.insert(frame, k).interpolation = interp
+        try:
+            fcurves = self.create_fcurves(b_action, key_type, key_range, flags, bone_name, key_name)
+            if len(key_range) == 1:
+                # flat key - make it zippable
+                key_per_fcurve = [keys]
+            else:
+                key_per_fcurve = zip(*keys)
+            for fcurve, fcu_keys in zip(fcurves, key_per_fcurve):
+                # add new points
+                fcurve.keyframe_points.add(count=len(fcu_keys))
+                # populate points with keys for this curve
+                fcurve.keyframe_points.foreach_set("co", [x for co in zip(samples, fcu_keys) for x in co])
+                fcurve.keyframe_points.foreach_set("interpolation", interpolations)
+                # update
+                fcurve.update()
+        except RuntimeError:
+            # blender throws F-Curve ... already exists in action ...
+            NifLog.warn(f"Could not add fcurve '{key_type}' to '{b_action.name}', already added before?")
 
     # import animation groups
     def import_text_keys(self, n_block, b_action):
