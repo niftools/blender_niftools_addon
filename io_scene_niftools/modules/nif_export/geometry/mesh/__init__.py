@@ -113,7 +113,7 @@ class Mesh:
 
         # let's now export one n_geom for every mesh material
         # TODO [material] needs refactoring - move material, texture, etc. to separate function
-        for materialIndex, b_mat in enumerate(mesh_materials):
+        for b_mat_index, b_mat in enumerate(mesh_materials):
 
             mesh_hasnormals = False
             if b_mat is not None:
@@ -141,7 +141,7 @@ class Mesh:
 
                 # multimaterial meshes: add material index (Morrowind's child naming convention)
                 if len(mesh_materials) > 1:
-                    n_geom.name = f"{n_geom.name.decode()}: {materialIndex}"
+                    n_geom.name = f"{n_geom.name.decode()}: {b_mat_index}"
                 else:
                     n_geom.name = block_store.get_full_name(n_geom)
 
@@ -218,7 +218,7 @@ class Mesh:
             for poly in eval_mesh.polygons:
 
                 # does the face belong to this n_geom?
-                if b_mat is not None and poly.material_index != materialIndex:
+                if b_mat is not None and poly.material_index != b_mat_index:
                     # we have a material but this face has another material, so skip
                     continue
 
