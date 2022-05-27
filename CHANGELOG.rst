@@ -1,9 +1,35 @@
+Version v0.0.15
+===============
+
+
+Version v0.0.14
+===============
+
+- #512 Two small Collision fixes
+    - Fix for importing an empty (convex) collision shape
+    - Closes #499 by moving it to a setting rather than using the collision physics property.
+    - Closes #511 Blender 3.1 python errors importing and exporting collisions
+- #497 Slight fix for triangle assignment to bodypart on partition import
+    - Added warning for too many bones per partition (since some games will crash with that
+    - Closes #496 "Some polygons of Parthurnax not assigned to any body part." error on unmodified model
+- #505 Import animation by default
+
+
 Version v0.0.13
 ==============
 
 - #75 Separate Normal data from Material code
 - #76 Separate UV import/export from Material code
 - #26 Refactor Material System : Texture/Geometry
+- #492 Several small fixes
+    - Addition of vertex normals/tangents/bitangents now depends on whether the 'model space normals' flag is enabled, rather than the shader type.
+    - Changed the limit for "Max Partition Bones" on export to the ushort limit (63 before), since Skyrim LE apparently has unlimited bones.
+    - Added single use of `math.mathutils_to_nifformat_matrix` to replace existing equivalent code.
+    - Corrected the backup links for the auto updater to use underscores instead of dashes (would result in 'page not found'.
+    - Changed shader node socket linking that used strings to use integers, for 2.8 compatibility.
+    - Fixed unweighted vertex selection for issue #490 and #491.
+  - Closes #490 - Export: Unweighted vertices cannot be selected without being in vertex selection mode
+  - Closes #491 - Export: Unweighted vertices in a secondary mesh under the parent skeleton cannot be selected
 
 Version v0.0.12
 ==============
