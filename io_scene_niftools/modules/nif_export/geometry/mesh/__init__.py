@@ -760,40 +760,34 @@ class Mesh:
         else:
             b_obj.modifiers.new('Triangulate', 'TRIANGULATE')
 
-    def add_defined_tangents(self, trishape, tangents, bitangents, as_extra_data):
+    def add_defined_tangents(self, n_geom, tangents, bitangents, as_extra_data):
         # check if size of tangents and bitangents is equal to num_vertices
-        if not (len(tangents) == len(bitangents) == trishape.data.num_vertices):
-            raise NifError(f'Number of tangents or bitangents does not agree with number of vertices in {trishape.name}')
+        if not (len(tangents) == len(bitangents) == n_geom.data.num_vertices):
+            raise NifError(f'Number of tangents or bitangents does not agree with number of vertices in {n_geom.name}')
 
         if as_extra_data:
             # if tangent space extra data already exists, use it
             # find possible extra data block
-            for extra in trishape.get_extra_datas():
+            extra_name = b'Tangent space (binormal & tangent vectors)'
+            for extra in n_geom.get_extra_datas():
                 if isinstance(extra, NifFormat.NiBinaryExtraData):
-                    if extra.name == b'Tangent space (binormal & tangent vectors)':
+                    if extra.name == extra_name:
                         break
             else:
-                extra = None
-            if not extra:
-                # otherwise, create a new block and link it
+                # create a new block and link it
                 extra = NifFormat.NiBinaryExtraData()
-                extra.name = b'Tangent space (binormal & tangent vectors)'
-                trishape.add_extra_data(extra)
-
+                extra.name = extra_name
+                n_geom.add_extra_data(extra)
             # write the data
             extra.binary_data = np.concatenate((tangents, bitangents), axis=0).astype('<f').tobytes()
         else:
             # set tangent space flag
-            trishape.data.extra_vectors_flags = 16
+            n_geom.data.extra_vectors_flags = 16
             # XXX used to be 61440
             # XXX from Sid Meier's Railroad
-            trishape.data.tangents.update_size()
-            trishape.data.bitangents.update_size()
-            for vec, data_tans in zip(tangents, trishape.data.tangents):
-                data_tans.x = vec[0]
-                data_tans.y = vec[1]
-                data_tans.z = vec[2]
-            for vec, data_bins in zip(bitangents, trishape.data.bitangents):
-                data_bins.x = vec[0]
-                data_bins.y = vec[1]
-                data_bins.z = vec[2]
+            n_geom.data.tangents.update_size()
+            for n_v, b_v in zip(n_geom.data.tangents, tangents):
+                n_v.x, n_v.y, n_v.z = b_v
+            n_geom.data.bitangents.update_size()
+            for n_v, b_v in zip(n_geom.data.bitangents, bitangents):
+                n_v.x, n_v.y, n_v.z = b_v
