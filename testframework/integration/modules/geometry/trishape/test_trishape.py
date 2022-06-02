@@ -49,7 +49,7 @@ from integration.modules.geometry.trishape import b_gen_geometry, n_gen_geometry
 class TestTriShape(SingleNif):
     """Test base geometry, single blender object."""
 
-    g_path = 'geometry/n_geom'  # (documented in base class)
+    g_path = 'geometry/trishape'  # (documented in base class)
     g_name = "test_trishape"
     b_name = 'Cube'
 
