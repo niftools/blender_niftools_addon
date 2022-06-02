@@ -42,13 +42,15 @@ from bpy.types import Panel, UIList, Menu
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-class ObjectPanel(Panel):
-    bl_label = "Niftools Object Property"
-    bl_idname = "NIFTOOLS_PT_ObjectPanel"
-
+class ObjectButtonsPanel(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
+    
+
+class ObjectPanel(ObjectButtonsPanel):
+    bl_label = "Niftools Object Property"
+    bl_idname = "NIFTOOLS_PT_ObjectPanel"
 
     # noinspection PyUnusedLocal
     @classmethod
@@ -61,7 +63,6 @@ class ObjectPanel(Panel):
 
         layout = self.layout
         row = layout.column()
-        row.prop(nif_obj_props, "rootnode")
         row.prop(nif_obj_props, "prn_location")
         row.prop(nif_obj_props, "upb")
         row.prop(nif_obj_props, "bsxflags")
@@ -74,13 +75,9 @@ class ObjectPanel(Panel):
             row.prop_search(nif_obj_props, "skeleton_root", parent.data, "bones")
 
 
-class ObjectExtraData(Panel):
+class ObjectExtraData(ObjectButtonsPanel):
     bl_label = "Niftools Object Extra Data"
     bl_idname = "NIFTOOLS_PT_ObjectExtraDataPanel"
-
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
 
     # noinspection PyUnusedLocal
     @classmethod
@@ -139,13 +136,10 @@ class ObjectExtraDataList(UIList):
         split.prop(item, "data", text="", emboss=False, translate=False, icon='BORDERMOVE')
 
 
-class ObjectBSInvMarkerPanel(Panel):
+class ObjectBSInvMarkerPanel(ObjectButtonsPanel):
     bl_label = "Niftools BS Inv Marker"
     bl_idname = "NIFTOOLS_PT_ObjectBSInvMarker"
-
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
+    bl_parent_id = "NIFTOOLS_PT_ObjectPanel"
 
     # noinspection PyUnusedLocal
     @classmethod
@@ -154,28 +148,26 @@ class ObjectBSInvMarkerPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        nif_bsinv_props = context.object.niftools_bs_invmarker
-
         row = layout.row()
-        if not context.object.niftools_bs_invmarker:
-            row.operator("object.niftools_bs_invmarker_add", icon='ZOOM_IN', text="")
-        if context.object.niftools_bs_invmarker:
-            row.operator("object.niftools_bs_invmarker_remove", icon='ZOOM_OUT', text="")
-
+        bs_inv = context.object.niftools.bs_inv
+        if not bs_inv:
+            row.operator("object.bs_inv_marker_add", icon='ZOOM_IN', text="")
+        else:
+            row.operator("object.bs_inv_marker_remove", icon='ZOOM_OUT', text="")
         col = row.column(align=True)
-        for i, x in enumerate(nif_bsinv_props):
-            col.prop(nif_bsinv_props[i], "bs_inv_x", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_y", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_z", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_zoom", index=i)
+        for i, x in enumerate(bs_inv):
+            col.prop(bs_inv[i], "x", index=i)
+            col.prop(bs_inv[i], "y", index=i)
+            col.prop(bs_inv[i], "z", index=i)
+            col.prop(bs_inv[i], "zoom", index=i)
 
 
 classes = [
-    ObjectBSInvMarkerPanel,
     ObjectExtraDataList,
     ObjectExtraDataType,
     ObjectExtraData,
-    ObjectPanel
+    ObjectPanel,
+    ObjectBSInvMarkerPanel,
 ]
 
 

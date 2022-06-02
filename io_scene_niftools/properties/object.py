@@ -97,16 +97,41 @@ class ExtraDataStore(PropertyGroup):
     )
 
 
-class ObjectProperty(PropertyGroup):
-
-    rootnode: EnumProperty(
-        name='Nif Root Node',
-        description='Type of property used to display meshes',
-        items=(
-            ('NiNode', 'NiNode', "", 0),
-            ('BSFadeNode', 'BSFadeNode', "", 1)),
-        default='NiNode',
+class BsInventoryMarker(PropertyGroup):
+    name: StringProperty(
+        name="",
+        default='INV'
     )
+
+    x: FloatProperty(
+        name="X Rotation",
+        description="Rotation of object in inventory around the x axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    y: FloatProperty(
+        name="Y Rotation",
+        description="Rotation of object in inventory around the y axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    z: FloatProperty(
+        name="Z Rotation",
+        description="Rotation of object in inventory around the z axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    zoom: FloatProperty(
+        name="Zoom",
+        description="Inventory object Zoom level",
+        default=1
+    )
+
+
+class ObjectProperty(PropertyGroup):
 
     prn_location: EnumProperty(
         name='Weapon Location',
@@ -155,47 +180,14 @@ class ObjectProperty(PropertyGroup):
         description="The bone that acts as the root of the SkinInstance",
     )
 
-
-class BsInventoryMarker(PropertyGroup):
-
-    name: StringProperty(
-        name="",
-        default='INV'
-    )
-
-    bs_inv_x: FloatProperty(
-        name="Inv X value",
-        description="Rotation of object in inventory around the x axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_y: FloatProperty(
-        name="Inv Y value",
-        description="Rotation of object in inventory around the y axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_z: FloatProperty(
-        name="Inv Z value",
-        description="Rotation of object in inventory around the z axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_zoom: FloatProperty(
-        name="Inv Zoom Value",
-        description="Inventory object Zoom level",
-        default=1
-    )
+    bs_inv: bpy.props.CollectionProperty(type=BsInventoryMarker)
 
 
 CLASSES = [
+    BsInventoryMarker,
     ExtraData,
     ExtraDataStore,
     ObjectProperty,
-    BsInventoryMarker
 ]
 
 
@@ -203,12 +195,10 @@ def register():
     register_classes(CLASSES, __name__)
 
     bpy.types.Object.niftools = bpy.props.PointerProperty(type=ObjectProperty)
-    bpy.types.Object.niftools_bs_invmarker = bpy.props.CollectionProperty(type=BsInventoryMarker)
 
 
 def unregister():
     del bpy.types.Object.niftools
-    del bpy.types.Object.niftools_bs_invmarker
 
     unregister_classes(CLASSES, __name__)
 

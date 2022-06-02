@@ -223,11 +223,10 @@ class NifImport(NifCommon):
                 else:
                     # this is a fallback for a weird bug, when a node is child of a NiLodNode in a skeletal nif
                     b_obj = self.objecthelper.create_b_obj(n_block, None, name=n_name)
-                b_obj.niftools.flags = n_block.flags
-
             else:
                 # import as an empty
                 b_obj = NiTypes.import_empty(n_block)
+            b_obj.niftools.flags = n_block.flags
 
             # find children
             b_children = []

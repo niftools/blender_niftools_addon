@@ -198,6 +198,16 @@ def find_controller(n_block, controller_type):
         ctrl = ctrl.next_controller
 
 
+def controllers_iter(n_block, controller_type):
+    """Find a controller."""
+    ctrl = n_block.controller
+    while ctrl:
+        if isinstance(ctrl, controller_type):
+            if ctrl.data or ctrl.interpolator:
+                yield ctrl
+        ctrl = ctrl.next_controller
+
+
 def find_extra(n_block, extratype):
     # TODO: 3.0 - Optimise
 

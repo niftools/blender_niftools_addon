@@ -41,6 +41,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.consts import QUAT, EULER, LOC, SCALE
 
 
 class Animation:
@@ -53,6 +54,23 @@ class Animation:
         # to prevent overwriting existing animations from older imports
         # and still be able to access existing actions from this run
         self.actions = {}
+
+    @staticmethod
+    def get_controller_data(ctrl):
+        """Return data for ctrl, look in interpolator (for newer games) or directly on ctrl"""
+        if ctrl.interpolator:
+            data = ctrl.interpolator.data
+        else:
+            data = ctrl.data
+        # these have their data set as a KeyGroup on data
+        if isinstance(data, (NifFormat.NiBoolData, NifFormat.NiFloatData, NifFormat.NiPosData)):
+            return data.data
+        return data
+
+    @staticmethod
+    def get_keys_values(items):
+        """Returns list of times and keys for an array 'items' with key elements having 'time' and 'value' attributes"""
+        return [key.time for key in items], [key.value for key in items]
 
     @staticmethod
     def show_pose_markers():
@@ -89,21 +107,21 @@ class Animation:
         b_obj.animation_data.action = b_action
         return b_action
 
-    def create_fcurves(self, action, dtype, drange, flags=None, bonename=None, keyname=None):
+    def create_fcurves(self, action, dtype, drange, flags, bone_name, key_name):
         """ Create fcurves in action for desired conditions. """
         # armature pose bone animation
-        if bonename:
+        if bone_name:
             fcurves = [
-                action.fcurves.new(data_path=f'pose.bones["{bonename}"].{dtype}', index=i, action_group=bonename)
+                action.fcurves.new(data_path=f'pose.bones["{bone_name}"].{dtype}', index=i, action_group=bone_name)
                 for i in drange]
         # shapekey pose bone animation
-        elif keyname:
+        elif key_name:
             fcurves = [
-                action.fcurves.new(data_path=f'key_blocks["{keyname}"].{dtype}', index=0,)
+                action.fcurves.new(data_path=f'key_blocks["{key_name}"].{dtype}', index=0,)
             ]
         else:
             # Object animation (non-skeletal) is lumped into the "LocRotScale" action_group
-            if dtype in ("rotation_euler", "rotation_quaternion", "location", "scale"):
+            if dtype in (QUAT, EULER, LOC, SCALE):
                 action_group = "LocRotScale"
             # Non-transformaing animations (eg. visibility or material anims) use no action groups
             else:
@@ -141,13 +159,34 @@ class Animation:
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
 
-    def add_key(self, fcurves, t, key, interp):
+    def add_keys(self, b_action, key_type, key_range, flags, times, keys, interp, bone_name=None, key_name=None):
         """
-        Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
+        Create needed fcurves and add a list of keys to an action.
         """
-        frame = round(t * self.fps)
-        for fcurve, k in zip(fcurves, key):
-            fcurve.keyframe_points.insert(frame, k).interpolation = interp
+        samples = [round(t * self.fps) for t in times]
+        assert len(samples) == len(keys)
+        # get interpolation enum representation
+        ipo = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items[interp].value
+        interpolations = [ipo for _ in range(len(samples))]
+        # import the keys
+        try:
+            fcurves = self.create_fcurves(b_action, key_type, key_range, flags, bone_name, key_name)
+            if len(key_range) == 1:
+                # flat key - make it zippable
+                key_per_fcurve = [keys]
+            else:
+                key_per_fcurve = zip(*keys)
+            for fcurve, fcu_keys in zip(fcurves, key_per_fcurve):
+                # add new points
+                fcurve.keyframe_points.add(count=len(fcu_keys))
+                # populate points with keys for this curve
+                fcurve.keyframe_points.foreach_set("co", [x for co in zip(samples, fcu_keys) for x in co])
+                fcurve.keyframe_points.foreach_set("interpolation", interpolations)
+                # update
+                fcurve.update()
+        except RuntimeError:
+            # blender throws F-Curve ... already exists in action ...
+            NifLog.warn(f"Could not add fcurve '{key_type}' to '{b_action.name}', already added before?")
 
     # import animation groups
     def import_text_keys(self, n_block, b_action):
@@ -212,3 +251,4 @@ class Animation:
         self.fps = fps
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
+

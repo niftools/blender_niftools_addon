@@ -94,3 +94,15 @@ Vertex Color & Alpha
 * `This image should clarify per-face vertex colouring
   <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
 * On export, the scripts will create extra vertices for different vertex colors per face.
+
+
+.. _geometry-shapekeys:
+
+Shape Key Animations
+--------------------
+
+**Example:**
+
+#. :ref:`Create a mesh-object <geometry-mesh>`.
+#. Add relative shape keys to your mesh.
+#. Keyframe each shape key's value so that the key influences the shape of the mesh at the desired time.

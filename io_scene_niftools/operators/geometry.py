@@ -45,31 +45,31 @@ from io_scene_niftools.utils.decorators import register_classes, unregister_clas
 
 class BsInvMarkerAdd(Operator):
     """Adds BsInvMarker set"""
-    bl_idname = "object.niftools_bs_invmarker_add"
+    bl_idname = "object.bs_inv_marker_add"
     bl_label = "Add Inventory Marker"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        obj = context.active_object
-        b_obj_invmarker = obj.niftools_bs_invmarker.add()
-        b_obj_invmarker.name = "INV"
-        b_obj_invmarker.bs_inv_x = 0
-        b_obj_invmarker.bs_inv_y = 0
-        b_obj_invmarker.bs_inv_z = 0
-        b_obj_invmarker.bs_inv_zoom = 1
+        bs_inv = context.object.niftools.bs_inv
+        bs_inv_item = bs_inv.add()
+        bs_inv_item.name = "INV"
+        bs_inv_item.bs_inv_x = 0
+        bs_inv_item.bs_inv_y = 0
+        bs_inv_item.bs_inv_z = 0
+        bs_inv_item.bs_inv_zoom = 1
         return {'FINISHED'}
 
 
 class BsInvMarkerRemove(bpy.types.Operator):
     """Removes BsInvMarker set"""
-    bl_idname = "object.niftools_bs_invmarker_remove"
+    bl_idname = "object.bs_inv_marker_remove"
     bl_label = "Remove Inventory Marker"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        item = len(context.active_object.niftools_bs_invmarker) - 1
-        obj = context.active_object
-        obj.niftools_bs_invmarker.remove(item)
+        bs_inv = context.object.niftools.bs_inv
+        item = len(bs_inv) - 1
+        bs_inv.remove(item)
         return {'FINISHED'}
 
 

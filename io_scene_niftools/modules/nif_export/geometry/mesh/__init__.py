@@ -69,7 +69,7 @@ class Mesh:
         n_parent, as NiTriShape and NiTriShapeData blocks, possibly
         along with some NiTexturingProperty, NiSourceTexture,
         NiMaterialProperty, and NiAlphaProperty blocks. We export one
-        trishape block per mesh material. We also export vertex weights.
+        n_geom block per mesh material. We also export vertex weights.
 
         The parameter trishape_name passes on the name for meshes that
         should be exported as a single mesh.
@@ -78,41 +78,42 @@ class Mesh:
 
         assert (b_obj.type == 'MESH')
 
-        # get mesh from b_obj
-        b_mesh = self.get_triangulated_mesh(b_obj)
-        b_mesh.calc_normals_split()
+        # get mesh from b_obj, and evaluate the mesh with modifiers applied, too
+        b_mesh = b_obj.data
+        eval_mesh = self.get_triangulated_mesh(b_obj)
+        eval_mesh.calc_normals_split()
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
         # so quickly catch this (rare!) case
-        if not b_mesh.vertices:
+        if not eval_mesh.vertices:
             # do not export anything
             NifLog.warn(f"{b_obj} has no vertices, skipped.")
             return
 
         # get the mesh's materials, this updates the mesh material list
         if not isinstance(n_parent, NifFormat.RootCollisionNode):
-            mesh_materials = b_mesh.materials
+            mesh_materials = eval_mesh.materials
         else:
             # ignore materials on collision trishapes
             mesh_materials = []
 
-        # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
+        # if mesh has no materials, all face material indices should be 0, so fake one material in the material list
         if not mesh_materials:
             mesh_materials = [None]
 
         # vertex color check
-        mesh_hasvcol = b_mesh.vertex_colors
+        mesh_hasvcol = eval_mesh.vertex_colors
         # list of body part (name, index, vertices) in this mesh
-        polygon_parts = self.get_polygon_parts(b_obj, b_mesh)
+        polygon_parts = self.get_polygon_parts(b_obj, eval_mesh)
         game = bpy.context.scene.niftools_scene.game
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
 
-        # let's now export one trishape for every mesh material
+        # let's now export one n_geom for every mesh material
         # TODO [material] needs refactoring - move material, texture, etc. to separate function
-        for materialIndex, b_mat in enumerate(mesh_materials):
+        for b_mat_index, b_mat in enumerate(mesh_materials):
 
             mesh_hasnormals = False
             if b_mat is not None:
@@ -120,53 +121,55 @@ class Mesh:
                 if (game == 'SKYRIM') and b_mat.niftools_shader.slsf_1_model_space_normals:
                     mesh_hasnormals = False  # for proper lighting
 
-            # create a trishape block
+            # create a n_geom block
             if not NifOp.props.stripify:
-                trishape = block_store.create_block("NiTriShape", b_obj)
+                n_geom = block_store.create_block("NiTriShape", b_obj)
+                n_geom.data = block_store.create_block("NiTriShapeData", b_obj)
             else:
-                trishape = block_store.create_block("NiTriStrips", b_obj)
+                n_geom = block_store.create_block("NiTriStrips", b_obj)
+                n_geom.data = block_store.create_block("NiTriStripsData", b_obj)
 
             # fill in the NiTriShape's non-trivial values
             if isinstance(n_parent, NifFormat.RootCollisionNode):
-                trishape.name = ""
+                n_geom.name = ""
             else:
                 if not trishape_name:
                     if n_parent.name:
-                        trishape.name = "Tri " + n_parent.name.decode()
+                        n_geom.name = "Tri " + n_parent.name.decode()
                     else:
-                        trishape.name = "Tri " + b_obj.name.decode()
+                        n_geom.name = "Tri " + b_obj.name.decode()
                 else:
-                    trishape.name = trishape_name
+                    n_geom.name = trishape_name
 
                 # multimaterial meshes: add material index (Morrowind's child naming convention)
                 if len(mesh_materials) > 1:
-                    trishape.name = f"{trishape.name.decode()}: {materialIndex}"
+                    n_geom.name = f"{n_geom.name.decode()}: {b_mat_index}"
                 else:
-                    trishape.name = block_store.get_full_name(trishape)
+                    n_geom.name = block_store.get_full_name(n_geom)
 
-            self.set_mesh_flags(b_obj, trishape)
+            self.set_mesh_flags(b_obj, n_geom)
 
             # extra shader for Sid Meier's Railroads
             if game == 'SID_MEIER_S_RAILROADS':
-                trishape.has_shader = True
-                trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
-                trishape.unknown_integer = -1  # default
+                n_geom.has_shader = True
+                n_geom.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
+                n_geom.unknown_integer = -1  # default
 
             # if we have an animation of a blender mesh
             # an intermediate NiNode has been created which holds this b_obj's transform
-            # the trishape itself then needs identity transform (default)
+            # the n_geom itself then needs identity transform (default)
             if trishape_name is not None:
                 # only export the bind matrix on trishapes that were not animated
-                math.set_object_matrix(b_obj, trishape)
+                math.set_object_matrix(b_obj, n_geom)
 
             # check if there is a parent
             if n_parent:
-                # add texture effect block (must be added as parent of the trishape)
+                # add texture effect block (must be added as parent of the n_geom)
                 n_parent = self.export_texture_effect(n_parent, b_mat)
                 # refer to this mesh in the parent's children list
-                n_parent.add_child(trishape)
+                n_parent.add_child(n_geom)
 
-            self.object_property.export_properties(b_obj, b_mat, trishape)
+            self.object_property.export_properties(b_obj, b_mat, n_geom)
 
             # -> now comes the real export
 
@@ -188,9 +191,9 @@ class Mesh:
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
-            mesh_uv_layers = b_mesh.uv_layers
+            b_uv_layers = eval_mesh.uv_layers
             vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
-            vertex_map = [None for _ in range(len(b_mesh.vertices))]  # blender vertex -> nif vertices
+            vertex_map = [None for _ in range(len(eval_mesh.vertices))]  # blender vertex -> nif vertices
             vertex_positions = []
             normals = []
             vertex_colors = []
@@ -200,24 +203,28 @@ class Mesh:
             bodypartfacemap = []
             polygons_without_bodypart = []
 
-            if b_mesh.polygons:
-                if mesh_uv_layers:
+            if eval_mesh.polygons:
+                if b_uv_layers:
                     # if we have uv coordinates double check that we have uv data
-                    if not b_mesh.uv_layer_stencil:
-                        NifLog.warn(f"No UV map for texture associated with selected mesh '{b_mesh.name}'.")
+                    if not eval_mesh.uv_layer_stencil:
+                        NifLog.warn(f"No UV map for texture associated with selected mesh '{eval_mesh.name}'.")
 
             use_tangents = False
-            if mesh_uv_layers and mesh_hasnormals:
+            if b_uv_layers and mesh_hasnormals:
                 if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
-                    b_mesh.calc_tangents(uvmap=mesh_uv_layers[0].name)
+                    eval_mesh.calc_tangents(uvmap=b_uv_layers[0].name)
                     tangents = []
                     bitangent_signs = []
 
-            for poly in b_mesh.polygons:
+            if game in ('FALLOUT_3', 'SKYRIM'):
+                if len(b_uv_layers) > 1:
+                    raise NifError(f"{game} does not support multiple UV layers.")
 
-                # does the face belong to this trishape?
-                if b_mat is not None and poly.material_index != materialIndex:
+            for poly in eval_mesh.polygons:
+
+                # does the face belong to this n_geom?
+                if b_mat is not None and poly.material_index != b_mat_index:
                     # we have a material but this face has another material, so skip
                     continue
 
@@ -230,25 +237,25 @@ class Mesh:
                 f_index = [-1] * f_numverts
                 for i, loop_index in enumerate(poly.loop_indices):
 
-                    fv_index = b_mesh.loops[loop_index].vertex_index
-                    vertex = b_mesh.vertices[fv_index]
+                    fv_index = eval_mesh.loops[loop_index].vertex_index
+                    vertex = eval_mesh.vertices[fv_index]
                     vertex_index = vertex.index
                     fv = vertex.co
 
                     # smooth = vertex normal, non-smooth = face normal)
                     if mesh_hasnormals:
                         if poly.use_smooth:
-                            fn = b_mesh.loops[loop_index].normal
+                            fn = eval_mesh.loops[loop_index].normal
                         else:
                             fn = poly.normal
                     else:
                         fn = None
 
-                    fuv = [uv_layer.data[loop_index].uv for uv_layer in b_mesh.uv_layers]
+                    fuv = [uv_layer.data[loop_index].uv for uv_layer in eval_mesh.uv_layers]
 
                     # TODO [geomotry][mesh] Need to map b_verts -> n_verts
                     if mesh_hasvcol:
-                        f_col = list(b_mesh.vertex_colors[0].data[loop_index].color)
+                        f_col = list(eval_mesh.vertex_colors[0].data[loop_index].color)
                     else:
                         f_col = None
 
@@ -282,11 +289,11 @@ class Mesh:
                         if mesh_hasnormals:
                             normals.append(vertquad[2])
                         if use_tangents:
-                            tangents.append(b_mesh.loops[loop_index].tangent)
-                            bitangent_signs.append([b_mesh.loops[loop_index].bitangent_sign])
+                            tangents.append(eval_mesh.loops[loop_index].tangent)
+                            bitangent_signs.append([eval_mesh.loops[loop_index].bitangent_sign])
                         if mesh_hasvcol:
                             vertex_colors.append(vertquad[3])
-                        if mesh_uv_layers:
+                        if b_uv_layers:
                             uv_coords.append(vertquad[1])
 
                 # now add the (hopefully, convex) face, in triangles
@@ -312,73 +319,32 @@ class Mesh:
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
-                self.select_unassigned_polygons(b_mesh, b_obj, polygons_without_bodypart)
+                self.select_unassigned_polygons(eval_mesh, b_obj, polygons_without_bodypart)
 
             if len(triangles) > 65535:
                 raise NifError("Too many polygons. Decimate your mesh and try again.")
             if len(vertex_positions) == 0:
                 continue  # m_4444x: skip 'empty' material indices
 
-            # add NiTriShape's data
-            if isinstance(trishape, NifFormat.NiTriShape):
-                tridata = block_store.create_block("NiTriShapeData", b_obj)
-            else:
-                tridata = block_store.create_block("NiTriStripsData", b_obj)
-            trishape.data = tridata
-
-            # data
-            tridata.num_vertices = len(vertex_positions)
-            tridata.has_vertices = True
-            tridata.vertices.update_size()
-            for i, v in enumerate(tridata.vertices):
-                v.x, v.y, v.z = vertex_positions[i]
-            tridata.update_center_radius()
-
-            if mesh_hasnormals:
-                tridata.has_normals = True
-                tridata.normals.update_size()
-                for i, v in enumerate(tridata.normals):
-                    v.x, v.y, v.z = normals[i]
-
-            if mesh_hasvcol:
-                tridata.has_vertex_colors = True
-                tridata.vertex_colors.update_size()
-                for i, v in enumerate(tridata.vertex_colors):
-                    v.r, v.g, v.b, v.a = vertex_colors[i]
-
-            if mesh_uv_layers:
-                if game in ('FALLOUT_3', 'SKYRIM'):
-                    if len(mesh_uv_layers) > 1:
-                        raise NifError(f"{game} does not support multiple UV layers.")
-                tridata.num_uv_sets = len(mesh_uv_layers)
-                tridata.bs_num_uv_sets = len(mesh_uv_layers)
-                tridata.has_uv = True
-                tridata.uv_sets.update_size()
-                for j, uv_layer in enumerate(mesh_uv_layers):
-                    for i, uv in enumerate(tridata.uv_sets[j]):
-                        if len(uv_coords[i]) == 0:
-                            continue  # skip non-uv textures
-                        uv.u = uv_coords[i][j][0]
-                        # NIF flips the texture V-coordinate (OpenGL standard)
-                        uv.v = 1.0 - uv_coords[i][j][1]  # opengl standard
+            self.set_geom_data(n_geom, vertex_positions, normals, vertex_colors, uv_coords, b_uv_layers)
 
             # set triangles stitch strips for civ4
-            tridata.set_triangles(triangles, stitchstrips=NifOp.props.stitch_strips)
+            n_geom.data.set_triangles(triangles, stitchstrips=NifOp.props.stitch_strips)
 
-            # update tangent space (as binary extra data only for Oblivion)
+            # update tangent space
             # for extra shader texture games, only export it if those textures are actually exported
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if use_tangents:
                 if game == 'SKYRIM':
-                    tridata.bs_num_uv_sets = tridata.bs_num_uv_sets + 4096
+                    n_geom.data.bs_num_uv_sets = n_geom.data.bs_num_uv_sets + 4096
                 # calculate the bitangents using the normals, tangent list and bitangent sign
                 bitangents = bitangent_signs * np.cross(normals, tangents)
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
                 # moreover, N_v = 1 - B_v, so d(B_v) = - d(N_v), therefore N_tan = -B_bit and N_bit = B_tan
-                self.add_defined_tangents(trishape,
+                self.add_defined_tangents(n_geom,
                                           tangents=-bitangents,
                                           bitangents=tangents,
-                                          as_extra_data=(game == 'OBLIVION'))
+                                          as_extra_data=(game == 'OBLIVION'))  # as binary extra data only for Oblivion
 
             # todo [mesh/object] use more sophisticated armature finding, also taking armature modifier into account
             # now export the vertex weights, if there are any
@@ -391,7 +357,7 @@ class Mesh:
                 if boneinfluences:  # yes we have skinning!
                     # create new skinning instance block and link it
                     skininst, skindata = self.create_skin_inst_data(b_obj, b_obj_armature, polygon_parts)
-                    trishape.skin_instance = skininst
+                    n_geom.skin_instance = skininst
 
                     # Vertex weights,  find weights and normalization factors
                     vert_list = {}
@@ -402,7 +368,7 @@ class Mesh:
                         b_list_weight = []
                         b_vert_group = b_obj.vertex_groups[bone_group]
 
-                        for b_vert in b_mesh.vertices:
+                        for b_vert in eval_mesh.vertices:
                             if len(b_vert.groups) == 0:  # check vert has weight_groups
                                 unweighted_vertices.append(b_vert.index)
                                 continue
@@ -424,13 +390,8 @@ class Mesh:
 
                     self.select_unweighted_vertices(b_obj, unweighted_vertices)
 
-                    # for each bone, first we get the bone block then we get the vertex weights and then we add it to the NiSkinData
-                    # note: allocate memory for faster performance
-                    vert_added = [False for _ in range(len(vertex_positions))]
+                    # for each bone, get the vertex weights and add its n_node to the NiSkinData
                     for b_bone_name in boneinfluences:
-                        # find bone in exported blocks
-                        bone_block = self.get_bone_block(b_obj_armature.data.bones[b_bone_name])
-
                         # find vertex weights
                         vert_weights = {}
                         for v in vert_list[b_bone_name]:
@@ -445,67 +406,105 @@ class Mesh:
                             if vertex_map[v[0]] and vert_norm[v[0]]:
                                 for vert_index in vertex_map[v[0]]:
                                     vert_weights[vert_index] = v[1] / vert_norm[v[0]]
-                                    vert_added[vert_index] = True
                         # add bone as influence, but only if there were actually any vertices influenced by the bone
                         if vert_weights:
-                            trishape.add_bone(bone_block, vert_weights)
+                            # find bone in exported blocks
+                            n_node = self.get_bone_block(b_obj_armature.data.bones[b_bone_name])
+                            n_geom.add_bone(n_node, vert_weights)
+                    del vert_weights
 
                     # update bind position skinning data
-                    # trishape.update_bind_position()
-                    # override pyffi trishape.update_bind_position with custom one that is relative to the nif root
-                    self.update_bind_position(trishape, n_root, b_obj_armature)
+                    # n_geom.update_bind_position()
+                    # override pyffi n_geom.update_bind_position with custom one that is relative to the nif root
+                    self.update_bind_position(n_geom, n_root, b_obj_armature)
 
                     # calculate center and radius for each skin bone data block
-                    trishape.update_skin_center_radius()
+                    n_geom.update_skin_center_radius()
 
-                    if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
-                        NifLog.info("Creating skin partition")
-
-                        # warn on bad config settings
-                        if game == 'OBLIVION':
-                            if NifOp.props.pad_bones:
-                                NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
-                        if game in ('OBLIVION', 'FALLOUT_3'):
-                            if NifOp.props.max_bones_per_partition < 18:
-                                NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
-                                            "Set it to 18 to get higher quality skin partitions.")
-                            elif NifOp.props.max_bones_per_partition > 18:
-                                NifLog.warn("Using more than 18 bones per partition on Oblivion/Fallout 3 export."
-                                            "This may cause issues in-game.")
-                        if game == 'SKYRIM':
-                            if NifOp.props.max_bones_per_partition < 24:
-                                NifLog.warn("Using less than 24 bones per partition on Skyrim export."
-                                            "Set it to 24 to get higher quality skin partitions.")
-                        # Skyrim Special Edition has a limit of 80 bones per partition, but export is not yet supported
-
-                        part_order = [getattr(NifFormat.BSDismemberBodyPartType, face_map.name, None) for face_map in b_obj.face_maps]
-                        part_order = [body_part for body_part in part_order if body_part is not None]
-                        # override pyffi trishape.update_skin_partition with custom one (that allows ordering)
-                        trishape.update_skin_partition = update_skin_partition.__get__(trishape)
-                        lostweight = trishape.update_skin_partition(
-                            maxbonesperpartition=NifOp.props.max_bones_per_partition,
-                            maxbonespervertex=NifOp.props.max_bones_per_vertex,
-                            stripify=NifOp.props.stripify,
-                            stitchstrips=NifOp.props.stitch_strips,
-                            padbones=NifOp.props.pad_bones,
-                            triangles=triangles,
-                            trianglepartmap=bodypartfacemap,
-                            maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
-                            part_sort_order=part_order)
-
-                        if lostweight > NifOp.props.epsilon:
-                            NifLog.warn(f"Lost {lostweight:f} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{trishape.name}')")
-
-                    # clean up
-                    del vert_weights
-                    del vert_added
+                    self.export_skin_partition(b_obj, bodypartfacemap, triangles, n_geom)
 
             # fix data consistency type
-            tridata.consistency_flags = b_obj.niftools.consistency_flags
+            n_geom.data.consistency_flags = b_obj.niftools.consistency_flags
 
             # export EGM or NiGeomMorpherController animation
-            self.morph_anim.export_morph(b_mesh, trishape, vertex_map)
-        return trishape
+            # shape keys are only present on the raw, unevaluated mesh
+            self.morph_anim.export_morph(b_mesh, n_geom, vertex_map)
+        return n_geom
+
+    def set_geom_data(self, n_geom, vertex_positions, normals, vertex_colors, uv_coords, b_uv_layers):
+        """Sets flat lists of per-vertex data to n_geom"""
+        # coords
+        n_geom.data.num_vertices = len(vertex_positions)
+        n_geom.data.has_vertices = True
+        n_geom.data.vertices.update_size()
+        for n_v, b_v in zip(n_geom.data.vertices, vertex_positions):
+            n_v.x, n_v.y, n_v.z = b_v
+        n_geom.data.update_center_radius()
+        # normals
+        n_geom.data.has_normals = bool(normals)
+        n_geom.data.normals.update_size()
+        for n_v, b_v in zip(n_geom.data.normals, normals):
+            n_v.x, n_v.y, n_v.z = b_v
+        # vertex_colors
+        n_geom.data.has_vertex_colors = bool(vertex_colors)
+        n_geom.data.vertex_colors.update_size()
+        for n_v, b_v in zip(n_geom.data.vertex_colors, vertex_colors):
+            n_v.r, n_v.g, n_v.b, n_v.a = b_v
+        # uv_sets
+        n_geom.data.has_uv = bool(b_uv_layers)
+        n_geom.data.num_uv_sets = len(b_uv_layers)
+        n_geom.data.bs_num_uv_sets = len(b_uv_layers)
+        n_geom.data.uv_sets.update_size()
+        for j, n_uv_set in enumerate(n_geom.data.uv_sets):
+            for i, n_uv in enumerate(n_uv_set):
+                if len(uv_coords[i]) == 0:
+                    continue  # skip non-uv textures
+                n_uv.u = uv_coords[i][j][0]
+                # NIF flips the texture V-coordinate (OpenGL standard)
+                n_uv.v = 1.0 - uv_coords[i][j][1]  # opengl standard
+
+    def export_skin_partition(self, b_obj, bodypartfacemap, triangles, n_geom):
+        """Attaches a skin partition to n_geom if needed"""
+        game = bpy.context.scene.niftools_scene.game
+        if NifData.data.version >= 0x04020100 and NifOp.props.skin_partition:
+            NifLog.info("Creating skin partition")
+
+            # warn on bad config settings
+            if game == 'OBLIVION':
+                if NifOp.props.pad_bones:
+                    NifLog.warn(
+                        "Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
+
+            # Skyrim Special Edition has a limit of 80 bones per partition, but export is not yet supported
+            bones_per_partition_lut = {"OBLIVION": 18, "FALLOUT_3": 18, "SKYRIM": 24}
+            rec_bones = bones_per_partition_lut.get(game, None)
+            if rec_bones is not None:
+                if NifOp.props.max_bones_per_partition < rec_bones:
+                    NifLog.warn(f"Using less than {rec_bones} bones per partition on {game} export."
+                                f"Set it to {rec_bones} to get higher quality skin partitions.")
+                elif NifOp.props.max_bones_per_partition > rec_bones:
+                    NifLog.warn(f"Using more than {rec_bones} bones per partition on {game} export."
+                                f"This may cause issues in-game.")
+
+            part_order = [getattr(NifFormat.BSDismemberBodyPartType, face_map.name, None) for face_map in
+                          b_obj.face_maps]
+            part_order = [body_part for body_part in part_order if body_part is not None]
+            # override pyffi n_geom.update_skin_partition with custom one (that allows ordering)
+            n_geom.update_skin_partition = update_skin_partition.__get__(n_geom)
+            lostweight = n_geom.update_skin_partition(
+                maxbonesperpartition=NifOp.props.max_bones_per_partition,
+                maxbonespervertex=NifOp.props.max_bones_per_vertex,
+                stripify=NifOp.props.stripify,
+                stitchstrips=NifOp.props.stitch_strips,
+                padbones=NifOp.props.pad_bones,
+                triangles=triangles,
+                trianglepartmap=bodypartfacemap,
+                maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
+                part_sort_order=part_order)
+
+            if lostweight > NifOp.props.epsilon:
+                NifLog.warn(
+                    f"Lost {lostweight:f} in vertex weights while creating a skin partition for Blender object '{b_obj.name}' (nif block '{n_geom.name}')")
 
     def update_bind_position(self, n_geom, n_root, b_obj_armature):
         """Transfer the Blender bind position to the nif bind position.
@@ -728,7 +727,7 @@ class Mesh:
             extra_node.rotation.set_identity()
             extra_node.scale = 1.0
             extra_node.flags = 0x000C  # morrowind
-            # create texture effect block and parent the texture effect and trishape to it
+            # create texture effect block and parent the texture effect and n_geom to it
             texeff = self.texture_helper.export_texture_effect(ref_mtex)
             extra_node.add_child(texeff)
             extra_node.add_effect(texeff)
@@ -761,40 +760,34 @@ class Mesh:
         else:
             b_obj.modifiers.new('Triangulate', 'TRIANGULATE')
 
-    def add_defined_tangents(self, trishape, tangents, bitangents, as_extra_data):
+    def add_defined_tangents(self, n_geom, tangents, bitangents, as_extra_data):
         # check if size of tangents and bitangents is equal to num_vertices
-        if not (len(tangents) == len(bitangents) == trishape.data.num_vertices):
-            raise NifError(f'Number of tangents or bitangents does not agree with number of vertices in {trishape.name}')
+        if not (len(tangents) == len(bitangents) == n_geom.data.num_vertices):
+            raise NifError(f'Number of tangents or bitangents does not agree with number of vertices in {n_geom.name}')
 
         if as_extra_data:
             # if tangent space extra data already exists, use it
             # find possible extra data block
-            for extra in trishape.get_extra_datas():
+            extra_name = b'Tangent space (binormal & tangent vectors)'
+            for extra in n_geom.get_extra_datas():
                 if isinstance(extra, NifFormat.NiBinaryExtraData):
-                    if extra.name == b'Tangent space (binormal & tangent vectors)':
+                    if extra.name == extra_name:
                         break
             else:
-                extra = None
-            if not extra:
-                # otherwise, create a new block and link it
+                # create a new block and link it
                 extra = NifFormat.NiBinaryExtraData()
-                extra.name = b'Tangent space (binormal & tangent vectors)'
-                trishape.add_extra_data(extra)
-
+                extra.name = extra_name
+                n_geom.add_extra_data(extra)
             # write the data
             extra.binary_data = np.concatenate((tangents, bitangents), axis=0).astype('<f').tobytes()
         else:
             # set tangent space flag
-            trishape.data.extra_vectors_flags = 16
+            n_geom.data.extra_vectors_flags = 16
             # XXX used to be 61440
             # XXX from Sid Meier's Railroad
-            trishape.data.tangents.update_size()
-            trishape.data.bitangents.update_size()
-            for vec, data_tans in zip(tangents, trishape.data.tangents):
-                data_tans.x = vec[0]
-                data_tans.y = vec[1]
-                data_tans.z = vec[2]
-            for vec, data_bins in zip(bitangents, trishape.data.bitangents):
-                data_bins.x = vec[0]
-                data_bins.y = vec[1]
-                data_bins.z = vec[2]
+            n_geom.data.tangents.update_size()
+            for n_v, b_v in zip(n_geom.data.tangents, tangents):
+                n_v.x, n_v.y, n_v.z = b_v
+            n_geom.data.bitangents.update_size()
+            for n_v, b_v in zip(n_geom.data.bitangents, bitangents):
+                n_v.x, n_v.y, n_v.z = b_v

@@ -87,3 +87,9 @@ TEX_SLOTS.DECAL_1 = "Decal 1"
 TEX_SLOTS.DECAL_2 = "Decal 2"
 TEX_SLOTS.SPECULAR = "Specular"
 TEX_SLOTS.NORMAL = "Normal"
+
+# fcurve data types for blender
+QUAT = "rotation_quaternion"
+EULER = "rotation_euler"
+LOC = "location"
+SCALE = "scale"

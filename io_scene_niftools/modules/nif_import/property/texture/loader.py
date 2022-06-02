@@ -36,16 +36,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
 from functools import reduce
 import operator
+import traceback
 import os.path
 
 import bpy
 from pyffi.formats.dds import DdsFormat
 from pyffi.formats.nif import NifFormat
 
-from io_scene_niftools.modules.nif_import.property import texture
+from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
 
@@ -61,34 +61,36 @@ def get_pixeldata_stream_overide(self):
     elif isinstance(self, NifFormat.NiPixelData):
         if self.pixel_data:
             # used in older nif versions
-            return bytearray().join(
-                bytearray().join([bytearray([x]) for x in tex])
-                for tex in self.pixel_data)
+            return bytearray(x for tex in self.pixel_data for x in tex)
         else:
             # used in newer nif versions
             return ''.join(self.pixel_data_matrix)
     else:
-        raise ValueError(
-            "cannot retrieve pixel data when saving pixel format %i as DDS")
+        raise ValueError(f"cannot retrieve pixel data when saving pixel format {self.pixel_format} as DDS")
+
+
 def save_as_dds_override(self, stream):
     data = DdsFormat.Data()
     header = data.header
     pixeldata = data.pixeldata
 
+    header.flags.caps = 1
+    header.flags.height = 1
+    header.flags.width = 1
+    header.flags.pixel_format = 1
+    header.flags.mipmap_count = 1
+    header.mipmap_count = len(self.mipmaps)
+    header.height = self.mipmaps[0].height
+    header.width = self.mipmaps[0].width
+    header.caps_1.complex = 1
+    header.caps_1.texture = 1
+    header.caps_1.mipmap = 1
     # create header, depending on the format
     if self.pixel_format in (NifFormat.PixelFormat.PX_FMT_RGB8,
                              NifFormat.PixelFormat.PX_FMT_RGBA8):
         # uncompressed RGB(A)
-        header.flags.caps = 1
-        header.flags.height = 1
-        header.flags.width = 1
-        header.flags.pixel_format = 1
-        header.flags.mipmap_count = 1
         header.flags.linear_size = 1
-        header.height = self.mipmaps[0].height
-        header.width = self.mipmaps[0].width
         header.linear_size = len(self.pixel_data)
-        header.mipmap_count = len(self.mipmaps)
         header.pixel_format.flags.rgb = 1
         header.pixel_format.bit_count = self.bits_per_pixel
         if not self.channels:
@@ -109,62 +111,32 @@ def save_as_dds_override(self, stream):
                 elif channel.type == NifFormat.ChannelType.CHNL_ALPHA:
                     header.pixel_format.a_mask = mask
                 bit_pos += channel.bits_per_channel
-        header.caps_1.complex = 1
-        header.caps_1.texture = 1
-        header.caps_1.mipmap = 1
-        pixeldata.set_value(self.__get_pixeldata_stream())
-    elif self.pixel_format == NifFormat.PixelFormat.PX_FMT_DXT1:
-        # format used in Megami Tensei: Imagine and Bully SE
-        header.flags.caps = 1
-        header.flags.height = 1
-        header.flags.width = 1
-        header.flags.pixel_format = 1
-        header.flags.mipmap_count = 1
-        header.flags.linear_size = 0
-        header.height = self.mipmaps[0].height
-        header.width = self.mipmaps[0].width
-        header.linear_size = 0
-        header.mipmap_count = len(self.mipmaps)
-        header.pixel_format.flags.four_c_c = 1
-        header.pixel_format.four_c_c = DdsFormat.FourCC.DXT1
-        header.pixel_format.bit_count = 0
-        header.pixel_format.r_mask = 0
-        header.pixel_format.g_mask = 0
-        header.pixel_format.b_mask = 0
-        header.pixel_format.a_mask = 0
-        header.caps_1.complex = 1
-        header.caps_1.texture = 1
-        header.caps_1.mipmap = 1
-        pixeldata.set_value(self.__get_pixeldata_stream())
-    elif self.pixel_format in (NifFormat.PixelFormat.PX_FMT_DXT5,
+    elif self.pixel_format in (NifFormat.PixelFormat.PX_FMT_DXT1,
+                               NifFormat.PixelFormat.PX_FMT_DXT5,
                                NifFormat.PixelFormat.PX_FMT_DXT5_ALT):
-        # format used in Megami Tensei: Imagine
-        header.flags.caps = 1
-        header.flags.height = 1
-        header.flags.width = 1
-        header.flags.pixel_format = 1
-        header.flags.mipmap_count = 1
+        # format used in Megami Tensei: Imagine and Bully SE
+
         header.flags.linear_size = 0
-        header.height = self.mipmaps[0].height
-        header.width = self.mipmaps[0].width
         header.linear_size = 0
-        header.mipmap_count = len(self.mipmaps)
         header.pixel_format.flags.four_c_c = 1
-        header.pixel_format.four_c_c = DdsFormat.FourCC.DXT5
+        if self.pixel_format in (NifFormat.PixelFormat.PX_FMT_DXT1,):
+            header.pixel_format.four_c_c = DdsFormat.FourCC.DXT1
+        if self.pixel_format in (NifFormat.PixelFormat.PX_FMT_DXT5,
+                                 NifFormat.PixelFormat.PX_FMT_DXT5_ALT):
+            header.pixel_format.four_c_c = DdsFormat.FourCC.DXT5
         header.pixel_format.bit_count = 0
         header.pixel_format.r_mask = 0
         header.pixel_format.g_mask = 0
         header.pixel_format.b_mask = 0
         header.pixel_format.a_mask = 0
-        header.caps_1.complex = 1
-        header.caps_1.texture = 1
-        header.caps_1.mipmap = 1
-        pixeldata.set_value(self.__get_pixeldata_stream())
     else:
-        raise ValueError(
-            "cannot save pixel format %i as DDS" % self.pixel_format)
+        raise ValueError(f"cannot save pixel format {self.pixel_format} as DDS")
 
+    # pyffi pixeldata can complain about a too long value for perfectly fine data
+    pixeldata.set_value(b"")
     data.write(stream)
+    # so just dump the bytes directly
+    stream.write(self.__get_pixeldata_stream())
 
 
 NifFormat.ATextureRenderData.__get_pixeldata_stream = get_pixeldata_stream_overide
@@ -173,6 +145,8 @@ NifFormat.ATextureRenderData.save_as_dds = save_as_dds_override
 
 
 class TextureLoader:
+
+    external_textures = set()
 
     @staticmethod
     def load_image(tex_path):
@@ -184,7 +158,7 @@ class TextureLoader:
             except:
                 NifLog.warn(f"Texture '{name}' not found or not supported and no alternate available")
                 b_image = bpy.data.images.new(name=name, width=1, height=1, alpha=True)
-                b_image.filepath=tex_path
+                b_image.filepath = tex_path
         else:
             b_image = bpy.data.images[name]
         return b_image
@@ -204,30 +178,38 @@ class TextureLoader:
             return self.import_external_source(source)
 
     def import_embedded_texture_source(self, source):
+        # first try to use the actual file name of this NiSourceTexture
+        tex_name = safe_decode(source.file_name)
+        tex_path = os.path.join(os.path.dirname(NifOp.props.filepath), tex_name)
+        # not set, then use generated sequence name
+        if not tex_name:
+            tex_path = self.generate_image_name()
 
-        fn, tex = self.generate_image_name()
+        # only save them once per run, obviously only useful if file_name was set
+        if tex_path not in self.external_textures:
+            # save embedded texture as dds file
+            with open(tex_path, "wb") as stream:
+                try:
+                    NifLog.info(f"Saving embedded texture as {tex_path}")
+                    source.pixel_data.save_as_dds(stream)
+                except ValueError:
+                    NifLog.warn(f"Pixel format not supported in embedded texture {tex_path}!")
+                    traceback.print_exc()
+            self.external_textures.add(tex_path)
 
-        # save embedded texture as dds file
-        with open(tex, "wb") as stream:
-            try:
-                NifLog.info(f"Saving embedded texture as {tex}")
-                source.pixel_data.save_as_dds(stream)
-            except ValueError:
-                NifLog.warn(f"Pixel format not supported in embedded texture {tex}!")
-
-        return self.load_image(tex)
+        return self.load_image(tex_path)
 
     @staticmethod
     def generate_image_name():
         """Find a file name (but avoid overwriting)"""
         n = 0
-        while n < 1000:
-            fn = "image{:0>3d}.dds".format(n)
+        while n < 10000:
+            fn = f"image{n:0>4d}.dds"
             tex = os.path.join(os.path.dirname(NifOp.props.filepath), fn)
             if not os.path.exists(tex):
                 break
             n += 1
-        return fn, tex
+        return tex
 
     def import_external_source(self, source):
         # the texture uses an external image file

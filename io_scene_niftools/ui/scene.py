@@ -44,13 +44,13 @@ from pyffi.formats.nif import NifFormat
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-class SceneButtonsPanel:
+class SceneButtonsPanel(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
 
 
-class ScenePanel(SceneButtonsPanel, Panel):
+class ScenePanel(SceneButtonsPanel):
     bl_label = "Niftools Scene Panel"
     bl_idname = "NIFTOOLS_PT_scene"
 
@@ -65,9 +65,10 @@ class ScenePanel(SceneButtonsPanel, Panel):
         layout = self.layout
         row = layout.column()
         row.prop(nif_scene_props, "game")
+        row.prop(nif_scene_props, "rootnode")
 
 
-class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
+class SceneVersionInfoPanel(SceneButtonsPanel):
     bl_label = "Nif Version Info"
     bl_idname = "NIFTOOLS_PT_scene_version_info"
     bl_parent_id = "NIFTOOLS_PT_scene"
@@ -89,6 +90,7 @@ class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
 
         col = flow.column()
         col.prop(nif_scene_props, "user_version_2")
+
 
 # class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):
 #     bl_label = "Nif Author Info"
