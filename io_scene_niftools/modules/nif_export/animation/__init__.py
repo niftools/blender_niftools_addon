@@ -201,4 +201,4 @@ class Animation(ABC):
             NifLog.info("Defining default action pose markers.")
             for frame, text in zip(b_action.frame_range, ("Idle: Start/Idle: Loop Start", "Idle: Loop Stop/Idle: Stop")):
                 marker = b_action.pose_markers.new(text)
-                marker.frame = frame
+                marker.frame = int(frame)
