@@ -181,8 +181,11 @@ class Armature:
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.display_type = 'STICK'
 
-        # use heuristics to determine a suitable orientation
-        forward, up = self.guess_orientation(n_armature)
+        # use heuristics to determine a suitable orientation, if requested
+        if NifOp.props.guess_armature_orientation:
+            forward, up = self.guess_orientation(n_armature)
+        else:
+            forward, up = (NifOp.props.armature_axis_forward, NifOp.props.armature_axis_up)
         # pass them to the matrix utility
         math.set_bone_orientation(forward, up)
         # store axis orientation for export

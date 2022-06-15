@@ -117,6 +117,41 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
         description="Loads texture embedded in .nif",
         default=False)
 
+    #Automatically detect armature orientation
+    guess_armature_orientation: bpy.props.BoolProperty(
+        name="Guess Armature Orientation",
+        description="Automatically detect armature orientation",
+        default=True)
+
+    #Specify axis_forward
+    armature_axis_forward: bpy.props.EnumProperty(
+        items=(
+            ("X", "X", ""),
+            ("Y", "Y", ""),
+            ("Z", "Z", ""),
+            ("-X", "-X", ""),
+            ("-Y", "-Y", ""),
+            ("-Z", "-Z", ""),
+        ),
+        name="Axis Forward",
+        description="Specify axis_forward",
+        default="Y")
+
+    #Specify axis_up
+    armature_axis_up: bpy.props.EnumProperty(
+        items=(
+            ("X", "X", ""),
+            ("Y", "Y", ""),
+            ("Z", "Z", ""),
+            ("-X", "-X", ""),
+            ("-Y", "-Y", ""),
+            ("-Z", "-Z", ""),
+        ),
+        name="Axis Up",
+        description="Specify axis_up",
+        default="X")
+
+
     def draw(self, context):
         pass
 
