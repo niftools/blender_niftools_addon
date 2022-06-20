@@ -161,13 +161,13 @@ class OperatorImportArmaturePanel(OperatorSetting, Panel):
         layout.prop(operator, "send_geoms_to_bind_pos")
         layout.prop(operator, "apply_skin_deformation")
 
-        layout.prop(operator, "guess_armature_orientation")
+        layout.prop(operator, "override_armature_orientation")
         row_ax_fwd = layout.row()
         row_ax_fwd.prop(operator, "armature_axis_forward")
-        row_ax_fwd.enabled = not operator.guess_armature_orientation #Grey out if guessing orientation is requested
+        row_ax_fwd.enabled = operator.override_armature_orientation #Grey out unless requesting override
         row_ax_up = layout.row()
         row_ax_up.prop(operator, "armature_axis_up")
-        row_ax_up.enabled = not operator.guess_armature_orientation
+        row_ax_up.enabled = operator.override_armature_orientation
 
 class OperatorImportAnimationPanel(OperatorSetting, Panel):
     bl_options = {'DEFAULT_CLOSED'}

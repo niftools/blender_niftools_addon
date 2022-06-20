@@ -182,7 +182,7 @@ class Armature:
         b_armature_data.display_type = 'STICK'
 
         # use heuristics to determine a suitable orientation, if requested
-        if NifOp.props.guess_armature_orientation:
+        if not NifOp.props.override_armature_orientation:
             forward, up = self.guess_orientation(n_armature)
         else:
             forward, up = (NifOp.props.armature_axis_forward, NifOp.props.armature_axis_up)

@@ -118,10 +118,10 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
         default=False)
 
     #Automatically detect armature orientation
-    guess_armature_orientation: bpy.props.BoolProperty(
-        name="Guess Armature Orientation",
-        description="Automatically detect armature orientation",
-        default=True)
+    override_armature_orientation: bpy.props.BoolProperty(
+        name="Override Armature Orientation",
+        description="Override detected armature orientation",
+        default=False)
 
     #Specify axis_forward
     armature_axis_forward: bpy.props.EnumProperty(
@@ -134,7 +134,7 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
             ("-Z", "-Z", ""),
         ),
         name="Axis Forward",
-        description="Specify axis_forward",
+        description="Specify the forward axis",
         default="Y")
 
     #Specify axis_up
@@ -148,7 +148,7 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
             ("-Z", "-Z", ""),
         ),
         name="Axis Up",
-        description="Specify axis_up",
+        description="Specify the up axis",
         default="X")
 
 
