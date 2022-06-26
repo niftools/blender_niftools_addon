@@ -63,6 +63,31 @@ class BonePanel(Panel):
         row.prop(nif_bone_props, "priority")
         row.prop(nif_bone_props, "longname")
 
+class BoneControllerPanel(Panel):
+    bl_idname = "NIFTOOLS_PT_BoneControllerPanel"
+    bl_label = "Niftools Bone Controller Props"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "bone"
+
+    # noinspection PyUnusedLocal
+    @classmethod
+    def poll(cls, context):
+        return context.bone is not None
+
+    def draw(self, context):
+        nif_bone_props = context.bone.niftools
+
+        row = self.layout.column()
+        row.prop(nif_bone_props, "BSLagBoneController")
+        row2 = self.layout.column()
+        row2.prop(nif_bone_props, "BSLagBoneController_flags")
+        row2.prop(nif_bone_props, "BSLagBoneController_linear_velocity")
+        row2.prop(nif_bone_props, "BSLagBoneController_linear_rotation")
+        row2.prop(nif_bone_props, "BSLagBoneController_maximum_distance")
+        row2.enabled = nif_bone_props.BSLagBoneController
+
+
 
 class ArmaturePanel(Panel):
     bl_label = "Niftools Armature Props"
@@ -88,7 +113,8 @@ class ArmaturePanel(Panel):
 
 classes = [
     BonePanel,
-    ArmaturePanel
+    ArmaturePanel,
+    BoneControllerPanel
 ]
 
 

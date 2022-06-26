@@ -41,7 +41,9 @@ import bpy
 from bpy.props import (PointerProperty,
                        IntProperty,
                        EnumProperty,
-                       StringProperty
+                       StringProperty,
+                       BoolProperty,
+                       FloatProperty
                        )
 from bpy.types import PropertyGroup
 
@@ -60,6 +62,34 @@ class BoneProperty(PropertyGroup):
     longname: StringProperty(
         name='Nif Long Name'
     )
+
+    #BSLagbone properties
+
+    BSLagBoneController: BoolProperty(
+        name='BSLagBoneController',
+        default=False
+    )
+
+    BSLagBoneController_flags: IntProperty(
+        name='flags',
+        default=72
+    )
+
+    BSLagBoneController_linear_velocity: FloatProperty(
+        name='linear velocity',
+        default=3.0
+    )
+
+    BSLagBoneController_linear_rotation: FloatProperty(
+        name='linear rotation',
+        default=1.0
+    )
+
+    BSLagBoneController_maximum_distance: FloatProperty(
+        name='maximum distance',
+        default=10.0
+    )
+
 
 
 class ArmatureProperty(PropertyGroup):
@@ -100,7 +130,6 @@ def register():
 
     bpy.types.Armature.niftools = bpy.props.PointerProperty(type=ArmatureProperty)
     bpy.types.Bone.niftools = bpy.props.PointerProperty(type=BoneProperty)
-
 
 def unregister():
     del bpy.types.Armature.niftools
