@@ -58,7 +58,7 @@ class Animation:
     @staticmethod
     def get_controller_data(ctrl):
         """Return data for ctrl, look in interpolator (for newer games) or directly on ctrl"""
-        if ctrl.interpolator:
+        if hasattr(ctrl, 'interpolator') and ctrl.interpolator:
             data = ctrl.interpolator.data
         else:
             data = ctrl.data
