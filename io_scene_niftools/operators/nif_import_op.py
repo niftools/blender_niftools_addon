@@ -45,7 +45,7 @@ from io_scene_niftools.nif_import import NifImport
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonNif
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
-@orientation_helper(axis_forward='-Z', axis_up='Y')
+@orientation_helper(axis_forward='Z', axis_up='-Y')
 class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, CommonNif):
     """Operator for loading a nif file."""
 
