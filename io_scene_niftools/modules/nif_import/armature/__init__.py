@@ -40,6 +40,7 @@
 import os
 
 import bpy
+from bpy_extras.io_utils import orientation_helper
 import mathutils
 
 from pyffi.formats.nif import NifFormat
@@ -185,7 +186,7 @@ class Armature:
         if not NifOp.props.override_armature_orientation:
             forward, up = self.guess_orientation(n_armature)
         else:
-            forward, up = (NifOp.props.armature_axis_forward, NifOp.props.armature_axis_up)
+            forward, up = (NifOp.props.axis_forward, NifOp.props.axis_up)
         # pass them to the matrix utility
         math.set_bone_orientation(forward, up)
         # store axis orientation for export

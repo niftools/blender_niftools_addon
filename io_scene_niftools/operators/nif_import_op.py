@@ -39,13 +39,13 @@
 
 import bpy
 from bpy.types import Operator, Panel
-from bpy_extras.io_utils import ImportHelper
+from bpy_extras.io_utils import ImportHelper, orientation_helper
 
 from io_scene_niftools.nif_import import NifImport
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonNif
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
-
+@orientation_helper(axis_forward='-Z', axis_up='Y')
 class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, CommonNif):
     """Operator for loading a nif file."""
 
@@ -122,34 +122,6 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
         name="Override Armature Orientation",
         description="Override detected armature orientation",
         default=False)
-
-    #Specify axis_forward
-    armature_axis_forward: bpy.props.EnumProperty(
-        items=(
-            ("X", "X", ""),
-            ("Y", "Y", ""),
-            ("Z", "Z", ""),
-            ("-X", "-X", ""),
-            ("-Y", "-Y", ""),
-            ("-Z", "-Z", ""),
-        ),
-        name="Axis Forward",
-        description="Specify the forward axis",
-        default="Y")
-
-    #Specify axis_up
-    armature_axis_up: bpy.props.EnumProperty(
-        items=(
-            ("X", "X", ""),
-            ("Y", "Y", ""),
-            ("Z", "Z", ""),
-            ("-X", "-X", ""),
-            ("-Y", "-Y", ""),
-            ("-Z", "-Z", ""),
-        ),
-        name="Axis Up",
-        description="Specify the up axis",
-        default="X")
 
 
     def draw(self, context):

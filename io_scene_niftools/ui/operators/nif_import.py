@@ -38,7 +38,6 @@
 # ***** END LICENSE BLOCK *****
 
 from bpy.types import Panel
-
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
@@ -162,12 +161,31 @@ class OperatorImportArmaturePanel(OperatorSetting, Panel):
         layout.prop(operator, "apply_skin_deformation")
 
         layout.prop(operator, "override_armature_orientation")
-        row_ax_fwd = layout.row()
-        row_ax_fwd.prop(operator, "armature_axis_forward")
-        row_ax_fwd.enabled = operator.override_armature_orientation #Grey out unless requesting override
-        row_ax_up = layout.row()
-        row_ax_up.prop(operator, "armature_axis_up")
-        row_ax_up.enabled = operator.override_armature_orientation
+
+
+class OperatorImportOverrideArmatureOrientationPanel(OperatorSetting, Panel):
+    bl_label = "Override Armature Orientation"
+    bl_idname = "NIFTOOLS_PT_import_operator_override_armature_orientation"
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "IMPORT_SCENE_OT_nif"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.enabled = operator.override_armature_orientation
+
+        layout.prop(operator, "axis_forward")
+        layout.prop(operator, "axis_up")
 
 class OperatorImportAnimationPanel(OperatorSetting, Panel):
     bl_options = {'DEFAULT_CLOSED'}
@@ -201,6 +219,7 @@ classes = [
     OperatorImportGeometryPanel,
     OperatorImportTexturePanel,
     OperatorImportArmaturePanel,
+    OperatorImportOverrideArmatureOrientationPanel,
     OperatorImportAnimationPanel
 ]
 
