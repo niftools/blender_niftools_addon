@@ -77,12 +77,12 @@ class BoneProperty(PropertyGroup):
 
     BSLagBoneController_linear_velocity: FloatProperty(
         name='linear velocity',
-        default=3.0
+        default=20.0
     )
 
     BSLagBoneController_linear_rotation: FloatProperty(
         name='linear rotation',
-        default=1.0
+        default=20.0
     )
 
     BSLagBoneController_maximum_distance: FloatProperty(
