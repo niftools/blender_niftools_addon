@@ -40,6 +40,7 @@
 import os
 
 import bpy
+from bpy_extras.io_utils import orientation_helper
 import mathutils
 
 from pyffi.formats.nif import NifFormat
@@ -181,8 +182,11 @@ class Armature:
         b_armature_data = bpy.data.armatures.new(armature_name)
         b_armature_data.display_type = 'STICK'
 
-        # use heuristics to determine a suitable orientation
-        forward, up = self.guess_orientation(n_armature)
+        # use heuristics to determine a suitable orientation, if requested
+        if not NifOp.props.override_armature_orientation:
+            forward, up = self.guess_orientation(n_armature)
+        else:
+            forward, up = (NifOp.props.axis_forward, NifOp.props.axis_up)
         # pass them to the matrix utility
         math.set_bone_orientation(forward, up)
         # store axis orientation for export
