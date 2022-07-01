@@ -79,13 +79,13 @@ class BoneControllerPanel(Panel):
         nif_bone_props = context.bone.niftools
 
         row = self.layout.column()
-        row.prop(nif_bone_props, "BSLagBoneController")
+        row.prop(nif_bone_props.lag_bone, "enabled")
         row2 = self.layout.column()
-        row2.prop(nif_bone_props, "BSLagBoneController_flags")
-        row2.prop(nif_bone_props, "BSLagBoneController_linear_velocity")
-        row2.prop(nif_bone_props, "BSLagBoneController_linear_rotation")
-        row2.prop(nif_bone_props, "BSLagBoneController_maximum_distance")
-        row2.enabled = nif_bone_props.BSLagBoneController
+        row2.prop(nif_bone_props.lag_bone, "flags")
+        row2.prop(nif_bone_props.lag_bone, "linear_velocity")
+        row2.prop(nif_bone_props.lag_bone, "linear_rotation")
+        row2.prop(nif_bone_props.lag_bone, "maximum_distance")
+        row2.enabled = nif_bone_props.lag_bone.enabled
 
 
 

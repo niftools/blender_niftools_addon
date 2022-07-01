@@ -242,12 +242,12 @@ class Armature:
         ctrl = n_block.controller
         if isinstance(ctrl, NifFormat.BSLagBoneController):
             #Enable bscontrollerlagboneprop
-            b_bone.niftools.BSLagBoneController = True
+            b_bone.niftools.lag_bone.enabled = True
             #Set the props we care about; flags, linear_velocity, linear_rotation, maximum distance
-            b_bone.niftools.BSLagBoneController_flags = ctrl.flags
-            b_bone.niftools.BSLagBoneController_linear_velocity = ctrl.linear_velocity
-            b_bone.niftools.BSLagBoneController_linear_rotation = ctrl.linear_rotation
-            b_bone.niftools.BSLagBoneController_maximum_distance = ctrl.maximum_distance
+            b_bone.niftools.lag_bone.flags = ctrl.flags
+            b_bone.niftools.lag_bone.linear_velocity = ctrl.linear_velocity
+            b_bone.niftools.lag_bone.linear_rotation = ctrl.linear_rotation
+            b_bone.niftools.lag_bone.maximum_distance = ctrl.maximum_distance
 
     def import_bone_bind(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
         """Adds a bone to the armature in edit mode."""

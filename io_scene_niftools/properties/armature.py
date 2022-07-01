@@ -50,6 +50,33 @@ from bpy.types import PropertyGroup
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
+class LagBoneControllerProperty(PropertyGroup):
+    enabled: BoolProperty(
+        name='BSLagBoneController',
+        default=False
+    )
+
+    flags: IntProperty(
+        name='flags',
+        default=72
+    )
+
+    linear_velocity: FloatProperty(
+        name='linear velocity',
+        default=20.0
+    )
+
+    linear_rotation: FloatProperty(
+        name='linear rotation',
+        default=20.0
+    )
+
+    maximum_distance: FloatProperty(
+        name='maximum distance',
+        default=10.0
+    )
+
+
 class BoneProperty(PropertyGroup):
     flags: IntProperty(
         name='Bone Flag',
@@ -63,63 +90,38 @@ class BoneProperty(PropertyGroup):
         name='Nif Long Name'
     )
 
-    #BSLagbone properties
-
-    BSLagBoneController: BoolProperty(
-        name='BSLagBoneController',
-        default=False
-    )
-
-    BSLagBoneController_flags: IntProperty(
-        name='flags',
-        default=72
-    )
-
-    BSLagBoneController_linear_velocity: FloatProperty(
-        name='linear velocity',
-        default=20.0
-    )
-
-    BSLagBoneController_linear_rotation: FloatProperty(
-        name='linear rotation',
-        default=20.0
-    )
-
-    BSLagBoneController_maximum_distance: FloatProperty(
-        name='maximum distance',
-        default=10.0
-    )
-
+    lag_bone: PointerProperty(type=LagBoneControllerProperty)
 
 
 class ArmatureProperty(PropertyGroup):
 
     axis_forward: EnumProperty(
-            name="Forward",
-            items=(('X', "X Forward", ""),
-                   ('Y', "Y Forward", ""),
-                   ('Z', "Z Forward", ""),
-                   ('-X', "-X Forward", ""),
-                   ('-Y', "-Y Forward", ""),
-                   ('-Z', "-Z Forward", ""),
-                   ),
-            default="X",
-            )
+        name="Forward",
+        items=(('X', "X Forward", ""),
+               ('Y', "Y Forward", ""),
+               ('Z', "Z Forward", ""),
+               ('-X', "-X Forward", ""),
+               ('-Y', "-Y Forward", ""),
+               ('-Z', "-Z Forward", ""),
+               ),
+        default="X",
+    )
 
     axis_up: EnumProperty(
-            name="Up",
-            items=(('X', "X Up", ""),
-                   ('Y', "Y Up", ""),
-                   ('Z', "Z Up", ""),
-                   ('-X', "-X Up", ""),
-                   ('-Y', "-Y Up", ""),
-                   ('-Z', "-Z Up", ""),
-                   ),
-            default="Y",
-            )
+        name="Up",
+        items=(('X', "X Up", ""),
+               ('Y', "Y Up", ""),
+               ('Z', "Z Up", ""),
+               ('-X', "-X Up", ""),
+               ('-Y', "-Y Up", ""),
+               ('-Z', "-Z Up", ""),
+               ),
+        default="Y",
+    )
 
 
 CLASSES = [
+    LagBoneControllerProperty,
     BoneProperty,
     ArmatureProperty
 ]
@@ -130,6 +132,7 @@ def register():
 
     bpy.types.Armature.niftools = bpy.props.PointerProperty(type=ArmatureProperty)
     bpy.types.Bone.niftools = bpy.props.PointerProperty(type=BoneProperty)
+
 
 def unregister():
     del bpy.types.Armature.niftools

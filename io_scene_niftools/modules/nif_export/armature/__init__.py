@@ -83,8 +83,8 @@ class Armature:
         for b_child in b_bone.children:
             self.export_bone(b_obj, b_child, n_node, n_root_node)
 
-        if b_bone.niftools.BSLagBoneController:
-            self.export_BSLagBoneController(b_bone, n_node)
+        if b_bone.niftools.lag_bone.enabled:
+            self.export_lag_bone(b_bone, n_node)
 
     def export_bone_flags(self, b_bone, n_node):
         """Exports or sets the flags according to the custom data in b_bone or the game version if none was set"""
@@ -115,7 +115,7 @@ class Armature:
             else:
                 n_node.flags = 0x0002  # default for Morrowind bones
 
-    def export_BSLagBoneController(self, b_bone, n_node):
+    def export_lag_bone(self, b_bone, n_node):
         """Exports a BSLagBoneController for the bone"""
 
         #BSLagBoneControllers are only for skyrim and later, afaik
@@ -126,13 +126,13 @@ class Armature:
         n_controller = block_store.create_block("BSLagBoneController")
         n_controller.name = block_store.get_full_name(b_bone)
         #This should be active and cycle, what I've seen in game.
-        n_controller.flags = b_bone.niftools.BSLagBoneController_flags #0x0048? hexa?
+        n_controller.flags = b_bone.niftools.lag_bone.flags #0x0048? hexa?
         n_controller.frequency = 1.0
         n_controller.phase = 0.0
         n_controller.start_time = consts.FLOAT_MIN
         n_controller.stop_time = consts.FLOAT_MAX
-        n_controller.linear_velocity = b_bone.niftools.BSLagBoneController_linear_velocity
-        n_controller.linear_rotation = b_bone.niftools.BSLagBoneController_linear_rotation
-        n_controller.maximum_distance = b_bone.niftools.BSLagBoneController_maximum_distance
+        n_controller.linear_velocity = b_bone.niftools.lag_bone.linear_velocity
+        n_controller.linear_rotation = b_bone.niftools.lag_bone.linear_rotation
+        n_controller.maximum_distance = b_bone.niftools.lag_bone.maximum_distance
         #add controller to _this_ block
         n_node.add_controller(n_controller)
