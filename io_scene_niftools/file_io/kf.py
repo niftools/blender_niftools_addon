@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import NifFile
 from io_scene_niftools.utils.logging import NifLog, NifError
 
 
@@ -50,18 +50,16 @@ class KFFile:
         """Loads a Kf file from the given path"""
         NifLog.info(f"Loading {file_path}")
 
-        kf_file = NifFormat.Data()
-
         # open keyframe file for binary reading
         with open(file_path, "rb") as kf_stream:
             # check if nif file is valid
-            kf_file.inspect_version_only(kf_stream)
-            if kf_file.version >= 0:
+            modification, (version, user_version, bs_version) = NifFile.inspect_version_only(kf_stream)
+            if version >= 0:
                 # it is valid, so read the file
-                NifLog.info(f"KF file version: {kf_file.version:x}")
+                NifLog.info(f"KF file version: {version:x}")
                 NifLog.info("Reading keyframe file")
-                kf_file.read(kf_stream)
-            elif kf_file.version == -1:
+                kf_file = NifFile.from_stream(kf_stream)
+            elif version == -1:
                 raise NifError("Unsupported KF version.")
             else:
                 raise NifError("Not a KF file.")

@@ -43,7 +43,7 @@ import time
 
 from functools import singledispatch
 from bisect import bisect_left
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.modules.nif_import.object import block_registry
@@ -116,9 +116,9 @@ class TransformAnimation(Animation):
     def __init__(self):
         super().__init__()
         self.import_kf_root = singledispatch(self.import_kf_root)
-        self.import_kf_root.register(NifFormat.NiControllerSequence, self.import_controller_sequence)
-        self.import_kf_root.register(NifFormat.NiSequenceStreamHelper, self.import_sequence_stream_helper)
-        self.import_kf_root.register(NifFormat.NiSequenceData, self.import_sequence_data)
+        self.import_kf_root.register(NifFormat.classes.NiControllerSequence, self.import_controller_sequence)
+        self.import_kf_root.register(NifFormat.classes.NiSequenceStreamHelper, self.import_sequence_stream_helper)
+        self.import_kf_root.register(NifFormat.classes.NiSequenceData, self.import_sequence_data)
 
     def get_bind_data(self, b_armature):
         """Get the required bind data of an armature. Used by standalone KF import and export. """
@@ -171,12 +171,12 @@ class TransformAnimation(Animation):
         textkeys = None
         while extra and controller:
             # textkeys in the stack do not specify node names, import as markers
-            while isinstance(extra, NifFormat.NiTextKeyExtraData):
+            while isinstance(extra, NifFormat.classes.NiTextKeyExtraData):
                 textkeys = extra
                 extra = extra.next_extra_data
 
             # grabe the node name from string data
-            if isinstance(extra, NifFormat.NiStringExtraData):
+            if isinstance(extra, NifFormat.classes.NiStringExtraData):
                 b_target = self.get_target(b_armature_obj, extra.string_data)
                 actions.add(self.import_keyframe_controller(controller, b_armature_obj, b_target, b_action_name))
             # grab next pair of extra and controller
@@ -247,10 +247,10 @@ class TransformAnimation(Animation):
             bone_name = None
 
         # B-spline curve import
-        if isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
+        if isinstance(n_kfc, NifFormat.classes.NiBSplineInterpolator):
             # Bsplines are Bezier curves
             interp = "BEZIER"
-            if isinstance(n_kfc, NifFormat.NiBSplineCompFloatInterpolator):
+            if isinstance(n_kfc, NifFormat.classes.NiBSplineCompFloatInterpolator):
                 # used by WLP2 (tiger.kf), but only for non-LocRotScale data
                 # eg. bone stretching - see controlledblock.get_variable_1()
                 # do not support this for now, no good representation in Blender
@@ -264,14 +264,14 @@ class TransformAnimation(Animation):
             self.import_keys(QUAT, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
             keys = list(n_kfc.get_scales())
             self.import_keys(SCALE, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
-        elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
+        elif isinstance(n_kfc, NifFormat.classes.NiMultiTargetTransformController):
             # not sure what this is used for
             return
         n_kfd = self.get_controller_data(n_kfc)
         # ZT2 - get extrapolation for every kfc
-        if isinstance(n_kfc, NifFormat.NiKeyframeController):
+        if isinstance(n_kfc, NifFormat.classes.NiKeyframeController):
             flags = n_kfc.flags
-        if isinstance(n_kfd, NifFormat.NiKeyframeData):
+        if isinstance(n_kfd, NifFormat.classes.NiKeyframeData):
             if n_kfd.rotation_type == 4:
                 b_target.rotation_mode = "XYZ"
                 # euler keys need not be sampled at the same time in KFs
@@ -320,7 +320,7 @@ class TransformAnimation(Animation):
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""
         # find keyframe controller
-        n_kfc = math.find_controller(n_block, (NifFormat.NiKeyframeController, NifFormat.NiTransformController))
+        n_kfc = math.find_controller(n_block, (NifFormat.classes.NiKeyframeController, NifFormat.classes.NiTransformController))
         if n_kfc:
             # skeletal animation
             if bone_name:
@@ -332,7 +332,7 @@ class TransformAnimation(Animation):
 
     def import_controller_manager(self, n_block, b_obj, b_armature):
         ctrlm = n_block.controller
-        if ctrlm and isinstance(ctrlm, NifFormat.NiControllerManager):
+        if ctrlm and isinstance(ctrlm, NifFormat.classes.NiControllerManager):
             NifLog.debug(f'Importing NiControllerManager')
             if b_armature:
                 self.get_bind_data(b_armature)

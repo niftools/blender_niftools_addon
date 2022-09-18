@@ -2,6 +2,8 @@
 
 
 def safe_decode(b: bytes, encodings=('ascii', 'utf8', 'latin1', 'shift-jis')) -> str:
+    if isinstance(b, str):
+        return b
     for encoding in encodings:
         try:
             return b.decode(encoding)
