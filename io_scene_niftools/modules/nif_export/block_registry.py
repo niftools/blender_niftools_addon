@@ -37,13 +37,14 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.consts import BIP_01, B_L_SUFFIX, BIP01_L, B_R_SUFFIX, BIP01_R, NPC_SUFFIX, B_L_POSTFIX, \
     NPC_L, B_R_POSTFIX, BRACE_L, BRACE_R, NPC_R, OPEN_BRACKET, CLOSE_BRACKET
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.singleton import NifData
 
 
 def replace_blender_name(name, original, replacement, open_replace, close_replace):
@@ -88,7 +89,7 @@ class ExportBlockRegistry:
         @param b_obj: The Blender object.
         @return: The newly created block."""
         try:
-            block = getattr(NifFormat, block_type)()
+            block = NifFormat.niobject_map[block_type](NifData.data)
         except AttributeError:
             raise io_scene_niftools.utils.logging.NifError(f"'{block_type}': Unknown block type (this is probably a bug).")
         return self.register_block(block, b_obj)
