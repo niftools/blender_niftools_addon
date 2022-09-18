@@ -219,9 +219,9 @@ class TransformAnimation(Animation):
 
         if n_kfi:
             # set the default transforms of the interpolator as the bone's bind pose
-            n_kfi.translation.x, n_kfi.translation.y, n_kfi.translation.z = bind_trans
-            n_kfi.rotation.w, n_kfi.rotation.x, n_kfi.rotation.y, n_kfi.rotation.z = bind_rot.to_quaternion()
-            n_kfi.scale = bind_scale
+            n_kfi.transform.translation.x, n_kfi.transform.translation.y, n_kfi.transform.translation.z = bind_trans
+            n_kfi.transform.rotation.w, n_kfi.transform.rotation.x, n_kfi.transform.rotation.y, n_kfi.transform.rotation.z = bind_rot.to_quaternion()
+            n_kfi.transform.scale = bind_scale
 
             if max(len(c) for c in (quat_curve, euler_curve, trans_curve, scale_curve)) > 0:
                 # number of frames is > 0, so add transform data

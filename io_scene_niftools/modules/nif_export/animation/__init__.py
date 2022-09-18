@@ -159,7 +159,7 @@ class Animation(ABC):
                 controlled_block.controller_type = "NiTransformController"
                 # get the parent's string palette
                 if not parent_block.string_palette:
-                    parent_block.string_palette = NifFormat.classes.NiStringPalette()
+                    parent_block.string_palette = NifFormat.classes.NiStringPalette(NifData.data)
                 # assign string palette to controller
                 controlled_block.string_palette = parent_block.string_palette
                 # add the strings and store their offsets
