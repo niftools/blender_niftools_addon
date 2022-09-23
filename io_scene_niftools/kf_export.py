@@ -91,6 +91,8 @@ class KfExport(NifCommon):
         # scale correction for the skeleton
         self.apply_scale(data, round(1 / NifOp.props.scale_correction))
 
+        data.validate()
+
         kffile = os.path.join(directory, prefix + filebase + ext)
         with open(kffile, "wb") as stream:
             data.write(stream)

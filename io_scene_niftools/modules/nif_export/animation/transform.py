@@ -243,6 +243,7 @@ class TransformAnimation(Animation):
         if euler_curve:
             n_kfd.rotation_type = NifFormat.classes.KeyType.XYZ_ROTATION_KEY
             n_kfd.num_rotation_keys = 1  # *NOT* len(frames) this crashes the engine!
+            n_kfd.reset_field("xyz_rotations")
             for i, coord in enumerate(n_kfd.xyz_rotations):
                 coord.num_keys = len(euler_curve)
                 coord.interpolation = NifFormat.classes.KeyType.LINEAR_KEY
