@@ -42,8 +42,8 @@ import os
 import bpy
 from bpy_extras.io_utils import orientation_helper
 import mathutils
+import generated.formats.nif as NifFormat
 
-from pyffi.formats.nif import NifFormat
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
@@ -82,7 +82,7 @@ class Armature:
     def get_skinned_geometries(self, n_root):
         """Yield all children in n_root's tree that have skinning"""
         # search for all NiTriShape or NiTriStrips blocks...
-        for n_block in n_root.tree(block_type=NifFormat.NiTriBasedGeom):
+        for n_block in n_root.tree(block_type=NifFormat.classes.NiTriBasedGeom):
             # yes, we found one, does it have skinning?
             if n_block.is_skin():
                 yield n_block
@@ -155,7 +155,7 @@ class Armature:
         """reposition non-skeletal bones to maintain their local orientation to their skeletal parents"""
         for n_child_node in n_node.children:
             # only process nodes
-            if not isinstance(n_child_node, NifFormat.NiNode):
+            if not isinstance(n_child_node, NifFormat.classes.NiNode):
                 continue
             if n_child_node not in self.bind_store and n_child_node in self.pose_store:
                 NifLog.debug(f"Calculating bind pose for non-skeletal bone {n_child_node.name}")
@@ -243,7 +243,7 @@ class Armature:
         # store nif block for access from object mode
         self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = math.nifformat_to_mathutils_matrix(self.bind_store.get(n_block, NifFormat.Matrix44()))
+        n_bind = math.nifformat_to_mathutils_matrix(self.bind_store.get(n_block, NifFormat.classes.Matrix44()))
         # get transformation in blender's coordinate space
         b_bind = math.nif_bind_to_blender_bind(n_bind)
 
@@ -330,12 +330,12 @@ class Armature:
 
     def is_bone(self, ni_block):
         """Tests a NiNode to see if it has been marked as a bone."""
-        if isinstance(ni_block, NifFormat.NiNode):
+        if isinstance(ni_block, NifFormat.classes.NiNode):
             return self.skinned
 
     def is_armature_root(self, n_block):
         """Tests a block to see if it's an armature."""
-        if isinstance(n_block, NifFormat.NiNode):
+        if isinstance(n_block, NifFormat.classes.NiNode):
             # we have skinning and are waiting for a suitable start node of the tree
             if self.skinned and not self.n_armature:
                 # now store it as the nif armature's root

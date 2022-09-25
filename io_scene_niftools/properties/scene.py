@@ -42,25 +42,28 @@ import bpy
 from bpy.props import PointerProperty, IntProperty, EnumProperty, StringProperty, FloatProperty, CollectionProperty
 from bpy.types import PropertyGroup
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif.versions import games, set_game
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-def _game_to_enum(game):
-    symbols = ":,'\" +-*!?;./="
-    table = str.maketrans(symbols, "_" * len(symbols))
-    enum = game.upper().translate(table).replace("__", "_")
-    return enum
+class DummyClass: pass
 
+dummy_context = DummyClass()
+dummy_context.bs_header = DummyClass()
+game_version_map = {}
+for game in games:
+    dummy_context.version = 0
+    dummy_context.user_version = 0
+    dummy_context.bs_header.bs_version = 0
+    set_game(dummy_context, game)
+    game_version_map[game._name_] = (dummy_context.version, dummy_context.user_version, dummy_context.bs_header.bs_version)
+game_version_map["NONE"] = (0, 0, 0)
 
 # noinspection PyUnusedLocal
 def update_version_from_game(self, context):
     """Updates the Scene panel's numerical version fields if its game value has been changed"""
-    self.nif_version = self.VERSION.get(self.game, 0)
-    self.user_version = self.USER_VERSION.get(self.game, 0)
-    self.user_version_2 = self.USER_VERSION_2.get(self.game, 0)
-
+    self.nif_version, self.user_version, self.user_version_2 = game_version_map[self.game]
 
 class Scene(PropertyGroup):
     nif_version: IntProperty(
@@ -84,9 +87,9 @@ class Scene(PropertyGroup):
     # For which game to export.
     game: bpy.props.EnumProperty(
         items=[('NONE', 'NONE', 'No game selected')] + [
-            (_game_to_enum(game), game, "Export for " + game)
-            for game in sorted(
-                [x for x in NifFormat.games.keys() if x != '?'])
+            (member._name_, member._value_, "Export for " + member._value_)
+            for member in sorted(
+                [member for member in games], key=lambda x: x._name_)
         ],
         name="Game",
         description="For which game to export",
@@ -101,25 +104,6 @@ class Scene(PropertyGroup):
             ('BSFadeNode', 'BSFadeNode', "", 1)),
         default='NiNode',
     )
-
-    # Map game enum to nif version.
-    VERSION = {
-        _game_to_enum(game): versions[-1]
-        for game, versions in NifFormat.games.items() if game != '?'
-    }
-
-    USER_VERSION = {
-        'OBLIVION': 11,
-        'FALLOUT_3': 11,
-        'SKYRIM': 12,
-        'DIVINITY_2': 131072
-    }
-
-    USER_VERSION_2 = {
-        'OBLIVION': 11,
-        'FALLOUT_3': 34,
-        'SKYRIM': 83
-    }
 
     scale_correction: bpy.props.FloatProperty(
         name="Scale Correction",

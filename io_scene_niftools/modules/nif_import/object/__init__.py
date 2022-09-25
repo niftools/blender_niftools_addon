@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.modules.nif_import.geometry.mesh import Mesh
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
@@ -110,7 +110,7 @@ class Object:
             raise RuntimeError(f"Unexpected object type {b_obj.__class__:s}")
 
     def create_mesh_object(self, n_block):
-        ni_name = n_block.name.decode()
+        ni_name = n_block.name
         # create mesh data
         b_mesh = bpy.data.meshes.new(ni_name)
 
@@ -144,9 +144,8 @@ class Object:
         """ Various settings in b_obj's niftools panel """
         b_obj.niftools.flags = n_block.flags
 
-        if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
-            cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
-            b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+        if isinstance(n_block.data.consistency_flags, NifFormat.classes.ConsistencyType):
+            b_obj.niftools.consistency_flags = n_block.data.consistency_flags._name_
         if n_block.is_skin():
             skininst = n_block.skin_instance
             skelroot = skininst.skeleton_root

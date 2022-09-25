@@ -138,7 +138,6 @@ class BSShader(ABC):
 
     @staticmethod
     def import_flags(b_mat, flags):
-        for name in flags._names:
-            sf_index = flags._names.index(name)
-            if flags._items[sf_index]._value == 1:
+        for name in type(flags).__members__:
+            if getattr(flags, name):
                 b_mat.niftools_shader[name] = True

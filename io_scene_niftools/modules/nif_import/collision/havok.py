@@ -37,13 +37,14 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 import mathutils
 
 import operator
 from functools import reduce, singledispatch
 
-from pyffi.formats.nif import NifFormat
-from pyffi.utils.quickhull import qhull3d
+import generated.formats.nif as NifFormat
+from generated.utils.quickhull import qhull3d
 
 from io_scene_niftools.modules.nif_import import collision
 from io_scene_niftools.modules.nif_import.collision import Collision
@@ -61,25 +62,25 @@ class BhkCollision(Collision):
         collision.DICT_HAVOK_OBJECTS = {}
 
         # TODO [collision][havok][property] Need better way to set this, maybe user property
-        if NifData.data._user_version_value_._value == 12 and NifData.data._user_version_2_value_._value == 83:
+        if bpy.context.scene.niftools_scene.user_version == 12 and bpy.context.scene.niftools_scene.user_version_2 == 83:
             self.HAVOK_SCALE = consts.HAVOK_SCALE * 10
         else:
             self.HAVOK_SCALE = consts.HAVOK_SCALE
 
         self.process_bhk = singledispatch(self.process_bhk)
-        self.process_bhk.register(NifFormat.bhkTransformShape, self.import_bhktransform)
-        self.process_bhk.register(NifFormat.bhkRigidBodyT, self.import_bhk_ridgidbody_t)
-        self.process_bhk.register(NifFormat.bhkRigidBody, self.import_bhk_ridgid_body)
-        self.process_bhk.register(NifFormat.bhkBoxShape, self.import_bhkbox_shape)
-        self.process_bhk.register(NifFormat.bhkSphereShape, self.import_bhksphere_shape)
-        self.process_bhk.register(NifFormat.bhkCapsuleShape, self.import_bhkcapsule_shape)
-        self.process_bhk.register(NifFormat.bhkConvexVerticesShape, self.import_bhkconvex_vertices_shape)
-        self.process_bhk.register(NifFormat.bhkPackedNiTriStripsShape, self.import_bhkpackednitristrips_shape)
-        self.process_bhk.register(NifFormat.bhkNiTriStripsShape, self.import_bhk_nitristrips_shape)
-        self.process_bhk.register(NifFormat.NiTriStripsData, self.import_nitristrips)
-        self.process_bhk.register(NifFormat.bhkMoppBvTreeShape, self.import_bhk_mopp_bv_tree_shape)
-        self.process_bhk.register(NifFormat.bhkListShape, self.import_bhk_list_shape)
-        self.process_bhk.register(NifFormat.bhkSimpleShapePhantom, self.import_bhk_simple_shape_phantom)
+        self.process_bhk.register(NifFormat.classes.BhkTransformShape, self.import_bhktransform)
+        self.process_bhk.register(NifFormat.classes.BhkRigidBodyT, self.import_bhk_ridgidbody_t)
+        self.process_bhk.register(NifFormat.classes.BhkRigidBody, self.import_bhk_ridgid_body)
+        self.process_bhk.register(NifFormat.classes.BhkBoxShape, self.import_bhkbox_shape)
+        self.process_bhk.register(NifFormat.classes.BhkSphereShape, self.import_bhksphere_shape)
+        self.process_bhk.register(NifFormat.classes.BhkCapsuleShape, self.import_bhkcapsule_shape)
+        self.process_bhk.register(NifFormat.classes.BhkConvexVerticesShape, self.import_bhkconvex_vertices_shape)
+        self.process_bhk.register(NifFormat.classes.BhkPackedNiTriStripsShape, self.import_bhkpackednitristrips_shape)
+        self.process_bhk.register(NifFormat.classes.BhkNiTriStripsShape, self.import_bhk_nitristrips_shape)
+        self.process_bhk.register(NifFormat.classes.NiTriStripsData, self.import_nitristrips)
+        self.process_bhk.register(NifFormat.classes.BhkMoppBvTreeShape, self.import_bhk_mopp_bv_tree_shape)
+        self.process_bhk.register(NifFormat.classes.BhkListShape, self.import_bhk_list_shape)
+        self.process_bhk.register(NifFormat.classes.BhkSimpleShapePhantom, self.import_bhk_simple_shape_phantom)
 
     def process_bhk(self, bhk_shape):
         """Base method to warn user that this property is not supported"""
@@ -179,31 +180,31 @@ class BhkCollision(Collision):
         for b_col_obj in collision_objs:
             b_r_body = b_col_obj.rigid_body
 
-            if bhkshape.mass > 0.0001:
+            if bhkshape.rigid_body_info.mass > 0.0001:
                 # for physics emulation
                 # (mass 0 results in issues with simulation)
-                b_r_body.mass = bhkshape.mass / len(collision_objs)
+                b_r_body.mass = bhkshape.rigid_body_info.mass / len(collision_objs)
 
-            b_r_body.mass = bhkshape.mass / len(collision_objs)
+            b_r_body.mass = bhkshape.rigid_body_info.mass / len(collision_objs)
 
             b_r_body.use_deactivation = True
-            b_r_body.friction = bhkshape.friction
-            b_r_body.restitution = bhkshape.restitution
-            b_r_body.linear_damping = bhkshape.linear_damping
-            b_r_body.angular_damping = bhkshape.angular_damping
-            vel = bhkshape.linear_velocity
+            b_r_body.friction = bhkshape.rigid_body_info.friction
+            b_r_body.restitution = bhkshape.rigid_body_info.restitution
+            b_r_body.linear_damping = bhkshape.rigid_body_info.linear_damping
+            b_r_body.angular_damping = bhkshape.rigid_body_info.angular_damping
+            vel = bhkshape.rigid_body_info.linear_velocity
             b_r_body.deactivate_linear_velocity = mathutils.Vector([vel.w, vel.x, vel.y, vel.z]).magnitude
-            ang_vel = bhkshape.angular_velocity
+            ang_vel = bhkshape.rigid_body_info.angular_velocity
             b_r_body.deactivate_angular_velocity = mathutils.Vector([ang_vel.w, ang_vel.x, ang_vel.y, ang_vel.z]).magnitude
 
             # Custom Niftools properties
-            b_col_obj.nifcollision.penetration_depth = bhkshape.penetration_depth
-            b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
-            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
-            b_col_obj.nifcollision.max_linear_velocity = bhkshape.max_linear_velocity
-            b_col_obj.nifcollision.max_angular_velocity = bhkshape.max_angular_velocity
+            b_col_obj.nifcollision.penetration_depth = bhkshape.rigid_body_info.penetration_depth
+            b_col_obj.nifcollision.deactivator_type = NifFormat.classes.HkDeactivatorType.from_value(bhkshape.rigid_body_info.deactivator_type)._name_
+            b_col_obj.nifcollision.solver_deactivation = NifFormat.classes.HkSolverDeactivation.from_value(bhkshape.rigid_body_info.solver_deactivation)._name_
+            b_col_obj.nifcollision.max_linear_velocity = bhkshape.rigid_body_info.max_linear_velocity
+            b_col_obj.nifcollision.max_angular_velocity = bhkshape.rigid_body_info.max_angular_velocity
 
-            b_col_obj.nifcollision.collision_layer = str(bhkshape.layer)
+            b_col_obj.nifcollision.collision_layer = str(bhkshape.rigid_body_info.havok_filter.layer._value_)
             # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
             # b_col_obj.nifcollision.col_filter = bhkshape.col_filter
@@ -327,5 +328,5 @@ class BhkCollision(Collision):
         faces = list(bhk_shape.get_triangles())
         b_obj = Object.mesh_from_data("poly", verts, faces)
         # TODO [collision] self.havok_mat!
-        self.set_b_collider(b_obj, bounds_type="MESH", radius=bhk_shape.radius)
+        self.set_b_collider(b_obj, bounds_type="MESH", radius=bhk_shape.bounding_sphere.radius)
         return [b_obj]

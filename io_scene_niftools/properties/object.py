@@ -47,7 +47,7 @@ from bpy.props import (PointerProperty,
                        )
 from bpy.types import PropertyGroup, Object
 
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -147,7 +147,7 @@ class ObjectProperty(PropertyGroup):
     consistency_flags: EnumProperty(
         name='Consistency Flag',
         description='Controls animation type',
-        items=[(item, item, "", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
+        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifFormat.classes.ConsistencyType)],
         # default = 'SHADER_DEFAULT'
     )
 

@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.modules.nif_import.geometry.vertex import Vertex
 from io_scene_niftools.modules.nif_import.property.texture.loader import TextureLoader
@@ -246,7 +246,7 @@ class NodesWrapper:
     def create_texture_slot(self, n_tex_desc):
         # todo [texture] refactor this to separate code paths?
         # when processing a NiTextureProperty
-        if isinstance(n_tex_desc, NifFormat.TexDesc):
+        if isinstance(n_tex_desc, NifFormat.classes.TexDesc):
             b_image = self.texture_loader.import_texture_source(n_tex_desc.source)
             uv_layer_index = n_tex_desc.uv_set
         # when processing a BS shader property - n_tex_desc is a bare string
@@ -321,7 +321,7 @@ class NodesWrapper:
         group_node = nodes.new('ShaderNodeGroup')
         group_node.node_tree = node_group
         links.new(group_node.inputs[0], b_texture_node.outputs[0])
-        if self.b_mat.niftools_shader.slsf_1_model_space_normals:
+        if self.b_mat.niftools_shader.model_space_normals:
             self.tree.links.new(self.diffuse_shader.inputs[2], group_node.outputs[0])
         else:
             # create tangent normal map converter and link to it
@@ -412,15 +412,15 @@ class NodesWrapper:
     @staticmethod
     def get_b_blend_type_from_n_apply_mode(n_apply_mode):
         # TODO [material] Check out n_apply_modes
-        if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
+        if n_apply_mode == NifFormat.classes.ApplyMode.APPLY_MODULATE:
             return "MIX"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
+        elif n_apply_mode == NifFormat.classes.ApplyMode.APPLY_REPLACE:
             return "COLOR"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
+        elif n_apply_mode == NifFormat.classes.ApplyMode.APPLY_DECAL:
             return "OVERLAY"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
+        elif n_apply_mode == NifFormat.classes.ApplyMode.APPLY_HILIGHT:
             return "LIGHTEN"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:  # used by Oblivion for parallax
+        elif n_apply_mode == NifFormat.classes.ApplyMode.APPLY_HILIGHT2:  # used by Oblivion for parallax
             return "MULTIPLY"
         else:
             NifLog.warn(f"Unknown apply mode ({n_apply_mode}) in material, using blend type 'MIX'")

@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.utils import math
@@ -49,7 +49,7 @@ class ObjectAnimation(Animation):
     def import_visibility(self, n_node, b_obj):
         """Import vis controller for blender object."""
 
-        n_vis_ctrl = math.find_controller(n_node, NifFormat.NiVisController)
+        n_vis_ctrl = math.find_controller(n_node, NifFormat.classes.NiVisController)
         if not n_vis_ctrl:
             return
         NifLog.info("Importing vis controller")

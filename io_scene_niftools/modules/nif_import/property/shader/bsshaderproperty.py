@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.modules.nif_import.property.material import Material
 from io_scene_niftools.modules.nif_import.property.shader import BSShader
@@ -80,8 +80,8 @@ class BSShaderPropertyProcessor(BSShader):
         return BSShaderPropertyProcessor.__instance
 
     def register(self, processor):
-        processor.register(NifFormat.BSLightingShaderProperty, self.import_bs_lighting_shader_property)
-        processor.register(NifFormat.BSEffectShaderProperty, self.import_bs_effect_shader_property)
+        processor.register(NifFormat.classes.BSLightingShaderProperty, self.import_bs_lighting_shader_property)
+        processor.register(NifFormat.classes.BSEffectShaderProperty, self.import_bs_effect_shader_property)
 
     def import_bs_lighting_shader_property(self, bs_shader_property):
 
@@ -89,8 +89,8 @@ class BSShaderPropertyProcessor(BSShader):
         b_shader = self._b_mat.niftools_shader
         b_shader.bs_shadertype = 'BSLightingShaderProperty'
 
-        shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(bs_shader_property.skyrim_shader_type)
-        b_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[shader_type]
+        shader_type = bs_shader_property.shader_type
+        b_shader.bslsp_shaderobjtype = shader_type._name_
 
         self.import_shader_flags(bs_shader_property)
 
@@ -102,9 +102,9 @@ class BSShaderPropertyProcessor(BSShader):
         self._nodes_wrapper.global_uv_offset_scale(x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y)
 
         # Diffuse color
-        if shader_type == NifFormat.BSLightingShaderPropertyShaderType["Skin Tint"]:
+        if shader_type == NifFormat.classes.BSLightingShaderType.SKIN_TINT:
             Material.import_material_diffuse(self._b_mat, bs_shader_property.skin_tint_color)
-        elif shader_type == NifFormat.BSLightingShaderPropertyShaderType["Hair Tint"]:
+        elif shader_type == NifFormat.classes.BSLightingShaderType.HAIR_TINT:
             Material.import_material_diffuse(self._b_mat, bs_shader_property.hair_tint_color)
 
         # TODO [material][b_shader][property] Handle nialphaproperty node lookup
@@ -191,16 +191,16 @@ class BSShaderPropertyProcessor(BSShader):
             # use modulo 256, because in BSEffectShaderProperty, pyffi also takes other bytes, making the value appear
             # higher than it is
             clamp_mode = shader.texture_clamp_mode % 256
-            if clamp_mode == NifFormat.TexClampMode.WRAP_S_WRAP_T:
+            if clamp_mode == NifFormat.classes.TexClampMode.WRAP_S_WRAP_T:
                 clamp_x = False
                 clamp_y = False
-            elif clamp_mode == NifFormat.TexClampMode.WRAP_S_CLAMP_T:
+            elif clamp_mode == NifFormat.classes.TexClampMode.WRAP_S_CLAMP_T:
                 clamp_x = False
                 clamp_y = True
-            elif clamp_mode == NifFormat.TexClampMode.CLAMP_S_WRAP_T:
+            elif clamp_mode == NifFormat.classes.TexClampMode.CLAMP_S_WRAP_T:
                 clamp_x = True
                 clamp_y = False
-            elif clamp_mode == NifFormat.TexClampMode.CLAMP_S_CLAMP_T:
+            elif clamp_mode == NifFormat.classes.TexClampMode.CLAMP_S_CLAMP_T:
                 clamp_x = True
                 clamp_y = True
             else:
