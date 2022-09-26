@@ -37,11 +37,12 @@
 #
 # ***** END LICENSE BLOCK *****
 import bpy
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export.property.texture import TextureSlotManager, TextureWriter
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.singleton import NifData
 
 
 class NiTextureProp(TextureSlotManager):
@@ -84,7 +85,7 @@ class NiTextureProp(TextureSlotManager):
 
         self.determine_texture_types(b_mat)
 
-        texprop = NifFormat.NiTexturingProperty()
+        texprop = NifFormat.classes.NiTexturingProperty(NifData.data)
 
         texprop.flags = flags
         texprop.apply_mode = applymode
@@ -95,7 +96,7 @@ class NiTextureProp(TextureSlotManager):
 
         # search for duplicate
         for n_block in block_store.block_to_obj:
-            if isinstance(n_block, NifFormat.NiTexturingProperty) and n_block.get_hash() == texprop.get_hash():
+            if isinstance(n_block, NifFormat.classes.NiTexturingProperty) and n_block.get_hash() == texprop.get_hash():
                 return n_block
 
         # no texturing property with given settings found, so use and register
@@ -162,20 +163,21 @@ class NiTextureProp(TextureSlotManager):
 
     def export_texture_effect(self, b_texture_node=None):
         """Export a texture effect block from material texture mtex (MTex, not Texture)."""
-        texeff = NifFormat.NiTextureEffect()
+        texeff = NifFormat.classes.NiTextureEffect(NifData.data)
         texeff.flags = 4
         texeff.rotation.set_identity()
         texeff.scale = 1.0
         texeff.model_projection_matrix.set_identity()
-        texeff.texture_filtering = NifFormat.TexFilterMode.FILTER_TRILERP
-        texeff.texture_clamping = NifFormat.TexClampMode.WRAP_S_WRAP_T
-        texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
-        texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
+        texeff.texture_filtering = NifFormat.classes.TexFilterMode.FILTER_TRILERP
+        texeff.texture_clamping = NifFormat.classes.TexClampMode.WRAP_S_WRAP_T
+        texeff.texture_type = NifFormat.classes.EffectType.EFFECT_ENVIRONMENT_MAP
+        texeff.coordinate_generation_type = NifFormat.classes.CoordGenType.CG_SPHERE_MAP
         if b_texture_node:
             texeff.source_texture = TextureWriter.export_source_texture(b_texture_node.texture)
             if bpy.context.scene.niftools_scene.game == 'MORROWIND':
                 texeff.num_affected_node_list_pointers += 1
-                texeff.affected_node_list_pointers.update_size()
+                # added value doesn't matter since it apparently gets automagically updated in engine
+                texeff.affected_node_list_pointers.append(0)
         texeff.unknown_vector.x = 1.0
         return block_store.register_block(texeff)
 
@@ -187,7 +189,7 @@ class NiTextureProp(TextureSlotManager):
             # sid meier's railroads:
             # some textures end up in the shader texture list there are 5 slots available, so set them up
             tex_prop.num_shader_textures = 5
-            tex_prop.shader_textures.update_size()
+            tex_prop.reset_field("shader_textures")
             for mapindex, shadertexdesc in enumerate(tex_prop.shader_textures):
                 # set default values
                 shadertexdesc.is_used = False
@@ -205,7 +207,7 @@ class NiTextureProp(TextureSlotManager):
         elif bpy.context.scene.niftools_scene.game == 'CIVILIZATION_IV':
             # some textures end up in the shader texture list there are 4 slots available, so set them up
             tex_prop.num_shader_textures = 4
-            tex_prop.shader_textures.update_size()
+            tex_prop.reset_field("shader_textures")
             for mapindex, shadertexdesc in enumerate(tex_prop.shader_textures):
                 # set default values
                 shadertexdesc.is_used = False
@@ -220,11 +222,11 @@ class NiTextureProp(TextureSlotManager):
     @staticmethod
     def get_n_apply_mode_from_b_blend_type(b_blend_type):
         if b_blend_type == "LIGHTEN":
-            return NifFormat.ApplyMode.APPLY_HILIGHT
+            return NifFormat.classes.ApplyMode.APPLY_HILIGHT
         elif b_blend_type == "MULTIPLY":
-            return NifFormat.ApplyMode.APPLY_HILIGHT2
+            return NifFormat.classes.ApplyMode.APPLY_HILIGHT2
         elif b_blend_type == "MIX":
-            return NifFormat.ApplyMode.APPLY_MODULATE
+            return NifFormat.classes.ApplyMode.APPLY_MODULATE
 
         NifLog.warn(f"Unsupported blend type ({b_blend_type}) in material, using apply mode APPLY_MODULATE")
-        return NifFormat.ApplyMode.APPLY_MODULATE
+        return NifFormat.classes.ApplyMode.APPLY_MODULATE

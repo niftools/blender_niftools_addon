@@ -39,7 +39,7 @@
 
 from bpy.types import Panel
 
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -78,7 +78,7 @@ class SceneVersionInfoPanel(SceneButtonsPanel):
         layout.use_property_split = True
 
         nif_scene_props = context.scene.niftools_scene
-        layout.label(text=NifFormat.HeaderString.version_string(nif_scene_props.nif_version))
+        layout.label(text=NifFormat.classes.HeaderString.version_string(nif_scene_props.nif_version))
 
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
 

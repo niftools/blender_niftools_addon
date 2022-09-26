@@ -95,8 +95,8 @@ def export_range_lod_data(n_node, b_obj):
     # set the data
     n_node.num_lod_levels = len(b_children)
     n_range_data.num_lod_levels = len(b_children)
-    n_node.lod_levels.update_size()
-    n_range_data.lod_levels.update_size()
+    n_node.reset_field("lod_levels")
+    n_range_data.reset_field("lod_levels")
     for b_child, n_lod_level, n_rd_lod_level in zip(b_children, n_node.lod_levels, n_range_data.lod_levels):
         n_lod_level.near_extent = b_child["near_extent"]
         n_lod_level.far_extent = b_child["far_extent"]
@@ -118,7 +118,7 @@ def export_furniture_marker(n_root, filebase):
         furnmark = block_store.create_block("BSFurnitureMarker")
         furnmark.name = "FRN"
         furnmark.num_positions = 1
-        furnmark.positions.update_size()
+        furnmark.reset_field("positions")
         furnmark.positions[0].position_ref_1 = furniturenumber
         furnmark.positions[0].position_ref_2 = furniturenumber
 

@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -66,13 +66,13 @@ class ObjectAnimation(Animation):
         # NiVisData = old style, NiBoolData = new style
         n_vis_data = block_store.create_block("NiVisData", fcurves)
         n_vis_data.num_keys = len(fcurves[0].keyframe_points)
-        n_vis_data.keys.update_size()
+        n_vis_data.reset_field("keys")
 
         # we just leave interpolation at constant
         n_bool_data = block_store.create_block("NiBoolData", fcurves)
-        n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
+        n_bool_data.data.interpolation = NifFormat.classes.KeyType.CONST_KEY
         n_bool_data.data.num_keys = len(fcurves[0].keyframe_points)
-        n_bool_data.data.keys.update_size()
+        n_bool_data.data.reset_field("keys")
         for b_point, n_vis_key, n_bool_key in zip(fcurves[0].keyframe_points, n_vis_data.keys, n_bool_data.data.keys):
             # add each point of the curve
             b_frame, b_value = b_point.co

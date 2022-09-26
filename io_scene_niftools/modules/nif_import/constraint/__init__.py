@@ -169,7 +169,7 @@ class Constraint:
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.export_constraints)
-            if isinstance(hkdescriptor, NifFormat.classes.RagdollDescriptor):
+            if isinstance(hkdescriptor, NifFormat.classes.BhkRagdollConstraintCInfo):
                 b_constr.pivot_type = 'CONE_TWIST'
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
@@ -194,7 +194,7 @@ class Constraint:
 
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
 
-            elif isinstance(hkdescriptor, NifFormat.classes.LimitedHingeDescriptor):
+            elif isinstance(hkdescriptor, NifFormat.classes.BhkLimitedHingeConstraintCInfo):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
                 axis_y = mathutils.Vector((hkdescriptor.perp_2_axle_in_a_1.x,
@@ -336,10 +336,10 @@ class Constraint:
             assert ((axis_z - mathutils.Vector((0, 0, 1)) * constr_matrix).length < 0.0001)
 
             # the generic rigid body type is very buggy... so for simulation purposes let's transform it into ball and hinge
-            if isinstance(hkdescriptor, NifFormat.classes.RagdollDescriptor):
+            if isinstance(hkdescriptor, NifFormat.classes.BhkRagdollConstraintCInfo):
                 # cone_twist
                 b_constr.pivot_type = 'CONE_TWIST'
-            elif isinstance(hkdescriptor, (NifFormat.classes.LimitedHingeDescriptor, NifFormat.classes.HingeDescriptor)):
+            elif isinstance(hkdescriptor, (NifFormat.classes.BhkLimitedHingeConstraintCInfo, NifFormat.classes.HingeDescriptor)):
                 # (limited) hinge
                 b_constr.pivot_type = 'HINGE'
             else:

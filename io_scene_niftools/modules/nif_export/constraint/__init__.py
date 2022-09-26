@@ -37,10 +37,10 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.formats.nif import NifFormat
-
 import bpy
 import mathutils
+
+import generated.formats.nif as NifFormat
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -78,7 +78,7 @@ class Constraint:
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in block_store.block_to_obj.items():
-                    if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj is b_obj:
+                    if isinstance(otherbody, NifFormat.classes.BhkRigidBody) and otherobj is b_obj:
                         hkbody = otherbody
                         break
                 else:
@@ -121,7 +121,7 @@ class Constraint:
                 if b_obj.niftools_constraint.LHMaxFriction != 0:
                     max_friction = b_obj.niftools_constraint.LHMaxFriction
                 else:
-                    if isinstance(n_bhkconstraint, NifFormat.bhkMalleableConstraint):
+                    if isinstance(n_bhkconstraint, NifFormat.classes.BhkMalleableConstraint):
                         # malleable typically have 0 (perhaps because they have a damping parameter)
                         max_friction = 0
                     else:
@@ -133,12 +133,11 @@ class Constraint:
 
                 # parent constraint to hkbody
                 hkbody.num_constraints += 1
-                hkbody.constraints.update_size()
-                hkbody.constraints[-1] = n_bhkconstraint
+                hkbody.append(n_bhkconstraint)
 
                 # export n_bhkconstraint settings
                 n_bhkconstraint.num_entities = 2
-                n_bhkconstraint.entities.update_size()
+                n_bhkconstraint.reset_field("entities")
                 n_bhkconstraint.entities[0] = hkbody
                 # is there a target?
                 targetobj = b_constr.target
@@ -147,7 +146,7 @@ class Constraint:
                     continue
                 # find target's bhkRigidBody
                 for otherbody, otherobj in block_store.block_to_obj.items():
-                    if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj == targetobj:
+                    if isinstance(otherbody, NifFormat.classes.BhkRigidBody) and otherobj == targetobj:
                         n_bhkconstraint.entities[1] = otherbody
                         break
                 else:
@@ -157,7 +156,7 @@ class Constraint:
                 # priority
                 n_bhkconstraint.priority = 1
                 # extra malleable constraint settings
-                if isinstance(n_bhkconstraint, NifFormat.bhkMalleableConstraint):
+                if isinstance(n_bhkconstraint, NifFormat.classes.BhkMalleableConstraint):
                     # unknowns
                     n_bhkconstraint.unknown_int_2 = 2
                     n_bhkconstraint.unknown_int_3 = 1
@@ -210,7 +209,7 @@ class Constraint:
                 axis_y = mathutils.Vector([0, 1, 0]) * constr_matrix
                 axis_z = mathutils.Vector([0, 0, 1]) * constr_matrix
 
-                if isinstance(n_bhkdescriptor, NifFormat.RagdollDescriptor):
+                if isinstance(n_bhkdescriptor, NifFormat.classes.BhkRagdollConstraintCInfo):
                     # z axis is the twist vector
                     n_bhkdescriptor.twist_a.x = axis_z[0]
                     n_bhkdescriptor.twist_a.y = axis_z[1]
@@ -233,7 +232,7 @@ class Constraint:
                     # same for maximum cone angle
                     n_bhkdescriptor.max_friction = max_friction
 
-                elif isinstance(n_bhkdescriptor, NifFormat.LimitedHingeDescriptor):
+                elif isinstance(n_bhkdescriptor, NifFormat.classes.BhkLimitedHingeConstraintCInfo):
                     # y axis is the zero angle vector on the plane of rotation
                     n_bhkdescriptor.perp_2_axle_in_a_1.x = axis_y[0]
                     n_bhkdescriptor.perp_2_axle_in_a_1.y = axis_y[1]
