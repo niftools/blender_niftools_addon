@@ -174,10 +174,8 @@ class VertexGroup:
                 tri_map[vertices] = [polygon.index]
         if isinstance(skininst, NifFormat.classes.BSDismemberSkinInstance):
             skinpart = ni_block.get_skin_partition()
-            for bodypart, skinpartblock in zip(skininst.partitions, skinpart.skin_partition_blocks):
-                bodypart_wrap = NifFormat.classes.BSDismemberBodyPartType()
-                bodypart_wrap.set_value(bodypart.body_part)
-                group_name = bodypart_wrap.get_detail_display()
+            for bodypart, skinpartblock in zip(skininst.partitions, skinpart.partitions):
+                group_name = bodypart.body_part._name_
 
                 # create face map if it did not exist yet
                 if group_name not in b_obj.face_maps:
