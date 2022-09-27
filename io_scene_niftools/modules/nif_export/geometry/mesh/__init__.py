@@ -336,7 +336,7 @@ class Mesh:
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if use_tangents:
                 if game == 'SKYRIM':
-                    n_geom.data.bs_num_uv_sets = n_geom.data.bs_num_uv_sets + 4096
+                    n_geom.data.bs_data_flags.has_tangents = True
                 # calculate the bitangents using the normals, tangent list and bitangent sign
                 bitangents = bitangent_signs * np.cross(normals, tangents)
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
@@ -451,9 +451,16 @@ class Mesh:
         for n_v, b_v in zip(n_geom.data.vertex_colors, vertex_colors):
             n_v.r, n_v.g, n_v.b, n_v.a = b_v
         # uv_sets
-        n_geom.data.has_uv = bool(b_uv_layers)
-        n_geom.data.num_uv_sets = len(b_uv_layers)
-        n_geom.data.bs_num_uv_sets = len(b_uv_layers)
+        if bpy.context.scene.niftools_scene.game == "SKYRIM":
+            data_flags = n_geom.data.bs_data_flags
+        else:
+            data_flags = n_geom.data.data_flags
+        data_flags.has_uv = bool(b_uv_layers)
+        if hasattr(data_flags, "num_uv_sets"):
+            data_flags.num_uv_sets = len(b_uv_layers)
+        else:
+            if len(b_uv_layers) > 1:
+                NifLog.warn(f"More than one UV layers for game that doesn't support it, taking first UV layer")
         n_geom.data.reset_field("uv_sets")
         for j, n_uv_set in enumerate(n_geom.data.uv_sets):
             for i, n_uv in enumerate(n_uv_set):
