@@ -435,7 +435,7 @@ def update_skin_partition(self,
             # store part for next iteration
             lastpart = part
 
-    for skinpartblock, part in zip(skinpart.skin_partition_blocks, parts):
+    for skinpartblock, part in zip(skinpart.partitions, parts):
         # get sorted list of bones
         bones = sorted(list(part[0]))
         triangles = part[1]

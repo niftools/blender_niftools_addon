@@ -168,6 +168,8 @@ class BSShaderProperty:
                 b_flag = b_mat.niftools_shader.get(sf_flag)
                 if b_flag:
                     setattr(flags, sf_flag, True)
+                else:
+                    setattr(flags, sf_flag, False)
 
     @staticmethod
     def set_color3_property(n_property, b_color):

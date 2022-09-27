@@ -75,9 +75,9 @@ class ShaderPanel(Panel):
         elif nif_obj_props.bs_shadertype in ('BSLightingShaderProperty', 'BSEffectShaderProperty'):
             row.prop(nif_obj_props, "bslsp_shaderobjtype")
 
-            for property_name in sorted([member._name_ for member in NifFormat.classes.SkyrimShaderPropertyFlags1]):
+            for property_name in sorted([member for member in NifFormat.classes.SkyrimShaderPropertyFlags1.__members__]):
                 row.prop(nif_obj_props, property_name)
-            for property_name in sorted([member._name_ for member in NifFormat.classes.SkyrimShaderPropertyFlags2]):
+            for property_name in sorted([member for member in NifFormat.classes.SkyrimShaderPropertyFlags2.__members__]):
                 row.prop(nif_obj_props, property_name)
 
 

@@ -73,7 +73,7 @@ class VertexGroup:
             bone_transforms.append(transform)
 
         # now the actual unique bit
-        for block in skin_partition.skin_partition_blocks:
+        for block in skin_partition.partitions:
             # create all vgroups for this block's bones
             block_bone_transforms = [bone_transforms[i] for i in block.bones]
 
@@ -147,7 +147,7 @@ class VertexGroup:
             # WLP2 - hides the weights in the partition
             else:
                 skin_partition = skininst.skin_partition
-                for block in skin_partition.skin_partition_blocks:
+                for block in skin_partition.partitions:
                     # create all vgroups for this block's bones
                     block_bone_names = [block_store.import_name(bones[i]) for i in block.bones]
                     for group_name in block_bone_names:
