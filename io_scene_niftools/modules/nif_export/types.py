@@ -53,14 +53,16 @@ def create_ninode(b_obj=None, n_node_type=None):
             n_node_type = "NiNode"
     # get node type - some are stored as custom property of the b_obj
     else:
-        try:
-            n_node_type = b_obj["type"]
-        except KeyError:
-            n_node_type = "NiNode"
+        # let n_node_type overwrite the detected node type
+        if n_node_type is None:
+            try:
+                n_node_type = b_obj["type"]
+            except KeyError:
+                n_node_type = "NiNode"
 
-        # ...others by presence of constraints
-        if has_track(b_obj):
-            n_node_type = "NiBillboardNode"
+            # ...others by presence of constraints
+            if has_track(b_obj):
+                n_node_type = "NiBillboardNode"
 
     # now create the node
     n_node = block_store.create_block(n_node_type, b_obj)
