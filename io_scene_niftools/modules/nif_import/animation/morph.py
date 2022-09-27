@@ -65,7 +65,7 @@ class MorphAnimation(Animation):
             if morph_data.num_morphs:
                 # get name for base key
                 morph = morph_data.morphs[0]
-                key_name = morph.frame_name.decode()
+                key_name = morph.frame_name
                 if not key_name:
                     key_name = 'Base'
 
@@ -80,7 +80,7 @@ class MorphAnimation(Animation):
                 for morph_i in range(1, morph_data.num_morphs):
                     morph = morph_data.morphs[morph_i]
                     # get name for key
-                    key_name = morph.frame_name.decode()
+                    key_name = morph.frame_name
                     if not key_name:
                         key_name = f'Key {morph_i}'
                     NifLog.info(f"Inserting key '{key_name}'")

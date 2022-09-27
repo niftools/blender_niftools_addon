@@ -305,9 +305,9 @@ class TransformAnimation(Animation):
         NifLog.info("Adding controllers and interpolators for skeleton")
         # note: block_store.block_to_obj changes during iteration, so need list copy
         for n_block in list(block_store.block_to_obj.keys()):
-            if isinstance(n_block, NifFormat.classes.NiNode) and n_block.name.decode() == "Bip01":
+            if isinstance(n_block, NifFormat.classes.NiNode) and n_block.name == "Bip01":
                 for n_bone in n_block.tree(block_type=NifFormat.classes.NiNode):
-                    n_kfc, n_kfi = self.transform_anim.create_controller(n_bone, n_bone.name.decode())
+                    n_kfc, n_kfi = self.transform_anim.create_controller(n_bone, n_bone.name)
                     # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
                     n_kfc.flags = 12
                     n_kfc.frequency = 1.0

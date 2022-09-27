@@ -131,7 +131,7 @@ class BSShader(ABC):
     def create_material_name(self, bs_shader_property):
         name = block_store.import_name(bs_shader_property)
         if name is None:
-            name = (self._n_block.name.decode() + "_nt_mat")
+            name = (self._n_block.name + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
         self._b_mesh.materials.append(b_mat)
         return b_mat

@@ -135,15 +135,15 @@ class Mesh:
             else:
                 if not trishape_name:
                     if n_parent.name:
-                        n_geom.name = "Tri " + n_parent.name.decode()
+                        n_geom.name = "Tri " + n_parent.name
                     else:
-                        n_geom.name = "Tri " + b_obj.name.decode()
+                        n_geom.name = "Tri " + b_obj.name
                 else:
                     n_geom.name = trishape_name
 
                 # multimaterial meshes: add material index (Morrowind's child naming convention)
                 if len(mesh_materials) > 1:
-                    n_geom.name = f"{n_geom.name.decode()}: {b_mat_index}"
+                    n_geom.name = f"{n_geom.name}: {b_mat_index}"
                 else:
                     n_geom.name = block_store.get_full_name(n_geom)
 
@@ -460,7 +460,7 @@ class Mesh:
             data_flags.num_uv_sets = len(b_uv_layers)
         else:
             if len(b_uv_layers) > 1:
-                NifLog.warn(f"More than one UV layers for game that doesn't support it, taking first UV layer")
+                NifLog.warn(f"More than one UV layers for game that doesn't support it, only using first UV layer")
         n_geom.data.reset_field("uv_sets")
         for j, n_uv_set in enumerate(n_geom.data.uv_sets):
             for i, n_uv in enumerate(n_uv_set):
@@ -594,7 +594,7 @@ class Mesh:
         # make sure that such a block exists, find it
         for block in block_store.block_to_obj:
             if isinstance(block, NifFormat.classes.NiNode):
-                if block.name.decode() == n_root_name:
+                if block.name == n_root_name:
                     skininst.skeleton_root = block
                     break
         else:

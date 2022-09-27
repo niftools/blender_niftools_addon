@@ -201,7 +201,7 @@ class Animation:
         """Stores the text keys as pose markers in a blender action."""
         if txk and b_action:
             for key in txk.text_keys:
-                newkey = key.value.decode().replace('\r\n', '/').rstrip('/')
+                newkey = key.value.replace('\r\n', '/').rstrip('/')
                 frame = round(key.time * self.fps)
                 marker = b_action.pose_markers.new(newkey)
                 marker.frame = frame
