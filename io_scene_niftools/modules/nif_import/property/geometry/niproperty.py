@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.animation.material import MaterialAnimation
 from io_scene_niftools.modules.nif_import.property.material import Material, NiMaterial
@@ -72,13 +72,13 @@ class NiPropertyProcessor:
     #         NiPropertyProcessor.__instance = self
 
     def register(self, processor):
-        processor.register(NifFormat.classes.NiMaterialProperty, self.process_nimaterial_property)
-        processor.register(NifFormat.classes.NiAlphaProperty, self.process_nialpha_property)
-        processor.register(NifFormat.classes.NiTexturingProperty, self.process_nitexturing_property)
-        processor.register(NifFormat.classes.NiStencilProperty, self.process_nistencil_property)
-        processor.register(NifFormat.classes.NiSpecularProperty, self.process_nispecular_property)
-        processor.register(NifFormat.classes.NiWireframeProperty, self.process_niwireframe_property)
-        processor.register(NifFormat.classes.NiVertexColorProperty, self.process_nivertexcolor_property)
+        processor.register(NifClasses.NiMaterialProperty, self.process_nimaterial_property)
+        processor.register(NifClasses.NiAlphaProperty, self.process_nialpha_property)
+        processor.register(NifClasses.NiTexturingProperty, self.process_nitexturing_property)
+        processor.register(NifClasses.NiStencilProperty, self.process_nistencil_property)
+        processor.register(NifClasses.NiSpecularProperty, self.process_nispecular_property)
+        processor.register(NifClasses.NiWireframeProperty, self.process_niwireframe_property)
+        processor.register(NifClasses.NiVertexColorProperty, self.process_nivertexcolor_property)
 
     @property
     def b_mesh(self):

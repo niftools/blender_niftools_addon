@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -70,7 +70,7 @@ class ObjectAnimation(Animation):
 
         # we just leave interpolation at constant
         n_bool_data = block_store.create_block("NiBoolData", fcurves)
-        n_bool_data.data.interpolation = NifFormat.classes.KeyType.CONST_KEY
+        n_bool_data.data.interpolation = NifClasses.KeyType.CONST_KEY
         n_bool_data.data.num_keys = len(fcurves[0].keyframe_points)
         n_bool_data.data.reset_field("keys")
         for b_point, n_vis_key, n_bool_key in zip(fcurves[0].keyframe_points, n_vis_data.keys, n_bool_data.data.keys):

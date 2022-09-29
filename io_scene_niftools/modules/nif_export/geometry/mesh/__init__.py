@@ -42,7 +42,7 @@ import mathutils
 import numpy as np
 import struct
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.geometry import mesh
@@ -92,7 +92,7 @@ class Mesh:
             return
 
         # get the mesh's materials, this updates the mesh material list
-        if not isinstance(n_parent, NifFormat.classes.RootCollisionNode):
+        if not isinstance(n_parent, NifClasses.RootCollisionNode):
             mesh_materials = eval_mesh.materials
         else:
             # ignore materials on collision trishapes
@@ -130,7 +130,7 @@ class Mesh:
                 n_geom.data = block_store.create_block("NiTriStripsData", b_obj)
 
             # fill in the NiTriShape's non-trivial values
-            if isinstance(n_parent, NifFormat.classes.RootCollisionNode):
+            if isinstance(n_parent, NifClasses.RootCollisionNode):
                 n_geom.name = ""
             else:
                 if not trishape_name:
@@ -424,7 +424,7 @@ class Mesh:
                     self.export_skin_partition(b_obj, bodypartfacemap, triangles, n_geom)
 
             # fix data consistency type
-            n_geom.data.consistency_flags = getattr(NifFormat.classes.ConsistencyType, b_obj.niftools.consistency_flags)
+            n_geom.data.consistency_flags = getattr(NifClasses.ConsistencyType, b_obj.niftools.consistency_flags)
 
             # export EGM or NiGeomMorpherController animation
             # shape keys are only present on the raw, unevaluated mesh
@@ -493,7 +493,7 @@ class Mesh:
                     NifLog.warn(f"Using more than {rec_bones} bones per partition on {game} export."
                                 f"This may cause issues in-game.")
 
-            part_order = [getattr(NifFormat.classes.BSDismemberBodyPartType, face_map.name, None) for face_map in
+            part_order = [getattr(NifClasses.BSDismemberBodyPartType, face_map.name, None) for face_map in
                           b_obj.face_maps]
             part_order = [body_part for body_part in part_order if body_part is not None]
             # override pyffi n_geom.update_skin_partition with custom one (that allows ordering)
@@ -556,7 +556,7 @@ class Mesh:
     def get_bone_block(self, b_bone):
         """For a blender bone, return the corresponding nif node from the blocks that have already been exported"""
         for n_block, b_obj in block_store.block_to_obj.items():
-            if isinstance(n_block, NifFormat.classes.NiNode) and b_bone == b_obj:
+            if isinstance(n_block, NifClasses.NiNode) and b_bone == b_obj:
                 return n_block
         raise NifError(f"Bone '{b_bone.name}' not found.")
 
@@ -564,10 +564,10 @@ class Mesh:
         """Returns the body part indices of the mesh polygons. -1 is either not assigned to a face map or not a valid
         body part"""
         index_group_map = {-1: -1}
-        for bodypartgroupname in [member._name_ for member in NifFormat.classes.BSDismemberBodyPartType]:
+        for bodypartgroupname in [member._name_ for member in NifClasses.BSDismemberBodyPartType]:
             face_map = b_obj.face_maps.get(bodypartgroupname)
             if face_map:
-                index_group_map[face_map.index] = getattr(NifFormat.classes.BSDismemberBodyPartType, bodypartgroupname)
+                index_group_map[face_map.index] = getattr(NifClasses.BSDismemberBodyPartType, bodypartgroupname)
         if len(index_group_map) <= 1:
             # there were no valid face maps
             return []
@@ -593,7 +593,7 @@ class Mesh:
             n_root_name = block_store.get_full_name(b_obj_armature)
         # make sure that such a block exists, find it
         for block in block_store.block_to_obj:
-            if isinstance(block, NifFormat.classes.NiNode):
+            if isinstance(block, NifClasses.NiNode):
                 if block.name == n_root_name:
                     skininst.skeleton_root = block
                     break
@@ -777,12 +777,12 @@ class Mesh:
             # find possible extra data block
             extra_name = b'Tangent space (binormal & tangent vectors)'
             for extra in n_geom.get_extra_datas():
-                if isinstance(extra, NifFormat.classes.NiBinaryExtraData):
+                if isinstance(extra, NifClasses.NiBinaryExtraData):
                     if extra.name == extra_name:
                         break
             else:
                 # create a new block and link it
-                extra = NifFormat.classes.NiBinaryExtraData(NifData.data)
+                extra = NifClasses.NiBinaryExtraData(NifData.data)
                 extra.name = extra_name
                 n_geom.add_extra_data(extra)
             # write the data

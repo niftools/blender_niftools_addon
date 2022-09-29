@@ -40,7 +40,7 @@
 
 import bpy
 import generated.spells.nif.fix
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.file_io.nif import NifFile
@@ -115,7 +115,7 @@ class NifImport(NifCommon):
             # import all root blocks
             for root in NifData.data.roots:
                 # root hack for corrupt better bodies meshes and remove geometry from better bodies on skeleton import
-                for b in (b for b in root.tree(block_type=NifFormat.classes.NiGeometry) if b.is_skin()):
+                for b in (b for b in root.tree(block_type=NifClasses.NiGeometry) if b.is_skin()):
                     # check if root belongs to the children list of the skeleton root
                     if root in [c for c in b.skin_instance.skeleton_root.children]:
                         # fix parenting and update transform accordingly
@@ -145,18 +145,18 @@ class NifImport(NifCommon):
     def import_root(self, root_block):
         """Main import function."""
         # check that this is not a kf file
-        if isinstance(root_block, (NifFormat.classes.NiSequence, NifFormat.classes.NiSequenceStreamHelper)):
+        if isinstance(root_block, (NifClasses.NiSequence, NifClasses.NiSequenceStreamHelper)):
             raise io_scene_niftools.utils.logging.NifError("Use the KF import operator to load KF files.")
 
         # divinity 2: handle CStreamableAssetData
-        if isinstance(root_block, NifFormat.classes.CStreamableAssetData):
+        if isinstance(root_block, NifClasses.CStreamableAssetData):
             root_block = root_block.root
 
         # mark armature nodes and bones
         self.armaturehelper.check_for_skin(root_block)
 
         # read the NIF tree
-        if isinstance(root_block, (NifFormat.classes.NiNode, NifFormat.classes.NiTriBasedGeom)):
+        if isinstance(root_block, (NifClasses.NiNode, NifClasses.NiTriBasedGeom)):
             b_obj = self.import_branch(root_block)
             ObjectProperty().import_extra_datas(root_block, b_obj)
 
@@ -169,10 +169,10 @@ class NifImport(NifCommon):
                     self.objecthelper.remove_armature_modifier(b_child)
                     self.objecthelper.append_armature_modifier(b_child, b_obj)
 
-        elif isinstance(root_block, NifFormat.classes.NiCamera):
+        elif isinstance(root_block, NifClasses.NiCamera):
             NifLog.warn('Skipped NiCamera root')
 
-        elif isinstance(root_block, NifFormat.classes.NiPhysXProp):
+        elif isinstance(root_block, NifClasses.NiPhysXProp):
             NifLog.warn('Skipped NiPhysXProp root')
 
         else:
@@ -181,9 +181,9 @@ class NifImport(NifCommon):
     def import_collision(self, n_node):
         """ Imports a NiNode's collision_object, if present"""
         if n_node.collision_object:
-            if isinstance(n_node.collision_object, NifFormat.classes.BhkNiCollisionObject):
+            if isinstance(n_node.collision_object, NifClasses.BhkNiCollisionObject):
                 return self.bhkhelper.import_bhk_shape(n_node.collision_object.body)
-            elif isinstance(n_node.collision_object, NifFormat.classes.NiCollisionData):
+            elif isinstance(n_node.collision_object, NifClasses.NiCollisionData):
                 return self.boundhelper.import_bounding_volume(n_node.collision_object.bounding_volume)
         return []
 
@@ -197,10 +197,10 @@ class NifImport(NifCommon):
             return None
 
         NifLog.info(f"Importing data for block '{safe_decode(n_block.name)}'")
-        if isinstance(n_block, NifFormat.classes.NiTriBasedGeom) and NifOp.props.process != "SKELETON_ONLY":
+        if isinstance(n_block, NifClasses.NiTriBasedGeom) and NifOp.props.process != "SKELETON_ONLY":
             return self.objecthelper.import_geometry_object(b_armature, n_block)
 
-        elif isinstance(n_block, NifFormat.classes.NiNode):
+        elif isinstance(n_block, NifClasses.NiNode):
             # import object
             if self.armaturehelper.is_armature_root(n_block):
                 # all bones in the tree are also imported by import_armature

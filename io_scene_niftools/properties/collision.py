@@ -46,7 +46,7 @@ from bpy.props import (PointerProperty,
                        )
 from bpy.types import PropertyGroup
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -59,11 +59,11 @@ def game_specific_col_layer_items(self, context):
         current_game = context.scene.niftools_scene.game
     col_layer_format = None
     if current_game == "OBLIVION":
-        col_layer_format = NifFormat.classes.OblivionLayer
+        col_layer_format = NifClasses.OblivionLayer
     elif current_game == "FALLOUT_3":
-        col_layer_format = NifFormat.classes.Fallout3Layer
+        col_layer_format = NifClasses.Fallout3Layer
     elif current_game in ("SKYRIM" , "SKYRIM_SE", "FALLOUT_4"):
-        col_layer_format = NifFormat.classes.SkyrimLayer
+        col_layer_format = NifClasses.SkyrimLayer
     if col_layer_format is None:
         return []
     else:
@@ -75,7 +75,7 @@ class CollisionProperty(PropertyGroup):
     motion_system: EnumProperty(
         name='Motion System',
         description='Havok Motion System settings for bhkRigidBody(t)',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifFormat.classes.HkMotionType)],
+        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.HkMotionType)],
         # default = 'MO_SYS_FIXED',
 
     )
@@ -95,19 +95,19 @@ class CollisionProperty(PropertyGroup):
     deactivator_type: EnumProperty(
         name='Deactivator Type',
         description='Motion deactivation setting',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifFormat.classes.HkDeactivatorType)],
+        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.HkDeactivatorType)],
     )
 
     solver_deactivation: EnumProperty(
         name='Solver Deactivation',
         description='Motion deactivation setting',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifFormat.classes.HkSolverDeactivation)],
+        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.HkSolverDeactivation)],
     )
 
     quality_type: EnumProperty(
         name='Quality Type',
         description='Determines quality of motion',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifFormat.classes.HkQualityType)],
+        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.HkQualityType)],
         # default = 'MO_QUAL_FIXED',
     )
 

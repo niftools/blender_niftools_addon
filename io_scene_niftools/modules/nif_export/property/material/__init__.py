@@ -39,7 +39,7 @@
 
 
 import bpy
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.animation.material import MaterialAnimation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -62,7 +62,7 @@ class MaterialProp:
             return
         name = block_store.get_full_name(b_mat)
         # create n_block
-        n_mat_prop = NifFormat.classes.NiMaterialProperty(NifData.data)
+        n_mat_prop = NifClasses.NiMaterialProperty(NifData.data)
 
         # list which determines whether the material name is relevant or not  only for particular names this holds,
         # such as EnvMap2 by default, the material name does not affect rendering
@@ -108,7 +108,7 @@ class MaterialProp:
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different materials even when NiMaterialProperty is the same)
         for n_block in block_store.block_to_obj:
-            if not isinstance(n_block, NifFormat.classes.NiMaterialProperty):
+            if not isinstance(n_block, NifClasses.NiMaterialProperty):
                 continue
 
             # when optimization is enabled, ignore material name

@@ -40,7 +40,7 @@
 import bpy
 import mathutils
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -107,7 +107,7 @@ class TransformAnimation(Animation):
         kf_root.name = b_action.name
         kf_root.unknown_int_1 = 1
         kf_root.weight = 1.0
-        kf_root.cycle_type = NifFormat.classes.CycleType.CYCLE_CLAMP
+        kf_root.cycle_type = NifClasses.CycleType.CYCLE_CLAMP
         kf_root.frequency = 1.0
 
         if anim_textextra.num_text_keys > 0:
@@ -241,18 +241,18 @@ class TransformAnimation(Animation):
 
         # finally we can export the data calculated above
         if euler_curve:
-            n_kfd.rotation_type = NifFormat.classes.KeyType.XYZ_ROTATION_KEY
+            n_kfd.rotation_type = NifClasses.KeyType.XYZ_ROTATION_KEY
             n_kfd.num_rotation_keys = 1  # *NOT* len(frames) this crashes the engine!
             n_kfd.reset_field("xyz_rotations")
             for i, coord in enumerate(n_kfd.xyz_rotations):
                 coord.num_keys = len(euler_curve)
-                coord.interpolation = NifFormat.classes.KeyType.LINEAR_KEY
+                coord.interpolation = NifClasses.KeyType.LINEAR_KEY
                 coord.reset_field("keys")
                 for key, (frame, euler) in zip(coord.keys, euler_curve):
                     key.time = frame / self.fps
                     key.value = euler[i]
         elif quat_curve:
-            n_kfd.rotation_type = NifFormat.classes.KeyType.QUADRATIC_KEY
+            n_kfd.rotation_type = NifClasses.KeyType.QUADRATIC_KEY
             n_kfd.num_rotation_keys = len(quat_curve)
             n_kfd.reset_field("quaternion_keys")
             for key, (frame, quat) in zip(n_kfd.quaternion_keys, quat_curve):
@@ -262,14 +262,14 @@ class TransformAnimation(Animation):
                 key.value.y = quat.y
                 key.value.z = quat.z
 
-        n_kfd.translations.interpolation = NifFormat.classes.KeyType.LINEAR_KEY
+        n_kfd.translations.interpolation = NifClasses.KeyType.LINEAR_KEY
         n_kfd.translations.num_keys = len(trans_curve)
         n_kfd.translations.reset_field("keys")
         for key, (frame, trans) in zip(n_kfd.translations.keys, trans_curve):
             key.time = frame / self.fps
             key.value.x, key.value.y, key.value.z = trans
 
-        n_kfd.scales.interpolation = NifFormat.classes.KeyType.LINEAR_KEY
+        n_kfd.scales.interpolation = NifClasses.KeyType.LINEAR_KEY
         n_kfd.scales.num_keys = len(scale_curve)
         n_kfd.scales.reset_field("keys")
         for key, (frame, scale) in zip(n_kfd.scales.keys, scale_curve):
@@ -280,9 +280,9 @@ class TransformAnimation(Animation):
         """Create the text keys before filling in the data so that the extra data hierarchy is correct"""
         # add a NiTextKeyExtraData block
         n_text_extra = block_store.create_block("NiTextKeyExtraData", None)
-        if isinstance(kf_root, NifFormat.classes.NiControllerSequence):
+        if isinstance(kf_root, NifClasses.NiControllerSequence):
             kf_root.text_keys = n_text_extra
-        elif isinstance(kf_root, NifFormat.classes.NiSequenceStreamHelper):
+        elif isinstance(kf_root, NifClasses.NiSequenceStreamHelper):
             kf_root.add_extra_data(n_text_extra)
         return n_text_extra
 
@@ -305,8 +305,8 @@ class TransformAnimation(Animation):
         NifLog.info("Adding controllers and interpolators for skeleton")
         # note: block_store.block_to_obj changes during iteration, so need list copy
         for n_block in list(block_store.block_to_obj.keys()):
-            if isinstance(n_block, NifFormat.classes.NiNode) and n_block.name == "Bip01":
-                for n_bone in n_block.tree(block_type=NifFormat.classes.NiNode):
+            if isinstance(n_block, NifClasses.NiNode) and n_block.name == "Bip01":
+                for n_bone in n_block.tree(block_type=NifClasses.NiNode):
                     n_kfc, n_kfi = self.transform_anim.create_controller(n_bone, n_bone.name)
                     # todo [anim] use self.nif_export.animationhelper.set_flags_and_timing
                     n_kfc.flags = 12

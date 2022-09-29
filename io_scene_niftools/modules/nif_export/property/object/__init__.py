@@ -40,7 +40,7 @@
 
 import bpy
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
@@ -225,7 +225,7 @@ class ObjectDataProperty:
         bs_inv_store = b_obj.niftools.bs_inv
         if niftools_scene.game in ('SKYRIM',) and bs_inv_store:
             bs_inv = bs_inv_store[0]
-            n_bs_inv_marker = NifFormat.classes.BSInvMarker(n_root.context)
+            n_bs_inv_marker = NifClasses.BSInvMarker(n_root.context)
             n_bs_inv_marker.name = bs_inv.name.encode()
             n_bs_inv_marker.rotation_x = (-bs_inv.x % (2 * pi)) * 1000
             n_bs_inv_marker.rotation_y = (-bs_inv.y % (2 * pi)) * 1000

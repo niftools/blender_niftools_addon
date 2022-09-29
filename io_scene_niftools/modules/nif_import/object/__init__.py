@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.geometry.mesh import Mesh
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
@@ -144,7 +144,7 @@ class Object:
         """ Various settings in b_obj's niftools panel """
         b_obj.niftools.flags = n_block.flags
 
-        if isinstance(n_block.data.consistency_flags, NifFormat.classes.ConsistencyType):
+        if isinstance(n_block.data.consistency_flags, NifClasses.ConsistencyType):
             b_obj.niftools.consistency_flags = n_block.data.consistency_flags._name_
         if n_block.is_skin():
             skininst = n_block.skin_instance

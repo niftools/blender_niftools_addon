@@ -39,7 +39,7 @@
 
 import bpy
 import mathutils
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import import animation
 from io_scene_niftools.modules.nif_import.animation import Animation
@@ -57,7 +57,7 @@ class MorphAnimation(Animation):
     def import_morph_controller(self, n_node, b_obj):
         """Import NiGeomMorpherController as shape keys for blender object."""
 
-        n_morph_ctrl = math.find_controller(n_node, NifFormat.classes.NiGeomMorpherController)
+        n_morph_ctrl = math.find_controller(n_node, NifClasses.NiGeomMorpherController)
         if n_morph_ctrl:
             NifLog.debug("NiGeomMorpherController processed")
             b_mesh = b_obj.data

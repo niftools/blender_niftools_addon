@@ -43,7 +43,7 @@ import os.path
 
 import bpy
 from pyffi.formats.dds import DdsFormat
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.singleton import NifOp
@@ -54,11 +54,11 @@ from io_scene_niftools.utils.logging import NifLog
 # This section replaces pyffi methods to impliment functionality immediately.
 #################
 def get_pixeldata_stream_overide(self):
-    if isinstance(self, NifFormat.classes.NiPersistentSrcTextureRendererData):
+    if isinstance(self, NifClasses.NiPersistentSrcTextureRendererData):
         return ''.join(
             ''.join([chr(x) for x in tex])
             for tex in self.pixel_data)
-    elif isinstance(self, NifFormat.classes.NiPixelData):
+    elif isinstance(self, NifClasses.NiPixelData):
         if self.pixel_data:
             # used in older nif versions
             return bytearray(x for tex in self.pixel_data for x in tex)
@@ -86,8 +86,8 @@ def save_as_dds_override(self, stream):
     header.caps_1.texture = 1
     header.caps_1.mipmap = 1
     # create header, depending on the format
-    if self.pixel_format in (NifFormat.classes.PixelFormat.PX_FMT_RGB8,
-                             NifFormat.classes.PixelFormat.PX_FMT_RGBA8):
+    if self.pixel_format in (NifClasses.PixelFormat.PX_FMT_RGB8,
+                             NifClasses.PixelFormat.PX_FMT_RGBA8):
         # uncompressed RGB(A)
         header.flags.linear_size = 1
         header.linear_size = len(self.pixel_data)
@@ -102,27 +102,27 @@ def save_as_dds_override(self, stream):
             bit_pos = 0
             for i, channel in enumerate(self.channels):
                 mask = (2 ** channel.bits_per_channel - 1) << bit_pos
-                if channel.type == NifFormat.classes.ChannelType.CHNL_RED:
+                if channel.type == NifClasses.ChannelType.CHNL_RED:
                     header.pixel_format.r_mask = mask
-                elif channel.type == NifFormat.classes.ChannelType.CHNL_GREEN:
+                elif channel.type == NifClasses.ChannelType.CHNL_GREEN:
                     header.pixel_format.g_mask = mask
-                elif channel.type == NifFormat.classes.ChannelType.CHNL_BLUE:
+                elif channel.type == NifClasses.ChannelType.CHNL_BLUE:
                     header.pixel_format.b_mask = mask
-                elif channel.type == NifFormat.classes.ChannelType.CHNL_ALPHA:
+                elif channel.type == NifClasses.ChannelType.CHNL_ALPHA:
                     header.pixel_format.a_mask = mask
                 bit_pos += channel.bits_per_channel
-    elif self.pixel_format in (NifFormat.classes.PixelFormat.PX_FMT_DXT1,
-                               NifFormat.classes.PixelFormat.PX_FMT_DXT5,
-                               NifFormat.classes.PixelFormat.PX_FMT_DXT5_ALT):
+    elif self.pixel_format in (NifClasses.PixelFormat.PX_FMT_DXT1,
+                               NifClasses.PixelFormat.PX_FMT_DXT5,
+                               NifClasses.PixelFormat.PX_FMT_DXT5_ALT):
         # format used in Megami Tensei: Imagine and Bully SE
 
         header.flags.linear_size = 0
         header.linear_size = 0
         header.pixel_format.flags.four_c_c = 1
-        if self.pixel_format in (NifFormat.classes.PixelFormat.PX_FMT_DXT1,):
+        if self.pixel_format in (NifClasses.PixelFormat.PX_FMT_DXT1,):
             header.pixel_format.four_c_c = DdsFormat.FourCC.DXT1
-        if self.pixel_format in (NifFormat.classes.PixelFormat.PX_FMT_DXT5,
-                                 NifFormat.classes.PixelFormat.PX_FMT_DXT5_ALT):
+        if self.pixel_format in (NifClasses.PixelFormat.PX_FMT_DXT5,
+                                 NifClasses.PixelFormat.PX_FMT_DXT5_ALT):
             header.pixel_format.four_c_c = DdsFormat.FourCC.DXT5
         header.pixel_format.bit_count = 0
         header.pixel_format.r_mask = 0
@@ -139,8 +139,8 @@ def save_as_dds_override(self, stream):
     stream.write(self.__get_pixeldata_stream())
 
 
-NifFormat.classes.NiPixelFormat.__get_pixeldata_stream = get_pixeldata_stream_overide
-NifFormat.classes.NiPixelFormat.save_as_dds = save_as_dds_override
+NifClasses.NiPixelFormat.__get_pixeldata_stream = get_pixeldata_stream_overide
+NifClasses.NiPixelFormat.save_as_dds = save_as_dds_override
 #################
 
 
@@ -172,7 +172,7 @@ class TextureLoader:
         if not source:
             return None
 
-        if isinstance(source, NifFormat.classes.NiSourceTexture) and not source.use_external and NifOp.props.use_embedded_texture:
+        if isinstance(source, NifClasses.NiSourceTexture) and not source.use_external and NifOp.props.use_embedded_texture:
             return self.import_embedded_texture_source(source)
         else:
             return self.import_external_source(source)
@@ -213,7 +213,7 @@ class TextureLoader:
 
     def import_external_source(self, source):
         # the texture uses an external image file
-        if isinstance(source, NifFormat.classes.NiSourceTexture):
+        if isinstance(source, NifClasses.NiSourceTexture):
             fn = source.file_name
         elif isinstance(source, str):
             fn = source

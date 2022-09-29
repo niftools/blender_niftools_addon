@@ -39,7 +39,7 @@
 import bpy
 import mathutils
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -100,7 +100,7 @@ class BhkCollision(Collision):
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-            if layer == NifFormat.classes.OblivionLayer.OL_BIPED:
+            if layer == NifClasses.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
                 n_col_obj = self.export_bhk_blend_collision(b_obj)
 
@@ -189,7 +189,7 @@ class BhkCollision(Collision):
         col_filter = b_obj.nifcollision.col_filter
 
         n_col_obj = block_store.create_block("bhkCollisionObject", b_obj)
-        if layer == NifFormat.classes.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
+        if layer == NifClasses.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
             # animated collision requires flags = 41
             # unless it is a constrainted but not keyframed object
             n_col_obj.flags = 41
@@ -219,7 +219,7 @@ class BhkCollision(Collision):
     # TODO [collision] Move to collision
     def update_rigid_bodies(self):
         if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.classes.BhkRigidBody)]
+            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifClasses.BhkRigidBody)]
 
             # update rigid body center of gravity and mass
             if self.IGNORE_BLENDER_PHYSICS:
@@ -535,7 +535,7 @@ class BhkCollision(Collision):
                 normals.append(rotation * face.normal)
 
         # TODO [collision][havok] Redo this as a material lookup
-        havok_mat = NifFormat.classes.HavokMaterial(NifData.data)
+        havok_mat = NifClasses.HavokMaterial(NifData.data)
         havok_mat.material = n_havok_mat
         n_col_shape.add_shape(triangles, normals, vertices, layer, havok_mat.material)
 
@@ -562,7 +562,7 @@ class BhkCollision(Collision):
             # n_col_shape.material = n_havok_mat[0]
         else:
             n_col_shape = n_col_body.shape
-            if not isinstance(n_col_shape, NifFormat.classes.BhkListShape):
+            if not isinstance(n_col_shape, NifClasses.BhkListShape):
                 raise ValueError('Not a list of collisions')
 
         n_col_shape.add_shape(self.export_collision_object(b_obj, layer, n_havok_mat))

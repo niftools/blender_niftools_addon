@@ -38,7 +38,7 @@
 
 import mathutils
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_import.animation.morph import MorphAnimation
@@ -67,7 +67,7 @@ class Mesh:
         :param b_obj: The mesh to which to append the geometry data. If C{None}, a new mesh is created.
         :type b_obj: A Blender object that has mesh data.
         """
-        assert (isinstance(n_block, NifFormat.classes.NiTriBasedGeom))
+        assert (isinstance(n_block, NifClasses.NiTriBasedGeom))
 
         node_name = n_block.name
         NifLog.info(f"Importing mesh data for geometry '{node_name}'")

@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.property.texture import TextureWriter, TextureSlotManager
 from io_scene_niftools.utils.consts import TEX_SLOTS
@@ -96,7 +96,7 @@ class BSShaderTexture(TextureSlotManager):
         bsshader.texture_set = self._create_textureset()
 
     def _create_textureset(self):
-        texset = NifFormat.classes.BSShaderTextureSet(NifData.data)
+        texset = NifClasses.BSShaderTextureSet(NifData.data)
 
         if self.slots[TEX_SLOTS.BASE]:
             texset.textures[0] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.BASE])
@@ -144,7 +144,7 @@ class BSShaderTexture(TextureSlotManager):
         if hasattr(shader, 'texture_clamp_mode'):
             if self.slots[TEX_SLOTS.BASE] and (self.slots[TEX_SLOTS.BASE].extension == "CLIP"):
                 # if the extension is clip, we know the wrap mode is clamp for both,
-                shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + NifFormat.classes.TexClampMode.CLAMP_S_CLAMP_T
+                shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + NifClasses.TexClampMode.CLAMP_S_CLAMP_T
             else:
                 # otherwise, look at the given clip modes from the nodes
                 if not clamp_x:

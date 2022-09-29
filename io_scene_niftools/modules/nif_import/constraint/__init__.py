@@ -39,7 +39,7 @@
 
 import bpy
 import mathutils
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import import collision
 from io_scene_niftools.utils.singleton import NifData
@@ -61,7 +61,7 @@ class Constraint:
 
     def import_constraint(self, hkbody):
         """Imports a bone havok constraint as Blender object constraint."""
-        assert (isinstance(hkbody, NifFormat.classes.BhkRigidBody))
+        assert (isinstance(hkbody, NifClasses.BhkRigidBody))
 
         # check for constraints
         if not hkbody.constraints:
@@ -91,16 +91,16 @@ class Constraint:
                 continue
 
             # get constraint descriptor
-            if isinstance(hkconstraint, NifFormat.classes.BhkRagdollConstraint):
+            if isinstance(hkconstraint, NifClasses.BhkRagdollConstraint):
                 hkdescriptor = hkconstraint.ragdoll
                 b_hkobj.rigid_body.enabled = True
-            elif isinstance(hkconstraint, NifFormat.classes.BhkLimitedHingeConstraint):
+            elif isinstance(hkconstraint, NifClasses.BhkLimitedHingeConstraint):
                 hkdescriptor = hkconstraint.limited_hinge
                 b_hkobj.rigid_body.enabled = True
-            elif isinstance(hkconstraint, NifFormat.classes.BhkHingeConstraint):
+            elif isinstance(hkconstraint, NifClasses.BhkHingeConstraint):
                 hkdescriptor = hkconstraint.hinge
                 b_hkobj.rigid_body.enabled = True
-            elif isinstance(hkconstraint, NifFormat.classes.BhkMalleableConstraint):
+            elif isinstance(hkconstraint, NifClasses.BhkMalleableConstraint):
                 if hkconstraint.type == 7:
                     hkdescriptor = hkconstraint.ragdoll
                     b_hkobj.rigid_body.enabled = False
@@ -169,7 +169,7 @@ class Constraint:
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.export_constraints)
-            if isinstance(hkdescriptor, NifFormat.classes.BhkRagdollConstraintCInfo):
+            if isinstance(hkdescriptor, NifClasses.BhkRagdollConstraintCInfo):
                 b_constr.pivot_type = 'CONE_TWIST'
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
@@ -194,7 +194,7 @@ class Constraint:
 
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
 
-            elif isinstance(hkdescriptor, NifFormat.classes.BhkLimitedHingeConstraintCInfo):
+            elif isinstance(hkdescriptor, NifClasses.BhkLimitedHingeConstraintCInfo):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
                 axis_y = mathutils.Vector((hkdescriptor.perp_2_axle_in_a_1.x,
@@ -229,7 +229,7 @@ class Constraint:
                     b_hkobj.niftools_constraint.tau = hkconstraint.tau
                     b_hkobj.niftools_constraint.damping = hkconstraint.damping
 
-            elif isinstance(hkdescriptor, NifFormat.classes.HingeDescriptor):
+            elif isinstance(hkdescriptor, NifClasses.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
                 axis_y = mathutils.Vector((hkdescriptor.perp_2_axle_in_a_1.x,
@@ -272,7 +272,7 @@ class Constraint:
             # which is exactly enough to provide the euler angles
 
             # multiply with rigid body transform
-            if isinstance(hkbody, NifFormat.classes.BhkRigidBodyT):
+            if isinstance(hkbody, NifClasses.BhkRigidBodyT):
                 # set rotation
                 transform = mathutils.Quaternion((hkbody.rotation.w,
                                                   hkbody.rotation.x,
@@ -336,10 +336,10 @@ class Constraint:
             assert ((axis_z - mathutils.Vector((0, 0, 1)) * constr_matrix).length < 0.0001)
 
             # the generic rigid body type is very buggy... so for simulation purposes let's transform it into ball and hinge
-            if isinstance(hkdescriptor, NifFormat.classes.BhkRagdollConstraintCInfo):
+            if isinstance(hkdescriptor, NifClasses.BhkRagdollConstraintCInfo):
                 # cone_twist
                 b_constr.pivot_type = 'CONE_TWIST'
-            elif isinstance(hkdescriptor, (NifFormat.classes.BhkLimitedHingeConstraintCInfo, NifFormat.classes.HingeDescriptor)):
+            elif isinstance(hkdescriptor, (NifClasses.BhkLimitedHingeConstraintCInfo, NifClasses.HingeDescriptor)):
                 # (limited) hinge
                 b_constr.pivot_type = 'HINGE'
             else:

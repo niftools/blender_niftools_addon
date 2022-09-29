@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 from pyffi.formats.egm import EgmFormat
 
 from io_scene_niftools.modules.nif_export.animation import Animation
@@ -161,7 +161,7 @@ class MorphAnimation(Animation):
             # note: we set data on n_morph for older nifs and on floatdata for newer nifs
             # of course only one of these will be actually written to the file
             for n_data in (n_morph, n_floatdata):
-                n_data.interpolation = NifFormat.classes.KeyType.LINEAR_KEY
+                n_data.interpolation = NifClasses.KeyType.LINEAR_KEY
                 n_data.num_keys = len(fcurves[0].keyframe_points)
                 n_data.reset_field("keys")
 

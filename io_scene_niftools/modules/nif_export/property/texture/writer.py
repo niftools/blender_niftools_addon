@@ -40,7 +40,7 @@
 import os.path
 
 import bpy
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -65,7 +65,7 @@ class TextureWriter:
         """
 
         # create NiSourceTexture
-        srctex = NifFormat.classes.NiSourceTexture(NifData.data)
+        srctex = NifClasses.NiSourceTexture(NifData.data)
         srctex.use_external = True
         if filename is not None:
             # preset filename
@@ -87,7 +87,7 @@ class TextureWriter:
 
         # search for duplicate
         for block in block_store.block_to_obj:
-            if isinstance(block, NifFormat.classes.NiSourceTexture) and block.get_hash() == srctex.get_hash():
+            if isinstance(block, NifClasses.NiSourceTexture) and block.get_hash() == srctex.get_hash():
                 return block
 
         # no identical source texture found, so use and register the new one

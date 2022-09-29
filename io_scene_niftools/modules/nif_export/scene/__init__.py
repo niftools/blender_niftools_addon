@@ -43,7 +43,7 @@ from io_scene_niftools.utils.logging import NifLog
 import generated.formats.nif as NifFormat
 
 def get_version_data():
-    """ Returns NifFormat.Data of the correct version and user versions """
+    """ Returns NifFormat.NifFile of the correct version and user versions """
     b_scene = bpy.context.scene.niftools_scene
     game = b_scene.game
     version = b_scene.nif_version

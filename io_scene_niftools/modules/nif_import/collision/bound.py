@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.collision import Collision
 from io_scene_niftools.modules.nif_import.object import Object
@@ -68,13 +68,13 @@ class Bound(Collision):
 
     def import_bounding_box(self, n_block):
         """Import a NiNode's bounding box or attached BSBound extra data."""
-        if not n_block or not isinstance(n_block, NifFormat.classes.NiNode):
+        if not n_block or not isinstance(n_block, NifClasses.NiNode):
             return []
         # we have a ninode with bounding box
         if n_block.has_bounding_volume:
             b_name = 'Bounding Volume'
 
-            if n_block.bounding_volume.collision_type == NifFormat.classes.BoundVolumeType.BOX_BV:
+            if n_block.bounding_volume.collision_type == NifClasses.BoundVolumeType.BOX_BV:
                 # Ninode's bbox behaves like a seperate mesh.
                 # bounding_box center(n_block.bounding_box.translation) is relative to the bound_box
                 n_bl_trans = n_block.translation
@@ -94,7 +94,7 @@ class Bound(Collision):
         else:
             for n_extra in n_block.get_extra_datas():
                 # TODO [extra][data] Move to property processor
-                if isinstance(n_extra, NifFormat.classes.BSBound):
+                if isinstance(n_extra, NifClasses.BSBound):
                     b_name = 'BSBound'
                     center = n_extra.center
                     dims = n_extra.dimensions

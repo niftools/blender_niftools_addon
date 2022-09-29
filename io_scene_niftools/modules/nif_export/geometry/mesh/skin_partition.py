@@ -39,7 +39,7 @@
 from itertools import repeat
 import logging
 from generated.utils.vertex_cache import get_cache_optimized_triangles, stable_stripify
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 def update_skin_partition(self,
                         maxbonesperpartition=4, maxbonespervertex=4,
@@ -319,7 +319,7 @@ def update_skin_partition(self,
         skindata.skin_partition = skinpart
     else:
     # otherwise, create a new block and link it
-        skinpart = NifFormat.classes.NiSkinPartition(skindata.context)
+        skinpart = NifClasses.NiSkinPartition(skindata.context)
         skindata.skin_partition = skinpart
         skininst.skin_partition = skinpart
 
@@ -417,7 +417,7 @@ def update_skin_partition(self,
                         key = lambda part: body_part_order_map[part[2]])
 
     # for Fallout 3, set dismember partition indices
-    if isinstance(skininst, NifFormat.classes.BSDismemberSkinInstance):
+    if isinstance(skininst, NifClasses.BSDismemberSkinInstance):
         skininst.num_partitions = len(parts)
         skininst.reset_field("partitions")
         lastpart = None

@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
@@ -71,7 +71,7 @@ class BSShaderProperty:
         return bsshader
 
     def export_bs_effect_shader_property(self, b_mat):
-        bsshader = NifFormat.classes.BSEffectShaderProperty(NifData.data)
+        bsshader = NifClasses.BSEffectShaderProperty(NifData.data)
 
         self.texturehelper.export_bs_effect_shader_prop_textures(bsshader)
 
@@ -92,18 +92,18 @@ class BSShaderProperty:
         return bsshader
 
     def export_bs_lighting_shader_property(self, b_mat):
-        bsshader = NifFormat.classes.BSLightingShaderProperty(NifData.data)
-        b_s_type = getattr(NifFormat.classes.BSLightingShaderType, b_mat.niftools_shader.bslsp_shaderobjtype)
-        bsshader.skyrim_shader_type = getattr(NifFormat.classes.BSLightingShaderType, b_mat.niftools_shader.bslsp_shaderobjtype)
+        bsshader = NifClasses.BSLightingShaderProperty(NifData.data)
+        b_s_type = getattr(NifClasses.BSLightingShaderType, b_mat.niftools_shader.bslsp_shaderobjtype)
+        bsshader.skyrim_shader_type = getattr(NifClasses.BSLightingShaderType, b_mat.niftools_shader.bslsp_shaderobjtype)
 
         self.texturehelper.export_bs_lighting_shader_prop_textures(bsshader)
 
         # Diffuse color
         d = b_mat.diffuse_color
 
-        if b_s_type == NifFormat.classes.BSLightingShaderType.SKIN_TINT:
+        if b_s_type == NifClasses.BSLightingShaderType.SKIN_TINT:
             BSShaderProperty.set_color3_property(bsshader.skin_tint_color, d)
-        elif b_s_type == NifFormat.classes.BSLightingShaderType.HAIR_TINT:
+        elif b_s_type == NifClasses.BSLightingShaderType.HAIR_TINT:
             BSShaderProperty.set_color3_property(bsshader.hair_tint_color, d)
         # TODO [shader] expose intensity value
         # b_mat.diffuse_intensity = 1.0
@@ -133,10 +133,10 @@ class BSShaderProperty:
         return bsshader
 
     def export_bs_shader_pp_lighting_property(self, b_mat):
-        bsshader = NifFormat.classes.BSShaderPPLightingProperty(NifData.data)
+        bsshader = NifClasses.BSShaderPPLightingProperty(NifData.data)
         # set shader options
         # TODO: FIXME:
-        bsshader.shader_type = getattr(NifFormat.classes.BSShaderType, b_mat.niftools_shader.bsspplp_shaderobjtype)
+        bsshader.shader_type = getattr(NifClasses.BSShaderType, b_mat.niftools_shader.bsspplp_shaderobjtype)
 
         self.texturehelper.export_bs_shader_pp_lighting_prop_textures(bsshader)
 

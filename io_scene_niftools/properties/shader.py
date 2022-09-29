@@ -44,7 +44,7 @@ from bpy.props import (PointerProperty,
                        )
 from bpy.types import PropertyGroup
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -66,14 +66,14 @@ class ShaderProps(PropertyGroup):
     bsspplp_shaderobjtype: EnumProperty(
         name='BS Shader PP Lighting Object Type',
         description='Type of object linked to shader',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifFormat.classes.BSShaderType)],
+        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.BSShaderType)],
         default='SHADER_DEFAULT'
     )
 
     bslsp_shaderobjtype: EnumProperty(
         name='BS Lighting Shader Object Type',
         description='Type of object linked to shader',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifFormat.classes.BSLightingShaderType)],
+        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.BSLightingShaderType)],
         # default = 'SHADER_DEFAULT'
     )
 
@@ -88,13 +88,13 @@ def prettify_prop_name(property_name):
 
 annotations_dict = ShaderProps.__dict__.get('__annotations__', None)
 if annotations_dict:
-    for property_name in NifFormat.classes.BSShaderFlags.__members__:
+    for property_name in NifClasses.BSShaderFlags.__members__:
         if property_name not in annotations_dict:
             annotations_dict[property_name] = BoolProperty(name=prettify_prop_name(property_name[3:]))
-    for property_name in NifFormat.classes.SkyrimShaderPropertyFlags1.__members__:
+    for property_name in NifClasses.SkyrimShaderPropertyFlags1.__members__:
         if property_name not in annotations_dict:
             annotations_dict[property_name] = BoolProperty(name=prettify_prop_name(property_name[7:]))
-    for property_name in NifFormat.classes.SkyrimShaderPropertyFlags2.__members__:
+    for property_name in NifClasses.SkyrimShaderPropertyFlags2.__members__:
         if property_name not in annotations_dict:
             annotations_dict[property_name] = BoolProperty(name=prettify_prop_name(property_name[7:]))
 

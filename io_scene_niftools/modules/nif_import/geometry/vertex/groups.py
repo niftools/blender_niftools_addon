@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
 from io_scene_niftools.utils.logging import NifLog
@@ -57,7 +57,7 @@ class VertexGroup:
         skin_data = skin_inst.data
         skin_partition = skin_inst.skin_partition
         skel_root = skin_inst.skeleton_root
-        vertices = [NifFormat.classes.Vector3() for _ in range(n_geom.data.num_vertices)]
+        vertices = [NifClasses.Vector3() for _ in range(n_geom.data.num_vertices)]
 
         # ignore normals for now, not needed for import
         sum_weights = [0.0 for _ in range(n_geom.data.num_vertices)]
@@ -100,7 +100,7 @@ class VertexGroup:
     def apply_skin_deformation(n_data):
         """ Process all geometries in NIF tree to apply their skin """
         # get all geometries with skin
-        n_geoms = [g for g in n_data.get_global_iterator() if isinstance(g, NifFormat.classes.NiGeometry) and g.is_skin()]
+        n_geoms = [g for g in n_data.get_global_iterator() if isinstance(g, NifClasses.NiGeometry) and g.is_skin()]
 
         # make sure that each skin is applied only once to avoid distortions when a model is referred to twice
         for n_geom in set(n_geoms):
@@ -172,7 +172,7 @@ class VertexGroup:
                 tri_map[vertices].append(polygon.index)
             else:
                 tri_map[vertices] = [polygon.index]
-        if isinstance(skininst, NifFormat.classes.BSDismemberSkinInstance):
+        if isinstance(skininst, NifClasses.BSDismemberSkinInstance):
             skinpart = ni_block.get_skin_partition()
             for bodypart, skinpartblock in zip(skininst.partitions, skinpart.partitions):
                 group_name = bodypart.body_part._name_

@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.property.shader import BSShader
 from io_scene_niftools.modules.nif_import.property.texture.types.bsshadertexture import BSShaderTexture
@@ -72,7 +72,7 @@ class BSShaderLightingPropertyProcessor(BSShader):
         return BSShaderLightingPropertyProcessor.__instance
 
     def register(self, processor):
-        processor.register(NifFormat.classes.BSShaderPPLightingProperty, self.import_bs_shader_pp_lighting_property)
+        processor.register(NifClasses.BSShaderPPLightingProperty, self.import_bs_shader_pp_lighting_property)
 
     def import_bs_shader_pp_lighting_property(self, bs_shader_prop):
         # Shader Flags

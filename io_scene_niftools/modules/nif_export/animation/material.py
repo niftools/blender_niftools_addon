@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import generated.formats.nif as NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.animation import Animation
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -71,9 +71,9 @@ class MaterialAnimation(Animation):
         if not n_mat_prop:
             raise ValueError("Bug!! must add material property before exporting alpha controller")
         colors = (("alpha", None),
-                  ("niftools.ambient_color", NifFormat.classes.MaterialColor.TC_AMBIENT),
-                  ("diffuse_color", NifFormat.classes.MaterialColor.TC_DIFFUSE),
-                  ("specular_color", NifFormat.classes.MaterialColor.TC_SPECULAR))
+                  ("niftools.ambient_color", NifClasses.MaterialColor.TC_AMBIENT),
+                  ("diffuse_color", NifClasses.MaterialColor.TC_DIFFUSE),
+                  ("specular_color", NifClasses.MaterialColor.TC_SPECULAR))
         # the actual export
         for b_dtype, n_dtype in colors:
             self.export_material_alpha_color_controller(b_material, n_mat_prop, b_dtype, n_dtype)
@@ -99,7 +99,7 @@ class MaterialAnimation(Animation):
         # create the key data
         n_key_data = block_store.create_block(keydata, fcurves)
         n_key_data.data.num_keys = len(fcurves[0].keyframe_points)
-        n_key_data.data.interpolation = NifFormat.classes.KeyType.LINEAR_KEY
+        n_key_data.data.interpolation = NifClasses.KeyType.LINEAR_KEY
         n_key_data.data.reset_field("keys")
 
         # assumption: all curves have same amount of keys and are sampled at the same time
@@ -148,12 +148,12 @@ class MaterialAnimation(Animation):
             return
 
         # get the uv curves and translate them into nif data
-        n_uv_data = NifFormat.classes.NiUVData(NifData.data)
+        n_uv_data = NifClasses.NiUVData(NifData.data)
         for fcu, n_uv_group in zip(fcurves, n_uv_data.uv_groups):
             if fcu:
                 NifLog.debug(f"Exporting {fcu} as NiUVData")
                 n_uv_group.num_keys = len(fcu.keyframe_points)
-                n_uv_group.interpolation = NifFormat.classes.KeyType.LINEAR_KEY
+                n_uv_group.interpolation = NifClasses.KeyType.LINEAR_KEY
                 n_uv_group.reset_field("keys")
                 for b_point, n_key in zip(fcu.keyframe_points, n_uv_group.keys):
                     # add each point of the curve
@@ -167,7 +167,7 @@ class MaterialAnimation(Animation):
 
         # if uv data is present then add the controller so it is exported
         if fcurves[0].keyframe_points:
-            n_uv_ctrl = NifFormat.classes.NiUVController(NifData.data)
+            n_uv_ctrl = NifClasses.NiUVController(NifData.data)
             self.set_flags_and_timing(n_uv_ctrl, fcurves)
             n_uv_ctrl.data = n_uv_data
             # attach block to geometry
