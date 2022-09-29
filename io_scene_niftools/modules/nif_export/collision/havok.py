@@ -535,7 +535,7 @@ class BhkCollision(Collision):
                 normals.append(rotation * face.normal)
 
         # TODO [collision][havok] Redo this as a material lookup
-        havok_mat = NifFormat.HavokMaterial(NifData.data)
+        havok_mat = NifFormat.classes.HavokMaterial(NifData.data)
         havok_mat.material = n_havok_mat
         n_col_shape.add_shape(triangles, normals, vertices, layer, havok_mat.material)
 
