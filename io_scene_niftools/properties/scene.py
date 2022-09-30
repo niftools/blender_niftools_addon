@@ -41,23 +41,35 @@
 import bpy
 from bpy.props import PointerProperty, IntProperty, EnumProperty, StringProperty, FloatProperty, CollectionProperty
 from bpy.types import PropertyGroup
+from itertools import chain
 
-from generated.formats.nif.versions import games, set_game
+from generated.formats.nif.versions import versions, set_game
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
 class DummyClass: pass
 
+
 dummy_context = DummyClass()
 dummy_context.bs_header = DummyClass()
+primary_games = list(chain.from_iterable(version.primary_games for version in versions if version.supported))
+all_games = list(chain.from_iterable(version.all_games for version in versions if version.supported))
 game_version_map = {}
-for game in games:
-    dummy_context.version = 0
-    dummy_context.user_version = 0
-    dummy_context.bs_header.bs_version = 0
-    set_game(dummy_context, game)
-    game_version_map[game._name_] = (dummy_context.version, dummy_context.user_version, dummy_context.bs_header.bs_version)
+
+
+def populate_version_map(iterable, version_map):
+	for game in iterable:
+		if game not in iterable:
+		    dummy_context.version = 0
+		    dummy_context.user_version = 0
+		    dummy_context.bs_header.bs_version = 0
+		    set_game(dummy_context, game)
+		    game_version_map[game._name_] = (dummy_context.version, dummy_context.user_version, dummy_context.bs_header.bs_version)
+
+
+populate_version_map(primary_games, game_version_map)
+populate_version_map(all_games, game_version_map)
 game_version_map["NONE"] = (0, 0, 0)
 
 # noinspection PyUnusedLocal
@@ -89,7 +101,7 @@ class Scene(PropertyGroup):
         items=[('NONE', 'NONE', 'No game selected')] + [
             (member._name_, member._value_, "Export for " + member._value_)
             for member in sorted(
-                [member for member in games], key=lambda x: x._name_)
+                [member for member in set(all_games)], key=lambda x: x._name_)
         ],
         name="Game",
         description="For which game to export",
