@@ -161,27 +161,19 @@ class VertexGroup:
                             if w > 0:
                                 group_name = block_bone_names[b_i]
                                 v_group = b_obj.vertex_groups[group_name]
-								# conversion from numpy.uint16 to int necessary because Blender doesn't accept them
+                                # conversion from numpy.uint16 to int necessary because Blender doesn't accept them
                                 v_group.add([int(vert)], w, 'REPLACE')
 
-        # import body parts as face maps
-        # get faces (triangles) as map of unordered vertices to list of indices
-        tri_map = {}
-        for polygon in b_obj.data.polygons:
-            vertices = frozenset(polygon.vertices)
-            if vertices in tri_map:
-                tri_map[vertices].append(polygon.index)
-            else:
-                tri_map[vertices] = [polygon.index]
         if isinstance(skininst, NifClasses.BSDismemberSkinInstance):
-            skinpart = ni_block.get_skin_partition()
-            for bodypart, skinpartblock in zip(skininst.partitions, skinpart.partitions):
+            for bodypart in skininst.partitions:
                 group_name = bodypart.body_part._name_
 
                 # create face map if it did not exist yet
                 if group_name not in b_obj.face_maps:
                     f_group = b_obj.face_maps.new(name=group_name)
-
-                # add the triangles to the face map
-                for vertices in skinpartblock.get_mapped_triangles():
-                    f_group.add(tri_map[frozenset(vertices)])
+                else:
+                    f_group = b_obj.face_maps[group_name]
+            triangles, bodyparts = skininst.get_dismember_partitions()
+            for i, bodypart in enumerate(bodyparts):
+                f_group = b_obj.face_maps[bodypart._name_]
+                f_group.add([i])
