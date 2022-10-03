@@ -122,7 +122,7 @@ class VertexGroup:
     @staticmethod
     def import_skin(ni_block, b_obj):
         """Import a NiSkinInstance and its contents as vertex groups"""
-        skininst = ni_block.skin_instance
+        skininst = ni_block.skin if isinstance(ni_block, NifClasses.BSTriShape) else ni_block.skin_instance
         if skininst:
             skindata = skininst.data
             bones = skininst.bones
@@ -161,7 +161,8 @@ class VertexGroup:
                             if w > 0:
                                 group_name = block_bone_names[b_i]
                                 v_group = b_obj.vertex_groups[group_name]
-                                v_group.add([vert], w, 'REPLACE')
+								# conversion from numpy.uint16 to int necessary because Blender doesn't accept them
+                                v_group.add([int(vert)], w, 'REPLACE')
 
         # import body parts as face maps
         # get faces (triangles) as map of unordered vertices to list of indices

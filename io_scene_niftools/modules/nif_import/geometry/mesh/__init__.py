@@ -100,7 +100,7 @@ class Mesh:
             if not n_tri_data:
                 raise io_scene_niftools.utils.logging.NifError(f"No shape data in {node_name}")
             vertices = n_tri_data.vertices
-            triangles = n_tri_data.get_triangles()
+            triangles = n_block.get_triangles()
             uvs = n_tri_data.uv_sets
             if n_tri_data.has_vertex_colors:
                 vertex_colors = n_tri_data.vertex_colors

@@ -134,7 +134,7 @@ class Object:
         # store flags etc
         self.import_object_flags(n_block, b_obj)
         # skinning? add armature modifier
-        if n_block.skin_instance:
+        if n_block.is_skin():
             self.append_armature_modifier(b_obj, b_armature)
         return b_obj
 
@@ -144,7 +144,7 @@ class Object:
         """ Various settings in b_obj's niftools panel """
         b_obj.niftools.flags = n_block.flags
 
-        if isinstance(n_block.data.consistency_flags, NifClasses.ConsistencyType):
+        if hasattr(n_block, "data") and isinstance(n_block.data.consistency_flags, NifClasses.ConsistencyType):
             b_obj.niftools.consistency_flags = n_block.data.consistency_flags._name_
         if n_block.is_skin():
             skininst = n_block.skin_instance
