@@ -36,7 +36,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import mathutils
+import numpy as np
 
 from generated.formats.nif import classes as NifClasses
 
@@ -67,29 +67,61 @@ class Mesh:
         :param b_obj: The mesh to which to append the geometry data. If C{None}, a new mesh is created.
         :type b_obj: A Blender object that has mesh data.
         """
-        assert (isinstance(n_block, NifClasses.NiTriBasedGeom))
 
         node_name = n_block.name
         NifLog.info(f"Importing mesh data for geometry '{node_name}'")
         b_mesh = b_obj.data
 
-        # shortcut for mesh geometry data
-        n_tri_data = n_block.data
-        if not n_tri_data:
-            raise io_scene_niftools.utils.logging.NifError(f"No shape data in {node_name}")
+        vertices = []
+        triangles = []
+        uvs = None
+        vertex_colors = None
+        normals = None
+
+        if isinstance(n_block, NifClasses.BSTriShape):
+            vertex_attributes = n_block.vertex_desc.vertex_attributes
+            vertex_data = n_block.get_vertex_data()
+            # change this part later for skinned meshes
+            if vertex_attributes.vertex:
+                vertices = [vertex.vertex for vertex in vertex_data]
+            triangles = n_block.get_triangles()
+            if vertex_attributes.u_vs:
+                uvs = [[vertex.uv for vertex in vertex_data]]
+            if vertex_attributes.vertex_colors:
+                vertex_colors = [vertex.vertex_colors for vertex in vertex_data]
+            if vertex_attributes.normals:
+                # stored as bytevector3, so needs normalization.
+                normals = np.array([vertex.normal for vertex in vertex_data], dtype=float) / 127.5 - 1.0
+        else:
+            assert (isinstance(n_block, NifClasses.NiTriBasedGeom))
+
+            # shortcut for mesh geometry data
+            n_tri_data = n_block.data
+            if not n_tri_data:
+                raise io_scene_niftools.utils.logging.NifError(f"No shape data in {node_name}")
+            vertices = n_tri_data.vertices
+            triangles = n_tri_data.get_triangles()
+            uvs = n_tri_data.uv_sets
+            if n_tri_data.has_vertex_colors:
+                vertex_colors = n_tri_data.vertex_colors
+            if n_tri_data.has_normals:
+                normals = n_tri_data.normals
 
         # create raw mesh from vertices and triangles
-        b_mesh.from_pydata(n_tri_data.vertices, [], n_tri_data.get_triangles())
+        b_mesh.from_pydata(vertices, [], triangles)
         b_mesh.update()
 
         # must set faces to smooth before setting custom normals, or the normals bug out!
-        is_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
+        is_smooth = True if (not(normals is None) or n_block.skin_instance) else False
         self.set_face_smooth(b_mesh, is_smooth)
 
         # store additional data layers
-        Vertex.map_uv_layer(b_mesh, n_tri_data)
-        Vertex.map_vertex_colors(b_mesh, n_tri_data)
-        Vertex.map_normals(b_mesh, n_tri_data)
+        if uvs is not None:
+            Vertex.map_uv_layer(b_mesh, uvs)
+        if vertex_colors is not None:
+            Vertex.map_vertex_colors(b_mesh, vertex_colors)
+        if normals is not None:
+            Vertex.map_normals(b_mesh, normals)
 
         self.mesh_prop_processor.process_property_list(n_block, b_obj)
 

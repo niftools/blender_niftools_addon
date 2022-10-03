@@ -156,7 +156,7 @@ class NifImport(NifCommon):
         self.armaturehelper.check_for_skin(root_block)
 
         # read the NIF tree
-        if isinstance(root_block, (NifClasses.NiNode, NifClasses.NiTriBasedGeom)):
+        if isinstance(root_block, (NifClasses.NiNode, NifClasses.NiTriBasedGeom, NifClasses.BSTriShape)):
             b_obj = self.import_branch(root_block)
             ObjectProperty().import_extra_datas(root_block, b_obj)
 
@@ -197,7 +197,7 @@ class NifImport(NifCommon):
             return None
 
         NifLog.info(f"Importing data for block '{safe_decode(n_block.name)}'")
-        if isinstance(n_block, NifClasses.NiTriBasedGeom) and NifOp.props.process != "SKELETON_ONLY":
+        if isinstance(n_block, (NifClasses.NiTriBasedGeom, NifClasses.BSTriShape)) and NifOp.props.process != "SKELETON_ONLY":
             return self.objecthelper.import_geometry_object(b_armature, n_block)
 
         elif isinstance(n_block, NifClasses.NiNode):

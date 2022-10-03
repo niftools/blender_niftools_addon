@@ -44,31 +44,28 @@ import numpy as np
 class Vertex:
 
     @staticmethod
-    def map_vertex_colors(b_mesh, n_tri_data):
-        if n_tri_data.has_vertex_colors:
-            b_mesh.vertex_colors.new(name=f"RGBA")
-            b_mesh.vertex_colors[-1].data.foreach_set("color", [channel for col in [n_tri_data.vertex_colors[loop.vertex_index] for loop in b_mesh.loops] for channel in (col.r, col.g, col.b, col.a)])
+    def map_vertex_colors(b_mesh, vertex_colors):
+        b_mesh.vertex_colors.new(name=f"RGBA")
+        b_mesh.vertex_colors[-1].data.foreach_set("color", [channel for col in [vertex_colors[loop.vertex_index] for loop in b_mesh.loops] for channel in (col.r, col.g, col.b, col.a)])
 
     @staticmethod
-    def map_uv_layer(b_mesh, n_tri_data):
+    def map_uv_layer(b_mesh, uv_sets):
         """ UV coordinates, NIF files only support 'sticky' UV coordinates, and duplicates vertices to emulate hard edges and UV seam.
             So whenever a hard edge or a UV seam is present the mesh, vertices are duplicated.
             Blender only must duplicate vertices for hard edges; duplicating for UV seams would introduce unnecessary hard edges."""
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
-        for uv_i, uv_set in enumerate(n_tri_data.uv_sets):
+        for uv_i, uv_set in enumerate(uv_sets):
             b_mesh.uv_layers.new(name=f"UV{uv_i}")
             b_mesh.uv_layers[-1].data.foreach_set("uv", [coord for uv in [uv_set[loop.vertex_index] for loop in b_mesh.loops] for coord in (uv.u, 1.0 - uv.v)])
 
     @staticmethod
-    def map_normals(b_mesh, n_tri_data):
+    def map_normals(b_mesh, normals):
         """Import nif normals as custom normals."""
-        if not n_tri_data.has_normals:
-            return
-        assert len(b_mesh.vertices) == len(n_tri_data.normals)
+        assert len(b_mesh.vertices) == len(normals)
         # set normals
         if NifOp.props.use_custom_normals:
-            no_array = np.array([normal.as_tuple() for normal in n_tri_data.normals])
+            no_array = np.array(normals)
             # the normals need to be pre-normalized or blender will do it inconsistely, leading to marked sharp edges
             no_array = Vertex.normalize(no_array)
             # use normals_split_custom_set_from_vertices to set the loop custom normals from the per-vertex normals
