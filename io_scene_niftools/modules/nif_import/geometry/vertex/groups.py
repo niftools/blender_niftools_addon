@@ -122,7 +122,7 @@ class VertexGroup:
     @staticmethod
     def import_skin(ni_block, b_obj):
         """Import a NiSkinInstance and its contents as vertex groups"""
-        skininst = ni_block.skin if isinstance(ni_block, NifClasses.BSTriShape) else ni_block.skin_instance
+        skininst = ni_block.skin_instance
         if skininst:
             skindata = skininst.data
             bones = skininst.bones

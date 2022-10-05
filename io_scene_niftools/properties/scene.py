@@ -60,7 +60,7 @@ game_version_map = {}
 
 def populate_version_map(iterable, version_map):
 	for game in iterable:
-		if game not in iterable:
+		if game not in version_map:
 		    dummy_context.version = 0
 		    dummy_context.user_version = 0
 		    dummy_context.bs_header.bs_version = 0

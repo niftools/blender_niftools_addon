@@ -112,7 +112,7 @@ class Mesh:
         b_mesh.update()
 
         # must set faces to smooth before setting custom normals, or the normals bug out!
-        is_smooth = True if (not(normals is None) or n_block.skin_instance) else False
+        is_smooth = True if (not(normals is None) or n_block.is_skin()) else False
         self.set_face_smooth(b_mesh, is_smooth)
 
         # store additional data layers
