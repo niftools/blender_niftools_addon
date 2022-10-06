@@ -199,8 +199,8 @@ class BhkCollision(Collision):
 
             # Custom Niftools properties
             b_col_obj.nifcollision.penetration_depth = bhkshape.rigid_body_info.penetration_depth
-            b_col_obj.nifcollision.deactivator_type = NifClasses.HkDeactivatorType.from_value(bhkshape.rigid_body_info.deactivator_type)._name_
-            b_col_obj.nifcollision.solver_deactivation = NifClasses.HkSolverDeactivation.from_value(bhkshape.rigid_body_info.solver_deactivation)._name_
+            b_col_obj.nifcollision.deactivator_type = bhkshape.rigid_body_info.deactivator_type.name
+            b_col_obj.nifcollision.solver_deactivation = bhkshape.rigid_body_info.solver_deactivation.name
             b_col_obj.nifcollision.max_linear_velocity = bhkshape.rigid_body_info.max_linear_velocity
             b_col_obj.nifcollision.max_angular_velocity = bhkshape.rigid_body_info.max_angular_velocity
 

@@ -147,7 +147,7 @@ class ObjectProperty(PropertyGroup):
     consistency_flags: EnumProperty(
         name='Consistency Flag',
         description='Controls animation type',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.ConsistencyType)],
+        items=[(member.name, member.name, "", i) for i, member in enumerate(NifClasses.ConsistencyType)],
         # default = 'SHADER_DEFAULT'
     )
 

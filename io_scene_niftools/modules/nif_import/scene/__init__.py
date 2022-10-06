@@ -52,9 +52,9 @@ def import_version_info(data):
     # filter possible games by nif version
     possible_games = get_game(data)
     if len(possible_games) == 1:
-        scene.game = possible_games[0]._name_
+        scene.game = possible_games[0].name
     elif len(possible_games) > 1:
-        scene.game = possible_games[0]._name_
+        scene.game = possible_games[0].name
         # todo[version] - check if this nif's version is marked as default for any of the possible games and use that
         NifLog.warn(f"Game set to '{possible_games[0]}', but multiple games qualified")
     scene.nif_version = nif_version

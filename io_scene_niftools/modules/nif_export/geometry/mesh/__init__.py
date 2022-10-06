@@ -564,7 +564,7 @@ class Mesh:
         """Returns the body part indices of the mesh polygons. -1 is either not assigned to a face map or not a valid
         body part"""
         index_group_map = {-1: -1}
-        for bodypartgroupname in [member._name_ for member in NifClasses.BSDismemberBodyPartType]:
+        for bodypartgroupname in [member.name for member in NifClasses.BSDismemberBodyPartType]:
             face_map = b_obj.face_maps.get(bodypartgroupname)
             if face_map:
                 index_group_map[face_map.index] = getattr(NifClasses.BSDismemberBodyPartType, bodypartgroupname)

@@ -145,7 +145,7 @@ class Object:
         b_obj.niftools.flags = n_block.flags
 
         if hasattr(n_block, "data") and isinstance(n_block.data.consistency_flags, NifClasses.ConsistencyType):
-            b_obj.niftools.consistency_flags = n_block.data.consistency_flags._name_
+            b_obj.niftools.consistency_flags = n_block.data.consistency_flags.name
         if n_block.is_skin():
             skininst = n_block.skin_instance
             skelroot = skininst.skeleton_root

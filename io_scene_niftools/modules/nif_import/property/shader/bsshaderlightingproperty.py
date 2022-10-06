@@ -79,7 +79,7 @@ class BSShaderLightingPropertyProcessor(BSShader):
         b_shader = self._b_mat.niftools_shader
         b_shader.bs_shadertype = 'BSShaderPPLightingProperty'
 
-        b_shader.bsspplp_shaderobjtype = bs_shader_prop.shader_type._name_
+        b_shader.bsspplp_shaderobjtype = bs_shader_prop.shader_type.name
 
         flags = bs_shader_prop.shader_flags
         self.import_flags(self._b_mat, flags)

@@ -166,7 +166,7 @@ class VertexGroup:
 
         if isinstance(skininst, NifClasses.BSDismemberSkinInstance):
             for bodypart in skininst.partitions:
-                group_name = bodypart.body_part._name_
+                group_name = bodypart.body_part.name
 
                 # create face map if it did not exist yet
                 if group_name not in b_obj.face_maps:
@@ -175,5 +175,5 @@ class VertexGroup:
                     f_group = b_obj.face_maps[group_name]
             triangles, bodyparts = skininst.get_dismember_partitions()
             for i, bodypart in enumerate(bodyparts):
-                f_group = b_obj.face_maps[bodypart._name_]
+                f_group = b_obj.face_maps[bodypart.name]
                 f_group.add([i])

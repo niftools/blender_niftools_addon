@@ -104,7 +104,7 @@ class Collision:
                         # pyffi exposes it as an int (struct.get_basic_attribute) and returns the enum's default value
                         # we treat it as if it was non-basic to get the enum itself
                         mat_enum = havok_material.material
-                        mat_name = mat_enum._name_
+                        mat_name = mat_enum.name
                     else:
                         # fallback, not sure if we should do this
                         mat_name = str(havok_material)

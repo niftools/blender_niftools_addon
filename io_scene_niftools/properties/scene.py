@@ -65,7 +65,7 @@ def populate_version_map(iterable, version_map):
 		    dummy_context.user_version = 0
 		    dummy_context.bs_header.bs_version = 0
 		    set_game(dummy_context, game)
-		    game_version_map[game._name_] = (dummy_context.version, dummy_context.user_version, dummy_context.bs_header.bs_version)
+		    game_version_map[game.name] = (dummy_context.version, dummy_context.user_version, dummy_context.bs_header.bs_version)
 
 
 populate_version_map(primary_games, game_version_map)
@@ -99,9 +99,9 @@ class Scene(PropertyGroup):
     # For which game to export.
     game: bpy.props.EnumProperty(
         items=[('NONE', 'NONE', 'No game selected')] + [
-            (member._name_, member._value_, "Export for " + member._value_)
+            (member.name, member._value_, "Export for " + member._value_)
             for member in sorted(
-                [member for member in set(all_games)], key=lambda x: x._name_)
+                [member for member in set(all_games)], key=lambda x: x.name)
         ],
         name="Game",
         description="For which game to export",

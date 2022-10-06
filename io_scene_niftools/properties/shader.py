@@ -66,14 +66,14 @@ class ShaderProps(PropertyGroup):
     bsspplp_shaderobjtype: EnumProperty(
         name='BS Shader PP Lighting Object Type',
         description='Type of object linked to shader',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.BSShaderType)],
+        items=[(member.name, member.name, "", i) for i, member in enumerate(NifClasses.BSShaderType)],
         default='SHADER_DEFAULT'
     )
 
     bslsp_shaderobjtype: EnumProperty(
         name='BS Lighting Shader Object Type',
         description='Type of object linked to shader',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.BSLightingShaderType)],
+        items=[(member.name, member.name, "", i) for i, member in enumerate(NifClasses.BSLightingShaderType)],
         # default = 'SHADER_DEFAULT'
     )
 

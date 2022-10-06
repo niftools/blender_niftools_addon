@@ -90,7 +90,7 @@ class BSShaderPropertyProcessor(BSShader):
         b_shader.bs_shadertype = 'BSLightingShaderProperty'
 
         shader_type = bs_shader_property.shader_type
-        b_shader.bslsp_shaderobjtype = shader_type._name_
+        b_shader.bslsp_shaderobjtype = shader_type.name
 
         self.import_shader_flags(bs_shader_property)
 

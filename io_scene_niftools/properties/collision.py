@@ -67,7 +67,7 @@ def game_specific_col_layer_items(self, context):
     if col_layer_format is None:
         return []
     else:
-        return [(str(member._value_), member._name_, "", member._value_) for member in col_layer_format]
+        return [(str(member._value_), member.name, "", member._value_) for member in col_layer_format]
 
 class CollisionProperty(PropertyGroup):
     """Group of Havok related properties, which gets attached to objects through a property pointer."""
@@ -75,7 +75,7 @@ class CollisionProperty(PropertyGroup):
     motion_system: EnumProperty(
         name='Motion System',
         description='Havok Motion System settings for bhkRigidBody(t)',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.HkMotionType)],
+        items=[(member.name, member.name, "", i) for i, member in enumerate(NifClasses.HkMotionType)],
         # default = 'MO_SYS_FIXED',
 
     )
@@ -95,19 +95,19 @@ class CollisionProperty(PropertyGroup):
     deactivator_type: EnumProperty(
         name='Deactivator Type',
         description='Motion deactivation setting',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.HkDeactivatorType)],
+        items=[(member.name, member.name, "", i) for i, member in enumerate(NifClasses.HkDeactivatorType)],
     )
 
     solver_deactivation: EnumProperty(
         name='Solver Deactivation',
         description='Motion deactivation setting',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.HkSolverDeactivation)],
+        items=[(member.name, member.name, "", i) for i, member in enumerate(NifClasses.HkSolverDeactivation)],
     )
 
     quality_type: EnumProperty(
         name='Quality Type',
         description='Determines quality of motion',
-        items=[(member._name_, member._name_, "", i) for i, member in enumerate(NifClasses.HkQualityType)],
+        items=[(member.name, member.name, "", i) for i, member in enumerate(NifClasses.HkQualityType)],
         # default = 'MO_QUAL_FIXED',
     )
 
