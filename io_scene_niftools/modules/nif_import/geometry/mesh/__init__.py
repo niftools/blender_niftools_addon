@@ -90,8 +90,7 @@ class Mesh:
             if vertex_attributes.vertex_colors:
                 vertex_colors = [vertex.vertex_colors for vertex in vertex_data]
             if vertex_attributes.normals:
-                # stored as bytevector3, so needs normalization.
-                normals = np.array([vertex.normal for vertex in vertex_data], dtype=float) / 127.5 - 1.0
+                normals = [vertex.normal for vertex in vertex_data]
         else:
             assert (isinstance(n_block, NifClasses.NiTriBasedGeom))
 
