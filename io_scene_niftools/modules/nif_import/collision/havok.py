@@ -204,7 +204,7 @@ class BhkCollision(Collision):
             b_col_obj.nifcollision.max_linear_velocity = bhkshape.rigid_body_info.max_linear_velocity
             b_col_obj.nifcollision.max_angular_velocity = bhkshape.rigid_body_info.max_angular_velocity
 
-            b_col_obj.nifcollision.collision_layer = str(bhkshape.rigid_body_info.havok_filter.layer._value_)
+            b_col_obj.nifcollision.collision_layer = str(bhkshape.rigid_body_info.havok_filter.layer.value)
             # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
             # b_col_obj.nifcollision.col_filter = bhkshape.col_filter

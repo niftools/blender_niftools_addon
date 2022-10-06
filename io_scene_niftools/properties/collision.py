@@ -67,7 +67,7 @@ def game_specific_col_layer_items(self, context):
     if col_layer_format is None:
         return []
     else:
-        return [(str(member._value_), member.name, "", member._value_) for member in col_layer_format]
+        return [(str(member.value), member.name, "", member.value) for member in col_layer_format]
 
 class CollisionProperty(PropertyGroup):
     """Group of Havok related properties, which gets attached to objects through a property pointer."""

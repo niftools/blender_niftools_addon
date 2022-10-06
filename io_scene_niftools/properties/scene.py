@@ -99,7 +99,7 @@ class Scene(PropertyGroup):
     # For which game to export.
     game: bpy.props.EnumProperty(
         items=[('NONE', 'NONE', 'No game selected')] + [
-            (member.name, member._value_, "Export for " + member._value_)
+            (member.name, member.value, "Export for " + member.value)
             for member in sorted(
                 [member for member in set(all_games)], key=lambda x: x.name)
         ],
