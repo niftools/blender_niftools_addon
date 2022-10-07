@@ -141,9 +141,8 @@ class Bound(Collision):
         offset = capsule.center
         # always a normalized vector
         direction = capsule.origin
-        # nb properly named in newer nif.xmls
-        extent = capsule.unknown_float_1
-        radius = capsule.unknown_float_2
+        extent = capsule.extent
+        radius = capsule.radius
 
         # positions of the box verts
         minx = miny = -radius

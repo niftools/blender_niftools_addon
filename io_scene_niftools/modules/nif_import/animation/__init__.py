@@ -215,9 +215,8 @@ class Animation:
                 key_times.extend(key.time for key in kfd.translations.keys)
                 key_times.extend(key.time for key in kfd.scales.keys)
                 key_times.extend(key.time for key in kfd.quaternion_keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[0].keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[1].keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[2].keys)
+                for dimension in kfd.xyz_rotations:
+                    key_times.extend(key.time for key in dimension.keys)
 
             for kfi in root.tree(block_type=NifClasses.NiBSplineInterpolator):
                 if not kfi.basis_data:
