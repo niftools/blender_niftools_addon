@@ -133,7 +133,7 @@ class BSShaderPropertyProcessor(BSShader):
 
         shader = self._b_mat.niftools_shader
         shader.bs_shadertype = 'BSEffectShaderProperty'
-        shader.bslsp_shaderobjtype = 'Default'
+        shader.bslsp_shaderobjtype = 'DEFAULT'
         self.import_shader_flags(bs_effect_shader_property)
 
         self.texturehelper.import_bseffectshaderproperty_textures(bs_effect_shader_property, self._nodes_wrapper)
