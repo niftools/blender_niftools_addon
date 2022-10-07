@@ -93,8 +93,8 @@ class BSShaderProperty:
 
     def export_bs_lighting_shader_property(self, b_mat):
         bsshader = NifClasses.BSLightingShaderProperty(NifData.data)
-        b_s_type = getattr(NifClasses.BSLightingShaderType, b_mat.niftools_shader.bslsp_shaderobjtype)
-        bsshader.skyrim_shader_type = getattr(NifClasses.BSLightingShaderType, b_mat.niftools_shader.bslsp_shaderobjtype)
+        b_s_type = NifClasses.BSLightingShaderType[b_mat.niftools_shader.bslsp_shaderobjtype]
+        bsshader.skyrim_shader_type = NifClasses.BSLightingShaderType[b_mat.niftools_shader.bslsp_shaderobjtype]
 
         self.texturehelper.export_bs_lighting_shader_prop_textures(bsshader)
 
@@ -136,7 +136,7 @@ class BSShaderProperty:
         bsshader = NifClasses.BSShaderPPLightingProperty(NifData.data)
         # set shader options
         # TODO: FIXME:
-        bsshader.shader_type = getattr(NifClasses.BSShaderType, b_mat.niftools_shader.bsspplp_shaderobjtype)
+        bsshader.shader_type = NifClasses.BSShaderType[b_mat.niftools_shader.bsspplp_shaderobjtype]
 
         self.texturehelper.export_bs_shader_pp_lighting_prop_textures(bsshader)
 

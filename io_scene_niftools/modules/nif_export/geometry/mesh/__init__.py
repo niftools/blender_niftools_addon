@@ -424,7 +424,7 @@ class Mesh:
                     self.export_skin_partition(b_obj, bodypartfacemap, triangles, n_geom)
 
             # fix data consistency type
-            n_geom.data.consistency_flags = getattr(NifClasses.ConsistencyType, b_obj.niftools.consistency_flags)
+            n_geom.data.consistency_flags = NifClasses.ConsistencyType[b_obj.niftools.consistency_flags]
 
             # export EGM or NiGeomMorpherController animation
             # shape keys are only present on the raw, unevaluated mesh
@@ -493,7 +493,7 @@ class Mesh:
                     NifLog.warn(f"Using more than {rec_bones} bones per partition on {game} export."
                                 f"This may cause issues in-game.")
 
-            part_order = [getattr(NifClasses.BSDismemberBodyPartType, face_map.name, None) for face_map in
+            part_order = [NifClasses.BSDismemberBodyPartType.get(face_map.name) for face_map in
                           b_obj.face_maps]
             part_order = [body_part for body_part in part_order if body_part is not None]
             # override pyffi n_geom.update_skin_partition with custom one (that allows ordering)
@@ -567,7 +567,7 @@ class Mesh:
         for bodypartgroupname in [member.name for member in NifClasses.BSDismemberBodyPartType]:
             face_map = b_obj.face_maps.get(bodypartgroupname)
             if face_map:
-                index_group_map[face_map.index] = getattr(NifClasses.BSDismemberBodyPartType, bodypartgroupname)
+                index_group_map[face_map.index] = NifClasses.BSDismemberBodyPartType[bodypartgroupname]
         if len(index_group_map) <= 1:
             # there were no valid face maps
             return []

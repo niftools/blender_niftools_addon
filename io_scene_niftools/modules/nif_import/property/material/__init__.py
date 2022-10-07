@@ -118,7 +118,7 @@ class NiMaterial(Material):
         # update material material name
         name = block_store.import_name(n_mat_prop)
         if name is None:
-            name = (n_block.name + "_nt_mat")
+            name = (f"{n_block.name}_nt_mat")
         b_mat.name = name
 
         self.import_material_ambient(b_mat, n_mat_prop.ambient_color)
