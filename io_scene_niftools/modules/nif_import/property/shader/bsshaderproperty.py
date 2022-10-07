@@ -188,9 +188,7 @@ class BSShaderPropertyProcessor(BSShader):
 
         # get the clamp (x and y direction)
         if hasattr(shader, 'texture_clamp_mode'):
-            # use modulo 256, because in BSEffectShaderProperty, pyffi also takes other bytes, making the value appear
-            # higher than it is
-            clamp_mode = shader.texture_clamp_mode % 256
+            clamp_mode = shader.texture_clamp_mode
             if clamp_mode == NifClasses.TexClampMode.WRAP_S_WRAP_T:
                 clamp_x = False
                 clamp_y = False

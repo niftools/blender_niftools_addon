@@ -144,7 +144,7 @@ class BSShaderTexture(TextureSlotManager):
         if hasattr(shader, 'texture_clamp_mode'):
             if self.slots[TEX_SLOTS.BASE] and (self.slots[TEX_SLOTS.BASE].extension == "CLIP"):
                 # if the extension is clip, we know the wrap mode is clamp for both,
-                shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + NifClasses.TexClampMode.CLAMP_S_CLAMP_T
+                shader.texture_clamp_mode = NifClasses.TexClampMode.CLAMP_S_CLAMP_T
             else:
                 # otherwise, look at the given clip modes from the nodes
                 if not clamp_x:
@@ -155,6 +155,6 @@ class BSShaderTexture(TextureSlotManager):
                     wrap_t = 1
                 else:
                     wrap_t = 0
-                shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + (wrap_s + wrap_t)
+                shader.texture_clamp_mode = NifClasses.TexClampMode.from_value(wrap_s + wrap_t)
 
         return shader
