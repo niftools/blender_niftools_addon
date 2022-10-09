@@ -45,7 +45,6 @@ import bpy
 from pyffi.formats.dds import DdsFormat
 from generated.formats.nif import classes as NifClasses
 
-from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
 
@@ -179,7 +178,7 @@ class TextureLoader:
 
     def import_embedded_texture_source(self, source):
         # first try to use the actual file name of this NiSourceTexture
-        tex_name = safe_decode(source.file_name)
+        tex_name = source.file_name
         tex_path = os.path.join(os.path.dirname(NifOp.props.filepath), tex_name)
         # not set, then use generated sequence name
         if not tex_name:

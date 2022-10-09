@@ -48,7 +48,6 @@ from generated.formats.nif import classes as NifClasses
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.modules.nif_import.object import block_registry
 from io_scene_niftools.utils import math
-from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.logging import NifLog
 from io_scene_niftools.utils.consts import QUAT, EULER, LOC, SCALE
 
@@ -142,12 +141,12 @@ class TransformAnimation(Animation):
 
     def import_kf_root(self, kf_root, b_armature_obj):
         """Base method to warn user that this root type is not supported"""
-        NifLog.warn(f"Unknown KF root block found : {safe_decode(kf_root.name)}")
+        NifLog.warn(f"Unknown KF root block found : {kf_root.name}")
         NifLog.warn(f"This type isn't currently supported: {type(kf_root)}")
 
     def import_generic_kf_root(self, kf_root):
         NifLog.debug(f'Importing {type(kf_root)}...')
-        return safe_decode(kf_root.name)
+        return kf_root.name
 
     def import_sequence_data(self, kf_root, b_armature_obj):
         b_action_name = self.import_generic_kf_root(kf_root)

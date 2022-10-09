@@ -39,8 +39,6 @@
 
 from io_scene_niftools.utils.logging import NifLog
 
-from io_scene_niftools.utils.blocks import safe_decode
-
 from io_scene_niftools.utils.consts import BIP_01, BIP01_L, B_L_SUFFIX, BIP01_R, B_R_SUFFIX, NPC_L, NPC_R, NPC_SUFFIX, \
     BRACE_R, B_R_POSTFIX, B_L_POSTFIX, CLOSE_BRACKET, BRACE_L, OPEN_BRACKET
 
@@ -53,8 +51,6 @@ def get_bone_name_for_blender(name):
     :return: Bone name in Blender convention.
     :rtype: :class:`str`
     """
-    if isinstance(name, bytes):
-        name = safe_decode(name)
     if name.startswith(BIP01_L):
         name = BIP_01 + name[8:] + B_L_SUFFIX
     elif name.startswith(BIP01_R):
@@ -93,7 +89,7 @@ class BlockRegistry:
 
         NifLog.debug(f"Importing name for {n_block.__class__.__name__} block from {n_block.name}")
         
-        n_name = safe_decode(n_block.name)
+        n_name = n_block.name
 
         # if name is empty, create something non-empty
         if not n_name:
