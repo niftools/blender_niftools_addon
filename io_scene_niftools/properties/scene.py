@@ -43,7 +43,7 @@ from bpy.props import PointerProperty, IntProperty, EnumProperty, StringProperty
 from bpy.types import PropertyGroup
 from itertools import chain
 
-from generated.formats.nif.versions import versions, set_game
+from generated.formats.nif.versions import available_versions, set_game
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -53,8 +53,8 @@ class DummyClass: pass
 
 dummy_context = DummyClass()
 dummy_context.bs_header = DummyClass()
-primary_games = list(chain.from_iterable(version.primary_games for version in versions if version.supported))
-all_games = list(chain.from_iterable(version.all_games for version in versions if version.supported))
+primary_games = list(chain.from_iterable(version.primary_games for version in available_versions if version.supported))
+all_games = list(chain.from_iterable(version.all_games for version in available_versions if version.supported))
 game_version_map = {}
 
 

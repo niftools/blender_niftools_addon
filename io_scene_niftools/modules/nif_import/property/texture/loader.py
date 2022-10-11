@@ -42,105 +42,10 @@ import traceback
 import os.path
 
 import bpy
-from pyffi.formats.dds import DdsFormat
 from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
-
-
-# TODO once the save_dds PR code is merged into pyffi this section can be deleted.
-# This section replaces pyffi methods to impliment functionality immediately.
-#################
-def get_pixeldata_stream_overide(self):
-    if isinstance(self, NifClasses.NiPersistentSrcTextureRendererData):
-        return ''.join(
-            ''.join([chr(x) for x in tex])
-            for tex in self.pixel_data)
-    elif isinstance(self, NifClasses.NiPixelData):
-        if self.pixel_data:
-            # used in older nif versions
-            return bytearray(x for tex in self.pixel_data for x in tex)
-        else:
-            # used in newer nif versions
-            return ''.join(self.pixel_data_matrix)
-    else:
-        raise ValueError(f"cannot retrieve pixel data when saving pixel format {self.pixel_format} as DDS")
-
-
-def save_as_dds_override(self, stream):
-    data = DdsFormat.Data()
-    header = data.header
-    pixeldata = data.pixeldata
-
-    header.flags.caps = 1
-    header.flags.height = 1
-    header.flags.width = 1
-    header.flags.pixel_format = 1
-    header.flags.mipmap_count = 1
-    header.mipmap_count = len(self.mipmaps)
-    header.height = self.mipmaps[0].height
-    header.width = self.mipmaps[0].width
-    header.caps_1.complex = 1
-    header.caps_1.texture = 1
-    header.caps_1.mipmap = 1
-    # create header, depending on the format
-    if self.pixel_format in (NifClasses.PixelFormat.PX_FMT_RGB8,
-                             NifClasses.PixelFormat.PX_FMT_RGBA8):
-        # uncompressed RGB(A)
-        header.flags.linear_size = 1
-        header.linear_size = len(self.pixel_data)
-        header.pixel_format.flags.rgb = 1
-        header.pixel_format.bit_count = self.bits_per_pixel
-        if not self.channels:
-            header.pixel_format.r_mask = self.red_mask
-            header.pixel_format.g_mask = self.green_mask
-            header.pixel_format.b_mask = self.blue_mask
-            header.pixel_format.a_mask = self.alpha_mask
-        else:
-            bit_pos = 0
-            for i, channel in enumerate(self.channels):
-                mask = (2 ** channel.bits_per_channel - 1) << bit_pos
-                if channel.type == NifClasses.ChannelType.CHNL_RED:
-                    header.pixel_format.r_mask = mask
-                elif channel.type == NifClasses.ChannelType.CHNL_GREEN:
-                    header.pixel_format.g_mask = mask
-                elif channel.type == NifClasses.ChannelType.CHNL_BLUE:
-                    header.pixel_format.b_mask = mask
-                elif channel.type == NifClasses.ChannelType.CHNL_ALPHA:
-                    header.pixel_format.a_mask = mask
-                bit_pos += channel.bits_per_channel
-    elif self.pixel_format in (NifClasses.PixelFormat.PX_FMT_DXT1,
-                               NifClasses.PixelFormat.PX_FMT_DXT5,
-                               NifClasses.PixelFormat.PX_FMT_DXT5_ALT):
-        # format used in Megami Tensei: Imagine and Bully SE
-
-        header.flags.linear_size = 0
-        header.linear_size = 0
-        header.pixel_format.flags.four_c_c = 1
-        if self.pixel_format in (NifClasses.PixelFormat.PX_FMT_DXT1,):
-            header.pixel_format.four_c_c = DdsFormat.FourCC.DXT1
-        if self.pixel_format in (NifClasses.PixelFormat.PX_FMT_DXT5,
-                                 NifClasses.PixelFormat.PX_FMT_DXT5_ALT):
-            header.pixel_format.four_c_c = DdsFormat.FourCC.DXT5
-        header.pixel_format.bit_count = 0
-        header.pixel_format.r_mask = 0
-        header.pixel_format.g_mask = 0
-        header.pixel_format.b_mask = 0
-        header.pixel_format.a_mask = 0
-    else:
-        raise ValueError(f"cannot save pixel format {self.pixel_format} as DDS")
-
-    # pyffi pixeldata can complain about a too long value for perfectly fine data
-    pixeldata.set_value(b"")
-    data.write(stream)
-    # so just dump the bytes directly
-    stream.write(self.__get_pixeldata_stream())
-
-
-NifClasses.NiPixelFormat.__get_pixeldata_stream = get_pixeldata_stream_overide
-NifClasses.NiPixelFormat.save_as_dds = save_as_dds_override
-#################
 
 
 class TextureLoader:

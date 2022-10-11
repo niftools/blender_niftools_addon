@@ -141,22 +141,22 @@ class MaterialAnimation(Animation):
             times, keys = self.get_keys_values(n_ctrl_data.keys)
             # get operation
             operation = n_ctrl.operation
-            if operation == NifClasses.TexTransform.TT_TRANSLATE_U:
+            if operation == NifClasses.TransformMember.TT_TRANSLATE_U:
                 data_path = LOC_DP
                 array_ind = 0
-            elif operation == NifClasses.TexTransform.TT_TRANSLATE_V:
+            elif operation == NifClasses.TransformMember.TT_TRANSLATE_V:
                 data_path = LOC_DP
                 array_ind = 1
                 # UV V coordinate is inverted in blender
                 keys = [-key for key in keys]
-            elif operation == NifClasses.TexTransform.TT_ROTATE:
+            elif operation == NifClasses.TransformMember.TT_ROTATE:
                 # not sure, need example nif
                 NifLog.warn("Rotation in Texture Transform is not supported")
                 return
-            elif operation == NifClasses.TexTransform.TT_SCALE_U:
+            elif operation == NifClasses.TransformMember.TT_SCALE_U:
                 data_path = SCALE_DP
                 array_ind = 0
-            elif operation == NifClasses.TexTransform.TT_SCALE_V:
+            elif operation == NifClasses.TransformMember.TT_SCALE_V:
                 data_path = SCALE_DP
                 array_ind = 1
 

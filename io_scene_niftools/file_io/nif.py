@@ -61,7 +61,7 @@ class NifFile:
             if version >= 0:
                 # it is valid, so read the file
                 NifLog.info(f"NIF file version: {version:x}")
-                NifLog.info("Reading {file_ext} file")
+                NifLog.info(f"Reading {file_ext} file")
                 data = NifFormat.NifFile.from_stream(nif_stream)
             elif version == -1:
                 raise NifError("Unsupported NIF version.")
