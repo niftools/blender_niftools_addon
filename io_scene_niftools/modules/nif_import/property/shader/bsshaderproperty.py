@@ -148,12 +148,12 @@ class BSShaderPropertyProcessor(BSShader):
         #     self.b_mat = self.set_alpha_bsshader(self.b_mat, bs_effect_shader_property)
 
         # Emissive
-        if bs_effect_shader_property.emissive_color:
-            Material.import_material_emissive(self._b_mat, bs_effect_shader_property.emissive_color)
+        if bs_effect_shader_property.base_color:
+            Material.import_material_emissive(self._b_mat, bs_effect_shader_property.base_color)
             # TODO [property][shader][alpha] Map this to actual alpha when component is available
-            Material.import_material_alpha(self._b_mat, bs_effect_shader_property.emissive_color.a)
+            Material.import_material_alpha(self._b_mat, bs_effect_shader_property.base_color.a)
             # todo [shader] create custom float property, or use as factor in mix shader?
-            # self.b_mat.emit = bs_effect_shader_property.emissive_multiple
+            # self.b_mat.emit = bs_effect_shader_property.base_color_scale
 
         # TODO [animation][shader] Move out to a dedicated controller processor
         if bs_effect_shader_property.controller:

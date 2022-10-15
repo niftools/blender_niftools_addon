@@ -81,10 +81,10 @@ class BSShaderProperty:
         #     bsshader.alpha = (1 - b_mat.alpha)
 
         # Emissive
-        BSShaderProperty.set_color3_property(bsshader.emissive_color, b_mat.niftools.emissive_color)
-        bsshader.emissive_color.a = b_mat.niftools.emissive_alpha.v
+        BSShaderProperty.set_color3_property(bsshader.base_color, b_mat.niftools.emissive_color)
+        bsshader.base_color.a = b_mat.niftools.emissive_alpha.v
         # TODO [shader] Expose a emission multiplier value
-        # bsshader.emissive_multiple = b_mat.emit
+        # bsshader.base_color_scale = b_mat.emit
 
         # Shader Flags
         BSShaderProperty.export_shader_flags(b_mat, bsshader)
