@@ -135,23 +135,15 @@ class BhkCollision(Collision):
 
         n_r_body = block_store.create_block("bhkRigidBody", b_obj)
         n_col_obj.body = n_r_body
-        n_r_body.layer = int(b_obj.nifcollision.collision_layer)
-        n_r_body.col_filter = b_obj.nifcollision.col_filter
-        n_r_body.unknown_short = 0
-        n_r_body.unknown_int_1 = 0
-        n_r_body.unknown_int_2 = 2084020722
-        unk_3 = n_r_body.unknown_3_ints
-        unk_3[0] = 0
-        unk_3[1] = 0
-        unk_3[2] = 0
-        n_r_body.collision_response = 1
-        n_r_body.unknown_byte = 0
-        n_r_body.process_contact_callback_delay = 65535
-        unk_2 = n_r_body.unknown_2_shorts
-        unk_2[0] = 35899
-        unk_2[1] = 16336
-        n_r_body.layer_copy = n_r_body.layer
-        n_r_body.col_filter_copy = n_r_body.col_filter
+
+        n_r_body.havok_filter.layer = int(b_obj.nifcollision.collision_layer)
+        n_r_body.havok_filter.flags = b_obj.nifcollision.col_filter
+        # n_r_body.havok_filter.group = 0
+
+        n_r_body.entity_info.collision_response = 1
+        n_r_body.rigid_body_info.collision_response = 1
+
+        n_r_body.rigid_body_info.havok_filter = n_r_body.havok_filter
         # TODO [format] nif.xml update required
         # ukn_6 = n_r_body.unknown_6_shorts
         # ukn_6[0] = 21280
@@ -164,24 +156,22 @@ class BhkCollision(Collision):
         b_r_body = b_obj.rigid_body
         # mass is 1.0 at the moment (unless property was set on import or by the user)
         # will be fixed in update_rigid_bodies()
-        n_r_body.mass = b_r_body.mass
-        n_r_body.linear_damping = b_r_body.linear_damping
-        n_r_body.angular_damping = b_r_body.angular_damping
+        n_r_info = n_r_body.rigid_body_info
+        n_r_info.mass = b_r_body.mass
+        n_r_info.linear_damping = b_r_body.linear_damping
+        n_r_info.angular_damping = b_r_body.angular_damping
         # n_r_body.linear_velocity = linear_velocity
         # n_r_body.angular_velocity = angular_velocity
-        n_r_body.friction = b_r_body.friction
-        n_r_body.restitution = b_r_body.restitution
-        n_r_body.max_linear_velocity = b_obj.nifcollision.max_linear_velocity
-        n_r_body.max_angular_velocity = b_obj.nifcollision.max_angular_velocity
-        n_r_body.penetration_depth = b_obj.nifcollision.penetration_depth
-        n_r_body.motion_system = b_obj.nifcollision.motion_system
-        n_r_body.deactivator_type = b_obj.nifcollision.deactivator_type
-        n_r_body.solver_deactivation = b_obj.nifcollision.solver_deactivation
-        # TODO [collision][properties][ui] expose unknowns to UI & make sure to keep defaults
-        n_r_body.unknown_byte_1 = 1
-        n_r_body.unknown_byte_2 = 1
-        n_r_body.quality_type = b_obj.nifcollision.quality_type
-        n_r_body.unknown_int_9 = 0
+        n_r_info.friction = b_r_body.friction
+        n_r_info.restitution = b_r_body.restitution
+        n_r_info.max_linear_velocity = b_obj.nifcollision.max_linear_velocity
+        n_r_info.max_angular_velocity = b_obj.nifcollision.max_angular_velocity
+        n_r_info.penetration_depth = b_obj.nifcollision.penetration_depth
+        n_r_info.motion_system = NifClasses.HkMotionType[b_obj.nifcollision.motion_system]
+        n_r_info.deactivator_type = NifClasses.HkDeactivatorType[b_obj.nifcollision.deactivator_type]
+        n_r_info.solver_deactivation = NifClasses.HkSolverDeactivation[b_obj.nifcollision.solver_deactivation]
+        n_r_info.quality_type = NifClasses.HkQualityType[b_obj.nifcollision.quality_type]
+        # TODO [collision] update the body flags to respond/not respond to wind
         return n_r_body
 
     def export_bhk_collison_object(self, b_obj):
@@ -287,11 +277,6 @@ class BhkCollision(Collision):
         colhull = block_store.create_block("bhkConvexVerticesShape", b_obj)
         # colhull.material = n_havok_mat[0]
         colhull.radius = radius
-
-        unk_6 = colhull.unknown_6_floats
-        unk_6[2] = -0.0  # enables arrow detection
-        unk_6[5] = -0.0  # enables arrow detection
-        # note: unknown 6 floats are usually all 0
 
         # Vertices
         colhull.num_vertices = len(vertlist)

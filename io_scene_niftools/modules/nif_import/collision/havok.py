@@ -207,7 +207,7 @@ class BhkCollision(Collision):
             b_col_obj.nifcollision.collision_layer = str(bhkshape.rigid_body_info.havok_filter.layer.value)
             # b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             # b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
-            # b_col_obj.nifcollision.col_filter = bhkshape.col_filter
+            b_col_obj.nifcollision.col_filter = bhkshape.havok_filter.flags
 
         # import constraints
         # this is done once all objects are imported for now, store all imported havok shapes with object lists
