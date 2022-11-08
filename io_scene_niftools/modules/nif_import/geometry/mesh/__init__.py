@@ -36,7 +36,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import numpy as np
+from itertools import chain
 
 from generated.formats.nif import classes as NifClasses
 
@@ -53,6 +53,8 @@ from io_scene_niftools.utils.logging import NifLog
 
 
 class Mesh:
+
+    supported_mesh_types = (NifClasses.BSTriShape, NifClasses.NiMesh, NifClasses.NiTriBasedGeom)
 
     def __init__(self):
         self.materialhelper = Material()
@@ -71,6 +73,8 @@ class Mesh:
         node_name = n_block.name
         NifLog.info(f"Importing mesh data for geometry '{node_name}'")
         b_mesh = b_obj.data
+
+        assert isinstance(n_block, self.supported_mesh_types)
 
         vertices = []
         triangles = []
@@ -91,8 +95,27 @@ class Mesh:
                 vertex_colors = [vertex.vertex_colors for vertex in vertex_data]
             if vertex_attributes.normals:
                 normals = [vertex.normal for vertex in vertex_data]
-        else:
-            assert (isinstance(n_block, NifClasses.NiTriBasedGeom))
+        elif isinstance(n_block, NifClasses.NiMesh):
+            # get the data from the associated nidatastreams based on the description in the component semantics
+            vertices = list(chain.from_iterable(n_block.geomdata_by_name("POSITION")))
+            triangles = n_block.get_triangles()
+            uvs = n_block.geomdata_by_name("TEXCOORD")
+            if len(uvs) == 0:
+                uvs = None
+            else:
+                uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
+            vertex_colors = n_block.geomdata_by_name("COLOR")
+            if len(vertex_colors) == 0:
+                vertex_colors = None
+            else:
+                vertex_colors = list(chain.from_iterable(vertex_colors))
+                vertex_colors = [NifClasses.Color4.from_value(color) for color in vertex_colors]
+            normals = n_block.geomdata_by_name("NORMAL")
+            if len(normals) == 0:
+                normals = None
+            else:
+                normals = list(chain.from_iterable(normals))
+        elif isinstance(n_block, NifClasses.NiTriBasedGeom):
 
             # shortcut for mesh geometry data
             n_tri_data = n_block.data
@@ -125,7 +148,8 @@ class Mesh:
         self.mesh_prop_processor.process_property_list(n_block, b_obj)
 
         # import skinning info, for meshes affected by bones
-        VertexGroup.import_skin(n_block, b_obj)
+        if n_block.is_skin():
+            VertexGroup.import_skin(n_block, b_obj)
 
         # import morph controller
         if NifOp.props.animation:
