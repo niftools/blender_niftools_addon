@@ -85,8 +85,10 @@ class Mesh:
         if isinstance(n_block, NifClasses.BSTriShape):
             vertex_attributes = n_block.vertex_desc.vertex_attributes
             vertex_data = n_block.get_vertex_data()
-            # change this part later for skinned meshes
-            if vertex_attributes.vertex:
+            if isinstance(n_block, NifClasses.BSDynamicTriShape):
+                # for BSDynamicTriShapes, the vertex data is stored in 4-component vertices
+                vertices = [(vertex.x, vertex.y, vertex.z) for vertex in n_block.vertices]
+            elif vertex_attributes.vertex:
                 vertices = [vertex.vertex for vertex in vertex_data]
             triangles = n_block.get_triangles()
             if vertex_attributes.u_vs:
