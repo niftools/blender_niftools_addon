@@ -83,10 +83,11 @@ class BhkCollision(Collision):
 
         # find physics properties/defaults
         # get havok material name from material name
+        hav_mat_type = type(NifClasses.HavokMaterial(NifData.data).material)
         if b_obj.data.materials:
-            n_havok_mat = b_obj.data.materials[0].name
+            n_havok_mat = hav_mat_type[b_obj.data.materials[0].name]
         else:
-            n_havok_mat = "HAV_MAT_STONE"
+            n_havok_mat = hav_mat_type.from_value(0)
 
         # linear_velocity = b_obj.rigid_body.deactivate_linear_velocity
         # angular_velocity = b_obj.rigid_body.deactivate_angular_velocity
@@ -121,7 +122,7 @@ class BhkCollision(Collision):
         else:
             n_col_body = parent_block.collision_object.body
             # fix total mass
-            n_col_body.mass += rigid_body.mass
+            n_col_body.rigid_body_info.mass += rigid_body.mass
 
         if coll_ispacked:
             self.export_collision_packed(b_obj, n_col_body, layer, n_havok_mat)
@@ -144,19 +145,14 @@ class BhkCollision(Collision):
         n_r_body.rigid_body_info.collision_response = 1
 
         n_r_body.rigid_body_info.havok_filter = n_r_body.havok_filter
-        # TODO [format] nif.xml update required
-        # ukn_6 = n_r_body.unknown_6_shorts
-        # ukn_6[0] = 21280
-        # ukn_6[1] = 4581
-        # ukn_6[2] = 62977
-        # ukn_6[3] = 65535
-        # ukn_6[4] = 44
-        # ukn_6[5] = 0
 
         b_r_body = b_obj.rigid_body
         # mass is 1.0 at the moment (unless property was set on import or by the user)
         # will be fixed in update_rigid_bodies()
         n_r_info = n_r_body.rigid_body_info
+        # TODO [format] update response type and callback delay (if relevant)
+        # n_r_info.collision_response = ?
+        # n_r_info.process_contact_callback_delay = ?
         n_r_info.mass = b_r_body.mass
         n_r_info.linear_damping = b_r_body.linear_damping
         n_r_info.angular_damping = b_r_body.angular_damping
@@ -242,17 +238,6 @@ class BhkCollision(Collision):
     def export_bhk_mopp_bv_tree_shape(self, b_obj, n_col_body):
         n_col_mopp = block_store.create_block("bhkMoppBvTreeShape", b_obj)
         n_col_body.shape = n_col_mopp
-        # n_col_mopp.material = n_havok_mat[0]
-        unk_8 = n_col_mopp.unknown_8_bytes
-        unk_8[0] = 160
-        unk_8[1] = 13
-        unk_8[2] = 75
-        unk_8[3] = 1
-        unk_8[4] = 192
-        unk_8[5] = 207
-        unk_8[6] = 144
-        unk_8[7] = 11
-        n_col_mopp.unknown_float = 1.0
         return n_col_mopp
 
     def export_bhk_packed_nitristrip_shape(self, b_obj, n_col_mopp):
@@ -517,12 +502,10 @@ class BhkCollision(Collision):
             normals.append(rotation @ face.normal)
             if len(face.vertices) == 4:
                 triangles.append([face.vertices[i] for i in (0, 2, 3)])
-                normals.append(rotation * face.normal)
+                normals.append(rotation @ face.normal)
 
         # TODO [collision][havok] Redo this as a material lookup
-        havok_mat = NifClasses.HavokMaterial(NifData.data)
-        havok_mat.material = n_havok_mat
-        n_col_shape.add_shape(triangles, normals, vertices, layer, havok_mat.material)
+        n_col_shape.add_shape(triangles, normals, vertices, layer, n_havok_mat)
 
     def export_collision_single(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add collision object to n_col_body.
