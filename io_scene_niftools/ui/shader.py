@@ -39,7 +39,7 @@
 
 from bpy.types import Panel
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -69,15 +69,15 @@ class ShaderPanel(Panel):
         if nif_obj_props.bs_shadertype == 'BSShaderPPLightingProperty':
             row.prop(nif_obj_props, "bsspplp_shaderobjtype")
 
-            for property_name in sorted(NifFormat.BSShaderFlags._names):
+            for property_name in sorted([member.name for member in NifClasses.BSShaderFlags]):
                 row.prop(nif_obj_props, property_name)
 
         elif nif_obj_props.bs_shadertype in ('BSLightingShaderProperty', 'BSEffectShaderProperty'):
             row.prop(nif_obj_props, "bslsp_shaderobjtype")
 
-            for property_name in sorted(NifFormat.SkyrimShaderPropertyFlags1._names):
+            for property_name in sorted([member.name for member in NifClasses.SkyrimShaderPropertyFlags1]):
                 row.prop(nif_obj_props, property_name)
-            for property_name in sorted(NifFormat.SkyrimShaderPropertyFlags2._names):
+            for property_name in sorted([member.name for member in NifClasses.SkyrimShaderPropertyFlags2]):
                 row.prop(nif_obj_props, property_name)
 
 

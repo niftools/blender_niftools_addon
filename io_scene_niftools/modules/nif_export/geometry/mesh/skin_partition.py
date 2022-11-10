@@ -36,10 +36,10 @@
 #
 # ***** END LICENSE BLOCK *****
 
+from itertools import repeat
 import logging
-import pyffi
-from pyffi.formats.nif import NifFormat
-
+from generated.utils.vertex_cache import get_cache_optimized_triangles, stable_stripify
+from generated.formats.nif import classes as NifClasses
 
 def update_skin_partition(self,
                         maxbonesperpartition=4, maxbonespervertex=4,
@@ -80,7 +80,7 @@ def update_skin_partition(self,
         maximize_bone_sharing is true, sorts the parts within the shared bones,
         and sorts the shared bone lists based on its first body part.
     """
-    logger = logging.getLogger("pyffi.nif.nitribasedgeom")
+    logger = logging.getLogger("generated.nif.nitribasedgeom")
 
     # if trianglepartmap not specified, map everything to index 0
     if trianglepartmap is None:
@@ -319,13 +319,13 @@ def update_skin_partition(self,
         skindata.skin_partition = skinpart
     else:
     # otherwise, create a new block and link it
-        skinpart = NifFormat.NiSkinPartition()
+        skinpart = NifClasses.NiSkinPartition(skindata.context)
         skindata.skin_partition = skinpart
         skininst.skin_partition = skinpart
 
     # set number of partitions
-    skinpart.num_skin_partition_blocks = len(parts)
-    skinpart.skin_partition_blocks.update_size()
+    skinpart.num_partitions = len(parts)
+    skinpart.reset_field("partitions")
 
     # maximize bone sharing, if requested
     if maximize_bone_sharing:
@@ -417,9 +417,9 @@ def update_skin_partition(self,
                         key = lambda part: body_part_order_map[part[2]])
 
     # for Fallout 3, set dismember partition indices
-    if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
+    if isinstance(skininst, NifClasses.BSDismemberSkinInstance):
         skininst.num_partitions = len(parts)
-        skininst.partitions.update_size()
+        skininst.reset_field("partitions")
         lastpart = None
         for bodypart, part in zip(skininst.partitions, parts):
             bodypart.body_part = part[2]
@@ -435,16 +435,16 @@ def update_skin_partition(self,
             # store part for next iteration
             lastpart = part
 
-    for skinpartblock, part in zip(skinpart.skin_partition_blocks, parts):
+    for skinpartblock, part in zip(skinpart.partitions, parts):
         # get sorted list of bones
         bones = sorted(list(part[0]))
         triangles = part[1]
         logger.info("Optimizing triangle ordering in partition %i"
                     % parts.index(part))
         # optimize triangles for vertex cache and calculate strips
-        triangles = pyffi.utils.vertex_cache.get_cache_optimized_triangles(
+        triangles = get_cache_optimized_triangles(
             triangles)
-        strips = pyffi.utils.vertex_cache.stable_stripify(
+        strips = stable_stripify(
             triangles, stitchstrips=stitchstrips)
         triangles_size = 3 * len(triangles)
         strips_size = len(strips) + sum(len(strip) for strip in strips)
@@ -499,17 +499,17 @@ def update_skin_partition(self,
         # engine doesn't like that, it seems to want exactly 4 even if there
         # are fewer
         skinpartblock.num_weights_per_vertex = maxbonespervertex
-        skinpartblock.bones.update_size()
+        skinpartblock.reset_field("bones")
         for i, bonenum in enumerate(bones):
             skinpartblock.bones[i] = bonenum
         for i in range(len(bones), skinpartblock.num_bones):
             skinpartblock.bones[i] = 0 # dummy bone slots refer to first bone
         skinpartblock.has_vertex_map = True
-        skinpartblock.vertex_map.update_size()
+        skinpartblock.reset_field("vertex_map")
         for i, v in enumerate(vertices):
             skinpartblock.vertex_map[i] = v
         skinpartblock.has_vertex_weights = True
-        skinpartblock.vertex_weights.update_size()
+        skinpartblock.reset_field("vertex_weights")
         for i, v in enumerate(vertices):
             for j in range(skinpartblock.num_weights_per_vertex):
                 if j < len(weights[v]):
@@ -518,26 +518,26 @@ def update_skin_partition(self,
                     skinpartblock.vertex_weights[i][j] = 0.0
         if stripifyblock:
             skinpartblock.has_faces = True
-            skinpartblock.strip_lengths.update_size()
+            skinpartblock.reset_field("strip_lengths")
             for i, strip in enumerate(strips):
                 skinpartblock.strip_lengths[i] = len(strip)
-            skinpartblock.strips.update_size()
+            skinpartblock.reset_field("strips")
             for i, strip in enumerate(strips):
                 for j, v in enumerate(strip):
                     skinpartblock.strips[i][j] = vertices.index(v)
         else:
             skinpartblock.has_faces = True
             # clear strip lengths array
-            skinpartblock.strip_lengths.update_size()
+            skinpartblock.reset_field("strip_lengths")
             # clear strips array
-            skinpartblock.strips.update_size()
-            skinpartblock.triangles.update_size()
+            skinpartblock.reset_field("strips")
+            skinpartblock.reset_field("triangles")
             for i, (v_1,v_2,v_3) in enumerate(triangles):
                 skinpartblock.triangles[i].v_1 = vertices.index(v_1)
                 skinpartblock.triangles[i].v_2 = vertices.index(v_2)
                 skinpartblock.triangles[i].v_3 = vertices.index(v_3)
         skinpartblock.has_bone_indices = True
-        skinpartblock.bone_indices.update_size()
+        skinpartblock.reset_field("bone_indices")
         for i, v in enumerate(vertices):
             # the boneindices set keeps track of indices that have not been
             # used yet

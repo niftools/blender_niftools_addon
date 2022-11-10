@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
 from io_scene_niftools.utils.logging import NifLog
@@ -57,7 +57,7 @@ class VertexGroup:
         skin_data = skin_inst.data
         skin_partition = skin_inst.skin_partition
         skel_root = skin_inst.skeleton_root
-        vertices = [NifFormat.Vector3() for _ in range(n_geom.data.num_vertices)]
+        vertices = [NifClasses.Vector3() for _ in range(n_geom.data.num_vertices)]
 
         # ignore normals for now, not needed for import
         sum_weights = [0.0 for _ in range(n_geom.data.num_vertices)]
@@ -73,7 +73,7 @@ class VertexGroup:
             bone_transforms.append(transform)
 
         # now the actual unique bit
-        for block in skin_partition.skin_partition_blocks:
+        for block in skin_partition.partitions:
             # create all vgroups for this block's bones
             block_bone_transforms = [bone_transforms[i] for i in block.bones]
 
@@ -100,7 +100,7 @@ class VertexGroup:
     def apply_skin_deformation(n_data):
         """ Process all geometries in NIF tree to apply their skin """
         # get all geometries with skin
-        n_geoms = [g for g in n_data.get_global_iterator() if isinstance(g, NifFormat.NiGeometry) and g.is_skin()]
+        n_geoms = [g for g in n_data.get_global_iterator() if isinstance(g, NifClasses.NiGeometry) and g.is_skin()]
 
         # make sure that each skin is applied only once to avoid distortions when a model is referred to twice
         for n_geom in set(n_geoms):
@@ -147,7 +147,7 @@ class VertexGroup:
             # WLP2 - hides the weights in the partition
             else:
                 skin_partition = skininst.skin_partition
-                for block in skin_partition.skin_partition_blocks:
+                for block in skin_partition.partitions:
                     # create all vgroups for this block's bones
                     block_bone_names = [block_store.import_name(bones[i]) for i in block.bones]
                     for group_name in block_bone_names:
@@ -161,28 +161,19 @@ class VertexGroup:
                             if w > 0:
                                 group_name = block_bone_names[b_i]
                                 v_group = b_obj.vertex_groups[group_name]
-                                v_group.add([vert], w, 'REPLACE')
+                                # conversion from numpy.uint16 to int necessary because Blender doesn't accept them
+                                v_group.add([int(vert)], w, 'REPLACE')
 
-        # import body parts as face maps
-        # get faces (triangles) as map of unordered vertices to list of indices
-        tri_map = {}
-        for polygon in b_obj.data.polygons:
-            vertices = frozenset(polygon.vertices)
-            if vertices in tri_map:
-                tri_map[vertices].append(polygon.index)
-            else:
-                tri_map[vertices] = [polygon.index]
-        if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-            skinpart = ni_block.get_skin_partition()
-            for bodypart, skinpartblock in zip(skininst.partitions, skinpart.skin_partition_blocks):
-                bodypart_wrap = NifFormat.BSDismemberBodyPartType()
-                bodypart_wrap.set_value(bodypart.body_part)
-                group_name = bodypart_wrap.get_detail_display()
+        if isinstance(skininst, NifClasses.BSDismemberSkinInstance):
+            for bodypart in skininst.partitions:
+                group_name = bodypart.body_part.name
 
                 # create face map if it did not exist yet
                 if group_name not in b_obj.face_maps:
                     f_group = b_obj.face_maps.new(name=group_name)
-
-                # add the triangles to the face map
-                for vertices in skinpartblock.get_mapped_triangles():
-                    f_group.add(tri_map[frozenset(vertices)])
+                else:
+                    f_group = b_obj.face_maps[group_name]
+            triangles, bodyparts = skininst.get_dismember_partitions()
+            for i, bodypart in enumerate(bodyparts):
+                f_group = b_obj.face_maps[bodypart.name]
+                f_group.add([i])

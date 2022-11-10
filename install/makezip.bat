@@ -32,5 +32,14 @@ xcopy "%ROOT%"\LICENSE.rst io_scene_niftools
 xcopy "%ROOT%"\README.rst io_scene_niftools
 popd
 
-powershell -executionpolicy bypass -Command "%DIR%\zip.ps1" -source "%DIR%\temp\io_scene_niftools" -destination "%DIR%\%ZIP_NAME%.zip"
-rmdir /s /q %DIR%\temp
+set "COMMAND_FILE=%DIR%\zip.ps1"
+set "COMMAND_FILE=%COMMAND_FILE: =` %"
+
+set "SOURCE_DIR=%DIR%\temp\io_scene_niftools"
+set "SOURCE_DIR=%SOURCE_DIR: =` %"
+
+set "DESTINATION_DIR=%DIR%\%ZIP_NAME%.zip"
+set "DESTINATION_DIR=%DESTINATION_DIR: =` %"
+
+powershell -executionpolicy bypass -Command "%COMMAND_FILE%" -source "%SOURCE_DIR%" -destination "%DESTINATION_DIR%"
+rmdir /s /q "%DIR%\temp"

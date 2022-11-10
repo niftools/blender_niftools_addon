@@ -39,7 +39,7 @@
 import bpy
 from bpy_extras.io_utils import axis_conversion
 import mathutils
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.logging import NifLog
 
@@ -181,8 +181,9 @@ def find_property(n_block, property_type):
             if isinstance(prop, property_type):
                 return prop
 
-    if hasattr(n_block, "bs_properties"):
-        for prop in n_block.bs_properties:
+    for prop_name in ("shader_property", "alpha_property"):
+        if hasattr(n_block, prop_name):
+            prop = getattr(n_block, prop_name)
             if isinstance(prop, property_type):
                 return prop
     return None
@@ -248,7 +249,7 @@ def mathutils_to_nifformat_matrix(b_matrix):
     """Convert a blender matrix to a NifFormat.Matrix44"""
     # transpose to swap columns for rows so we can use pyffi's set_rows() directly
     # instead of setting every single value manually
-    n_matrix = NifFormat.Matrix44()
+    n_matrix = NifClasses.Matrix44()
     n_matrix.set_rows(*b_matrix.transposed())
     return n_matrix
 

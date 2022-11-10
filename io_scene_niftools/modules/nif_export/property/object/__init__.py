@@ -40,7 +40,7 @@
 
 import bpy
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
@@ -85,8 +85,7 @@ class ObjectProperty:
 
                 block_store.register_block(bsshader)
                 # TODO [pyffi] Add helper function to allow adding bs_property / general list addition
-                n_block.bs_properties[0] = bsshader
-                n_block.bs_properties.update_size()
+                n_block.shader_property = bsshader
 
             else:
                 if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
@@ -226,7 +225,7 @@ class ObjectDataProperty:
         bs_inv_store = b_obj.niftools.bs_inv
         if niftools_scene.game in ('SKYRIM',) and bs_inv_store:
             bs_inv = bs_inv_store[0]
-            n_bs_inv_marker = NifFormat.BSInvMarker()
+            n_bs_inv_marker = NifClasses.BSInvMarker(n_root.context)
             n_bs_inv_marker.name = bs_inv.name.encode()
             n_bs_inv_marker.rotation_x = (-bs_inv.x % (2 * pi)) * 1000
             n_bs_inv_marker.rotation_y = (-bs_inv.y % (2 * pi)) * 1000

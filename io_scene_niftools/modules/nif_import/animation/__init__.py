@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 import bpy
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.logging import NifLog
 from io_scene_niftools.utils.consts import QUAT, EULER, LOC, SCALE
@@ -63,7 +63,7 @@ class Animation:
         else:
             data = ctrl.data
         # these have their data set as a KeyGroup on data
-        if isinstance(data, (NifFormat.NiBoolData, NifFormat.NiFloatData, NifFormat.NiPosData)):
+        if isinstance(data, (NifClasses.NiBoolData, NifClasses.NiFloatData, NifClasses.NiPosData)):
             return data.data
         return data
 
@@ -83,9 +83,9 @@ class Animation:
 
     @staticmethod
     def get_b_interp_from_n_interp(n_ipol):
-        if n_ipol in (NifFormat.KeyType.LINEAR_KEY, NifFormat.KeyType.XYZ_ROTATION_KEY):
+        if n_ipol in (NifClasses.KeyType.LINEAR_KEY, NifClasses.KeyType.XYZ_ROTATION_KEY):
             return "LINEAR"
-        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
+        elif n_ipol == NifClasses.KeyType.QUADRATIC_KEY:
             return "BEZIER"
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
@@ -191,17 +191,17 @@ class Animation:
     # import animation groups
     def import_text_keys(self, n_block, b_action):
         """Gets and imports a NiTextKeyExtraData"""
-        if isinstance(n_block, NifFormat.NiControllerSequence):
+        if isinstance(n_block, NifClasses.NiControllerSequence):
             txk = n_block.text_keys
         else:
-            txk = n_block.find(block_type=NifFormat.NiTextKeyExtraData)
+            txk = n_block.find(block_type=NifClasses.NiTextKeyExtraData)
         self.import_text_key_extra_data(txk, b_action)
 
     def import_text_key_extra_data(self, txk, b_action):
         """Stores the text keys as pose markers in a blender action."""
         if txk and b_action:
             for key in txk.text_keys:
-                newkey = key.value.decode().replace('\r\n', '/').rstrip('/')
+                newkey = key.value.replace('\r\n', '/').rstrip('/')
                 frame = round(key.time * self.fps)
                 marker = b_action.pose_markers.new(newkey)
                 marker.frame = frame
@@ -211,15 +211,14 @@ class Animation:
         # find all key times
         key_times = []
         for root in roots:
-            for kfd in root.tree(block_type=NifFormat.NiKeyframeData):
+            for kfd in root.tree(block_type=NifClasses.NiKeyframeData):
                 key_times.extend(key.time for key in kfd.translations.keys)
                 key_times.extend(key.time for key in kfd.scales.keys)
                 key_times.extend(key.time for key in kfd.quaternion_keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[0].keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[1].keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[2].keys)
+                for dimension in kfd.xyz_rotations:
+                    key_times.extend(key.time for key in dimension.keys)
 
-            for kfi in root.tree(block_type=NifFormat.NiBSplineInterpolator):
+            for kfi in root.tree(block_type=NifClasses.NiBSplineInterpolator):
                 if not kfi.basis_data:
                     # skip bsplines without basis data (eg bowidle.kf in Oblivion)
                     continue
@@ -228,7 +227,7 @@ class Animation:
                     / (kfi.basis_data.num_control_points - 2)
                     for point in range(kfi.basis_data.num_control_points - 2))
 
-            for uv_data in root.tree(block_type=NifFormat.NiUVData):
+            for uv_data in root.tree(block_type=NifClasses.NiUVData):
                 for uv_group in uv_data.uv_groups:
                     key_times.extend(key.time for key in uv_group.keys)
 

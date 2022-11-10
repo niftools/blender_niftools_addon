@@ -40,10 +40,10 @@
 import bpy
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 def get_version_data():
-    """ Returns NifFormat.Data of the correct version and user versions """
+    """ Returns NifFormat.NifFile of the correct version and user versions """
     b_scene = bpy.context.scene.niftools_scene
     game = b_scene.game
     version = b_scene.nif_version
@@ -53,4 +53,4 @@ def get_version_data():
     user_version = b_scene.user_version if b_scene.user_version else b_scene.USER_VERSION.get(game, 0)
     user_version_2 = b_scene.user_version_2 if b_scene.user_version_2 else b_scene.USER_VERSION_2.get(game, 0)
 
-    return version, NifFormat.Data(version, user_version, user_version_2)
+    return version, NifFormat.NifFile.from_version(version, user_version, user_version_2)

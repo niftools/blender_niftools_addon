@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.utils import math
@@ -56,12 +56,12 @@ class MaterialAnimation(Animation):
         """Import material animation data for given geometry."""
         if not NifOp.props.animation:
             return
-        n_material = math.find_property(n_geom, NifFormat.NiMaterialProperty)
+        n_material = math.find_property(n_geom, NifClasses.NiMaterialProperty)
         if n_material:
             self.import_material_alpha_controller(b_material, n_material)
-            for b_channel, n_target_color in (("niftools.ambient_color", NifFormat.TargetColor.TC_AMBIENT),
-                                              ("diffuse_color", NifFormat.TargetColor.TC_DIFFUSE),
-                                              ("specular_color", NifFormat.TargetColor.TC_SPECULAR)):
+            for b_channel, n_target_color in (("niftools.ambient_color", NifClasses.MaterialColor.TC_AMBIENT),
+                                              ("diffuse_color", NifClasses.MaterialColor.TC_DIFFUSE),
+                                              ("specular_color", NifClasses.MaterialColor.TC_SPECULAR)):
                 self.import_material_color_controller(b_material, n_material, b_channel, n_target_color)
 
         self.import_uv_controller(b_material, n_geom)
@@ -69,7 +69,7 @@ class MaterialAnimation(Animation):
 
     def import_material_alpha_controller(self, b_material, n_material):
         # find alpha controller
-        n_ctrl = math.find_controller(n_material, NifFormat.NiAlphaController)
+        n_ctrl = math.find_controller(n_material, NifClasses.NiAlphaController)
         if not n_ctrl:
             return
         NifLog.info("Importing alpha controller")
@@ -85,7 +85,7 @@ class MaterialAnimation(Animation):
     def import_material_color_controller(self, b_material, n_material, b_channel, n_target_color):
         # find material color controller with matching target color
         for n_ctrl in n_material.get_controllers():
-            if isinstance(n_ctrl, NifFormat.NiMaterialColorController):
+            if isinstance(n_ctrl, NifClasses.NiMaterialColorController):
                 if n_ctrl.get_target_color() == n_target_color:
                     break
         else:
@@ -100,7 +100,7 @@ class MaterialAnimation(Animation):
     def import_uv_controller(self, b_material, n_geom):
         """Import UV controller data as a mapping node with animated values."""
         # search for the block
-        n_ctrl = math.find_controller(n_geom, NifFormat.NiUVController)
+        n_ctrl = math.find_controller(n_geom, NifClasses.NiUVController)
         if not n_ctrl:
             return
         NifLog.info("Importing UV controller")
@@ -125,10 +125,10 @@ class MaterialAnimation(Animation):
     def import_tex_transform_controller(self, b_material, n_geom):
         """Import UV controller data as a mapping node with animated values."""
         # search for the block
-        n_tex_prop = math.find_property(n_geom, NifFormat.NiTexturingProperty)
+        n_tex_prop = math.find_property(n_geom, NifClasses.NiTexturingProperty)
         if not n_tex_prop:
             return
-        for n_ctrl in math.controllers_iter(n_tex_prop, NifFormat.NiTextureTransformController):
+        for n_ctrl in math.controllers_iter(n_tex_prop, NifClasses.NiTextureTransformController):
             NifLog.info("Importing Texture Transform controller")
 
             n_ctrl_data = self.get_controller_data(n_ctrl)
@@ -141,22 +141,22 @@ class MaterialAnimation(Animation):
             times, keys = self.get_keys_values(n_ctrl_data.keys)
             # get operation
             operation = n_ctrl.operation
-            if operation == NifFormat.TexTransform.TT_TRANSLATE_U:
+            if operation == NifClasses.TransformMember.TT_TRANSLATE_U:
                 data_path = LOC_DP
                 array_ind = 0
-            elif operation == NifFormat.TexTransform.TT_TRANSLATE_V:
+            elif operation == NifClasses.TransformMember.TT_TRANSLATE_V:
                 data_path = LOC_DP
                 array_ind = 1
                 # UV V coordinate is inverted in blender
                 keys = [-key for key in keys]
-            elif operation == NifFormat.TexTransform.TT_ROTATE:
+            elif operation == NifClasses.TransformMember.TT_ROTATE:
                 # not sure, need example nif
                 NifLog.warn("Rotation in Texture Transform is not supported")
                 return
-            elif operation == NifFormat.TexTransform.TT_SCALE_U:
+            elif operation == NifClasses.TransformMember.TT_SCALE_U:
                 data_path = SCALE_DP
                 array_ind = 0
-            elif operation == NifFormat.TexTransform.TT_SCALE_V:
+            elif operation == NifClasses.TransformMember.TT_SCALE_V:
                 data_path = SCALE_DP
                 array_ind = 1
 

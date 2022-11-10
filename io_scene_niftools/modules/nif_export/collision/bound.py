@@ -63,8 +63,7 @@ class BSBound(Collision):
         # block_parent.add_extra_data(n_bbox)
         # quick hack (better solution would be to make apply_scale non-recursive)
         block_parent.num_extra_data_list += 1
-        block_parent.extra_data_list.update_size()
-        block_parent.extra_data_list[-1] = n_bbox
+        block_parent.extra_data_list.append(n_bbox)
         # set name, center, and dimensions
         n_bbox.name = "BBX"
         center = n_bbox.center

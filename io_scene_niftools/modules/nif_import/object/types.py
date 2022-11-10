@@ -37,8 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.formats.nif import NifFormat
 import bpy
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.object import Object
 
@@ -48,7 +48,7 @@ class NiTypes:
     @staticmethod
     def import_root_collision(n_node, b_obj):
         """ Import a RootCollisionNode, which is usually attached to a root node and holds a NiTriShape"""
-        if isinstance(n_node, NifFormat.RootCollisionNode):
+        if isinstance(n_node, NifClasses.RootCollisionNode):
             b_obj["type"] = "RootCollisionNode"
             b_obj.name = "RootCollisionNode"
             b_obj.niftools.flags = n_node.flags
@@ -59,7 +59,7 @@ class NiTypes:
     @staticmethod
     def import_range_lod_data(n_node, b_obj, b_children):
         """ Import LOD ranges and mark b_obj as a LOD node """
-        if isinstance(n_node, NifFormat.NiLODNode):
+        if isinstance(n_node, NifClasses.NiLODNode):
             b_obj["type"] = "NiLODNode"
             range_data = n_node
 
@@ -75,7 +75,7 @@ class NiTypes:
     @staticmethod
     def import_billboard(n_node, b_obj):
         """ Import a NiBillboardNode """
-        if isinstance(n_node, NifFormat.NiBillboardNode) and not isinstance(b_obj, bpy.types.Bone):
+        if isinstance(n_node, NifClasses.NiBillboardNode) and not isinstance(b_obj, bpy.types.Bone):
             # find camera object
             for obj in bpy.context.scene.objects:
                 if obj.type == 'CAMERA':

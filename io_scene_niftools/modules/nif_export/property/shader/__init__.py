@@ -36,12 +36,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.property.texture.types.bsshadertexture import BSShaderTexture
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.consts import FLOAT_MAX
+from io_scene_niftools.utils.singleton import NifData
 
 
 class BSShaderProperty:
@@ -70,7 +71,7 @@ class BSShaderProperty:
         return bsshader
 
     def export_bs_effect_shader_property(self, b_mat):
-        bsshader = NifFormat.BSEffectShaderProperty()
+        bsshader = NifClasses.BSEffectShaderProperty(NifData.data)
 
         self.texturehelper.export_bs_effect_shader_prop_textures(bsshader)
 
@@ -80,10 +81,10 @@ class BSShaderProperty:
         #     bsshader.alpha = (1 - b_mat.alpha)
 
         # Emissive
-        BSShaderProperty.set_color3_property(bsshader.emissive_color, b_mat.niftools.emissive_color)
-        bsshader.emissive_color.a = b_mat.niftools.emissive_alpha.v
+        BSShaderProperty.set_color3_property(bsshader.base_color, b_mat.niftools.emissive_color)
+        bsshader.base_color.a = b_mat.niftools.emissive_alpha.v
         # TODO [shader] Expose a emission multiplier value
-        # bsshader.emissive_multiple = b_mat.emit
+        # bsshader.base_color_scale = b_mat.emit
 
         # Shader Flags
         BSShaderProperty.export_shader_flags(b_mat, bsshader)
@@ -91,18 +92,18 @@ class BSShaderProperty:
         return bsshader
 
     def export_bs_lighting_shader_property(self, b_mat):
-        bsshader = NifFormat.BSLightingShaderProperty()
-        b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_mat.niftools_shader.bslsp_shaderobjtype)
-        bsshader.skyrim_shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
+        bsshader = NifClasses.BSLightingShaderProperty(NifData.data)
+        b_s_type = NifClasses.BSLightingShaderType[b_mat.niftools_shader.bslsp_shaderobjtype]
+        bsshader.skyrim_shader_type = NifClasses.BSLightingShaderType[b_mat.niftools_shader.bslsp_shaderobjtype]
 
         self.texturehelper.export_bs_lighting_shader_prop_textures(bsshader)
 
         # Diffuse color
         d = b_mat.diffuse_color
 
-        if b_s_type == NifFormat.BSLightingShaderPropertyShaderType["Skin Tint"]:
+        if b_s_type == NifClasses.BSLightingShaderType.SKIN_TINT:
             BSShaderProperty.set_color3_property(bsshader.skin_tint_color, d)
-        elif b_s_type == NifFormat.BSLightingShaderPropertyShaderType["Hair Tint"]:
+        elif b_s_type == NifClasses.BSLightingShaderType.HAIR_TINT:
             BSShaderProperty.set_color3_property(bsshader.hair_tint_color, d)
         # TODO [shader] expose intensity value
         # b_mat.diffuse_intensity = 1.0
@@ -132,11 +133,10 @@ class BSShaderProperty:
         return bsshader
 
     def export_bs_shader_pp_lighting_property(self, b_mat):
-        bsshader = NifFormat.BSShaderPPLightingProperty()
+        bsshader = NifClasses.BSShaderPPLightingProperty(NifData.data)
         # set shader options
         # TODO: FIXME:
-        b_s_type = NifFormat.BSShaderType._enumkeys.index(b_mat.niftools_shader.bsspplp_shaderobjtype)
-        bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
+        bsshader.shader_type = NifClasses.BSShaderType[b_mat.niftools_shader.bsspplp_shaderobjtype]
 
         self.texturehelper.export_bs_shader_pp_lighting_prop_textures(bsshader)
 
@@ -163,12 +163,13 @@ class BSShaderProperty:
     @staticmethod
     def process_flags(b_mat, flags):
         b_flag_list = b_mat.niftools_shader.bl_rna.properties.keys()
-        for sf_flag in flags._names:
+        for sf_flag in flags.__members__:
             if sf_flag in b_flag_list:
                 b_flag = b_mat.niftools_shader.get(sf_flag)
                 if b_flag:
-                    sf_flag_index = flags._names.index(sf_flag)
-                    flags._items[sf_flag_index]._value = 1
+                    setattr(flags, sf_flag, True)
+                else:
+                    setattr(flags, sf_flag, False)
 
     @staticmethod
     def set_color3_property(n_property, b_color):

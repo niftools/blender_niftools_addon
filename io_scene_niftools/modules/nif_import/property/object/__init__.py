@@ -37,12 +37,10 @@
 #
 # ***** END LICENSE BLOCK *****
 import bpy
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.properties.object import PRN_DICT
 from math import pi
-
-from io_scene_niftools.utils.blocks import safe_decode
 
 
 class ObjectProperty:
@@ -52,20 +50,20 @@ class ObjectProperty:
         """ Only to be called on nif and blender root objects! """
         niftools_scene = bpy.context.scene.niftools_scene
         # store type of root node
-        if isinstance(root_block, NifFormat.BSFadeNode):
+        if isinstance(root_block, NifClasses.BSFadeNode):
             niftools_scene.rootnode = 'BSFadeNode'
         # store its flags
         b_obj.niftools.flags = root_block.flags
         # store extra datas
         for n_extra in root_block.get_extra_datas():
-            if isinstance(n_extra, NifFormat.NiStringExtraData):
+            if isinstance(n_extra, NifClasses.NiStringExtraData):
                 # weapon location or attachment position
-                if n_extra.name.decode() == "Prn":
+                if n_extra.name == "Prn":
                     game = bpy.context.scene.niftools_scene.game
                     if game in PRN_DICT[next(iter(PRN_DICT))]:
                         # first check specifically in that game
                         for slot, game_map in PRN_DICT.items():
-                            if game_map[game].lower() == n_extra.string_data.decode().lower():
+                            if game_map[game].lower() == n_extra.string_data.lower():
                                 b_obj.niftools.prn_location = slot
                                 break
                     if b_obj.niftools.prn_location == "NONE":
@@ -73,19 +71,19 @@ class ObjectProperty:
                         # or we have the wrong game. Check all key, value pairs
                         for slot, game_map in PRN_DICT.items():
                             for k, v in game_map:
-                                if v.lower() == n_extra.string_data.decode().lower():
+                                if v.lower() == n_extra.string_data.lower():
                                     b_obj.niftools.prn_location = slot
                                     break
                             else:
                                 continue
                             break
-                elif n_extra.name.decode() == "UPB":
-                    b_obj.niftools.upb = n_extra.string_data.decode()
-            elif isinstance(n_extra, NifFormat.BSXFlags):
+                elif n_extra.name == "UPB":
+                    b_obj.niftools.upb = n_extra.string_data
+            elif isinstance(n_extra, NifClasses.BSXFlags):
                 b_obj.niftools.bsxflags = n_extra.integer_data
-            elif isinstance(n_extra, NifFormat.BSInvMarker):
+            elif isinstance(n_extra, NifClasses.BSInvMarker):
                 bs_inv_item = b_obj.niftools.bs_inv.add()
-                bs_inv_item.name = safe_decode(n_extra.name)
+                bs_inv_item.name = n_extra.name
                 bs_inv_item.x = (-n_extra.rotation_x / 1000) % (2 * pi)
                 bs_inv_item.y = (-n_extra.rotation_y / 1000) % (2 * pi)
                 bs_inv_item.z = (-n_extra.rotation_z / 1000) % (2 * pi)

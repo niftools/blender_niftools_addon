@@ -38,8 +38,6 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import mathutils
-from pyffi.formats.nif import NifFormat
 
 from io_scene_niftools.modules.nif_export import types
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation

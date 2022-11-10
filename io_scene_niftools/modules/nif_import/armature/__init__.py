@@ -42,8 +42,8 @@ import os
 import bpy
 from bpy_extras.io_utils import orientation_helper
 import mathutils
+from generated.formats.nif import classes as NifClasses
 
-from pyffi.formats.nif import NifFormat
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
@@ -51,7 +51,6 @@ from io_scene_niftools.modules.nif_export.block_registry import block_store as b
 from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_import.object import Object
 from io_scene_niftools.utils import math
-from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.logging import NifLog
 from io_scene_niftools.utils.singleton import NifOp, NifData
 
@@ -82,7 +81,7 @@ class Armature:
     def get_skinned_geometries(self, n_root):
         """Yield all children in n_root's tree that have skinning"""
         # search for all NiTriShape or NiTriStrips blocks...
-        for n_block in n_root.tree(block_type=NifFormat.NiTriBasedGeom):
+        for n_block in n_root.tree(block_type=(NifClasses.NiTriBasedGeom, NifClasses.BSTriShape)):
             # yes, we found one, does it have skinning?
             if n_block.is_skin():
                 yield n_block
@@ -132,13 +131,20 @@ class Armature:
                             NifLog.debug(f"Transforming bind of {bonenode.name}")
                             bonedata.set_transform(diff.get_inverse(fast=False) * bonedata.get_transform())
                     # transforming verts helps with nifs where the skins differ, eg MW vampire or WLP2 Gastornis
-                    for vert in geom.data.vertices:
+                    if isinstance(geom, NifClasses.BSTriShape):
+                        vertices = [vert_data.vertex for vert_data in geom.skin.skin_partition.vertex_data]
+                        normals = [vert_data.normal for vert_data in geom.skin.skin_partition.vertex_data]
+                    else:
+                        vertices = geom.data.vertices
+                        normals = geom.data.normals
+                    for vert in vertices:
                         newvert = vert * diff
                         vert.x = newvert.x
                         vert.y = newvert.y
                         vert.z = newvert.z
-                    for norm in geom.data.normals:
-                        newnorm = norm * diff.get_matrix_33()
+                    diff33 = diff.get_matrix_33()
+                    for norm in normals:
+                        newnorm = norm * diff33
                         norm.x = newnorm.x
                         norm.y = newnorm.y
                         norm.z = newnorm.z
@@ -155,7 +161,7 @@ class Armature:
         """reposition non-skeletal bones to maintain their local orientation to their skeletal parents"""
         for n_child_node in n_node.children:
             # only process nodes
-            if not isinstance(n_child_node, NifFormat.NiNode):
+            if not isinstance(n_child_node, NifClasses.NiNode):
                 continue
             if n_child_node not in self.bind_store and n_child_node in self.pose_store:
                 NifLog.debug(f"Calculating bind pose for non-skeletal bone {n_child_node.name}")
@@ -216,7 +222,7 @@ class Armature:
         for bone_name, b_bone in b_armature_obj.data.bones.items():
             n_block = self.name_to_block[bone_name]
             # the property is only available from object mode!
-            block_store.store_longname(b_bone, safe_decode(n_block.name))
+            block_store.store_longname(b_bone, n_block.name)
             if NifOp.props.animation:
                 self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
@@ -243,7 +249,7 @@ class Armature:
         # store nif block for access from object mode
         self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = math.nifformat_to_mathutils_matrix(self.bind_store.get(n_block, NifFormat.Matrix44()))
+        n_bind = math.nifformat_to_mathutils_matrix(self.bind_store.get(n_block, NifClasses.Matrix44()))
         # get transformation in blender's coordinate space
         b_bind = math.nif_bind_to_blender_bind(n_bind)
 
@@ -330,12 +336,12 @@ class Armature:
 
     def is_bone(self, ni_block):
         """Tests a NiNode to see if it has been marked as a bone."""
-        if isinstance(ni_block, NifFormat.NiNode):
+        if isinstance(ni_block, NifClasses.NiNode):
             return self.skinned
 
     def is_armature_root(self, n_block):
         """Tests a block to see if it's an armature."""
-        if isinstance(n_block, NifFormat.NiNode):
+        if isinstance(n_block, NifClasses.NiNode):
             # we have skinning and are waiting for a suitable start node of the tree
             if self.skinned and not self.n_armature:
                 # now store it as the nif armature's root

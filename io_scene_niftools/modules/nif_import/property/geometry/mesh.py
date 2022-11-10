@@ -47,7 +47,6 @@ from io_scene_niftools.modules.nif_import.property.nodes_wrapper import NodesWra
 from io_scene_niftools.modules.nif_import.property.shader.bsshaderlightingproperty import BSShaderLightingPropertyProcessor
 from io_scene_niftools.modules.nif_import.property.shader.bsshaderproperty import BSShaderPropertyProcessor
 from io_scene_niftools.utils.logging import NifLog
-from io_scene_niftools.utils.blocks import safe_decode
 
 
 class MeshPropertyProcessor:
@@ -70,7 +69,7 @@ class MeshPropertyProcessor:
         b_mesh = b_obj.data
 
         # get all valid properties that are attached to n_block
-        props = list(prop for prop in itertools.chain(n_block.properties, n_block.bs_properties) if prop is not None)
+        props = list(prop for prop in itertools.chain(n_block.properties, [n_block.shader_property, n_block.alpha_property]) if prop is not None)
 
         # we need no material if we have no properties
         if not props:
@@ -79,7 +78,7 @@ class MeshPropertyProcessor:
         # just to avoid duped materials, a first pass, make sure a named material is created or retrieved
         for prop in props:
             if prop.name:
-                name = safe_decode(prop.name)
+                name = prop.name
                 if name and name in bpy.data.materials:
                     b_mat = bpy.data.materials[name]
                     NifLog.debug(f"Retrieved already imported material {b_mat.name} from name {name}")
@@ -89,7 +88,7 @@ class MeshPropertyProcessor:
                 break
         else:
             # bs shaders often have no name, so generate one from mesh name
-            name = safe_decode(n_block.name) + "_nt_mat"
+            name = f"{n_block.name}_nt_mat"
             b_mat = bpy.data.materials.new(name)
             NifLog.debug(f"Created material {name} to store properties in {b_mat.name}")
 

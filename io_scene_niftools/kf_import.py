@@ -39,10 +39,7 @@
 
 import os
 
-import pyffi.spells.nif.fix
-
-from io_scene_niftools.file_io.kf import KFFile
-from io_scene_niftools.modules.nif_export import armature
+from io_scene_niftools.file_io.nif import NifFile as KFFile
 from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import math
@@ -72,7 +69,7 @@ class KfImport(NifCommon):
                 # get nif space bind pose of armature here for all anims
                 self.transform_anim.get_bind_data(b_armature)
             for kf_file in kf_files:
-                kfdata = KFFile.load_kf(kf_file)
+                kfdata = KFFile.load_nif(kf_file)
 
                 self.apply_scale(kfdata, NifOp.props.scale_correction)
 

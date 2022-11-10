@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.geometry.mesh import Mesh
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store
@@ -110,7 +110,7 @@ class Object:
             raise RuntimeError(f"Unexpected object type {b_obj.__class__:s}")
 
     def create_mesh_object(self, n_block):
-        ni_name = n_block.name.decode()
+        ni_name = n_block.name
         # create mesh data
         b_mesh = bpy.data.meshes.new(ni_name)
 
@@ -134,7 +134,7 @@ class Object:
         # store flags etc
         self.import_object_flags(n_block, b_obj)
         # skinning? add armature modifier
-        if n_block.skin_instance:
+        if n_block.is_skin():
             self.append_armature_modifier(b_obj, b_armature)
         return b_obj
 
@@ -144,9 +144,8 @@ class Object:
         """ Various settings in b_obj's niftools panel """
         b_obj.niftools.flags = n_block.flags
 
-        if n_block.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
-            cf_index = NifFormat.ConsistencyType._enumvalues.index(n_block.data.consistency_flags)
-            b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+        if hasattr(n_block, "data") and isinstance(n_block.data.consistency_flags, NifClasses.ConsistencyType):
+            b_obj.niftools.consistency_flags = n_block.data.consistency_flags.name
         if n_block.is_skin():
             skininst = n_block.skin_instance
             skelroot = skininst.skeleton_root

@@ -37,8 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import os.path as path
 
-from pyffi.formats.nif import NifFormat
+import generated.formats.nif as NifFormat
 
 from io_scene_niftools.utils.logging import NifLog, NifError
 
@@ -51,18 +52,18 @@ class NifFile:
         """Loads a nif from the given file path"""
         NifLog.info(f"Importing {file_path}")
 
-        data = NifFormat.Data()
+        file_ext = path.splitext(file_path)[1]
 
         # open file for binary reading
         with open(file_path, "rb") as nif_stream:
             # check if nif file is valid
-            data.inspect_version_only(nif_stream)
-            if data.version >= 0:
+            modification, (version, user_version, bs_version) = NifFormat.NifFile.inspect_version_only(nif_stream)
+            if version >= 0:
                 # it is valid, so read the file
-                NifLog.info(f"NIF file version: {data.version:x}")
-                NifLog.info("Reading file")
-                data.read(nif_stream)
-            elif data.version == -1:
+                NifLog.info(f"NIF file version: {version:x}")
+                NifLog.info(f"Reading {file_ext} file")
+                data = NifFormat.NifFile.from_stream(nif_stream)
+            elif version == -1:
                 raise NifError("Unsupported NIF version.")
             else:
                 raise NifError("Not a NIF file.")

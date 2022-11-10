@@ -42,7 +42,7 @@ import mathutils
 import numpy as np
 import struct
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.geometry import mesh
@@ -92,7 +92,7 @@ class Mesh:
             return
 
         # get the mesh's materials, this updates the mesh material list
-        if not isinstance(n_parent, NifFormat.RootCollisionNode):
+        if not isinstance(n_parent, NifClasses.RootCollisionNode):
             mesh_materials = eval_mesh.materials
         else:
             # ignore materials on collision trishapes
@@ -118,7 +118,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (game == 'SKYRIM') and b_mat.niftools_shader.slsf_1_model_space_normals:
+                if (game == 'SKYRIM') and b_mat.niftools_shader.model_space_normals:
                     mesh_hasnormals = False  # for proper lighting
 
             # create a n_geom block
@@ -130,20 +130,20 @@ class Mesh:
                 n_geom.data = block_store.create_block("NiTriStripsData", b_obj)
 
             # fill in the NiTriShape's non-trivial values
-            if isinstance(n_parent, NifFormat.RootCollisionNode):
+            if isinstance(n_parent, NifClasses.RootCollisionNode):
                 n_geom.name = ""
             else:
                 if not trishape_name:
                     if n_parent.name:
-                        n_geom.name = "Tri " + n_parent.name.decode()
+                        n_geom.name = "Tri " + n_parent.name
                     else:
-                        n_geom.name = "Tri " + b_obj.name.decode()
+                        n_geom.name = "Tri " + b_obj.name
                 else:
                     n_geom.name = trishape_name
 
                 # multimaterial meshes: add material index (Morrowind's child naming convention)
                 if len(mesh_materials) > 1:
-                    n_geom.name = f"{n_geom.name.decode()}: {b_mat_index}"
+                    n_geom.name = f"{n_geom.name}: {b_mat_index}"
                 else:
                     n_geom.name = block_store.get_full_name(n_geom)
 
@@ -336,7 +336,7 @@ class Mesh:
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if use_tangents:
                 if game == 'SKYRIM':
-                    n_geom.data.bs_num_uv_sets = n_geom.data.bs_num_uv_sets + 4096
+                    n_geom.data.bs_data_flags.has_tangents = True
                 # calculate the bitangents using the normals, tangent list and bitangent sign
                 bitangents = bitangent_signs * np.cross(normals, tangents)
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
@@ -424,7 +424,7 @@ class Mesh:
                     self.export_skin_partition(b_obj, bodypartfacemap, triangles, n_geom)
 
             # fix data consistency type
-            n_geom.data.consistency_flags = b_obj.niftools.consistency_flags
+            n_geom.data.consistency_flags = NifClasses.ConsistencyType[b_obj.niftools.consistency_flags]
 
             # export EGM or NiGeomMorpherController animation
             # shape keys are only present on the raw, unevaluated mesh
@@ -436,25 +436,32 @@ class Mesh:
         # coords
         n_geom.data.num_vertices = len(vertex_positions)
         n_geom.data.has_vertices = True
-        n_geom.data.vertices.update_size()
+        n_geom.data.reset_field("vertices")
         for n_v, b_v in zip(n_geom.data.vertices, vertex_positions):
             n_v.x, n_v.y, n_v.z = b_v
         n_geom.data.update_center_radius()
         # normals
         n_geom.data.has_normals = bool(normals)
-        n_geom.data.normals.update_size()
+        n_geom.data.reset_field("normals")
         for n_v, b_v in zip(n_geom.data.normals, normals):
             n_v.x, n_v.y, n_v.z = b_v
         # vertex_colors
         n_geom.data.has_vertex_colors = bool(vertex_colors)
-        n_geom.data.vertex_colors.update_size()
+        n_geom.data.reset_field("vertex_colors")
         for n_v, b_v in zip(n_geom.data.vertex_colors, vertex_colors):
             n_v.r, n_v.g, n_v.b, n_v.a = b_v
         # uv_sets
-        n_geom.data.has_uv = bool(b_uv_layers)
-        n_geom.data.num_uv_sets = len(b_uv_layers)
-        n_geom.data.bs_num_uv_sets = len(b_uv_layers)
-        n_geom.data.uv_sets.update_size()
+        if bpy.context.scene.niftools_scene.game == "SKYRIM":
+            data_flags = n_geom.data.bs_data_flags
+        else:
+            data_flags = n_geom.data.data_flags
+        data_flags.has_uv = bool(b_uv_layers)
+        if hasattr(data_flags, "num_uv_sets"):
+            data_flags.num_uv_sets = len(b_uv_layers)
+        else:
+            if len(b_uv_layers) > 1:
+                NifLog.warn(f"More than one UV layers for game that doesn't support it, only using first UV layer")
+        n_geom.data.reset_field("uv_sets")
         for j, n_uv_set in enumerate(n_geom.data.uv_sets):
             for i, n_uv in enumerate(n_uv_set):
                 if len(uv_coords[i]) == 0:
@@ -486,7 +493,7 @@ class Mesh:
                     NifLog.warn(f"Using more than {rec_bones} bones per partition on {game} export."
                                 f"This may cause issues in-game.")
 
-            part_order = [getattr(NifFormat.BSDismemberBodyPartType, face_map.name, None) for face_map in
+            part_order = [NifClasses.BSDismemberBodyPartType.get(face_map.name) for face_map in
                           b_obj.face_maps]
             part_order = [body_part for body_part in part_order if body_part is not None]
             # override pyffi n_geom.update_skin_partition with custom one (that allows ordering)
@@ -549,7 +556,7 @@ class Mesh:
     def get_bone_block(self, b_bone):
         """For a blender bone, return the corresponding nif node from the blocks that have already been exported"""
         for n_block, b_obj in block_store.block_to_obj.items():
-            if isinstance(n_block, NifFormat.NiNode) and b_bone == b_obj:
+            if isinstance(n_block, NifClasses.NiNode) and b_bone == b_obj:
                 return n_block
         raise NifError(f"Bone '{b_bone.name}' not found.")
 
@@ -557,10 +564,10 @@ class Mesh:
         """Returns the body part indices of the mesh polygons. -1 is either not assigned to a face map or not a valid
         body part"""
         index_group_map = {-1: -1}
-        for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
+        for bodypartgroupname in [member.name for member in NifClasses.BSDismemberBodyPartType]:
             face_map = b_obj.face_maps.get(bodypartgroupname)
             if face_map:
-                index_group_map[face_map.index] = getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname)
+                index_group_map[face_map.index] = NifClasses.BSDismemberBodyPartType[bodypartgroupname]
         if len(index_group_map) <= 1:
             # there were no valid face maps
             return []
@@ -586,8 +593,8 @@ class Mesh:
             n_root_name = block_store.get_full_name(b_obj_armature)
         # make sure that such a block exists, find it
         for block in block_store.block_to_obj:
-            if isinstance(block, NifFormat.NiNode):
-                if block.name.decode() == n_root_name:
+            if isinstance(block, NifClasses.NiNode):
+                if block.name == n_root_name:
                     skininst.skeleton_root = block
                     break
         else:
@@ -770,12 +777,12 @@ class Mesh:
             # find possible extra data block
             extra_name = b'Tangent space (binormal & tangent vectors)'
             for extra in n_geom.get_extra_datas():
-                if isinstance(extra, NifFormat.NiBinaryExtraData):
+                if isinstance(extra, NifClasses.NiBinaryExtraData):
                     if extra.name == extra_name:
                         break
             else:
                 # create a new block and link it
-                extra = NifFormat.NiBinaryExtraData()
+                extra = NifClasses.NiBinaryExtraData(NifData.data)
                 extra.name = extra_name
                 n_geom.add_extra_data(extra)
             # write the data
@@ -785,9 +792,9 @@ class Mesh:
             n_geom.data.extra_vectors_flags = 16
             # XXX used to be 61440
             # XXX from Sid Meier's Railroad
-            n_geom.data.tangents.update_size()
+            n_geom.data.reset_field("tangents")
             for n_v, b_v in zip(n_geom.data.tangents, tangents):
                 n_v.x, n_v.y, n_v.z = b_v
-            n_geom.data.bitangents.update_size()
+            n_geom.data.reset_field("bitangents")
             for n_v, b_v in zip(n_geom.data.bitangents, bitangents):
                 n_v.x, n_v.y, n_v.z = b_v
