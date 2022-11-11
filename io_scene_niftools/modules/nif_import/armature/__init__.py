@@ -46,7 +46,7 @@ from generated.formats.nif import classes as NifClasses
 
 
 import io_scene_niftools.utils.logging
-from io_scene_niftools.modules.nif_import.object.block_registry import block_store
+from io_scene_niftools.modules.nif_import.object.block_registry import block_store, get_bone_name_for_blender
 from io_scene_niftools.modules.nif_export.block_registry import block_store as block_store_export
 from io_scene_niftools.modules.nif_import.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_import.object import Object
@@ -81,7 +81,7 @@ class Armature:
     def get_skinned_geometries(self, n_root):
         """Yield all children in n_root's tree that have skinning"""
         # search for all NiTriShape or NiTriStrips blocks...
-        for n_block in n_root.tree(block_type=(NifClasses.NiTriBasedGeom, NifClasses.BSTriShape)):
+        for n_block in n_root.tree(block_type=(NifClasses.NiTriBasedGeom, NifClasses.BSTriShape, NifClasses.NiMesh)):
             # yes, we found one, does it have skinning?
             if n_block.is_skin():
                 yield n_block
@@ -109,50 +109,57 @@ class Armature:
         # improved from pyffi's send_geometries_to_bind_position & send_bones_to_bind_position
         NifLog.debug(f"Calculating bind for {n_armature.name}")
         # prioritize geometries that have most nodes in their skin instance
-        geoms = sorted(self.get_skinned_geometries(n_armature), key=lambda g: g.skin_instance.num_bones, reverse=True)
+        sort_function = lambda g: len(g.extra_em_data.bone_transforms) if isinstance(g, NifClasses.NiMesh) else g.skin_instance.num_bones
+        geoms = sorted(self.get_skinned_geometries(n_armature), key=sort_function, reverse=True)
         NifLog.debug(f"Found {len(geoms)} skinned geometries")
         for geom in geoms:
             NifLog.debug(f"Checking skin of {geom.name}")
-            skininst = geom.skin_instance
-            for bonenode, bonedata in self.bones_iter(skininst):
-                # make sure all bone data of shared bones coincides
-                # see if the bone has been used by a previous skin instance
-                if bonenode in self.bind_store:
-                    # get the bind pose that has been stored
-                    diff = (bonedata.get_transform()
-                            * self.bind_store[bonenode]
-                            # * geom.skin_instance.data.get_transform())  use this if relative to skin instead of geom
-                            * geom.get_transform(n_armature).get_inverse(fast=False))
-                    # there is a difference between the two geometries' bind poses
-                    if not diff.is_identity():
-                        NifLog.debug(f"Fixing {geom.name} bind position")
-                        # update the skin for all bones of the new geom
-                        for bonenode, bonedata in self.bones_iter(skininst):
-                            NifLog.debug(f"Transforming bind of {bonenode.name}")
-                            bonedata.set_transform(diff.get_inverse(fast=False) * bonedata.get_transform())
-                    # transforming verts helps with nifs where the skins differ, eg MW vampire or WLP2 Gastornis
-                    if isinstance(geom, NifClasses.BSTriShape):
-                        vertices = [vert_data.vertex for vert_data in geom.skin.skin_partition.vertex_data]
-                        normals = [vert_data.normal for vert_data in geom.skin.skin_partition.vertex_data]
-                    else:
-                        vertices = geom.data.vertices
-                        normals = geom.data.normals
-                    for vert in vertices:
-                        newvert = vert * diff
-                        vert.x = newvert.x
-                        vert.y = newvert.y
-                        vert.z = newvert.z
-                    diff33 = diff.get_matrix_33()
-                    for norm in normals:
-                        newnorm = norm * diff33
-                        norm.x = newnorm.x
-                        norm.y = newnorm.y
-                        norm.z = newnorm.z
-                    break
-            # store bind pose
-            for bonenode, bonedata in self.bones_iter(skininst):
-                NifLog.debug(f"Stored {geom.name} bind position")
-                self.bind_store[bonenode] = self.get_skin_bind(bonedata, geom, n_armature)
+            if isinstance(geom, NifClasses.NiMesh):
+                # bones have no names and are not associated with any NiNodes
+                for i, bone_transform in enumerate(geom.extra_em_data.bone_transforms):
+                    # Use transpose because the matrices are stored transposed to usual format.
+                    self.bind_store[i] = bone_transform.get_transpose().get_inverse(fast=False) * geom.get_transform(n_armature)
+            else:
+                skininst = geom.skin_instance
+                for bonenode, bonedata in self.bones_iter(skininst):
+                    # make sure all bone data of shared bones coincides
+                    # see if the bone has been used by a previous skin instance
+                    if bonenode in self.bind_store:
+                        # get the bind pose that has been stored
+                        diff = (bonedata.get_transform()
+                                * self.bind_store[bonenode]
+                                # * geom.skin_instance.data.get_transform())  use this if relative to skin instead of geom
+                                * geom.get_transform(n_armature).get_inverse(fast=False))
+                        # there is a difference between the two geometries' bind poses
+                        if not diff.is_identity():
+                            NifLog.debug(f"Fixing {geom.name} bind position")
+                            # update the skin for all bones of the new geom
+                            for bonenode, bonedata in self.bones_iter(skininst):
+                                NifLog.debug(f"Transforming bind of {bonenode.name}")
+                                bonedata.set_transform(diff.get_inverse(fast=False) * bonedata.get_transform())
+                        # transforming verts helps with nifs where the skins differ, eg MW vampire or WLP2 Gastornis
+                        if isinstance(geom, NifClasses.BSTriShape):
+                            vertices = [vert_data.vertex for vert_data in geom.skin.skin_partition.vertex_data]
+                            normals = [vert_data.normal for vert_data in geom.skin.skin_partition.vertex_data]
+                        else:
+                            vertices = geom.data.vertices
+                            normals = geom.data.normals
+                        for vert in vertices:
+                            newvert = vert * diff
+                            vert.x = newvert.x
+                            vert.y = newvert.y
+                            vert.z = newvert.z
+                        diff33 = diff.get_matrix_33()
+                        for norm in normals:
+                            newnorm = norm * diff33
+                            norm.x = newnorm.x
+                            norm.y = newnorm.y
+                            norm.z = newnorm.z
+                        break
+                # store bind pose
+                for bonenode, bonedata in self.bones_iter(skininst):
+                    NifLog.debug(f"Stored {geom.name} bind position")
+                    self.bind_store[bonenode] = self.get_skin_bind(bonedata, geom, n_armature)
 
         NifLog.debug("Storing non-skeletal bone poses")
         self.fix_pose(n_armature, n_armature)
@@ -220,11 +227,12 @@ class Armature:
             self.transform_anim.get_bind_data(b_armature_obj)
 
         for bone_name, b_bone in b_armature_obj.data.bones.items():
-            n_block = self.name_to_block[bone_name]
-            # the property is only available from object mode!
-            block_store.store_longname(b_bone, n_block.name)
-            if NifOp.props.animation:
-                self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
+            n_block = self.name_to_block.get(bone_name)
+            if n_block:
+               # the property is only available from object mode!
+                block_store.store_longname(b_bone, n_block.name)
+                if NifOp.props.animation:
+                    self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
         # import pose
         for b_name, n_block in self.name_to_block.items():
@@ -237,19 +245,12 @@ class Armature:
 
         return b_armature_obj
 
-    def import_bone_bind(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
+    def create_bone(self, bone_name, bind_key, b_armature_data, b_parent_bone=None):
         """Adds a bone to the armature in edit mode."""
-        # check that n_block is indeed a bone
-        if not self.is_bone(n_block):
-            return None
-        # bone name
-        bone_name = block_store.import_name(n_block)
         # create a new bone
         b_edit_bone = b_armature_data.edit_bones.new(bone_name)
-        # store nif block for access from object mode
-        self.name_to_block[b_edit_bone.name] = n_block
         # get the nif bone's armature space matrix (under the hood all bone space matrixes are multiplied together)
-        n_bind = math.nifformat_to_mathutils_matrix(self.bind_store.get(n_block, NifClasses.Matrix44()))
+        n_bind = math.nifformat_to_mathutils_matrix(self.bind_store.get(bind_key, NifClasses.Matrix44()))
         # get transformation in blender's coordinate space
         b_bind = math.nif_bind_to_blender_bind(n_bind)
 
@@ -259,6 +260,24 @@ class Armature:
         # link to parent
         if b_parent_bone:
             b_edit_bone.parent = b_parent_bone
+        return b_edit_bone
+
+    def import_bone_bind(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
+        """Adds a bone to the armature in edit mode."""
+        if isinstance(n_block, NifClasses.NiMesh):
+            # NiMesh has bones, but they are not separate blocks
+            for i, transform in enumerate(n_block.extra_em_data.bone_transforms):
+                bone_name = get_bone_name_for_blender(str(i))
+                b_edit_bone = self.create_bone(bone_name, i, b_armature_data, b_parent_bone)
+            return
+        elif not self.is_bone(n_block):
+            # check that n_block is indeed a bone
+            return None
+        # bone name
+        bone_name = block_store.import_name(n_block)
+        b_edit_bone = self.create_bone(bone_name, n_block, b_armature_data, b_parent_bone)
+        # store nif block for access from object mode
+        self.name_to_block[b_edit_bone.name] = n_block
         # import and parent bone children
         for n_child in n_block.children:
             self.import_bone_bind(n_child, b_armature_data, n_armature, b_edit_bone)
@@ -281,21 +300,28 @@ class Armature:
         """Return the index of the max value in values"""
         return max(zip(values, range(len(values))))[1]
 
-    def get_forward_axis(self, n_bone, axis_indices):
-        """Helper function to get the forward axis of a bone"""
-        # check that n_block is indeed a bone
-        if not self.is_bone(n_bone):
-            return None
-        trans = n_bone.translation.as_tuple()
-        trans_abs = tuple(abs(v) for v in trans)
+    @classmethod
+    def max_coord_ind_from_translation(cls, translation):
+        trans_abs = tuple(abs(v) for v in translation)
         # get the index of the coordinate with the biggest absolute value
-        max_coord_ind = self.argmax(trans_abs)
+        max_coord_ind = cls.argmax(trans_abs)
         # now check the sign
-        actual_value = trans[max_coord_ind]
+        actual_value = translation[max_coord_ind]
         # handle sign accordingly so negative indices map to the negative identifiers in list
         if actual_value < 0:
             max_coord_ind += 3
-        axis_indices.append(max_coord_ind)
+        return max_coord_ind
+
+    def get_forward_axis(self, n_bone, axis_indices):
+        """Helper function to get the forward axis of a bone"""
+        # check that n_block is indeed a bone
+        if isinstance(n_bone, NifClasses.NiMesh):
+            for transform in n_bone.extra_em_data.bone_transforms:
+                axis_indices.append(self.max_coord_ind_from_translation(transform.get_transpose().get_translation()))
+            return
+        elif not self.is_bone(n_bone):
+            return None
+        axis_indices.append(self.max_coord_ind_from_translation(n_bone.translation))
         # move down the hierarchy
         for n_child in n_bone.children:
             self.get_forward_axis(n_child, axis_indices)
