@@ -86,7 +86,7 @@ class Armature:
             if n_block.is_skin():
                 yield n_block
 
-    def get_skin_bind(self, n_bone, geom, n_root):
+    def get_skin_bind(self, inv_bind, geom, n_root):
         """Get armature space bind matrix for skin partition bone's inverse bind matrix"""
         # get the bind pose from the skin data
         # NiSkinData stores the inverse bind (=rest) pose for each bone, in armature space
@@ -95,7 +95,7 @@ class Armature:
         # this gives a straight rest pose for MW too
         # return n_bone.get_transform().get_inverse(fast=False) * geom.skin_instance.data.get_transform().get_inverse(fast=False)
         # however, this conflicts with send_geometries_to_bind_position for MW meshes, so stick to this now
-        return n_bone.get_transform().get_inverse(fast=False) * geom.get_transform(n_root)
+        return inv_bind.get_inverse(fast=False) * geom.get_transform(n_root)
 
     def bones_iter(self, skin_instance):
         # might want to make sure that bone_list includes no dupes too to avoid breaking the first mesh
@@ -118,7 +118,7 @@ class Armature:
                 # bones have no names and are not associated with any NiNodes
                 for i, bone_transform in enumerate(geom.extra_em_data.bone_transforms):
                     # Use transpose because the matrices are stored transposed to usual format.
-                    self.bind_store[i] = bone_transform.get_transpose().get_inverse(fast=False) * geom.get_transform(n_armature)
+                    self.bind_store[i] = self.get_skin_bind(bone_transform.get_transpose(), geom, n_armature)
             else:
                 skininst = geom.skin_instance
                 for bonenode, bonedata in self.bones_iter(skininst):
@@ -139,7 +139,13 @@ class Armature:
                                 bonedata.set_transform(diff.get_inverse(fast=False) * bonedata.get_transform())
                         # transforming verts helps with nifs where the skins differ, eg MW vampire or WLP2 Gastornis
                         if isinstance(geom, NifClasses.BSTriShape):
-                            vertices = [vert_data.vertex for vert_data in geom.skin.skin_partition.vertex_data]
+                            if isinstance(geom, NifClasses.BSDynamicTriShape):
+                                # BSDynamicTriShape uses Vector4 to store vertices with a 0 W component, which would
+                                # nullify translation when multiplied by a Matrix44. Hence, first conversion to Vector3
+                                # and assign the position values back later.
+                                vertices = [NifClasses.Vector3.from_value((vertex.x, vertex.y, vertex.z)) for vertex in geom.vertices]
+                            else:
+                                vertices = [vert_data.vertex for vert_data in geom.skin.skin_partition.vertex_data]
                             normals = [vert_data.normal for vert_data in geom.skin.skin_partition.vertex_data]
                         else:
                             vertices = geom.data.vertices
@@ -155,11 +161,16 @@ class Armature:
                             norm.x = newnorm.x
                             norm.y = newnorm.y
                             norm.z = newnorm.z
+                        if isinstance(geom, NifClasses.BSDynamicTriShape):
+                            for vertex, t_vertex in zip(geom.vertices, vertices):
+                                vertex.x = t_vertex.x
+                                vertex.y = t_vertex.y
+                                vertex.z = t_vertex.z
                         break
                 # store bind pose
                 for bonenode, bonedata in self.bones_iter(skininst):
                     NifLog.debug(f"Stored {geom.name} bind position")
-                    self.bind_store[bonenode] = self.get_skin_bind(bonedata, geom, n_armature)
+                    self.bind_store[bonenode] = self.get_skin_bind(bonedata.get_transform(), geom, n_armature)
 
         NifLog.debug("Storing non-skeletal bone poses")
         self.fix_pose(n_armature, n_armature)
