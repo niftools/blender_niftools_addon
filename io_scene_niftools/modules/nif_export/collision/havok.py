@@ -242,17 +242,12 @@ class BhkCollision(Collision):
     def export_bhk_packed_nitristrip_shape(self, b_obj, n_col_mopp):
         # the mopp origin, scale, and data are written later
         n_col_shape = block_store.create_block("bhkPackedNiTriStripsShape", b_obj)
-        n_col_shape.unknown_int_1 = 0
-        n_col_shape.unknown_int_2 = 21929432
-        n_col_shape.unknown_float_1 = 0.1
-        n_col_shape.unknown_int_3 = 0
-        n_col_shape.unknown_float_2 = 0
-        n_col_shape.unknown_float_3 = 0.1
+        # TODO [collision] radius has default of 0.1, but maybe let depend on margin
         scale = n_col_shape.scale
         scale.x = 0
         scale.y = 0
         scale.z = 0
-        scale.unknown_float_4 = 0
+        scale.w = 0
         n_col_shape.scale_copy = scale
         n_col_mopp.shape = n_col_shape
         return n_col_shape
@@ -310,17 +305,7 @@ class BhkCollision(Collision):
             n_coltf = block_store.create_block("bhkConvexTransformShape", b_obj)
 
             # n_coltf.material = n_havok_mat[0]
-            n_coltf.unknown_float_1 = 0.1
-
-            unk_8 = n_coltf.unknown_8_bytes
-            unk_8[0] = 96
-            unk_8[1] = 120
-            unk_8[2] = 53
-            unk_8[3] = 19
-            unk_8[4] = 24
-            unk_8[5] = 9
-            unk_8[6] = 253
-            unk_8[7] = 4
+            n_coltf.radius = radius
 
             hktf = math.get_object_bind(b_obj)
             # the translation part must point to the center of the data
@@ -351,16 +336,6 @@ class BhkCollision(Collision):
                 n_coltf.shape = n_colbox
                 # n_colbox.material = n_havok_mat[0]
                 n_colbox.radius = radius
-
-                unk_8 = n_colbox.unknown_8_bytes
-                unk_8[0] = 0x6b
-                unk_8[1] = 0xee
-                unk_8[2] = 0x43
-                unk_8[3] = 0x40
-                unk_8[4] = 0x3a
-                unk_8[5] = 0xef
-                unk_8[6] = 0x8e
-                unk_8[7] = 0x3e
 
                 # fix dimensions for havok coordinate system
                 box_extends = self.calculate_box_extents(b_obj)
