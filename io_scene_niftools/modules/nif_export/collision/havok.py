@@ -186,7 +186,6 @@ class BhkCollision(Collision):
 
     def export_bhk_blend_collision(self, b_obj):
         n_col_obj = block_store.create_block("bhkBlendCollisionObject", b_obj)
-        n_col_obj.flags = 9
         n_col_obj.unknown_float_1 = 1.0
         n_col_obj.unknown_float_2 = 1.0
         return n_col_obj
