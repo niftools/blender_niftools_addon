@@ -252,9 +252,9 @@ class BhkCollision(Collision):
         n_col_mopp.shape = n_col_shape
         return n_col_shape
 
-    def export_bhk_convex_vertices_shape(self, b_obj, fdistlist, fnormlist, radius, vertlist):
+    def export_bhk_convex_vertices_shape(self, b_obj, fdistlist, fnormlist, radius, vertlist, n_havok_mat):
         colhull = block_store.create_block("bhkConvexVerticesShape", b_obj)
-        # colhull.material = n_havok_mat[0]
+        colhull.material.material = n_havok_mat
         colhull.radius = radius
 
         # Vertices
@@ -304,7 +304,7 @@ class BhkCollision(Collision):
             # note: collision settings are taken from lowerclasschair01.nif
             n_coltf = block_store.create_block("bhkConvexTransformShape", b_obj)
 
-            # n_coltf.material = n_havok_mat[0]
+            n_coltf.material.material = n_havok_mat
             n_coltf.radius = radius
 
             hktf = math.get_object_bind(b_obj)
@@ -334,7 +334,7 @@ class BhkCollision(Collision):
             if collision_shape == 'BOX':
                 n_colbox = block_store.create_block("bhkBoxShape", b_obj)
                 n_coltf.shape = n_colbox
-                # n_colbox.material = n_havok_mat[0]
+                n_colbox.material.material = n_havok_mat
                 n_colbox.radius = radius
 
                 # fix dimensions for havok coordinate system
@@ -348,7 +348,7 @@ class BhkCollision(Collision):
             elif collision_shape == 'SPHERE':
                 n_colsphere = block_store.create_block("bhkSphereShape", b_obj)
                 n_coltf.shape = n_colsphere
-                # n_colsphere.material = n_havok_mat[0]
+                n_colsphere.material.material = n_havok_mat
                 # TODO [object][collision] find out what this is: fix for havok coordinate system (6 * 7 = 42)
                 # take average radius
                 n_colsphere.radius = radius
@@ -372,8 +372,7 @@ class BhkCollision(Collision):
             second_point /= self.HAVOK_SCALE
 
             n_col_caps = block_store.create_block("bhkCapsuleShape", b_obj)
-            # n_col_caps.material = n_havok_mat[0]
-            # n_col_caps.skyrim_material = n_havok_mat[1]
+            n_col_caps.material.material = n_havok_mat
 
             cap_1 = n_col_caps.first_point
             cap_1.x = first_point.x
@@ -434,7 +433,7 @@ class BhkCollision(Collision):
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise io_scene_niftools.utils.logging.NifError("Mesh has too many polygons/vertices. Simply/split your mesh and try again.")
 
-            return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist)
+            return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist, n_havok_mat)
 
         else:
             raise io_scene_niftools.utils.logging.NifError(f'Cannot export collision type {collision_shape} to collision shape list')
@@ -501,7 +500,7 @@ class BhkCollision(Collision):
         if not n_col_body.shape:
             n_col_shape = block_store.create_block("bhkListShape")
             n_col_body.shape = n_col_shape
-            # n_col_shape.material = n_havok_mat[0]
+            n_col_shape.material.material = n_havok_mat
         else:
             n_col_shape = n_col_body.shape
             if not isinstance(n_col_shape, NifClasses.BhkListShape):
