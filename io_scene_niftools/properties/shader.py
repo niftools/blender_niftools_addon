@@ -88,15 +88,12 @@ def prettify_prop_name(property_name):
 
 annotations_dict = ShaderProps.__dict__.get('__annotations__', None)
 if annotations_dict:
-    for property_name in NifClasses.BSShaderFlags.__members__:
-        if property_name not in annotations_dict:
-            annotations_dict[property_name] = BoolProperty(name=prettify_prop_name(property_name[3:]))
-    for property_name in NifClasses.SkyrimShaderPropertyFlags1.__members__:
-        if property_name not in annotations_dict:
-            annotations_dict[property_name] = BoolProperty(name=prettify_prop_name(property_name[7:]))
-    for property_name in NifClasses.SkyrimShaderPropertyFlags2.__members__:
-        if property_name not in annotations_dict:
-            annotations_dict[property_name] = BoolProperty(name=prettify_prop_name(property_name[7:]))
+    for flag_field in (NifClasses.BSShaderFlags,
+                       NifClasses.SkyrimShaderPropertyFlags1,
+                       NifClasses.SkyrimShaderPropertyFlags2):
+        for property_name in flag_field.__members__:
+            if property_name not in annotations_dict:
+                annotations_dict[property_name] = BoolProperty(name=prettify_prop_name(property_name))
 
 
 CLASSES = [
