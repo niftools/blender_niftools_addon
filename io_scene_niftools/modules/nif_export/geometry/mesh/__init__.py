@@ -493,9 +493,8 @@ class Mesh:
                     NifLog.warn(f"Using more than {rec_bones} bones per partition on {game} export."
                                 f"This may cause issues in-game.")
 
-            part_order = [NifClasses.BSDismemberBodyPartType.get(face_map.name) for face_map in
-                          b_obj.face_maps]
-            part_order = [body_part for body_part in part_order if body_part is not None]
+            part_order = [NifClasses.BSDismemberBodyPartType[face_map.name] for face_map in
+                          b_obj.face_maps if face_map.name in NifClasses.BSDismemberBodyPartType.__members__]
             # override pyffi n_geom.update_skin_partition with custom one (that allows ordering)
             n_geom.update_skin_partition = update_skin_partition.__get__(n_geom)
             lostweight = n_geom.update_skin_partition(
