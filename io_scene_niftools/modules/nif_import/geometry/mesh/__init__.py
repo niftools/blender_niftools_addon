@@ -99,7 +99,8 @@ class Mesh:
                 normals = [vertex.normal for vertex in vertex_data]
         elif isinstance(n_block, NifClasses.NiMesh):
             # get the data from the associated nidatastreams based on the description in the component semantics
-            vertices = list(chain.from_iterable(n_block.geomdata_by_name("POSITION")))
+            vertices.extend(list(chain.from_iterable(n_block.geomdata_by_name("POSITION"))))
+            vertices.extend(list(chain.from_iterable(n_block.geomdata_by_name("POSITION_BP"))))
             triangles = n_block.get_triangles()
             uvs = n_block.geomdata_by_name("TEXCOORD")
             if len(uvs) == 0:
@@ -113,6 +114,7 @@ class Mesh:
                 vertex_colors = list(chain.from_iterable(vertex_colors))
                 vertex_colors = [NifClasses.Color4.from_value(color) for color in vertex_colors]
             normals = n_block.geomdata_by_name("NORMAL")
+            normals.extend(n_block.geomdata_by_name("NORMAL_BP"))
             if len(normals) == 0:
                 normals = None
             else:

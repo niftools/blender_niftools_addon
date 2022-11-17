@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import numpy as np
+from itertools import chain
 
 from generated.formats.nif import classes as NifClasses
 
@@ -126,16 +127,30 @@ class VertexGroup:
     def import_skin(ni_block, b_obj):
         """Import a NiSkinInstance and its contents as vertex groups"""
         if isinstance(ni_block, NifClasses.NiMesh):
-            # only for Epic Mickey nifs for now
-            # get all the weights and the corresponding bone (indices)
-            bone_indices = np.zeros((len(b_obj.data.vertices), 3), dtype=int)
-            bone_weights = np.zeros((len(b_obj.data.vertices), 3), dtype=float)
-            bone_weights_set = ni_block.extra_em_data.weights
-            for i, set_index in enumerate(ni_block.extra_em_data.vertex_to_weight_map):
-                weight = bone_weights_set[set_index]
-                bone_indices[i] = weight.bone_indices
-                bone_weights[i] = weight.weights
-            bone_names = [get_bone_name_for_blender(str(i)) for i in range(len(ni_block.extra_em_data.bone_transforms))]
+            if ni_block.has_extra_em_data:
+                # only for Epic Mickey nifs for now
+                # get all the weights and the corresponding bone (indices)
+                bone_indices = np.zeros((len(b_obj.data.vertices), 3), dtype=int)
+                bone_weights = np.zeros((len(b_obj.data.vertices), 3), dtype=float)
+                bone_weights_set = ni_block.extra_em_data.weights
+                for i, set_index in enumerate(ni_block.extra_em_data.vertex_to_weight_map):
+                    weight = bone_weights_set[set_index]
+                    bone_indices[i] = weight.bone_indices
+                    bone_weights[i] = weight.weights
+                bone_names = [get_bone_name_for_blender(str(i)) for i in range(len(ni_block.extra_em_data.bone_transforms))]
+            else:
+                bone_indices = []
+                bone_weights = chain.from_iterable(ni_block.geomdata_by_name('BLENDWEIGHT'))
+
+                # assume there's only on SkinningMeshModifier
+                skin_modifier = [block for block in ni_block.modifiers if isinstance(block, NifClasses.NiSkinningMeshModifier)][0]
+                bone_names = [block_store.import_name(bone) for bone in skin_modifier.bones]
+
+                bone_palettes = ni_block.geomdata_by_name('BONE_PALETTE')
+                bone_index_datas = ni_block.geomdata_by_name('BLENDINDICES')
+
+                for palette, index_datas in zip(bone_palettes, bone_index_datas):
+                    bone_indices.extend([[palette[i] for i in indices] for indices in index_datas])
 
             # create all vgroups for this block's bones
             for group_name in bone_names:
@@ -144,7 +159,8 @@ class VertexGroup:
             # add every vertex to the corresponding groups
             for i, (weights, indices) in enumerate(zip(bone_weights, bone_indices)):
                 for w, b_i in zip(weights, indices):
-                    if b_i >= 0:
+                    # weights and indices is not necessarily equally long - luckily zip limits to the shortest
+                    if b_i >= 0 and w > 0:
                         group_name = bone_names[b_i]
                         v_group = b_obj.vertex_groups[group_name]
                         v_group.add([int(i)], w, 'REPLACE')
