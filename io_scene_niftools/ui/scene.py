@@ -65,7 +65,6 @@ class ScenePanel(SceneButtonsPanel):
         layout = self.layout
         row = layout.column()
         row.prop(nif_scene_props, "game")
-        row.prop(nif_scene_props, "rootnode")
 
 
 class SceneVersionInfoPanel(SceneButtonsPanel):

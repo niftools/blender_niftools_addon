@@ -133,6 +133,15 @@ class BsInventoryMarker(PropertyGroup):
 
 class ObjectProperty(PropertyGroup):
 
+    nodetype: EnumProperty(
+        name='Node Type',
+        description='Type of node this empty represents',
+        items=(
+              ('NiNode', 'NiNode', "", 0),
+              ('BSFadeNode', 'BSFadeNode', "", 1)),
+        default='NiNode',
+    )
+
     prn_location: EnumProperty(
         name='Weapon Location',
         description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',

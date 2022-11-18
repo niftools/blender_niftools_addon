@@ -51,7 +51,7 @@ class ObjectProperty:
         niftools_scene = bpy.context.scene.niftools_scene
         # store type of root node
         if isinstance(root_block, NifClasses.BSFadeNode):
-            niftools_scene.rootnode = 'BSFadeNode'
+            b_obj.niftools.nodetype = 'BSFadeNode'
         # store its flags
         b_obj.niftools.flags = root_block.flags
         # store extra datas

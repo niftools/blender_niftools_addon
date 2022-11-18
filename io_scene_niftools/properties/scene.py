@@ -108,15 +108,6 @@ class Scene(PropertyGroup):
         default='NONE',
         update=update_version_from_game)
 
-    rootnode: EnumProperty(
-        name='Root Node',
-        description='Type of property used to display meshes',
-        items=(
-            ('NiNode', 'NiNode', "", 0),
-            ('BSFadeNode', 'BSFadeNode', "", 1)),
-        default='NiNode',
-    )
-
     scale_correction: bpy.props.FloatProperty(
         name="Scale Correction",
         description="Changes size of mesh to fit onto Blender's default grid",

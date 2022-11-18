@@ -55,10 +55,7 @@ def create_ninode(b_obj=None, n_node_type=None):
     else:
         # let n_node_type overwrite the detected node type
         if n_node_type is None:
-            try:
-                n_node_type = b_obj["type"]
-            except KeyError:
-                n_node_type = "NiNode"
+            n_node_type = b_obj.niftools.nodetype
 
             # ...others by presence of constraints
             if has_track(b_obj):
