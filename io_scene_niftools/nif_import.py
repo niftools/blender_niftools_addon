@@ -155,7 +155,7 @@ class NifImport(NifCommon):
         self.armaturehelper.check_for_skin(root_block)
 
         # read the NIF tree
-        if isinstance(root_block, NifClasses.NiNode) or self.object_helper.has_geometry(root_block):
+        if isinstance(root_block, NifClasses.NiNode) or self.objecthelper.has_geometry(root_block):
             b_obj = self.import_branch(root_block)
             ObjectProperty().import_extra_datas(root_block, b_obj)
 
