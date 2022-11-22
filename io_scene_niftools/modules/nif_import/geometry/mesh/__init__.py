@@ -119,6 +119,9 @@ class Mesh:
                 normals = None
             else:
                 normals = list(chain.from_iterable(normals))
+                # for some reason, normals can be four-component structs instead of 3, discard the 4th.
+                if len(normals[0]) > 3:
+                    normals = [(n[0], n[1], n[2]) for n in normals]
         elif isinstance(n_block, NifClasses.NiTriBasedGeom):
 
             # shortcut for mesh geometry data

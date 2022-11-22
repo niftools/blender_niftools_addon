@@ -70,7 +70,7 @@ def populate_version_map(iterable, version_map):
 
 populate_version_map(primary_games, game_version_map)
 populate_version_map(all_games, game_version_map)
-game_version_map["NONE"] = (0, 0, 0)
+game_version_map["UNKNOWN"] = (0, 0, 0)
 
 # noinspection PyUnusedLocal
 def update_version_from_game(self, context):
@@ -98,14 +98,14 @@ class Scene(PropertyGroup):
 
     # For which game to export.
     game: bpy.props.EnumProperty(
-        items=[('NONE', 'NONE', 'No game selected')] + [
+        items=[('UNKNOWN', 'UNKNOWN', 'No game selected')] + [
             (member.name, member.value, "Export for " + member.value)
             for member in sorted(
                 [member for member in set(all_games)], key=lambda x: x.name)
         ],
         name="Game",
         description="For which game to export",
-        default='NONE',
+        default='UNKNOWN',
         update=update_version_from_game)
 
     scale_correction: bpy.props.FloatProperty(

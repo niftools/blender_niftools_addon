@@ -65,7 +65,7 @@ class KfExport(NifCommon):
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
-        if bpy.context.scene.niftools_scene.game == 'NONE':
+        if bpy.context.scene.niftools_scene.game == 'UNKNOWN':
             raise NifError("You have not selected a game. Please select a game in the scene tab.")
 
         prefix = "x" if bpy.context.scene.niftools_scene.game in ('MORROWIND',) else ""
