@@ -49,7 +49,7 @@ from io_scene_niftools.modules.nif_import.property.material import Material
 from io_scene_niftools.modules.nif_import.property.geometry.mesh import MeshPropertyProcessor
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class Mesh:
@@ -98,6 +98,10 @@ class Mesh:
             if vertex_attributes.normals:
                 normals = [vertex.normal for vertex in vertex_data]
         elif isinstance(n_block, NifClasses.NiMesh):
+            # if it has a displaylist then we don't know how to process this NiMesh
+            if len(n_block.geomdata_by_name("DISPLAYLIST")) > 0:
+                raise NifError(f"Geometry {node_name} contains a DISPLAYLIST-annotated NiDataStream. This is not yet "
+                               f"supported.")
             # get the data from the associated nidatastreams based on the description in the component semantics
             vertices.extend(list(chain.from_iterable(n_block.geomdata_by_name("POSITION"))))
             vertices.extend(list(chain.from_iterable(n_block.geomdata_by_name("POSITION_BP"))))
