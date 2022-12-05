@@ -300,9 +300,9 @@ class NodesWrapper:
             group_nodes = node_group.nodes
             # add the in/output nodes
             input_node = group_nodes.new('NodeGroupInput')
-            node_group.inputs.new('NodeSocketImage', "Input")
+            node_group.inputs.new('NodeSocketColor', "Input")
             output_node = group_nodes.new('NodeGroupOutput')
-            node_group.outputs.new('NodeSocketImage', "Output")
+            node_group.outputs.new('NodeSocketColor', "Output")
             # create the converting nodes
             separate_node = group_nodes.new("ShaderNodeSeparateRGB")
             invert_node = group_nodes.new("ShaderNodeInvert")
