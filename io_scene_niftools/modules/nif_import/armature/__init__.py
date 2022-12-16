@@ -226,6 +226,11 @@ class Armature:
             if NifOp.props.animation:
                 self.transform_anim.import_transforms(n_block, b_armature_obj, bone_name)
 
+            #Maybe better place to put this?
+            # Check for bs lagbone controllers and set them
+            self.import_bslagbonecontrollers(n_block, b_bone)
+
+
         # import pose
         for b_name, n_block in self.name_to_block.items():
             n_pose = self.pose_store[n_block]
@@ -236,6 +241,19 @@ class Armature:
             bpy.context.view_layer.update()
 
         return b_armature_obj
+
+
+    def import_bslagbonecontrollers(self, n_block, b_bone):
+        """Check for and import bslagbonecontrollers."""
+        ctrl = n_block.controller
+        if isinstance(ctrl, NifFormat.BSLagBoneController):
+            #Enable bscontrollerlagboneprop
+            b_bone.niftools.lag_bone.enabled = True
+            #Set the props we care about; flags, linear_velocity, linear_rotation, maximum distance
+            b_bone.niftools.lag_bone.flags = ctrl.flags
+            b_bone.niftools.lag_bone.linear_velocity = ctrl.linear_velocity
+            b_bone.niftools.lag_bone.linear_rotation = ctrl.linear_rotation
+            b_bone.niftools.lag_bone.maximum_distance = ctrl.maximum_distance
 
     def import_bone_bind(self, n_block, b_armature_data, n_armature, b_parent_bone=None):
         """Adds a bone to the armature in edit mode."""

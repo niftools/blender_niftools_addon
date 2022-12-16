@@ -41,11 +41,40 @@ import bpy
 from bpy.props import (PointerProperty,
                        IntProperty,
                        EnumProperty,
-                       StringProperty
+                       StringProperty,
+                       BoolProperty,
+                       FloatProperty
                        )
 from bpy.types import PropertyGroup
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
+
+
+class LagBoneControllerProperty(PropertyGroup):
+    enabled: BoolProperty(
+        name='BSLagBoneController',
+        default=False
+    )
+
+    flags: IntProperty(
+        name='flags',
+        default=72
+    )
+
+    linear_velocity: FloatProperty(
+        name='linear velocity',
+        default=20.0
+    )
+
+    linear_rotation: FloatProperty(
+        name='linear rotation',
+        default=20.0
+    )
+
+    maximum_distance: FloatProperty(
+        name='maximum distance',
+        default=10.0
+    )
 
 
 class BoneProperty(PropertyGroup):
@@ -61,35 +90,38 @@ class BoneProperty(PropertyGroup):
         name='Nif Long Name'
     )
 
+    lag_bone: PointerProperty(type=LagBoneControllerProperty)
+
 
 class ArmatureProperty(PropertyGroup):
 
     axis_forward: EnumProperty(
-            name="Forward",
-            items=(('X', "X Forward", ""),
-                   ('Y', "Y Forward", ""),
-                   ('Z', "Z Forward", ""),
-                   ('-X', "-X Forward", ""),
-                   ('-Y', "-Y Forward", ""),
-                   ('-Z', "-Z Forward", ""),
-                   ),
-            default="X",
-            )
+        name="Forward",
+        items=(('X', "X Forward", ""),
+               ('Y', "Y Forward", ""),
+               ('Z', "Z Forward", ""),
+               ('-X', "-X Forward", ""),
+               ('-Y', "-Y Forward", ""),
+               ('-Z', "-Z Forward", ""),
+               ),
+        default="X",
+    )
 
     axis_up: EnumProperty(
-            name="Up",
-            items=(('X', "X Up", ""),
-                   ('Y', "Y Up", ""),
-                   ('Z', "Z Up", ""),
-                   ('-X', "-X Up", ""),
-                   ('-Y', "-Y Up", ""),
-                   ('-Z', "-Z Up", ""),
-                   ),
-            default="Y",
-            )
+        name="Up",
+        items=(('X', "X Up", ""),
+               ('Y', "Y Up", ""),
+               ('Z', "Z Up", ""),
+               ('-X', "-X Up", ""),
+               ('-Y', "-Y Up", ""),
+               ('-Z', "-Z Up", ""),
+               ),
+        default="Y",
+    )
 
 
 CLASSES = [
+    LagBoneControllerProperty,
     BoneProperty,
     ArmatureProperty
 ]
