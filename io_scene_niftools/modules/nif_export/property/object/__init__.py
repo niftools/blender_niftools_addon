@@ -71,7 +71,8 @@ class ObjectProperty:
                          self.export_specular_property(b_mat),
                          self.material_property.export_material_property(b_mat)
                          ):
-                n_block.add_property(prop)
+                if prop is not None:
+                    n_block.add_property(prop)
 
             # todo [property] refactor this
             # add textures
