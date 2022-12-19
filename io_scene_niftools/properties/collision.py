@@ -58,7 +58,7 @@ def game_specific_col_layer_items(self, context):
     else:
         current_game = context.scene.niftools_scene.game
     col_layer_format = None
-    if current_game == "OBLIVION":
+    if current_game in ("OBLIVION", "OBLIVION_KF"):
         col_layer_format = NifClasses.OblivionLayer
     elif current_game == "FALLOUT_3":
         col_layer_format = NifClasses.Fallout3Layer
