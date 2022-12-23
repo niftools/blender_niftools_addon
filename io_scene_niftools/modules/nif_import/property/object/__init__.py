@@ -70,7 +70,7 @@ class ObjectProperty:
                         # we didn't find anything, either because the game doesn't have it,
                         # or we have the wrong game. Check all key, value pairs
                         for slot, game_map in PRN_DICT.items():
-                            for k, v in game_map:
+                            for k, v in game_map.items():
                                 if v.lower() == n_extra.string_data.lower():
                                     b_obj.niftools.prn_location = slot
                                     break
