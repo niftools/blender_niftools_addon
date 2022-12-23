@@ -45,7 +45,6 @@ from generated.formats.nif import classes as NifClasses
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_niftools.properties.object import PRN_DICT
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils.consts import UPB_DEFAULT
 from io_scene_niftools.utils.singleton import NifOp
@@ -240,11 +239,10 @@ class ObjectDataProperty:
         game = bpy.context.scene.niftools_scene.game
         if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             loc = root_obj.niftools.prn_location
-            if loc != "NONE" and (PRN_DICT[loc][game] is not None):
-                # add string extra data
+            if loc:
                 prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
-                prn.string_data = PRN_DICT[loc][game]
+                prn.string_data = loc
                 n_root.add_extra_data(prn)
 
     # TODO [object][property] Move to object property

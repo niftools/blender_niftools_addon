@@ -69,7 +69,9 @@ class ObjectPanel(ObjectButtonsPanel):
         if self.is_root_object(b_obj):
             if b_obj.type == "EMPTY":
                 row.prop(nif_obj_props, "nodetype")
-            row.prop(nif_obj_props, "prn_location")
+            if b_obj.type != "ARMATURE":
+                # prn nistringextradata is only useful as replacement for rigging data
+                row.prop(nif_obj_props, "prn_location")
             row.prop(nif_obj_props, "upb")
             row.prop(nif_obj_props, "bsxflags")
         if b_obj.type == "MESH":

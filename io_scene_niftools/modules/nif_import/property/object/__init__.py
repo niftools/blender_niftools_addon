@@ -39,7 +39,6 @@
 import bpy
 from generated.formats.nif import classes as NifClasses
 
-from io_scene_niftools.properties.object import PRN_DICT
 from math import pi
 
 
@@ -59,24 +58,7 @@ class ObjectProperty:
             if isinstance(n_extra, NifClasses.NiStringExtraData):
                 # weapon location or attachment position
                 if n_extra.name == "Prn":
-                    game = bpy.context.scene.niftools_scene.game
-                    if game in PRN_DICT[next(iter(PRN_DICT))]:
-                        # first check specifically in that game
-                        for slot, game_map in PRN_DICT.items():
-                            if game_map[game].lower() == n_extra.string_data.lower():
-                                b_obj.niftools.prn_location = slot
-                                break
-                    if b_obj.niftools.prn_location == "NONE":
-                        # we didn't find anything, either because the game doesn't have it,
-                        # or we have the wrong game. Check all key, value pairs
-                        for slot, game_map in PRN_DICT.items():
-                            for k, v in game_map.items():
-                                if v.lower() == n_extra.string_data.lower():
-                                    b_obj.niftools.prn_location = slot
-                                    break
-                            else:
-                                continue
-                            break
+                    b_obj.niftools.prn_location = n_extra.string_data
                 elif n_extra.name == "UPB":
                     b_obj.niftools.upb = n_extra.string_data
             elif isinstance(n_extra, NifClasses.BSXFlags):
