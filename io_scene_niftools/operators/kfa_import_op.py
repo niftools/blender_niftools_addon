@@ -1,8 +1,8 @@
-"""Nif Operators, nif specific operators to update nif properties"""
+"""Blender Niftools Addon Main Import operators, function called through Import Menu"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
-# Copyright © 2014, NIF File Format Library and Tools contributors.
+# Copyright © 2019, NIF File Format Library and Tools contributors.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -37,39 +37,44 @@
 #
 # ***** END LICENSE BLOCK *****
 
-
 import bpy
-from io_scene_niftools.utils.decorators import register_modules, unregister_modules
-from io_scene_niftools.operators import object, geometry, nif_import_op, nif_export_op, kf_import_op, kfa_import_op, egm_import_op, kf_export_op
+from bpy.types import Operator, PropertyGroup
+from bpy_extras.io_utils import ImportHelper
+
+from io_scene_niftools.kfa_import import KfaImport
+from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonKfa
+from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-# noinspection PyUnusedLocal
-def menu_func_import(self, context):
-    self.layout.operator(nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
-    self.layout.operator(kf_import_op.KfImportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
-    self.layout.operator(kfa_import_op.KfaImportOperator.bl_idname, text="NetImmerse/Gamebryo (.kfa)")
-    self.layout.operator(egm_import_op.EgmImportOperator.bl_idname, text="NetImmerse/Gamebryo (.egm)")
-    # TODO [general] get default path from config registry
-    # default_path = bpy.data.filename.replace(".blend", ".nif")
-    # ).filepath = default_path
+class KfaImportOperator(Operator, ImportHelper, CommonDevOperator, CommonScale, CommonKfa):
+    """Operator for loading a kfa file."""
+
+    # Name of function for calling the nif export operators.
+    bl_idname = "import_scene.kfa"
+
+    # How the nif import operators is labelled in the user interface.
+    bl_label = "Import KFA"
+
+    files: bpy.props.CollectionProperty(type=PropertyGroup)
+
+    def execute(self, context):
+        """Execute the import operators: first constructs a
+        :class:`~io_scene_niftools.kfa_import.KfaImport` instance and then
+        calls its :meth:`~io_scene_niftools.kfa_import.KfImport.execute`
+        method.
+        """
+
+        return KfaImport(self, context).execute()
 
 
-# noinspection PyUnusedLocal
-def menu_func_export(self, context):
-    self.layout.operator(nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
-    self.layout.operator(kf_export_op.KfExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
-
-
-MODS = [object, geometry, nif_import_op, nif_export_op, kf_import_op, kfa_import_op, kf_export_op, egm_import_op]
+classes = [
+    KfaImportOperator
+]
 
 
 def register():
-    register_modules(MODS, __name__)
-    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+    register_classes(classes, __name__)
 
 
 def unregister():
-    unregister_modules(MODS, __name__)
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    unregister_classes(classes, __name__)
