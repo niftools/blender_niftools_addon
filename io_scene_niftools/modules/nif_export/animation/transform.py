@@ -47,6 +47,7 @@ from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils import math, consts
 from io_scene_niftools.utils.logging import NifError, NifLog
 
+from io_scene_niftools.modules.nif_export import block_registry
 
 class TransformAnimation(Animation):
 
@@ -119,6 +120,75 @@ class TransformAnimation(Animation):
         kf_root.target_name = targetname
         return kf_root
 
+
+    def export_kfa_root(self, b_armature=None):
+        """Creates and returns a KFA root block and exports controllers for objects and bones"""
+        scene = bpy.context.scene
+        game = scene.niftools_scene.game
+        kfa_root = block_store.create_block("NiNode")
+
+        anim_textextra = self.create_text_keys(kfa_root)
+        targetname = "Scene Root"
+
+        # mapping between bones name and id 
+        bonename_dict = { "Bip01":0, "Bip01 Pelvis":1, "Bip01 Spine":2, "Bip01 Spine1":3, "Bip01 Spine2":4, "Bip01 Spine3":5, "Bip01 Neck":6, "Bip01 Neck1":7, "Bip01 Neck2":8, "Bip01 Neck3":9, "Bip01 Neck4":10, "Bip01 Head":11, "Bip01 Ponytail1":12, "Bip01 Ponytail11":13, "Bip01 Ponytail12":14, "Bip01 Ponytail13":15, "Bip01 Ponytail14":16, "Bip01 Ponytail2":17, "Bip01 Ponytail21":18, "Bip01 Ponytail22":19, "Bip01 Ponytail23":20, "Bip01 Ponytail24":21, "Bip01 L Clavicle":22, "Bip01 L UpperArm":23, "Bip01 L Forearm":34, "Bip01 L Hand":25, "Bip01 L Finger0":26, "Bip01 L Finger01":27, "Bip01 L Finger02":28, "Bip01 L Finger1":29, "Bip01 L Finger11":30, "Bip01 L Finger12":31, "Bip01 L Finger2":32, "Bip01 L Finger21":33, "Bip01 L Finger22":34, "Bip01 R Clavicle":35, "Bip01 R UpperArm":36, "Bip01 R Forearm":37, "Bip01 R Hand":38, "Bip01 R Finger0":39, "Bip01 R Finger01":40, "Bip01 R Finger02":41, "Bip01 R Finger1":42, "Bip01 R Finger11":43, "Bip01 R Finger12":44, "Bip01 R Finger2":45, "Bip01 R Finger21":46, "Bip01 R Finger22":47, "Bip01 L Thigh":48, "Bip01 L Calf":49, "Bip01 L HorseLink":50, "Bip01 L Foot":51, "Bip01 L Toe0":52, "Bip01 L Toe01":53, "Bip01 R Thigh":54, "Bip01 R Calf":55, "Bip01 R HorseLink":56, "Bip01 R Foot":57, "Bip01 R Toe0":58, "Bip01 R Toe01":59, "Bip01 Tail":60, "Bip01 Tail1":61, "Bip01 Tail2":62, "Bip01 Tail3":63, "Bip01 Tail4":64, "Bip01 L Shield":65, "Bip01 R Shield":66, "Bip01 L Held":67, "Bip01 R Held":68, "Bip01 L Belt":69, "Bip01 R Belt":70, "Bip01 L Back":71, "Bip01 R Back":72, "Bip01 Helm":73, "Bip01 Ext01":74, "Bip01 Ext02":75, "Bip01 Ext03":76, "Bip01 Ext04":77, "Bip01 Ext05":78, "Bip01 Ext06":79, "Bip01 Ext07":80, "Bip01 Ext08":81, "Bip01 Ext09":82, "Bip01 Ext10":83, "Bip01 Ext11":84, "Bip01 Ext12":85, "Bip01 Ext13":86, "Bip01 Ext14":87, "Bip01 Ext15":88, "Bip01 Ext16":89, "Bip01 Ext17":90, "Bip01 Ext18":91, "Bip01 Ext19":92, "Bip01 Ext20":93, "Bip01 L Finger3":94, "Bip01 L Finger31":95, "Bip01 L Finger32":96, "Bip01 L Finger4":97, "Bip01 L Finger41":98, "Bip01 L Finger42":99, "Bip01 R Finger3":100, "Bip01 R Finger31":101, "Bip01 R Finger32":102, "Bip01 R Finger4":103, "Bip01 R Finger41":104, "Bip01 R Finger42":105, "Bip01 L Toe02":106, "Bip01 L Toe03":107, "Bip01 L Toe1":108, "Bip01 L Toe11":109, "Bip01 L Toe12":110, "Bip01 L Toe2":111, "Bip01 L Toe21":112, "Bip01 L Toe22":113, "Bip01 R Toe02":114, "Bip01 R Toe03":115, "Bip01 R Toe1":116, "Bip01 R Toe11":117, "Bip01 R Toe12":118, "Bip01 R Toe2":119, "Bip01 R Toe21":120, "Bip01 R Toe22":121, "Bip01 L ForeTwist":122, "Bip01 L ForeTwist1":123, "Bip01 R ForeTwist":124, "Bip01 R ForeTwist1":125, "Bip01 EyeLids":126, "Bip01 L BicepTwist":127, "Bip01 R BicepTwist":128, "Bip01 L Pauldron":129, "Bip01 R Pauldron":130, "Bip01 Beard1":131, "Bip01 Beard2":132, "Bip01 FrontRobe1":133, "Bip01 FrontRobe2":134, "Bip01 BackRobe1":135, "Bip01 BackRobe2":136, "Bip01 C Cloak01":137, "Bip01 C Cloak02":138, "Bip01 C Cloak03":139, "Bip01 C Cloak04":140, "Bip01 C Cloak05":141, "Bip01 L Cloak01":142, "Bip01 L Cloak02":143, "Bip01 L Cloak03":144, "Bip01 L Cloak04":145, "Bip01 L Cloak05":146, "Bip01 R Cloak01":147, "Bip01 R Cloak02":148, "Bip01 R Cloak03":149, "Bip01 R Cloak04":150, "Bip01 R Cloak05":151, "Bip01 C CloakIKChain":152, "Bip01 L CloakIKChain":153, "Bip01 R CloakIKChain":154, "Bip01 L ThighTwist":155, "Bip01 R ThighTwist":156, "R Cloak Control01":157, "L Cloak Control01":158, "C Cloak Control01":159, "C Cloak Control02":160, "C Cloak Control03":161, "C Cloak Control04":162, "C Cloak Control05":163, "C Cloak Control06":164, "L Cloak Control02":165, "L Cloak Control03":166, "L Cloak Control04":167, "L Cloak Control05":168, "L Cloak Control06":169, "R Cloak Control02":170, "R Cloak Control03":171, "R Cloak Control04":172, "R Cloak Control05":173, "R Cloak Control06":174 }
+
+        # per-node animation
+        if b_armature:
+            b_action = self.get_active_action(b_armature)
+            # generate array of NiStringExtraData to indice the bones list used
+            extraDataList = []
+            data_nb=0
+            for b_bone in b_armature.data.bones:
+                # get bone name
+                bone_name = block_registry.ExportBlockRegistry.get_bone_name_for_nif(b_bone.name)
+                # retrieve the bone id from the bone name
+                bone_id = bonename_dict.get(bone_name)
+
+                if bone_id != None:
+                    if (b_bone and b_bone.name in b_action.groups) or (not b_bone) :
+                        # NiStringExtraData corresponding to bone  
+                        extraData = block_store.create_block("NiStringExtraData")
+                        extraData.name="NiStringED"+'%03d'%data_nb
+                        extraData.string_data = str(bone_id)
+                        extraDataList.append(extraData)
+                        # Create and add the NiKeyframeController corresponding to the bone in the chained list
+                        self.export_transforms(kfa_root, b_armature, b_action, b_bone)                      
+                    data_nb = data_nb +1
+                                   
+            kfa_root.set_extra_datas(extraDataList)
+                
+            # quick hack to set correct target name
+            if "Bip01" in b_armature.data.bones:
+                targetname = "Bip01"
+            elif "Bip02" in b_armature.data.bones:
+                targetname = "Bip02"
+
+        # per-object animation
+        else:
+            for b_obj in bpy.data.objects:
+                b_action = self.get_active_action(b_obj)
+                self.export_transforms(kfa_root, b_obj, b_action)
+
+        #self.export_text_keys(b_action, anim_textextra)
+
+        kfa_root.name = b_action.name
+        kfa_root.unknown_int_1 = 1
+        kfa_root.weight = 1.0
+        kfa_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
+        kfa_root.frequency = 1.0
+
+        if anim_textextra.num_text_keys > 0:
+            kfa_root.start_time = anim_textextra.text_keys[0].time
+            kfa_root.stop_time = anim_textextra.text_keys[anim_textextra.num_text_keys - 1].time
+        else:
+            kfa_root.start_time = scene.frame_start / self.fps
+            kfa_root.stop_time = scene.frame_end / self.fps
+
+        kfa_root.target_name = targetname
+        return kfa_root
+
+
     def export_transforms(self, parent_block, b_obj, b_action, bone=None):
         """
         If bone == None, object level animation is exported.
@@ -174,6 +244,7 @@ class TransformAnimation(Animation):
 
         # decompose the bind matrix
         bind_scale, bind_rot, bind_trans = math.decompose_srt(bind_matrix)
+        
         n_kfc, n_kfi = self.create_controller(parent_block, target_name, priority)
 
         # fill in the non-trivial values
@@ -273,7 +344,8 @@ class TransformAnimation(Animation):
         for key, (frame, scale) in zip(n_kfd.scales.keys, scale_curve):
             key.time = frame / self.fps
             key.value = scale
-
+        
+            
     def create_text_keys(self, kf_root):
         """Create the text keys before filling in the data so that the extra data hierarchy is correct"""
         # add a NiTextKeyExtraData block
