@@ -40,13 +40,14 @@
 
 import bpy
 from io_scene_niftools.utils.decorators import register_modules, unregister_modules
-from io_scene_niftools.operators import object, geometry, nif_import_op, nif_export_op, kf_import_op, egm_import_op, kf_export_op
+from io_scene_niftools.operators import object, geometry, nif_import_op, nif_export_op, kf_import_op, kfa_import_op, egm_import_op, kf_export_op, kfa_export_op
 
 
 # noinspection PyUnusedLocal
 def menu_func_import(self, context):
     self.layout.operator(nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
     self.layout.operator(kf_import_op.KfImportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
+    self.layout.operator(kfa_import_op.KfaImportOperator.bl_idname, text="NetImmerse/Gamebryo (.kfa)")
     self.layout.operator(egm_import_op.EgmImportOperator.bl_idname, text="NetImmerse/Gamebryo (.egm)")
     # TODO [general] get default path from config registry
     # default_path = bpy.data.filename.replace(".blend", ".nif")
@@ -57,9 +58,10 @@ def menu_func_import(self, context):
 def menu_func_export(self, context):
     self.layout.operator(nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
     self.layout.operator(kf_export_op.KfExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kf)")
+    self.layout.operator(kfa_export_op.KfaExportOperator.bl_idname, text="NetImmerse/Gamebryo (.kfa)")
 
 
-MODS = [object, geometry, nif_import_op, nif_export_op, kf_import_op, kf_export_op, egm_import_op]
+MODS = [object, geometry, nif_import_op, nif_export_op, kf_import_op, kfa_import_op, kf_export_op, kfa_export_op, egm_import_op]
 
 
 def register():

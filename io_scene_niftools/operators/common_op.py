@@ -128,3 +128,12 @@ class CommonKf:
     filter_glob: bpy.props.StringProperty(
         default="*.kf",
         options={'HIDDEN'})
+        
+class CommonKfa:
+    # Default file name extension.
+    filename_ext = ".kfa"
+
+    # File name filter for file select dialog.
+    filter_glob: bpy.props.StringProperty(
+        default="*.kfa",
+        options={'HIDDEN'})
