@@ -9,7 +9,7 @@ RUN git clone https://github.com/OpenNaja/cobra-tools.git && cd cobra-tools && g
     git clone https://github.com/Candoran2/new-pyffi && cd new-pyffi && git reset --hard $pyffi_commit && cd .. && \
     mv ./new-pyffi/formats/nif ./cobra-tools/source/formats && \
     mv ./new-pyffi/spells ./cobra-tools/source && \
-    mv ./new-pyffi/utils ./cobra-tools/utils && \
+    mv ./new-pyffi/utils ./cobra-tools/source && \
     git clone https://github.com/niftools/nifxml.git && cd nifxml && git reset --hard $nifxml_commit && cd .. && \
     mv ./nifxml/nif.xml ./cobra-tools/source/formats/nif
 
