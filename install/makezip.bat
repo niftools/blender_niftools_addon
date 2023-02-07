@@ -25,7 +25,7 @@ xcopy /s "%ROOT%\io_scene_niftools" io_scene_niftools
 mkdir "%DEPS%"
 
 python -m pip install "PyFFI==%PYFFI_VERSION%" --target="%DEPS%"
-docker compose up
+docker compose up || exit 1
 
 xcopy "%ROOT%"\AUTHORS.rst io_scene_niftools
 xcopy "%ROOT%"\CHANGELOG.rst io_scene_niftools
