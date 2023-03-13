@@ -125,6 +125,9 @@ class Object:
 
         return b_obj
 
+    def has_geometry(self, n_block):
+        return isinstance(n_block, self.mesh.supported_mesh_types)
+
     def import_geometry_object(self, b_armature, n_block):
         # it's a shape node and we're not importing skeleton only
         b_obj = self.create_mesh_object(n_block)
@@ -146,7 +149,7 @@ class Object:
 
         if hasattr(n_block, "data") and isinstance(n_block.data.consistency_flags, NifClasses.ConsistencyType):
             b_obj.niftools.consistency_flags = n_block.data.consistency_flags.name
-        if n_block.is_skin():
+        if n_block.is_skin() and hasattr(n_block, "skin_instance"):
             skininst = n_block.skin_instance
             skelroot = skininst.skeleton_root
             b_obj.niftools.skeleton_root = block_store.import_name(skelroot)

@@ -36,7 +36,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import numpy as np
+from itertools import chain
 
 from generated.formats.nif import classes as NifClasses
 
@@ -49,10 +49,12 @@ from io_scene_niftools.modules.nif_import.property.material import Material
 from io_scene_niftools.modules.nif_import.property.geometry.mesh import MeshPropertyProcessor
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class Mesh:
+
+    supported_mesh_types = (NifClasses.BSTriShape, NifClasses.NiMesh, NifClasses.NiTriBasedGeom)
 
     def __init__(self):
         self.materialhelper = Material()
@@ -72,6 +74,8 @@ class Mesh:
         NifLog.info(f"Importing mesh data for geometry '{node_name}'")
         b_mesh = b_obj.data
 
+        assert isinstance(n_block, self.supported_mesh_types)
+
         vertices = []
         triangles = []
         uvs = None
@@ -81,8 +85,10 @@ class Mesh:
         if isinstance(n_block, NifClasses.BSTriShape):
             vertex_attributes = n_block.vertex_desc.vertex_attributes
             vertex_data = n_block.get_vertex_data()
-            # change this part later for skinned meshes
-            if vertex_attributes.vertex:
+            if isinstance(n_block, NifClasses.BSDynamicTriShape):
+                # for BSDynamicTriShapes, the vertex data is stored in 4-component vertices
+                vertices = [(vertex.x, vertex.y, vertex.z) for vertex in n_block.vertices]
+            elif vertex_attributes.vertex:
                 vertices = [vertex.vertex for vertex in vertex_data]
             triangles = n_block.get_triangles()
             if vertex_attributes.u_vs:
@@ -91,8 +97,36 @@ class Mesh:
                 vertex_colors = [vertex.vertex_colors for vertex in vertex_data]
             if vertex_attributes.normals:
                 normals = [vertex.normal for vertex in vertex_data]
-        else:
-            assert (isinstance(n_block, NifClasses.NiTriBasedGeom))
+        elif isinstance(n_block, NifClasses.NiMesh):
+            # if it has a displaylist then we don't know how to process this NiMesh
+            if len(n_block.geomdata_by_name("DISPLAYLIST")) > 0:
+                raise NifError(f"Geometry {node_name} contains a DISPLAYLIST-annotated NiDataStream. This is not yet "
+                               f"supported.")
+            # get the data from the associated nidatastreams based on the description in the component semantics
+            vertices.extend(list(chain.from_iterable(n_block.geomdata_by_name("POSITION"))))
+            vertices.extend(list(chain.from_iterable(n_block.geomdata_by_name("POSITION_BP"))))
+            triangles = n_block.get_triangles()
+            uvs = n_block.geomdata_by_name("TEXCOORD")
+            if len(uvs) == 0:
+                uvs = None
+            else:
+                uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
+            vertex_colors = n_block.geomdata_by_name("COLOR")
+            if len(vertex_colors) == 0:
+                vertex_colors = None
+            else:
+                vertex_colors = list(chain.from_iterable(vertex_colors))
+                vertex_colors = [NifClasses.Color4.from_value(color) for color in vertex_colors]
+            normals = n_block.geomdata_by_name("NORMAL")
+            normals.extend(n_block.geomdata_by_name("NORMAL_BP"))
+            if len(normals) == 0:
+                normals = None
+            else:
+                normals = list(chain.from_iterable(normals))
+                # for some reason, normals can be four-component structs instead of 3, discard the 4th.
+                if len(normals[0]) > 3:
+                    normals = [(n[0], n[1], n[2]) for n in normals]
+        elif isinstance(n_block, NifClasses.NiTriBasedGeom):
 
             # shortcut for mesh geometry data
             n_tri_data = n_block.data
@@ -125,7 +159,8 @@ class Mesh:
         self.mesh_prop_processor.process_property_list(n_block, b_obj)
 
         # import skinning info, for meshes affected by bones
-        VertexGroup.import_skin(n_block, b_obj)
+        if n_block.is_skin():
+            VertexGroup.import_skin(n_block, b_obj)
 
         # import morph controller
         if NifOp.props.animation:

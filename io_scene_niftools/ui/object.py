@@ -46,7 +46,10 @@ class ObjectButtonsPanel(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
-    
+
+    @staticmethod
+    def is_root_object(b_obj):
+        return b_obj.parent is None
 
 class ObjectPanel(ObjectButtonsPanel):
     bl_label = "Niftools Object Property"
@@ -58,19 +61,26 @@ class ObjectPanel(ObjectButtonsPanel):
         return True
 
     def draw(self, context):
-        ob = context.object
-        nif_obj_props = ob.niftools
+        b_obj = context.object
+        nif_obj_props = b_obj.niftools
 
         layout = self.layout
         row = layout.column()
-        row.prop(nif_obj_props, "prn_location")
-        row.prop(nif_obj_props, "upb")
-        row.prop(nif_obj_props, "bsxflags")
-        row.prop(nif_obj_props, "consistency_flags")
+        if self.is_root_object(b_obj):
+            if b_obj.type == "EMPTY":
+                row.prop(nif_obj_props, "nodetype")
+            if b_obj.type != "ARMATURE":
+                # prn nistringextradata is only useful as replacement for rigging data
+                row.prop(nif_obj_props, "prn_location")
+            row.prop(nif_obj_props, "upb")
+            row.prop(nif_obj_props, "bsxflags")
+        if b_obj.type == "MESH":
+            # consistency flags only exist for NiGeometry
+            row.prop(nif_obj_props, "consistency_flags")
         row.prop(nif_obj_props, "flags")
         row.prop(nif_obj_props, "longname")
 
-        parent = ob.parent
+        parent = b_obj.parent
         if parent and parent.type == 'ARMATURE':
             row.prop_search(nif_obj_props, "skeleton_root", parent.data, "bones")
 
@@ -144,7 +154,7 @@ class ObjectBSInvMarkerPanel(ObjectButtonsPanel):
     # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
-        return True
+        return cls.is_root_object(context.object)
 
     def draw(self, context):
         layout = self.layout

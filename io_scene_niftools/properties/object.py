@@ -52,25 +52,30 @@ from generated.formats.nif import classes as NifClasses
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-prn_array = [
-            ["OBLIVION", "FALLOUT_3", "SKYRIM"],
-            ["DAGGER", "SideWeapon", "Weapon", "WeaponDagger"],
-            ["2HANDED", "BackWeapon", "Weapon", "WeaponBack"],
-            ["BOW", "BackWeapon", None, "WeaponBow"],
-            ["MACE", "SideWeapon", "Weapon", "WeaponMace"],
-            ["SHIELD", "Bip01 L ForearmTwist", None, "SHIELD"],
-            ["STAFF", "Torch", "Weapon", "WeaponStaff"],
-            ["SWORD", "SideWeapon", "Weapon", "WeaponSword"],
-            ["AXE", "SideWeapon", "Weapon", "WeaponAxe"],
-            ["QUIVER", "Quiver", "Weapon", "QUIVER"],
-            ["TORCH", "Torch", "Weapon", "SHIELD"],
-            ["HELMET", "Bip01 Head", "Bip01 Head", "NPC Head [Head]"],
-            ["RING", "Bip01 R Finger1", "Bip01 R Finger1", "NPC R Finger10 [RF10]"]
-            ]
-# PRN_DICT is a dict like so: dict['SLOT']['GAME']: 'Bone'
-PRN_DICT = {}
-for row in prn_array[1:]:
-    PRN_DICT[row[0]] = dict(zip(prn_array[0], row[1:]))
+prn_map = {"OBLIVION":   [("SideWeapon", ""),
+                          ("BackWeapon", ""),
+                          ("Bip01 L ForearmTwist", "Used for shields"),
+                          ("Torch", ""),
+                          ("Quiver", ""),
+                          ("Bip01 Head", "Used for helmets"),
+                          ("Bip01 R Finger1", "Used for rings")],
+           "FALLOUT_3":  [("Weapon", ""),
+                          ("Bip01 Head", "Used for helmets"),
+                          ("Bip01 R Finger1", "")],
+           "SKYRIM":     [("WeaponDagger", ""),
+                          ("WeaponBack", ""),
+                          ("WeaponBow", ""),
+                          ("WeaponMace", ""),
+                          ("SHIELD", ""),
+                          ("WeaponStaff", ""),
+                          ("WeaponSword", ""),
+                          ("WeaponAxe", ""),
+                          ("QUIVER", ""),
+                          ("SHIELD", ""),
+                          ("NPC Head [Head]", "Used for helmets"),
+                          ("NPC R Finger10 [RF10]", "Used for rings")]
+           }
+prn_map["SKYRIM_SE"] = prn_map["SKYRIM"]
 
 
 class ExtraData(PropertyGroup):
@@ -133,10 +138,19 @@ class BsInventoryMarker(PropertyGroup):
 
 class ObjectProperty(PropertyGroup):
 
-    prn_location: EnumProperty(
+    nodetype: EnumProperty(
+        name='Node Type',
+        description='Type of node this empty represents',
+        items=(
+              ('NiNode', 'NiNode', "", 0),
+              ('BSFadeNode', 'BSFadeNode', "", 1)),
+        default='NiNode',
+    )
+
+    prn_location: StringProperty(
         name='Weapon Location',
         description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',
-        items=[(item, item, "", i) for i, item in enumerate(["NONE"] + list(PRN_DICT.keys()))],
+        search=lambda self, context, edit_text: prn_map.get(context.scene.niftools_scene.game, []),
         # default = 'NONE'
     )
 

@@ -257,12 +257,13 @@ class TransformAnimation(Animation):
                 # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
                 return
             times = list(n_kfc.get_times())
-            keys = list(n_kfc.get_translations())
+            keys = [NifClasses.Vector3.from_value(tuple_key) for tuple_key in n_kfc.get_translations()]
             self.import_keys(LOC, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
-            keys = list(n_kfc.get_rotations())
+            keys = [NifClasses.Quaternion.from_value(tuple_key) for tuple_key in n_kfc.get_rotations()]
             self.import_keys(QUAT, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
             keys = list(n_kfc.get_scales())
             self.import_keys(SCALE, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+            return b_action
         elif isinstance(n_kfc, NifClasses.NiMultiTargetTransformController):
             # not sure what this is used for
             return

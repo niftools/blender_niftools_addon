@@ -79,33 +79,31 @@ class Constraint:
         # now import all constraints
         for hkconstraint in hkbody.constraints:
 
-            # check constraint entities
-            if not hkconstraint.num_entities == 2:
+            # check constraint 
+            c_info = hkconstraint.constraint_info
+            if not c_info.num_entities == 2:
                 NifLog.warn("Constraint with more than 2 entities, skipped")
                 continue
-            if not hkconstraint.entities[0] is hkbody:
+            if not c_info.entity_a is hkbody:
                 NifLog.warn("First constraint entity not self, skipped")
                 continue
-            if not hkconstraint.entities[1] in collision.DICT_HAVOK_OBJECTS:
+            if not c_info.entity_b in collision.DICT_HAVOK_OBJECTS:
                 NifLog.warn("Second constraint entity not imported, skipped")
                 continue
 
             # get constraint descriptor
-            if isinstance(hkconstraint, NifClasses.BhkRagdollConstraint):
-                hkdescriptor = hkconstraint.ragdoll
+            hkdescriptor = hkconstraint.constraint
+            if isinstance(hkdescriptor, (NifClasses.BhkRagdollConstraintCInfo,
+                                         NifClasses.BhkLimitedHingeConstraintCInfo,
+                                         NifClasses.BhkHingeConstraintCInfo)):
                 b_hkobj.rigid_body.enabled = True
-            elif isinstance(hkconstraint, NifClasses.BhkLimitedHingeConstraint):
-                hkdescriptor = hkconstraint.limited_hinge
-                b_hkobj.rigid_body.enabled = True
-            elif isinstance(hkconstraint, NifClasses.BhkHingeConstraint):
-                hkdescriptor = hkconstraint.hinge
-                b_hkobj.rigid_body.enabled = True
-            elif isinstance(hkconstraint, NifClasses.BhkMalleableConstraint):
-                if hkconstraint.type == 7:
-                    hkdescriptor = hkconstraint.ragdoll
+            elif isinstance(hkdescriptor, NifClasses.BhkMalleableConstraintCInfo):
+                # TODO [constraint] add other types used by malleable constraint (for values 0, 1, 6 and 8)
+                if hkdescriptor.type == 2:
+                    hkdescriptor = hkdescriptor.limited_hinge
                     b_hkobj.rigid_body.enabled = False
-                elif hkconstraint.type == 2:
-                    hkdescriptor = hkconstraint.limited_hinge
+                elif hkdescriptor.type == 7:
+                    hkdescriptor = hkconstraint.ragdoll
                     b_hkobj.rigid_body.enabled = False
                 else:
                     NifLog.warn(f"Unknown malleable type ({hkconstraint.type:s}), skipped")

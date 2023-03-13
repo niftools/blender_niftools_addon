@@ -88,7 +88,7 @@ class NifExport(NifCommon):
         try:  # catch export errors
 
             # protect against null nif versions
-            if bpy.context.scene.niftools_scene.game == 'NONE':
+            if bpy.context.scene.niftools_scene.game == 'UNKNOWN':
                 raise NifError("You have not selected a game. Please select a game and"
                                 " nif version in the scene tab.")
 
