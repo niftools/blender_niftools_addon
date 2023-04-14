@@ -179,12 +179,8 @@ class TextureLoader:
         """Returns an image or a generated image if none was found"""
         name = os.path.basename(tex_path)
         if name not in bpy.data.images:
-            try:
-                b_image = bpy.data.images.load(tex_path)
-            except:
-                NifLog.warn(f"Texture '{name}' not found or not supported and no alternate available")
-                b_image = bpy.data.images.new(name=name, width=1, height=1, alpha=True)
-                b_image.filepath=tex_path
+            b_image = bpy.data.images.new(name=name, width=1, height=1, alpha=True)
+            b_image.filepath=tex_path
         else:
             b_image = bpy.data.images[name]
         return b_image
@@ -240,64 +236,6 @@ class TextureLoader:
 
         fn = fn.replace('\\', os.sep)
         fn = fn.replace('/', os.sep)
-        # go searching for it
-        import_path = os.path.dirname(NifOp.props.filepath)
-        search_path_list = [import_path]
-        if bpy.context.preferences.filepaths.texture_directory:
-            search_path_list.append(bpy.context.preferences.filepaths.texture_directory)
-
-        # TODO [general][path] Implement full texture path finding.
-        nif_dir = os.path.join(os.getcwd(), 'nif')
-        search_path_list.append(nif_dir)
-
-        # if it looks like a Morrowind style path, use common sense to guess texture path
-        meshes_index = import_path.lower().find("meshes")
-        if meshes_index != -1:
-            search_path_list.append(import_path[:meshes_index] + 'textures')
-
-        # if it looks like a Civilization IV style path, use common sense to guess texture path
-        art_index = import_path.lower().find("art")
-        if art_index != -1:
-            search_path_list.append(import_path[:art_index] + 'shared')
-
-        # go through all texture search paths
-        for texdir in search_path_list:
-            if texdir[0:2] == "//":
-                # Blender-specific directory, slows down resolve_ncase:
-                relative = True
-                texdir = texdir[2:]
-            else:
-                relative = False
-            texdir = texdir.replace('\\', os.sep)
-            texdir = texdir.replace('/', os.sep)
-            # go through all possible file names, try alternate extensions too; for linux, also try lower case versions of filenames
-            texfns = reduce(operator.add,
-                            [[fn[:-4] + ext, fn[:-4].lower() + ext]
-                             for ext in ('.DDS', '.dds', '.PNG', '.png',
-                                         '.TGA', '.tga', '.BMP', '.bmp',
-                                         '.JPG', '.jpg')])
-
-            texfns = [fn, fn.lower()] + list(set(texfns))
-            for texfn in texfns:
-                # now a little trick, to satisfy many Morrowind mods
-                if texfn[:9].lower() == 'textures' + os.sep and texdir[-9:].lower() == os.sep + 'textures':
-                    # strip one of the two 'textures' from the path
-                    tex = os.path.join(texdir[:-9], texfn)
-                else:
-                    tex = os.path.join(texdir, texfn)
-
-                # "ignore case" on linuxW
-                if relative:
-                    tex = bpy.path.abspath("//" + tex)
-                tex = bpy.path.resolve_ncase(tex)
-                NifLog.debug(f"Searching {tex}")
-                if os.path.exists(tex):
-                    if relative:
-                        return self.load_image(bpy.path.relpath(tex))
-                    else:
-                        return self.load_image(tex)
-
-        else:
-            tex = fn
+        tex = fn
         # probably not found, but load a dummy regardless
         return self.load_image(tex)
