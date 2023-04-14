@@ -52,6 +52,8 @@ class NiTextureProp:
 
     def import_nitextureprop_textures(self, n_texture_desc, nodes_wrapper):
         # NifLog.debug(f"Importing {n_texture_desc}")
+
+        all_empty = True
         # go over all valid texture slots
         for slot_name, _ in self.slots.items():
             # get the field name used by nif xml for this texture
@@ -60,6 +62,33 @@ class NiTextureProp:
             # get the tex desc link
             has_tex = getattr(n_texture_desc, "has_"+field_name, None)
             if has_tex:
-                NifLog.debug(f"Texdesc has active {slot_name}")
+                # NifLog.warn(f"Texdesc has active {slot_name}")
                 n_tex = getattr(n_texture_desc, field_name)
                 nodes_wrapper.create_and_link(slot_name, n_tex)
+                all_empty = False
+        if all_empty:
+            NifLog.warn(
+                f"Tried importing a texture, but slots are empty, so trying to reach shader_textures")
+            # NifLog.warn(n_texture_desc)
+            shader_textures = getattr(n_texture_desc, 'shader_textures', None)
+            if shader_textures:
+                if len(shader_textures) > 0:
+                    texture_data = getattr(shader_textures[0], 'texture_data')
+                    is_used = getattr(shader_textures[0], 'is_used')
+                    if texture_data and is_used:
+                        NifLog.warn('linking base slot')
+                        nodes_wrapper.create_and_link(
+                            TEX_SLOTS.BASE, texture_data)
+                # check for map
+                for texture in shader_textures:
+                    texture_data = getattr(texture, 'texture_data')
+                    is_used = getattr(texture, 'is_used')
+                    if texture_data and is_used:
+                        source = getattr(texture_data, 'source', None)
+                        if source:
+                            file_name = getattr(source, 'file_name', None)
+                            if file_name:
+                                if 'CompleteMap' in str(file_name):
+                                    NifLog.warn(str(file_name))
+                                    nodes_wrapper.create_and_link(
+                                        TEX_SLOTS.DETAIL, texture_data)
