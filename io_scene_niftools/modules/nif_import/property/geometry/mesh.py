@@ -79,12 +79,8 @@ class MeshPropertyProcessor:
         for prop in props:
             if prop.name:
                 name = prop.name.decode()
-                if name and name in bpy.data.materials:
-                    b_mat = bpy.data.materials[name]
-                    NifLog.debug(f"Retrieved already imported material {b_mat.name} from name {name}")
-                else:
-                    b_mat = bpy.data.materials.new(name)
-                    NifLog.debug(f"Created material {name} to store properties in {b_mat.name}")
+                b_mat = bpy.data.materials.new(name)
+                NifLog.debug(f"Created material {name} to store properties in {b_mat.name}")
                 break
         else:
             # bs shaders often have no name, so generate one from mesh name
