@@ -465,7 +465,7 @@ class BhkCollision(Collision):
         transform = math.get_object_bind(b_obj)
         rotation = transform.decompose()[1]
 
-        vertices = [vert.co @ transform for vert in b_mesh.vertices]
+        vertices = [transform @ vert.co for vert in b_mesh.vertices]
         triangles = []
         normals = []
         for face in b_mesh.polygons:
