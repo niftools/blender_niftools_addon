@@ -136,6 +136,10 @@ class BsInventoryMarker(PropertyGroup):
     )
 
 
+prn_versioned_arguments = {}
+if bpy.app.version >= (3, 3, 0):
+    prn_versioned_arguments['search'] = lambda self, context, edit_text: prn_map.get(context.scene.niftools_scene.game, [])
+
 class ObjectProperty(PropertyGroup):
 
     nodetype: EnumProperty(
@@ -147,11 +151,11 @@ class ObjectProperty(PropertyGroup):
         default='NiNode',
     )
 
+
     prn_location: StringProperty(
         name='Weapon Location',
         description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',
-        search=lambda self, context, edit_text: prn_map.get(context.scene.niftools_scene.game, []),
-        # default = 'NONE'
+        **prn_versioned_arguments,
     )
 
     longname: StringProperty(
