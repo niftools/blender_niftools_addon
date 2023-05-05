@@ -103,7 +103,7 @@ class Constraint:
                     hkdescriptor = hkdescriptor.limited_hinge
                     b_hkobj.rigid_body.enabled = False
                 elif hkdescriptor.type == 7:
-                    hkdescriptor = hkconstraint.ragdoll
+                    hkdescriptor = hkdescriptor.ragdoll
                     b_hkobj.rigid_body.enabled = False
                 else:
                     NifLog.warn(f"Unknown malleable type ({hkconstraint.type:s}), skipped")
