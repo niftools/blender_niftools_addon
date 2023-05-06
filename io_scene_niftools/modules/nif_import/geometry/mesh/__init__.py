@@ -36,8 +36,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from itertools import chain
-
 from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
@@ -103,26 +101,24 @@ class Mesh:
                 raise NifError(f"Geometry {node_name} contains a DISPLAYLIST-annotated NiDataStream. This is not yet "
                                f"supported.")
             # get the data from the associated nidatastreams based on the description in the component semantics
-            vertices.extend(list(chain.from_iterable(n_block.geomdata_by_name("POSITION"))))
-            vertices.extend(list(chain.from_iterable(n_block.geomdata_by_name("POSITION_BP"))))
+            vertices.extend(n_block.geomdata_by_name("POSITION", sep_datastreams=False))
+            vertices.extend(n_block.geomdata_by_name("POSITION_BP", sep_datastreams=False))
             triangles = n_block.get_triangles()
             uvs = n_block.geomdata_by_name("TEXCOORD")
             if len(uvs) == 0:
                 uvs = None
             else:
                 uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
-            vertex_colors = n_block.geomdata_by_name("COLOR")
+            vertex_colors = n_block.geomdata_by_name("COLOR", sep_datastreams=False)
             if len(vertex_colors) == 0:
                 vertex_colors = None
             else:
-                vertex_colors = list(chain.from_iterable(vertex_colors))
                 vertex_colors = [NifClasses.Color4.from_value(color) for color in vertex_colors]
-            normals = n_block.geomdata_by_name("NORMAL")
-            normals.extend(n_block.geomdata_by_name("NORMAL_BP"))
+            normals = n_block.geomdata_by_name("NORMAL", sep_datastreams=False)
+            normals.extend(n_block.geomdata_by_name("NORMAL_BP", sep_datastreams=False))
             if len(normals) == 0:
                 normals = None
             else:
-                normals = list(chain.from_iterable(normals))
                 # for some reason, normals can be four-component structs instead of 3, discard the 4th.
                 if len(normals[0]) > 3:
                     normals = [(n[0], n[1], n[2]) for n in normals]
