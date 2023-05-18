@@ -146,8 +146,8 @@ class VertexGroup:
                 skin_modifier = [block for block in ni_block.modifiers if isinstance(block, NifClasses.NiSkinningMeshModifier)][0]
                 bone_names = [block_store.import_name(bone) for bone in skin_modifier.bones]
 
-                bone_palettes = ni_block.geomdata_by_name('BONE_PALETTE')
-                bone_index_datas = ni_block.geomdata_by_name('BLENDINDICES')
+                bone_palettes = ni_block.geomdata_by_name('BONE_PALETTE', sep_datastreams=False, sep_regions=True)
+                bone_index_datas = ni_block.geomdata_by_name('BLENDINDICES', sep_datastreams=False, sep_regions=True)
 
                 for palette, index_datas in zip(bone_palettes, bone_index_datas):
                     bone_indices.extend([[palette[i] for i in indices] for indices in index_datas])

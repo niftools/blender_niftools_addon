@@ -140,6 +140,7 @@ class MorphAnimation(Animation):
             # create interpolator for shape b_key (needs to be there even if there is no fcu)
             interpol = block_store.create_block("NiFloatInterpolator")
             interpol.value = 0
+            # [TODO] condition this - only qualifying fields will have been reset to the correct size
             morph_ctrl.interpolators[key_block_num] = interpol
 
             # fallout 3 stores interpolators inside the interpolator_weights block
