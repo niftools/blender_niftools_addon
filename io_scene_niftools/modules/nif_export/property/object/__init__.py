@@ -226,10 +226,10 @@ class ObjectDataProperty:
         if niftools_scene.game in ('SKYRIM',) and bs_inv_store:
             bs_inv = bs_inv_store[0]
             n_bs_inv_marker = NifClasses.BSInvMarker(n_root.context)
-            n_bs_inv_marker.name = bs_inv.name.encode()
-            n_bs_inv_marker.rotation_x = (-bs_inv.x % (2 * pi)) * 1000
-            n_bs_inv_marker.rotation_y = (-bs_inv.y % (2 * pi)) * 1000
-            n_bs_inv_marker.rotation_z = (-bs_inv.z % (2 * pi)) * 1000
+            n_bs_inv_marker.name = bs_inv.name
+            n_bs_inv_marker.rotation_x = round((-bs_inv.x % (2 * pi)) * 1000)
+            n_bs_inv_marker.rotation_y = round((-bs_inv.y % (2 * pi)) * 1000)
+            n_bs_inv_marker.rotation_z = round((-bs_inv.z % (2 * pi)) * 1000)
             n_bs_inv_marker.zoom = bs_inv.zoom
             n_root.add_extra_data(n_bs_inv_marker)
 

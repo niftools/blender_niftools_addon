@@ -451,7 +451,7 @@ class Mesh:
         for n_v, b_v in zip(n_geom.data.vertex_colors, vertex_colors):
             n_v.r, n_v.g, n_v.b, n_v.a = b_v
         # uv_sets
-        if bpy.context.scene.niftools_scene.game == "SKYRIM":
+        if bpy.context.scene.niftools_scene.nif_version == 0x14020007 and bpy.context.scene.niftools_scene.user_version_2:
             data_flags = n_geom.data.bs_data_flags
         else:
             data_flags = n_geom.data.data_flags
