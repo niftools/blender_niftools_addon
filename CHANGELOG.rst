@@ -1,6 +1,7 @@
 Version v0.1.00
 ===============
 
+- #576 Updates to documentation, changelog and makezip.bat (copies over generated folder from cobra-tools).
 - #572 Extra development of NiMesh import and some fixes
     - Fix to BSInvMarker rotation export.
     - Fix for bs_data_flags setting in export - now also applied to other games where applicable, not just Skyrim.
