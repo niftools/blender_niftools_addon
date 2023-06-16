@@ -1,6 +1,28 @@
-Version v0.0.15
+Version v0.1.00
 ===============
 
+- #572 Extra development of NiMesh import and some fixes
+    - Fix to BSInvMarker rotation export.
+    - Fix for bs_data_flags setting in export - now also applied to other games where applicable, not just Skyrim.
+    - Fix to transform on packed collision vertices export.
+    - Adjust StringProperty arguments to prevent crash in Blender 3.2 or lower.
+    - Fix to mistake in BhkMalleableConstraint info import.
+    - Added processing of regions to NiMesh bone import.
+    - Basic DisplayList import (NiMesh with a specific type of datastream, which encodes the geometry). Bone weights for this type of nif are still unimplemented.
+- #543 Use "Color" type for "InvertY" group
+- #541 NiMesh import and updates for newer xml
+    - Nif file glob now partially dependent on xml.
+    - Support for NiMesh import (except those using DisplayList).
+    - Support for BSDynamicTriShape import.
+    - Update to Object properties ui (now only show relevant properties)
+    - Closes #543 "Unknown block type BSDynamicTriShape".
+    - Closes #421 "Can't import catherine classic .nif files."
+- #535 Pyffi overhaul
+    - Change kf and nif import to make use of the new statically generated nif reading/writing library.
+    - Added support for SSE mesh import.
+    - Closes #521.
+- #526 Allow setting armature axis manually
+- #524 int cast in add_dummy_markers to comply with blender 3.1+'s python and check for interpolator attribute on controller before accessing it.
 
 Version v0.0.14
 ===============

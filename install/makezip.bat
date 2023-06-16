@@ -26,10 +26,16 @@ mkdir "%DEPS%"
 
 python -m pip install "PyFFI==%PYFFI_VERSION%" --target="%DEPS%"
 
+xcopy "%GENERATED_FOLDER%" "%DEPS%\generated" /s /q /i
+
 xcopy "%ROOT%"\AUTHORS.rst io_scene_niftools
 xcopy "%ROOT%"\CHANGELOG.rst io_scene_niftools
 xcopy "%ROOT%"\LICENSE.rst io_scene_niftools
 xcopy "%ROOT%"\README.rst io_scene_niftools
+
+:: remove all __pycache__ folders
+for /d /r %%x in (*) do if "%%~nx" == "__pycache__" rd %%x /s /q
+
 popd
 
 set "COMMAND_FILE=%DIR%\zip.ps1"
