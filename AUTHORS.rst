@@ -18,13 +18,14 @@ Contributors
 ------------
 
 * Aaron1178
+* Allofich
 * Alphax
 * Arcimaestro
 * Arthmoor
 * Artorp
-
 * Deedes
 * Eli2
+* enpinion
 * Entim
 * Eugenius-v
 * Fritz_fretz
@@ -37,11 +38,13 @@ Contributors
 * mgm101
 * opusGlass
 * Pacificmorrowind
+* paulgreenG
 * Pentinen
 * @reddraconi
 * shon
 * @SubhadeepG
 * @TagnumElite
+* TackYs
 * Tamira
 * Thedaywalker
 * Tijer
