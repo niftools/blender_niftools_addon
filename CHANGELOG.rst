@@ -16,7 +16,7 @@ Version v0.1.00
     - Support for NiMesh import (except those using DisplayList).
     - Support for BSDynamicTriShape import.
     - Update to Object properties ui (now only show relevant properties)
-    - Closes #543 "Unknown block type BSDynamicTriShape".
+    - Closes #533 "Unknown block type BSDynamicTriShape".
     - Closes #421 "Can't import catherine classic .nif files."
 - #535 Pyffi overhaul
     - Change kf and nif import to make use of the new statically generated nif reading/writing library.
@@ -24,6 +24,12 @@ Version v0.1.00
     - Closes #521.
 - #526 Allow setting armature axis manually
 - #524 int cast in add_dummy_markers to comply with blender 3.1+'s python and check for interpolator attribute on controller before accessing it.
+- #506 Speedup anim import & various other fixes
+    - Closes #180
+    - Closes #495
+    - Closes #500
+    - Closes #510
+    - Closes #517
 
 Version v0.0.14
 ===============
