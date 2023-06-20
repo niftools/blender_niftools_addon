@@ -78,7 +78,7 @@ class BSShaderTexture:
         for slot_name, slot_i in slots.items():
             # skip those whose index we don't know from old code
             if slot_i is not None and len(textures) > slot_i:
-                tex_str = textures[slot_i].decode()
+                tex_str = textures[slot_i]
                 # see if it holds a texture
                 if tex_str:
                     NifLog.debug(f"Shader has active {slot_name}")
@@ -86,11 +86,11 @@ class BSShaderTexture:
 
     def import_bseffectshaderproperty_textures(self, bs_effect_shader_property, nodes_wrapper):
 
-        base = bs_effect_shader_property.source_texture.decode()
+        base = bs_effect_shader_property.source_texture
         if base:
             nodes_wrapper.create_and_link(TEX_SLOTS.BASE, base)
 
-        glow = bs_effect_shader_property.greyscale_texture.decode()
+        glow = bs_effect_shader_property.greyscale_texture
         if glow:
             nodes_wrapper.create_and_link(TEX_SLOTS.GLOW, glow)
 

@@ -39,31 +39,45 @@
 
 
 import bpy
-from bpy.props import PointerProperty, IntProperty
+from bpy.props import PointerProperty, IntProperty, EnumProperty, StringProperty, FloatProperty, CollectionProperty
 from bpy.types import PropertyGroup
+from itertools import chain
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif.versions import available_versions, set_game
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-def _game_to_enum(game):
-    symbols = ":,'\" +-*!?;./="
-    table = str.maketrans(symbols, "_" * len(symbols))
-    enum = game.upper().translate(table).replace("__", "_")
-    return enum
+class DummyClass: pass
 
+
+dummy_context = DummyClass()
+dummy_context.bs_header = DummyClass()
+primary_games = list(chain.from_iterable(version.primary_games for version in available_versions if version.supported))
+all_games = list(chain.from_iterable(version.all_games for version in available_versions if version.supported))
+game_version_map = {}
+
+
+def populate_version_map(iterable, version_map):
+	for game in iterable:
+		if game not in version_map:
+		    dummy_context.version = 0
+		    dummy_context.user_version = 0
+		    dummy_context.bs_header.bs_version = 0
+		    set_game(dummy_context, game)
+		    game_version_map[game.name] = (dummy_context.version, dummy_context.user_version, dummy_context.bs_header.bs_version)
+
+
+populate_version_map(primary_games, game_version_map)
+populate_version_map(all_games, game_version_map)
+game_version_map["UNKNOWN"] = (0, 0, 0)
 
 # noinspection PyUnusedLocal
 def update_version_from_game(self, context):
     """Updates the Scene panel's numerical version fields if its game value has been changed"""
-    self.nif_version = self.VERSION.get(self.game, 0)
-    self.user_version = self.USER_VERSION.get(self.game, 0)
-    self.user_version_2 = self.USER_VERSION_2.get(self.game, 0)
-
+    self.nif_version, self.user_version, self.user_version_2 = game_version_map[self.game]
 
 class Scene(PropertyGroup):
-
     nif_version: IntProperty(
         name='Version',
         description="The Gamebryo Engine version used",
@@ -84,34 +98,15 @@ class Scene(PropertyGroup):
 
     # For which game to export.
     game: bpy.props.EnumProperty(
-        items=[('NONE', 'NONE', 'No game selected')] + [
-            (_game_to_enum(game), game, "Export for " + game)
-            for game in sorted(
-                [x for x in NifFormat.games.keys() if x != '?'])
+        items=[('UNKNOWN', 'UNKNOWN', 'No game selected')] + [
+            (member.name, member.value, "Export for " + member.value)
+            for member in sorted(
+                [member for member in set(all_games)], key=lambda x: x.name)
         ],
         name="Game",
         description="For which game to export",
-        default='NONE',
+        default='UNKNOWN',
         update=update_version_from_game)
-
-    # Map game enum to nif version.
-    VERSION = {
-        _game_to_enum(game): versions[-1]
-        for game, versions in NifFormat.games.items() if game != '?'
-    }
-
-    USER_VERSION = {
-        'OBLIVION': 11,
-        'FALLOUT_3': 11,
-        'SKYRIM': 12,
-        'DIVINITY_2': 131072
-    }
-
-    USER_VERSION_2 = {
-        'OBLIVION': 11,
-        'FALLOUT_3': 34,
-        'SKYRIM': 83
-    }
 
     scale_correction: bpy.props.FloatProperty(
         name="Scale Correction",

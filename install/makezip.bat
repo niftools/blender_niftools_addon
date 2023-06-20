@@ -26,11 +26,26 @@ mkdir "%DEPS%"
 
 python -m pip install "PyFFI==%PYFFI_VERSION%" --target="%DEPS%"
 
+xcopy "%GENERATED_FOLDER%" "%DEPS%\generated" /s /q /i
+
 xcopy "%ROOT%"\AUTHORS.rst io_scene_niftools
 xcopy "%ROOT%"\CHANGELOG.rst io_scene_niftools
 xcopy "%ROOT%"\LICENSE.rst io_scene_niftools
 xcopy "%ROOT%"\README.rst io_scene_niftools
+
+:: remove all __pycache__ folders
+for /d /r %%x in (*) do if "%%~nx" == "__pycache__" rd %%x /s /q
+
 popd
 
-powershell -executionpolicy bypass -Command "%DIR%\zip.ps1" -source "%DIR%\temp\io_scene_niftools" -destination "%DIR%\%ZIP_NAME%.zip"
-rmdir /s /q %DIR%\temp
+set "COMMAND_FILE=%DIR%\zip.ps1"
+set "COMMAND_FILE=%COMMAND_FILE: =` %"
+
+set "SOURCE_DIR=%DIR%\temp\io_scene_niftools"
+set "SOURCE_DIR=%SOURCE_DIR: =` %"
+
+set "DESTINATION_DIR=%DIR%\%ZIP_NAME%.zip"
+set "DESTINATION_DIR=%DESTINATION_DIR: =` %"
+
+powershell -executionpolicy bypass -Command "%COMMAND_FILE%" -source "%SOURCE_DIR%" -destination "%DESTINATION_DIR%"
+rmdir /s /q "%DIR%\temp"

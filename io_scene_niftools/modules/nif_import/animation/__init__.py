@@ -38,9 +38,10 @@
 # ***** END LICENSE BLOCK *****
 import bpy
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.consts import QUAT, EULER, LOC, SCALE
 
 
 class Animation:
@@ -55,6 +56,23 @@ class Animation:
         self.actions = {}
 
     @staticmethod
+    def get_controller_data(ctrl):
+        """Return data for ctrl, look in interpolator (for newer games) or directly on ctrl"""
+        if hasattr(ctrl, 'interpolator') and ctrl.interpolator:
+            data = ctrl.interpolator.data
+        else:
+            data = ctrl.data
+        # these have their data set as a KeyGroup on data
+        if isinstance(data, (NifClasses.NiBoolData, NifClasses.NiFloatData, NifClasses.NiPosData)):
+            return data.data
+        return data
+
+    @staticmethod
+    def get_keys_values(items):
+        """Returns list of times and keys for an array 'items' with key elements having 'time' and 'value' attributes"""
+        return [key.time for key in items], [key.value for key in items]
+
+    @staticmethod
     def show_pose_markers():
         """Helper function to ensure that pose markers are shown"""
         for screen in bpy.data.screens:
@@ -65,9 +83,9 @@ class Animation:
 
     @staticmethod
     def get_b_interp_from_n_interp(n_ipol):
-        if n_ipol in (NifFormat.KeyType.LINEAR_KEY, NifFormat.KeyType.XYZ_ROTATION_KEY):
+        if n_ipol in (NifClasses.KeyType.LINEAR_KEY, NifClasses.KeyType.XYZ_ROTATION_KEY):
             return "LINEAR"
-        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
+        elif n_ipol == NifClasses.KeyType.QUADRATIC_KEY:
             return "BEZIER"
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
@@ -89,21 +107,21 @@ class Animation:
         b_obj.animation_data.action = b_action
         return b_action
 
-    def create_fcurves(self, action, dtype, drange, flags=None, bonename=None, keyname=None):
+    def create_fcurves(self, action, dtype, drange, flags, bone_name, key_name):
         """ Create fcurves in action for desired conditions. """
         # armature pose bone animation
-        if bonename:
+        if bone_name:
             fcurves = [
-                action.fcurves.new(data_path=f'pose.bones["{bonename}"].{dtype}', index=i, action_group=bonename)
+                action.fcurves.new(data_path=f'pose.bones["{bone_name}"].{dtype}', index=i, action_group=bone_name)
                 for i in drange]
         # shapekey pose bone animation
-        elif keyname:
+        elif key_name:
             fcurves = [
-                action.fcurves.new(data_path=f'key_blocks["{keyname}"].{dtype}', index=0,)
+                action.fcurves.new(data_path=f'key_blocks["{key_name}"].{dtype}', index=0,)
             ]
         else:
             # Object animation (non-skeletal) is lumped into the "LocRotScale" action_group
-            if dtype in ("rotation_euler", "rotation_quaternion", "location", "scale"):
+            if dtype in (QUAT, EULER, LOC, SCALE):
                 action_group = "LocRotScale"
             # Non-transformaing animations (eg. visibility or material anims) use no action groups
             else:
@@ -141,28 +159,49 @@ class Animation:
             for fcurve in fcurves:
                 fcurve.extrapolation = 'CONSTANT'
 
-    def add_key(self, fcurves, t, key, interp):
+    def add_keys(self, b_action, key_type, key_range, flags, times, keys, interp, bone_name=None, key_name=None):
         """
-        Add a key (len=n) to a set of fcurves (len=n) at the given frame. Set the key's interpolation to interp.
+        Create needed fcurves and add a list of keys to an action.
         """
-        frame = round(t * self.fps)
-        for fcurve, k in zip(fcurves, key):
-            fcurve.keyframe_points.insert(frame, k).interpolation = interp
+        samples = [round(t * self.fps) for t in times]
+        assert len(samples) == len(keys)
+        # get interpolation enum representation
+        ipo = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items[interp].value
+        interpolations = [ipo for _ in range(len(samples))]
+        # import the keys
+        try:
+            fcurves = self.create_fcurves(b_action, key_type, key_range, flags, bone_name, key_name)
+            if len(key_range) == 1:
+                # flat key - make it zippable
+                key_per_fcurve = [keys]
+            else:
+                key_per_fcurve = zip(*keys)
+            for fcurve, fcu_keys in zip(fcurves, key_per_fcurve):
+                # add new points
+                fcurve.keyframe_points.add(count=len(fcu_keys))
+                # populate points with keys for this curve
+                fcurve.keyframe_points.foreach_set("co", [x for co in zip(samples, fcu_keys) for x in co])
+                fcurve.keyframe_points.foreach_set("interpolation", interpolations)
+                # update
+                fcurve.update()
+        except RuntimeError:
+            # blender throws F-Curve ... already exists in action ...
+            NifLog.warn(f"Could not add fcurve '{key_type}' to '{b_action.name}', already added before?")
 
     # import animation groups
     def import_text_keys(self, n_block, b_action):
         """Gets and imports a NiTextKeyExtraData"""
-        if isinstance(n_block, NifFormat.NiControllerSequence):
+        if isinstance(n_block, NifClasses.NiControllerSequence):
             txk = n_block.text_keys
         else:
-            txk = n_block.find(block_type=NifFormat.NiTextKeyExtraData)
+            txk = n_block.find(block_type=NifClasses.NiTextKeyExtraData)
         self.import_text_key_extra_data(txk, b_action)
 
     def import_text_key_extra_data(self, txk, b_action):
         """Stores the text keys as pose markers in a blender action."""
         if txk and b_action:
             for key in txk.text_keys:
-                newkey = key.value.decode().replace('\r\n', '/').rstrip('/')
+                newkey = key.value.replace('\r\n', '/').rstrip('/')
                 frame = round(key.time * self.fps)
                 marker = b_action.pose_markers.new(newkey)
                 marker.frame = frame
@@ -172,15 +211,14 @@ class Animation:
         # find all key times
         key_times = []
         for root in roots:
-            for kfd in root.tree(block_type=NifFormat.NiKeyframeData):
+            for kfd in root.tree(block_type=NifClasses.NiKeyframeData):
                 key_times.extend(key.time for key in kfd.translations.keys)
                 key_times.extend(key.time for key in kfd.scales.keys)
                 key_times.extend(key.time for key in kfd.quaternion_keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[0].keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[1].keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[2].keys)
+                for dimension in kfd.xyz_rotations:
+                    key_times.extend(key.time for key in dimension.keys)
 
-            for kfi in root.tree(block_type=NifFormat.NiBSplineInterpolator):
+            for kfi in root.tree(block_type=NifClasses.NiBSplineInterpolator):
                 if not kfi.basis_data:
                     # skip bsplines without basis data (eg bowidle.kf in Oblivion)
                     continue
@@ -189,7 +227,7 @@ class Animation:
                     / (kfi.basis_data.num_control_points - 2)
                     for point in range(kfi.basis_data.num_control_points - 2))
 
-            for uv_data in root.tree(block_type=NifFormat.NiUVData):
+            for uv_data in root.tree(block_type=NifClasses.NiUVData):
                 for uv_group in uv_data.uv_groups:
                     key_times.extend(key.time for key in uv_group.keys)
 
@@ -212,3 +250,4 @@ class Animation:
         self.fps = fps
         bpy.context.scene.render.fps = fps
         bpy.context.scene.frame_set(0)
+

@@ -39,13 +39,13 @@
 import bpy
 import mathutils
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.modules.nif_export.collision import Collision
 from io_scene_niftools.utils import math, consts
-from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.singleton import NifOp, NifData
 from io_scene_niftools.utils.logging import NifLog
 
 
@@ -83,10 +83,11 @@ class BhkCollision(Collision):
 
         # find physics properties/defaults
         # get havok material name from material name
+        hav_mat_type = type(NifClasses.HavokMaterial(NifData.data).material)
         if b_obj.data.materials:
-            n_havok_mat = b_obj.data.materials[0].name
+            n_havok_mat = hav_mat_type[b_obj.data.materials[0].name]
         else:
-            n_havok_mat = "HAV_MAT_STONE"
+            n_havok_mat = hav_mat_type.from_value(0)
 
         # linear_velocity = b_obj.rigid_body.deactivate_linear_velocity
         # angular_velocity = b_obj.rigid_body.deactivate_angular_velocity
@@ -100,7 +101,7 @@ class BhkCollision(Collision):
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-            if layer == NifFormat.OblivionLayer.OL_BIPED:
+            if layer == NifClasses.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
                 n_col_obj = self.export_bhk_blend_collision(b_obj)
 
@@ -121,7 +122,7 @@ class BhkCollision(Collision):
         else:
             n_col_body = parent_block.collision_object.body
             # fix total mass
-            n_col_body.mass += rigid_body.mass
+            n_col_body.rigid_body_info.mass += rigid_body.mass
 
         if coll_ispacked:
             self.export_collision_packed(b_obj, n_col_body, layer, n_havok_mat)
@@ -135,53 +136,38 @@ class BhkCollision(Collision):
 
         n_r_body = block_store.create_block("bhkRigidBody", b_obj)
         n_col_obj.body = n_r_body
-        n_r_body.layer = int(b_obj.nifcollision.collision_layer)
-        n_r_body.col_filter = b_obj.nifcollision.col_filter
-        n_r_body.unknown_short = 0
-        n_r_body.unknown_int_1 = 0
-        n_r_body.unknown_int_2 = 2084020722
-        unk_3 = n_r_body.unknown_3_ints
-        unk_3[0] = 0
-        unk_3[1] = 0
-        unk_3[2] = 0
-        n_r_body.collision_response = 1
-        n_r_body.unknown_byte = 0
-        n_r_body.process_contact_callback_delay = 65535
-        unk_2 = n_r_body.unknown_2_shorts
-        unk_2[0] = 35899
-        unk_2[1] = 16336
-        n_r_body.layer_copy = n_r_body.layer
-        n_r_body.col_filter_copy = n_r_body.col_filter
-        # TODO [format] nif.xml update required
-        # ukn_6 = n_r_body.unknown_6_shorts
-        # ukn_6[0] = 21280
-        # ukn_6[1] = 4581
-        # ukn_6[2] = 62977
-        # ukn_6[3] = 65535
-        # ukn_6[4] = 44
-        # ukn_6[5] = 0
+
+        n_r_body.havok_filter.layer = int(b_obj.nifcollision.collision_layer)
+        n_r_body.havok_filter.flags = b_obj.nifcollision.col_filter
+        # n_r_body.havok_filter.group = 0
+
+        n_r_body.entity_info.collision_response = 1
+        n_r_body.rigid_body_info.collision_response = 1
+
+        n_r_body.rigid_body_info.havok_filter = n_r_body.havok_filter
 
         b_r_body = b_obj.rigid_body
         # mass is 1.0 at the moment (unless property was set on import or by the user)
         # will be fixed in update_rigid_bodies()
-        n_r_body.mass = b_r_body.mass
-        n_r_body.linear_damping = b_r_body.linear_damping
-        n_r_body.angular_damping = b_r_body.angular_damping
+        n_r_info = n_r_body.rigid_body_info
+        # TODO [format] update response type and callback delay (if relevant)
+        # n_r_info.collision_response = ?
+        # n_r_info.process_contact_callback_delay = ?
+        n_r_info.mass = b_r_body.mass
+        n_r_info.linear_damping = b_r_body.linear_damping
+        n_r_info.angular_damping = b_r_body.angular_damping
         # n_r_body.linear_velocity = linear_velocity
         # n_r_body.angular_velocity = angular_velocity
-        n_r_body.friction = b_r_body.friction
-        n_r_body.restitution = b_r_body.restitution
-        n_r_body.max_linear_velocity = b_obj.nifcollision.max_linear_velocity
-        n_r_body.max_angular_velocity = b_obj.nifcollision.max_angular_velocity
-        n_r_body.penetration_depth = b_obj.nifcollision.penetration_depth
-        n_r_body.motion_system = b_obj.nifcollision.motion_system
-        n_r_body.deactivator_type = b_obj.nifcollision.deactivator_type
-        n_r_body.solver_deactivation = b_obj.nifcollision.solver_deactivation
-        # TODO [collision][properties][ui] expose unknowns to UI & make sure to keep defaults
-        n_r_body.unknown_byte_1 = 1
-        n_r_body.unknown_byte_2 = 1
-        n_r_body.quality_type = b_obj.nifcollision.quality_type
-        n_r_body.unknown_int_9 = 0
+        n_r_info.friction = b_r_body.friction
+        n_r_info.restitution = b_r_body.restitution
+        n_r_info.max_linear_velocity = b_obj.nifcollision.max_linear_velocity
+        n_r_info.max_angular_velocity = b_obj.nifcollision.max_angular_velocity
+        n_r_info.penetration_depth = b_obj.nifcollision.penetration_depth
+        n_r_info.motion_system = NifClasses.HkMotionType[b_obj.nifcollision.motion_system]
+        n_r_info.deactivator_type = NifClasses.HkDeactivatorType[b_obj.nifcollision.deactivator_type]
+        n_r_info.solver_deactivation = NifClasses.HkSolverDeactivation[b_obj.nifcollision.solver_deactivation]
+        n_r_info.quality_type = NifClasses.HkQualityType[b_obj.nifcollision.quality_type]
+        # TODO [collision] update the body flags to respond/not respond to wind
         return n_r_body
 
     def export_bhk_collison_object(self, b_obj):
@@ -189,7 +175,7 @@ class BhkCollision(Collision):
         col_filter = b_obj.nifcollision.col_filter
 
         n_col_obj = block_store.create_block("bhkCollisionObject", b_obj)
-        if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
+        if layer == NifClasses.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
             # animated collision requires flags = 41
             # unless it is a constrainted but not keyframed object
             n_col_obj.flags = 41
@@ -200,7 +186,6 @@ class BhkCollision(Collision):
 
     def export_bhk_blend_collision(self, b_obj):
         n_col_obj = block_store.create_block("bhkBlendCollisionObject", b_obj)
-        n_col_obj.flags = 9
         n_col_obj.unknown_float_1 = 1.0
         n_col_obj.unknown_float_2 = 1.0
         return n_col_obj
@@ -219,7 +204,7 @@ class BhkCollision(Collision):
     # TODO [collision] Move to collision
     def update_rigid_bodies(self):
         if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifFormat.bhkRigidBody)]
+            n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifClasses.BhkRigidBody)]
 
             # update rigid body center of gravity and mass
             if self.IGNORE_BLENDER_PHYSICS:
@@ -252,50 +237,29 @@ class BhkCollision(Collision):
     def export_bhk_mopp_bv_tree_shape(self, b_obj, n_col_body):
         n_col_mopp = block_store.create_block("bhkMoppBvTreeShape", b_obj)
         n_col_body.shape = n_col_mopp
-        # n_col_mopp.material = n_havok_mat[0]
-        unk_8 = n_col_mopp.unknown_8_bytes
-        unk_8[0] = 160
-        unk_8[1] = 13
-        unk_8[2] = 75
-        unk_8[3] = 1
-        unk_8[4] = 192
-        unk_8[5] = 207
-        unk_8[6] = 144
-        unk_8[7] = 11
-        n_col_mopp.unknown_float = 1.0
         return n_col_mopp
 
     def export_bhk_packed_nitristrip_shape(self, b_obj, n_col_mopp):
         # the mopp origin, scale, and data are written later
         n_col_shape = block_store.create_block("bhkPackedNiTriStripsShape", b_obj)
-        n_col_shape.unknown_int_1 = 0
-        n_col_shape.unknown_int_2 = 21929432
-        n_col_shape.unknown_float_1 = 0.1
-        n_col_shape.unknown_int_3 = 0
-        n_col_shape.unknown_float_2 = 0
-        n_col_shape.unknown_float_3 = 0.1
+        # TODO [collision] radius has default of 0.1, but maybe let depend on margin
         scale = n_col_shape.scale
         scale.x = 0
         scale.y = 0
         scale.z = 0
-        scale.unknown_float_4 = 0
+        scale.w = 0
         n_col_shape.scale_copy = scale
         n_col_mopp.shape = n_col_shape
         return n_col_shape
 
-    def export_bhk_convex_vertices_shape(self, b_obj, fdistlist, fnormlist, radius, vertlist):
+    def export_bhk_convex_vertices_shape(self, b_obj, fdistlist, fnormlist, radius, vertlist, n_havok_mat):
         colhull = block_store.create_block("bhkConvexVerticesShape", b_obj)
-        # colhull.material = n_havok_mat[0]
+        colhull.material.material = n_havok_mat
         colhull.radius = radius
-
-        unk_6 = colhull.unknown_6_floats
-        unk_6[2] = -0.0  # enables arrow detection
-        unk_6[5] = -0.0  # enables arrow detection
-        # note: unknown 6 floats are usually all 0
 
         # Vertices
         colhull.num_vertices = len(vertlist)
-        colhull.vertices.update_size()
+        colhull.reset_field("vertices")
         for vhull, vert in zip(colhull.vertices, vertlist):
             vhull.x = vert[0] / self.HAVOK_SCALE
             vhull.y = vert[1] / self.HAVOK_SCALE
@@ -304,7 +268,7 @@ class BhkCollision(Collision):
 
         # Normals
         colhull.num_normals = len(fnormlist)
-        colhull.normals.update_size()
+        colhull.reset_field("normals")
         for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
             nhull.x = norm[0]
             nhull.y = norm[1]
@@ -340,18 +304,8 @@ class BhkCollision(Collision):
             # note: collision settings are taken from lowerclasschair01.nif
             n_coltf = block_store.create_block("bhkConvexTransformShape", b_obj)
 
-            # n_coltf.material = n_havok_mat[0]
-            n_coltf.unknown_float_1 = 0.1
-
-            unk_8 = n_coltf.unknown_8_bytes
-            unk_8[0] = 96
-            unk_8[1] = 120
-            unk_8[2] = 53
-            unk_8[3] = 19
-            unk_8[4] = 24
-            unk_8[5] = 9
-            unk_8[6] = 253
-            unk_8[7] = 4
+            n_coltf.material.material = n_havok_mat
+            n_coltf.radius = radius
 
             hktf = math.get_object_bind(b_obj)
             # the translation part must point to the center of the data
@@ -380,18 +334,8 @@ class BhkCollision(Collision):
             if collision_shape == 'BOX':
                 n_colbox = block_store.create_block("bhkBoxShape", b_obj)
                 n_coltf.shape = n_colbox
-                # n_colbox.material = n_havok_mat[0]
+                n_colbox.material.material = n_havok_mat
                 n_colbox.radius = radius
-
-                unk_8 = n_colbox.unknown_8_bytes
-                unk_8[0] = 0x6b
-                unk_8[1] = 0xee
-                unk_8[2] = 0x43
-                unk_8[3] = 0x40
-                unk_8[4] = 0x3a
-                unk_8[5] = 0xef
-                unk_8[6] = 0x8e
-                unk_8[7] = 0x3e
 
                 # fix dimensions for havok coordinate system
                 box_extends = self.calculate_box_extents(b_obj)
@@ -404,7 +348,7 @@ class BhkCollision(Collision):
             elif collision_shape == 'SPHERE':
                 n_colsphere = block_store.create_block("bhkSphereShape", b_obj)
                 n_coltf.shape = n_colsphere
-                # n_colsphere.material = n_havok_mat[0]
+                n_colsphere.material.material = n_havok_mat
                 # TODO [object][collision] find out what this is: fix for havok coordinate system (6 * 7 = 42)
                 # take average radius
                 n_colsphere.radius = radius
@@ -428,8 +372,7 @@ class BhkCollision(Collision):
             second_point /= self.HAVOK_SCALE
 
             n_col_caps = block_store.create_block("bhkCapsuleShape", b_obj)
-            # n_col_caps.material = n_havok_mat[0]
-            # n_col_caps.skyrim_material = n_havok_mat[1]
+            n_col_caps.material.material = n_havok_mat
 
             cap_1 = n_col_caps.first_point
             cap_1.x = first_point.x
@@ -490,7 +433,7 @@ class BhkCollision(Collision):
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise io_scene_niftools.utils.logging.NifError("Mesh has too many polygons/vertices. Simply/split your mesh and try again.")
 
-            return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist)
+            return self.export_bhk_convex_vertices_shape(b_obj, fdistlist, fnormlist, radius, vertlist, n_havok_mat)
 
         else:
             raise io_scene_niftools.utils.logging.NifError(f'Cannot export collision type {collision_shape} to collision shape list')
@@ -522,22 +465,20 @@ class BhkCollision(Collision):
         transform = math.get_object_bind(b_obj)
         rotation = transform.decompose()[1]
 
-        vertices = [vert.co * transform for vert in b_mesh.vertices]
+        vertices = [transform @ vert.co for vert in b_mesh.vertices]
         triangles = []
         normals = []
         for face in b_mesh.polygons:
             if len(face.vertices) < 3:
                 continue  # ignore degenerate polygons
             triangles.append([face.vertices[i] for i in (0, 1, 2)])
-            normals.append(rotation * face.normal)
+            normals.append(rotation @ face.normal)
             if len(face.vertices) == 4:
                 triangles.append([face.vertices[i] for i in (0, 2, 3)])
-                normals.append(rotation * face.normal)
+                normals.append(rotation @ face.normal)
 
         # TODO [collision][havok] Redo this as a material lookup
-        havok_mat = NifFormat.HavokMaterial()
-        havok_mat.material = n_havok_mat
-        n_col_shape.add_shape(triangles, normals, vertices, layer, havok_mat.material)
+        n_col_shape.add_shape(triangles, normals, vertices, layer, n_havok_mat)
 
     def export_collision_single(self, b_obj, n_col_body, layer, n_havok_mat):
         """Add collision object to n_col_body.
@@ -559,10 +500,10 @@ class BhkCollision(Collision):
         if not n_col_body.shape:
             n_col_shape = block_store.create_block("bhkListShape")
             n_col_body.shape = n_col_shape
-            # n_col_shape.material = n_havok_mat[0]
+            n_col_shape.material.material = n_havok_mat
         else:
             n_col_shape = n_col_body.shape
-            if not isinstance(n_col_shape, NifFormat.bhkListShape):
+            if not isinstance(n_col_shape, NifClasses.BhkListShape):
                 raise ValueError('Not a list of collisions')
 
         n_col_shape.add_shape(self.export_collision_object(b_obj, layer, n_havok_mat))

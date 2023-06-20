@@ -47,30 +47,35 @@ from bpy.props import (PointerProperty,
                        )
 from bpy.types import PropertyGroup, Object
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-prn_array = [
-            ["OBLIVION", "FALLOUT_3", "SKYRIM"],
-            ["DAGGER", "SideWeapon", "Weapon", "WeaponDagger"],
-            ["2HANDED", "BackWeapon", "Weapon", "WeaponBack"],
-            ["BOW", "BackWeapon", None, "WeaponBow"],
-            ["MACE", "SideWeapon", "Weapon", "WeaponMace"],
-            ["SHIELD", "Bip01 L ForearmTwist", None, "SHIELD"],
-            ["STAFF", "Torch", "Weapon", "WeaponStaff"],
-            ["SWORD", "SideWeapon", "Weapon", "WeaponSword"],
-            ["AXE", "SideWeapon", "Weapon", "WeaponAxe"],
-            ["QUIVER", "Quiver", "Weapon", "QUIVER"],
-            ["TORCH", "Torch", "Weapon", "SHIELD"],
-            ["HELMET", "Bip01 Head", "Bip01 Head", "NPC Head [Head]"],
-            ["RING", "Bip01 R Finger1", "Bip01 R Finger1", "NPC R Finger10 [RF10]"]
-            ]
-# PRN_DICT is a dict like so: dict['SLOT']['GAME']: 'Bone'
-PRN_DICT = {}
-for row in prn_array[1:]:
-    PRN_DICT[row[0]] = dict(zip(prn_array[0], row[1:]))
+prn_map = {"OBLIVION":   [("SideWeapon", ""),
+                          ("BackWeapon", ""),
+                          ("Bip01 L ForearmTwist", "Used for shields"),
+                          ("Torch", ""),
+                          ("Quiver", ""),
+                          ("Bip01 Head", "Used for helmets"),
+                          ("Bip01 R Finger1", "Used for rings")],
+           "FALLOUT_3":  [("Weapon", ""),
+                          ("Bip01 Head", "Used for helmets"),
+                          ("Bip01 R Finger1", "")],
+           "SKYRIM":     [("WeaponDagger", ""),
+                          ("WeaponBack", ""),
+                          ("WeaponBow", ""),
+                          ("WeaponMace", ""),
+                          ("SHIELD", ""),
+                          ("WeaponStaff", ""),
+                          ("WeaponSword", ""),
+                          ("WeaponAxe", ""),
+                          ("QUIVER", ""),
+                          ("SHIELD", ""),
+                          ("NPC Head [Head]", "Used for helmets"),
+                          ("NPC R Finger10 [RF10]", "Used for rings")]
+           }
+prn_map["SKYRIM_SE"] = prn_map["SKYRIM"]
 
 
 class ExtraData(PropertyGroup):
@@ -97,22 +102,60 @@ class ExtraDataStore(PropertyGroup):
     )
 
 
+class BsInventoryMarker(PropertyGroup):
+    name: StringProperty(
+        name="",
+        default='INV'
+    )
+
+    x: FloatProperty(
+        name="X Rotation",
+        description="Rotation of object in inventory around the x axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    y: FloatProperty(
+        name="Y Rotation",
+        description="Rotation of object in inventory around the y axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    z: FloatProperty(
+        name="Z Rotation",
+        description="Rotation of object in inventory around the z axis",
+        default=0,
+        subtype="ANGLE"
+    )
+
+    zoom: FloatProperty(
+        name="Zoom",
+        description="Inventory object Zoom level",
+        default=1
+    )
+
+
+prn_versioned_arguments = {}
+if bpy.app.version >= (3, 3, 0):
+    prn_versioned_arguments['search'] = lambda self, context, edit_text: prn_map.get(context.scene.niftools_scene.game, [])
+
 class ObjectProperty(PropertyGroup):
 
-    rootnode: EnumProperty(
-        name='Nif Root Node',
-        description='Type of property used to display meshes',
+    nodetype: EnumProperty(
+        name='Node Type',
+        description='Type of node this empty represents',
         items=(
-            ('NiNode', 'NiNode', "", 0),
-            ('BSFadeNode', 'BSFadeNode', "", 1)),
+              ('NiNode', 'NiNode', "", 0),
+              ('BSFadeNode', 'BSFadeNode', "", 1)),
         default='NiNode',
     )
 
-    prn_location: EnumProperty(
+
+    prn_location: StringProperty(
         name='Weapon Location',
         description='Attachment point of weapon, for Skyrim, FO3 & Oblivion',
-        items=[(item, item, "", i) for i, item in enumerate(["NONE"] + list(PRN_DICT.keys()))],
-        # default = 'NONE'
+        **prn_versioned_arguments,
     )
 
     longname: StringProperty(
@@ -122,7 +165,7 @@ class ObjectProperty(PropertyGroup):
     consistency_flags: EnumProperty(
         name='Consistency Flag',
         description='Controls animation type',
-        items=[(item, item, "", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
+        items=[(member.name, member.name, "", i) for i, member in enumerate(NifClasses.ConsistencyType)],
         # default = 'SHADER_DEFAULT'
     )
 
@@ -155,47 +198,14 @@ class ObjectProperty(PropertyGroup):
         description="The bone that acts as the root of the SkinInstance",
     )
 
-
-class BsInventoryMarker(PropertyGroup):
-
-    name: StringProperty(
-        name="",
-        default='INV'
-    )
-
-    bs_inv_x: FloatProperty(
-        name="Inv X value",
-        description="Rotation of object in inventory around the x axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_y: FloatProperty(
-        name="Inv Y value",
-        description="Rotation of object in inventory around the y axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_z: FloatProperty(
-        name="Inv Z value",
-        description="Rotation of object in inventory around the z axis",
-        default=0,
-        subtype = "ANGLE"
-    )
-
-    bs_inv_zoom: FloatProperty(
-        name="Inv Zoom Value",
-        description="Inventory object Zoom level",
-        default=1
-    )
+    bs_inv: bpy.props.CollectionProperty(type=BsInventoryMarker)
 
 
 CLASSES = [
+    BsInventoryMarker,
     ExtraData,
     ExtraDataStore,
     ObjectProperty,
-    BsInventoryMarker
 ]
 
 
@@ -203,12 +213,10 @@ def register():
     register_classes(CLASSES, __name__)
 
     bpy.types.Object.niftools = bpy.props.PointerProperty(type=ObjectProperty)
-    bpy.types.Object.niftools_bs_invmarker = bpy.props.CollectionProperty(type=BsInventoryMarker)
 
 
 def unregister():
     del bpy.types.Object.niftools
-    del bpy.types.Object.niftools_bs_invmarker
 
     unregister_classes(CLASSES, __name__)
 

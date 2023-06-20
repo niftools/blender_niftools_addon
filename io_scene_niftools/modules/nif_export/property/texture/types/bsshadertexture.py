@@ -36,10 +36,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.property.texture import TextureWriter, TextureSlotManager
 from io_scene_niftools.utils.consts import TEX_SLOTS
+from io_scene_niftools.utils.singleton import NifData
 
 
 class BSShaderTexture(TextureSlotManager):
@@ -78,7 +79,9 @@ class BSShaderTexture(TextureSlotManager):
 
         # Add in extra texture slots
         texset.num_textures = 9
-        texset.textures.update_size()
+        existing_textures = texset.textures[:]
+        texset.reset_field("textures")
+        texset.textures[:len(existing_textures)] = existing_textures
 
         if self.slots[TEX_SLOTS.DECAL_0]:
             texset.textures[6] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.DECAL_0])
@@ -93,7 +96,7 @@ class BSShaderTexture(TextureSlotManager):
         bsshader.texture_set = self._create_textureset()
 
     def _create_textureset(self):
-        texset = NifFormat.BSShaderTextureSet()
+        texset = NifClasses.BSShaderTextureSet(NifData.data)
 
         if self.slots[TEX_SLOTS.BASE]:
             texset.textures[0] = TextureWriter.export_texture_filename(self.slots[TEX_SLOTS.BASE])
@@ -141,7 +144,7 @@ class BSShaderTexture(TextureSlotManager):
         if hasattr(shader, 'texture_clamp_mode'):
             if self.slots[TEX_SLOTS.BASE] and (self.slots[TEX_SLOTS.BASE].extension == "CLIP"):
                 # if the extension is clip, we know the wrap mode is clamp for both,
-                shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + NifFormat.TexClampMode.CLAMP_S_CLAMP_T
+                shader.texture_clamp_mode = NifClasses.TexClampMode.CLAMP_S_CLAMP_T
             else:
                 # otherwise, look at the given clip modes from the nodes
                 if not clamp_x:
@@ -152,6 +155,6 @@ class BSShaderTexture(TextureSlotManager):
                     wrap_t = 1
                 else:
                     wrap_t = 0
-                shader.texture_clamp_mode = (shader.texture_clamp_mode - shader.texture_clamp_mode % 256) + (wrap_s + wrap_t)
+                shader.texture_clamp_mode = NifClasses.TexClampMode.from_value(wrap_s + wrap_t)
 
         return shader

@@ -38,7 +38,9 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import pyffi
+import generated.formats.nif as NifFormat
+from generated.spells.nif import NifToaster
+from generated.spells.nif.fix import SpellScale
 
 from io_scene_niftools.utils import debugging
 from io_scene_niftools.utils.singleton import NifOp
@@ -65,11 +67,11 @@ class NifCommon:
 
         NifLog.info(f"Executing - Niftools : Blender Niftools Addon v{niftools_ver}"
                     f"(running on Blender {bpy.app.version_string}, "
-                    f"PyFFI {pyffi.__version__})")
+                    f"Nif xml version {NifFormat.__xml_version__})")
 
     @staticmethod
     def apply_scale(data, scale):
         NifLog.info(f"Scale Correction set to {scale}")
-        toaster = pyffi.spells.nif.NifToaster()
+        toaster = NifToaster()
         toaster.scale = scale
-        pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
+        SpellScale(data=data, toaster=toaster).recurse()

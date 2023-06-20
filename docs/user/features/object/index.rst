@@ -122,8 +122,8 @@ First, we complete the object panel:
 #. Set your **BSX Flags**.
 #. Select a **Consistency Flag** from the drop-down box. See `this comment
    <https://github.com/niftools/nifskope/issues/69#issuecomment-61427385>`_ for discussion of what they might do.
-#. The **Object Flag** is ???????. Set it to an appropriate number.
-#. The **Nif Long Name** is ???????. Set it to an appropriate string.
+#. The **Object Flag** corresponds to the flags field on NiAVObjects. The exact meaning will differ based on the block type. Set it to an appropriate number. If left to 0, will use a default value.
+#. The **Nif Long Name** is the actual name used for the corresponding block in the nif. You can either set it to an appropriate string, or leave it empty. In the latter case, the nif name will be determined based on the blender name of the object.
 #. The **Skeleton Root** determines the root bone used in this mesh's SkinInstance. Can usually be ignored / left empty, falls back to the armature object = root node.
 
 .. Extra Data and InvMarkers I have no idea how to fill them in. Help?

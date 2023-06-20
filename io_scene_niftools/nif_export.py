@@ -41,8 +41,7 @@
 import os.path
 
 import bpy
-import pyffi.spells.nif.fix
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_export.constraint import Constraint
@@ -89,7 +88,7 @@ class NifExport(NifCommon):
         try:  # catch export errors
 
             # protect against null nif versions
-            if bpy.context.scene.niftools_scene.game == 'NONE':
+            if bpy.context.scene.niftools_scene.game == 'UNKNOWN':
                 raise NifError("You have not selected a game. Please select a game and"
                                 " nif version in the scene tab.")
 
@@ -144,7 +143,7 @@ class NifExport(NifCommon):
                 # if we are in that situation, add a trivial keyframe animation
                 has_keyframecontrollers = False
                 for block in block_store.block_to_obj:
-                    if isinstance(block, NifFormat.NiKeyframeController):
+                    if isinstance(block, NifClasses.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
                 if (not has_keyframecontrollers) and (not NifOp.props.bs_animation_node):
@@ -154,10 +153,10 @@ class NifExport(NifCommon):
 
                 if NifOp.props.bs_animation_node:
                     for block in block_store.block_to_obj:
-                        if isinstance(block, NifFormat.NiNode):
+                        if isinstance(block, NifClasses.NiNode):
                             # if any of the shape children has a controller or if the ninode has a controller convert its type
-                            if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
-                                new_block = NifFormat.NiBSAnimationNode().deepcopy(block)
+                            if block.controller or any(child.controller for child in block.children if isinstance(child, NifClasses.NiGeometry)):
+                                new_block = NifClasses.NiBSAnimationNode(NifData.data).deepcopy(block)
                                 # have to change flags to 42 to make it work
                                 new_block.flags = 42
                                 root_block.replace_global_node(block, new_block)
@@ -171,9 +170,9 @@ class NifExport(NifCommon):
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
             # note: block_store.block_to_obj changes during iteration, so need list copy
             for block in list(block_store.block_to_obj.keys()):
-                if isinstance(block, NifFormat.bhkListShape):
+                if isinstance(block, NifClasses.BhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
-                        if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
+                        if isinstance(sub_shape, NifClasses.BhkConvexVerticesShape):
                             coltf = block_store.create_block("bhkConvexTransformShape")
                             coltf.material = sub_shape.material
                             coltf.unknown_float_1 = 0.1
@@ -236,7 +235,7 @@ class NifExport(NifCommon):
             # generate mopps (must be done after applying scale!)
             if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 for block in block_store.block_to_obj:
-                    if isinstance(block, NifFormat.bhkMoppBvTreeShape):
+                    if isinstance(block, NifClasses.BhkMoppBvTreeShape):
                         NifLog.info("Generating mopp...")
                         block.update_mopp()
                         # print "=== DEBUG: MOPP TREE ==="
@@ -269,6 +268,7 @@ class NifExport(NifCommon):
             elif bpy.context.scene.niftools_scene.game == 'HOWLING_SWORD':
                 data.modification = "jmihs1"
 
+            data.validate()
             with open(niffile, "wb") as stream:
                 data.write(stream)
 

@@ -40,12 +40,11 @@
 
 import bpy
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.property.material import MaterialProp
 from io_scene_niftools.modules.nif_export.property.shader import BSShaderProperty
 from io_scene_niftools.modules.nif_export.property.texture.types.nitextureprop import NiTextureProp
-from io_scene_niftools.properties.object import PRN_DICT
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils.consts import UPB_DEFAULT
 from io_scene_niftools.utils.singleton import NifOp
@@ -71,7 +70,8 @@ class ObjectProperty:
                          self.export_specular_property(b_mat),
                          self.material_property.export_material_property(b_mat)
                          ):
-                n_block.add_property(prop)
+                if prop is not None:
+                    n_block.add_property(prop)
 
             # todo [property] refactor this
             # add textures
@@ -85,8 +85,7 @@ class ObjectProperty:
 
                 block_store.register_block(bsshader)
                 # TODO [pyffi] Add helper function to allow adding bs_property / general list addition
-                n_block.bs_properties[0] = bsshader
-                n_block.bs_properties.update_size()
+                n_block.shader_property = bsshader
 
             else:
                 if bpy.context.scene.niftools_scene.game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES:
@@ -220,21 +219,19 @@ class ObjectDataProperty:
 
     # TODO [object][property] Move to object property
     @staticmethod
-    def export_inventory_marker(n_root, root_objects):
-        if bpy.context.scene.niftools_scene.game in ('SKYRIM',):
-            for root_object in root_objects:
-                if root_object.niftools_bs_invmarker:
-                    for extra_item in n_root.extra_data_list:
-                        if isinstance(extra_item, NifFormat.BSInvMarker):
-                            raise NifError("Multiple Items have Inventory marker data only one item may contain this data")
-                    else:
-                        n_extra_list = NifFormat.BSInvMarker()
-                        n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
-                        n_extra_list.rotation_x = (-root_object.niftools_bs_invmarker[0].bs_inv_x % (2 * pi)) * 1000
-                        n_extra_list.rotation_y = (-root_object.niftools_bs_invmarker[0].bs_inv_y % (2 * pi)) * 1000
-                        n_extra_list.rotation_z = (-root_object.niftools_bs_invmarker[0].bs_inv_z % (2 * pi)) * 1000
-                        n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
-                        n_root.add_extra_data(n_extra_list)
+    def export_inventory_marker(n_root, b_obj):
+        """Attaches a BSInvMarker to n_root if desired and fill in its values"""
+        niftools_scene = bpy.context.scene.niftools_scene
+        bs_inv_store = b_obj.niftools.bs_inv
+        if niftools_scene.game in ('SKYRIM',) and bs_inv_store:
+            bs_inv = bs_inv_store[0]
+            n_bs_inv_marker = NifClasses.BSInvMarker(n_root.context)
+            n_bs_inv_marker.name = bs_inv.name
+            n_bs_inv_marker.rotation_x = round((-bs_inv.x % (2 * pi)) * 1000)
+            n_bs_inv_marker.rotation_y = round((-bs_inv.y % (2 * pi)) * 1000)
+            n_bs_inv_marker.rotation_z = round((-bs_inv.z % (2 * pi)) * 1000)
+            n_bs_inv_marker.zoom = bs_inv.zoom
+            n_root.add_extra_data(n_bs_inv_marker)
 
     # TODO [object][property] Move to new object type
     def export_weapon_location(self, n_root, root_obj):
@@ -242,11 +239,10 @@ class ObjectDataProperty:
         game = bpy.context.scene.niftools_scene.game
         if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             loc = root_obj.niftools.prn_location
-            if loc != "NONE" and (PRN_DICT[loc][game] is not None):
-                # add string extra data
+            if loc:
                 prn = block_store.create_block("NiStringExtraData")
                 prn.name = 'Prn'
-                prn.string_data = PRN_DICT[loc][game]
+                prn.string_data = loc
                 n_root.add_extra_data(prn)
 
     # TODO [object][property] Move to object property

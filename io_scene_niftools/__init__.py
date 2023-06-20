@@ -49,7 +49,7 @@ bl_info = {
     "description": "Import and export files in the NetImmerse/Gamebryo formats (.nif, .kf, .egm)",
     "author": "Niftools team",
     "blender": (2, 82, 0),
-    "version": (0, 0, 14),  # can't read from VERSION, blender wants it hardcoded
+    "version": (0, 1, 0),  # can't read from VERSION, blender wants it hardcoded
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "Generally stable port of the Niftool's Blender NifScripts, many improvements, still work in progress",
@@ -72,8 +72,8 @@ def locate_dependencies():
 
     with open(os.path.join(current_dir, "VERSION.txt")) as version:
         NifLog.info(f"Loading: Blender Niftools Addon: {version.read()}")
-        import pyffi
-        NifLog.info(f"Loading: PyFFi: {pyffi.__version__}")
+        import generated.formats.nif as NifFormat
+        NifLog.info(f"Loading: NifFormat: {NifFormat.__xml_version__}") # todo [generated] update this and library to have actual versioning
 
 
 locate_dependencies()

@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.geometry.vertex import Vertex
 from io_scene_niftools.modules.nif_import.property.texture.loader import TextureLoader
@@ -69,6 +69,10 @@ class NodesWrapper:
         self.diffuse_texture = None
         self.vcol = None
 
+    @staticmethod
+    def uv_node_name(uv_index):
+        return f"TexCoordIndex_{uv_index}"
+
     def set_uv_map(self, b_texture_node, uv_index=0, reflective=False):
         """Attaches a vector node describing the desired coordinate transforms to the texture node's UV input."""
         if reflective:
@@ -76,7 +80,7 @@ class NodesWrapper:
             self.tree.links.new(uv.outputs[6], b_texture_node.inputs[0])
         # use supplied UV maps for everything else, if present
         else:
-            uv_name = "TexCoordIndex" + str(uv_index)
+            uv_name = self.uv_node_name(uv_index)
             existing_node = self.tree.nodes.get(uv_name)
             if not existing_node:
                 uv = self.tree.nodes.new('ShaderNodeUVMap')
@@ -85,53 +89,34 @@ class NodesWrapper:
             else:
                 uv = existing_node
             self.tree.links.new(uv.outputs[0], b_texture_node.inputs[0])
-            # todo [texture/anim] if present in nifs, support it and move to anim sys
-            # if tex_transform or tex_anim:
-            #     transform = tree.nodes.new('ShaderNodeMapping')
-            #     # todo [texture] negate V coordinate
-            #     if tex_transform:
-            #         matrix_4x4 = mathutils.Matrix(tex_transform)
-            #         transform.scale = matrix_4x4.to_scale()
-            #         transform.rotation = matrix_4x4.to_euler()
-            #         transform.translation = matrix_4x4.to_translation()
-            #         transform.name = "TextureTransform" + str(i)
-            #     if tex_anim:
-            #         for j, dtype in enumerate(("offsetu", "offsetv")):
-            #             for key in tex_anim[dtype]:
-            #                 transform.translation[j] = key[1]
-            #                 # note that since we are dealing with UV coordinates, V has to be negated
-            #                 if j == 1: transform.translation[j] *= -1
-            #                 transform.keyframe_insert("translation", index=j, frame=int(key[0] * fps))
-            #     tree.links.new(uv.outputs[0], transform.inputs[0])
-            #     tree.links.new(transform.outputs[0], tex.inputs[0])
 
     def global_uv_offset_scale(self, x_scale, y_scale, x_offset, y_offset, clamp_x, clamp_y):
         # get all uv nodes (by name, since we are importing they have the predefined name
         # and then we don't have to loop through every node
         uv_nodes = {}
-        i = 0
+        uv_index = 0
         while True:
-            uv_name = "TexCoordIndex" + str(i)
+            uv_name = self.uv_node_name(uv_index)
             uv_node = self.tree.nodes.get(uv_name)
             if uv_node and isinstance(uv_node, bpy.types.ShaderNodeUVMap):
-                uv_nodes[uv_name] = uv_node
-                i += 1
+                uv_nodes[uv_index] = uv_node
+                uv_index += 1
             else:
                 break
 
         clip_texture = clamp_x and clamp_y
 
-        for uv_name, uv_node in uv_nodes.items():
+        for uv_index, uv_node in uv_nodes.items():
             # for each of those, create a new uv output node and relink
             split_node = self.tree.nodes.new("ShaderNodeSeparateXYZ")
-            split_node.name = "Separate UV" + uv_name[-1]
+            split_node.name = f"Separate UV{uv_index}"
             split_node.label = split_node.name
             combine_node = self.tree.nodes.new("ShaderNodeCombineXYZ")
-            combine_node.name = "Combine UV" + uv_name[-1]
+            combine_node.name = f"Combine UV{uv_index}"
             combine_node.label = combine_node.name
 
             x_node = self.tree.nodes.new("ShaderNodeMath")
-            x_node.name = "X offset and scale UV" + uv_name[-1]
+            x_node.name = f"X offset and scale UV{uv_index}"
             x_node.label = x_node.name
             x_node.operation = 'MULTIPLY_ADD'
             # only clamp on the math node when we're not clamping on both directions
@@ -143,7 +128,7 @@ class NodesWrapper:
             self.tree.links.new(x_node.outputs[0], combine_node.inputs[0])
 
             y_node = self.tree.nodes.new("ShaderNodeMath")
-            y_node.name = "Y offset and scale UV" + uv_name[-1]
+            y_node.name = f"Y offset and scale UV{uv_index}"
             y_node.label = y_node.name
             y_node.operation = 'MULTIPLY_ADD'
             y_node.use_clamp = clamp_y and not clip_texture
@@ -261,7 +246,7 @@ class NodesWrapper:
     def create_texture_slot(self, n_tex_desc):
         # todo [texture] refactor this to separate code paths?
         # when processing a NiTextureProperty
-        if isinstance(n_tex_desc, NifFormat.TexDesc):
+        if isinstance(n_tex_desc, NifClasses.TexDesc):
             b_image = self.texture_loader.import_texture_source(n_tex_desc.source)
             uv_layer_index = n_tex_desc.uv_set
         # when processing a BS shader property - n_tex_desc is a bare string
@@ -315,9 +300,9 @@ class NodesWrapper:
             group_nodes = node_group.nodes
             # add the in/output nodes
             input_node = group_nodes.new('NodeGroupInput')
-            node_group.inputs.new('NodeSocketImage', "Input")
+            node_group.inputs.new('NodeSocketColor', "Input")
             output_node = group_nodes.new('NodeGroupOutput')
-            node_group.outputs.new('NodeSocketImage', "Output")
+            node_group.outputs.new('NodeSocketColor', "Output")
             # create the converting nodes
             separate_node = group_nodes.new("ShaderNodeSeparateRGB")
             invert_node = group_nodes.new("ShaderNodeInvert")
@@ -336,7 +321,7 @@ class NodesWrapper:
         group_node = nodes.new('ShaderNodeGroup')
         group_node.node_tree = node_group
         links.new(group_node.inputs[0], b_texture_node.outputs[0])
-        if self.b_mat.niftools_shader.slsf_1_model_space_normals:
+        if self.b_mat.niftools_shader.model_space_normals:
             self.tree.links.new(self.diffuse_shader.inputs[2], group_node.outputs[0])
         else:
             # create tangent normal map converter and link to it
@@ -427,15 +412,15 @@ class NodesWrapper:
     @staticmethod
     def get_b_blend_type_from_n_apply_mode(n_apply_mode):
         # TODO [material] Check out n_apply_modes
-        if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
+        if n_apply_mode == NifClasses.ApplyMode.APPLY_MODULATE:
             return "MIX"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
+        elif n_apply_mode == NifClasses.ApplyMode.APPLY_REPLACE:
             return "COLOR"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
+        elif n_apply_mode == NifClasses.ApplyMode.APPLY_DECAL:
             return "OVERLAY"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
+        elif n_apply_mode == NifClasses.ApplyMode.APPLY_HILIGHT:
             return "LIGHTEN"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:  # used by Oblivion for parallax
+        elif n_apply_mode == NifClasses.ApplyMode.APPLY_HILIGHT2:  # used by Oblivion for parallax
             return "MULTIPLY"
         else:
             NifLog.warn(f"Unknown apply mode ({n_apply_mode}) in material, using blend type 'MIX'")

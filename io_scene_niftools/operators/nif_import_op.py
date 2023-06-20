@@ -39,13 +39,13 @@
 
 import bpy
 from bpy.types import Operator, Panel
-from bpy_extras.io_utils import ImportHelper
+from bpy_extras.io_utils import ImportHelper, orientation_helper
 
 from io_scene_niftools.nif_import import NifImport
 from io_scene_niftools.operators.common_op import CommonDevOperator, CommonScale, CommonNif
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
-
+@orientation_helper(axis_forward='Z', axis_up='-Y')
 class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, CommonNif):
     """Operator for loading a nif file."""
 
@@ -116,6 +116,13 @@ class NifImportOperator(Operator, ImportHelper, CommonScale, CommonDevOperator, 
         name="Use Embedded Texture",
         description="Loads texture embedded in .nif",
         default=False)
+
+    #Automatically detect armature orientation
+    override_armature_orientation: bpy.props.BoolProperty(
+        name="Override Armature Orientation",
+        description="Override detected armature orientation",
+        default=False)
+
 
     def draw(self, context):
         pass

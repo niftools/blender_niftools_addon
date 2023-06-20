@@ -36,9 +36,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import mathutils
-
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
+from generated.formats.nif.nimesh.structs.DisplayList import DisplayList
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_import.animation.morph import MorphAnimation
@@ -49,10 +48,12 @@ from io_scene_niftools.modules.nif_import.property.material import Material
 from io_scene_niftools.modules.nif_import.property.geometry.mesh import MeshPropertyProcessor
 from io_scene_niftools.utils import math
 from io_scene_niftools.utils.singleton import NifOp
-from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.logging import NifLog, NifError
 
 
 class Mesh:
+
+    supported_mesh_types = (NifClasses.BSTriShape, NifClasses.NiMesh, NifClasses.NiTriBasedGeom)
 
     def __init__(self):
         self.materialhelper = Material()
@@ -67,34 +68,102 @@ class Mesh:
         :param b_obj: The mesh to which to append the geometry data. If C{None}, a new mesh is created.
         :type b_obj: A Blender object that has mesh data.
         """
-        assert (isinstance(n_block, NifFormat.NiTriBasedGeom))
 
-        node_name = n_block.name.decode()
+        node_name = n_block.name
         NifLog.info(f"Importing mesh data for geometry '{node_name}'")
         b_mesh = b_obj.data
 
-        # shortcut for mesh geometry data
-        n_tri_data = n_block.data
-        if not n_tri_data:
-            raise io_scene_niftools.utils.logging.NifError(f"No shape data in {node_name}")
+        assert isinstance(n_block, self.supported_mesh_types)
+
+        vertices = []
+        triangles = []
+        uvs = None
+        vertex_colors = None
+        normals = None
+
+        if isinstance(n_block, NifClasses.BSTriShape):
+            vertex_attributes = n_block.vertex_desc.vertex_attributes
+            vertex_data = n_block.get_vertex_data()
+            if isinstance(n_block, NifClasses.BSDynamicTriShape):
+                # for BSDynamicTriShapes, the vertex data is stored in 4-component vertices
+                vertices = [(vertex.x, vertex.y, vertex.z) for vertex in n_block.vertices]
+            elif vertex_attributes.vertex:
+                vertices = [vertex.vertex for vertex in vertex_data]
+            triangles = n_block.get_triangles()
+            if vertex_attributes.u_vs:
+                uvs = [[vertex.uv for vertex in vertex_data]]
+            if vertex_attributes.vertex_colors:
+                vertex_colors = [vertex.vertex_colors for vertex in vertex_data]
+            if vertex_attributes.normals:
+                normals = [vertex.normal for vertex in vertex_data]
+        elif isinstance(n_block, NifClasses.NiMesh):
+            # if it has a displaylist then we don't know how to process this NiMesh
+            displaylist_data = n_block.geomdata_by_name("DISPLAYLIST", False, False)
+            if len(displaylist_data) > 0:
+                displaylist = DisplayList(displaylist_data)
+                vertices_info, triangles = displaylist.create_mesh_data(n_block)
+                vertices = vertices_info[0]
+                normals = vertices_info[1]
+                vertex_colors = [NifClasses.Color4.from_value(color) for color in vertices_info[2]]
+                uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in vertices_info[3]]]
+            else:
+                # get the data from the associated nidatastreams based on the description in the component semantics
+                vertices.extend(n_block.geomdata_by_name("POSITION", sep_datastreams=False))
+                vertices.extend(n_block.geomdata_by_name("POSITION_BP", sep_datastreams=False))
+                triangles = n_block.get_triangles()
+                uvs = n_block.geomdata_by_name("TEXCOORD")
+                if len(uvs) == 0:
+                    uvs = None
+                else:
+                    uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
+                vertex_colors = n_block.geomdata_by_name("COLOR", sep_datastreams=False)
+                if len(vertex_colors) == 0:
+                    vertex_colors = None
+                else:
+                    vertex_colors = [NifClasses.Color4.from_value(color) for color in vertex_colors]
+                normals = n_block.geomdata_by_name("NORMAL", sep_datastreams=False)
+                normals.extend(n_block.geomdata_by_name("NORMAL_BP", sep_datastreams=False))
+                if len(normals) == 0:
+                    normals = None
+                else:
+                    # for some reason, normals can be four-component structs instead of 3, discard the 4th.
+                    if len(normals[0]) > 3:
+                        normals = [(n[0], n[1], n[2]) for n in normals]
+        elif isinstance(n_block, NifClasses.NiTriBasedGeom):
+
+            # shortcut for mesh geometry data
+            n_tri_data = n_block.data
+            if not n_tri_data:
+                raise io_scene_niftools.utils.logging.NifError(f"No shape data in {node_name}")
+            vertices = n_tri_data.vertices
+            triangles = n_block.get_triangles()
+            uvs = n_tri_data.uv_sets
+            if n_tri_data.has_vertex_colors:
+                vertex_colors = n_tri_data.vertex_colors
+            if n_tri_data.has_normals:
+                normals = n_tri_data.normals
 
         # create raw mesh from vertices and triangles
-        b_mesh.from_pydata(n_tri_data.vertices, [], n_tri_data.get_triangles())
+        b_mesh.from_pydata(vertices, [], triangles)
         b_mesh.update()
 
         # must set faces to smooth before setting custom normals, or the normals bug out!
-        is_smooth = True if (n_tri_data.has_normals or n_block.skin_instance) else False
+        is_smooth = True if (not(normals is None) or n_block.is_skin()) else False
         self.set_face_smooth(b_mesh, is_smooth)
 
         # store additional data layers
-        Vertex.map_uv_layer(b_mesh, n_tri_data)
-        Vertex.map_vertex_colors(b_mesh, n_tri_data)
-        Vertex.map_normals(b_mesh, n_tri_data)
+        if uvs is not None:
+            Vertex.map_uv_layer(b_mesh, uvs)
+        if vertex_colors is not None:
+            Vertex.map_vertex_colors(b_mesh, vertex_colors)
+        if normals is not None:
+            Vertex.map_normals(b_mesh, normals)
 
         self.mesh_prop_processor.process_property_list(n_block, b_obj)
 
         # import skinning info, for meshes affected by bones
-        VertexGroup.import_skin(n_block, b_obj)
+        if n_block.is_skin():
+            VertexGroup.import_skin(n_block, b_obj)
 
         # import morph controller
         if NifOp.props.animation:

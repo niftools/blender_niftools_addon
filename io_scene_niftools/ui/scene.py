@@ -39,18 +39,18 @@
 
 from bpy.types import Panel
 
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-class SceneButtonsPanel:
+class SceneButtonsPanel(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "scene"
 
 
-class ScenePanel(SceneButtonsPanel, Panel):
+class ScenePanel(SceneButtonsPanel):
     bl_label = "Niftools Scene Panel"
     bl_idname = "NIFTOOLS_PT_scene"
 
@@ -67,7 +67,7 @@ class ScenePanel(SceneButtonsPanel, Panel):
         row.prop(nif_scene_props, "game")
 
 
-class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
+class SceneVersionInfoPanel(SceneButtonsPanel):
     bl_label = "Nif Version Info"
     bl_idname = "NIFTOOLS_PT_scene_version_info"
     bl_parent_id = "NIFTOOLS_PT_scene"
@@ -77,7 +77,7 @@ class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
         layout.use_property_split = True
 
         nif_scene_props = context.scene.niftools_scene
-        layout.label(text=NifFormat.HeaderString.version_string(nif_scene_props.nif_version))
+        layout.label(text=NifClasses.HeaderString.version_string(nif_scene_props.nif_version))
 
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
 
@@ -89,6 +89,7 @@ class SceneVersionInfoPanel(SceneButtonsPanel, Panel):
 
         col = flow.column()
         col.prop(nif_scene_props, "user_version_2")
+
 
 # class SceneAuthorInfoPanel(SceneButtonsPanel, Panel):
 #     bl_label = "Nif Author Info"

@@ -40,10 +40,6 @@
 import os
 import bpy
 
-import pyffi.spells.nif.fix
-
-from io_scene_niftools.file_io.kf import KFFile
-from io_scene_niftools.modules.nif_export import armature
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.nif_common import NifCommon
 from io_scene_niftools.utils import math
@@ -69,7 +65,7 @@ class KfExport(NifCommon):
         directory = os.path.dirname(NifOp.props.filepath)
         filebase, fileext = os.path.splitext(os.path.basename(NifOp.props.filepath))
 
-        if bpy.context.scene.niftools_scene.game == 'NONE':
+        if bpy.context.scene.niftools_scene.game == 'UNKNOWN':
             raise NifError("You have not selected a game. Please select a game in the scene tab.")
 
         prefix = "x" if bpy.context.scene.niftools_scene.game in ('MORROWIND',) else ""
@@ -94,6 +90,8 @@ class KfExport(NifCommon):
 
         # scale correction for the skeleton
         self.apply_scale(data, round(1 / NifOp.props.scale_correction))
+
+        data.validate()
 
         kffile = os.path.join(directory, prefix + filebase + ext)
         with open(kffile, "wb") as stream:

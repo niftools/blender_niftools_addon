@@ -42,13 +42,18 @@ from bpy.types import Panel, UIList, Menu
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
 
-class ObjectPanel(Panel):
-    bl_label = "Niftools Object Property"
-    bl_idname = "NIFTOOLS_PT_ObjectPanel"
-
+class ObjectButtonsPanel(Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
+
+    @staticmethod
+    def is_root_object(b_obj):
+        return b_obj.parent is None
+
+class ObjectPanel(ObjectButtonsPanel):
+    bl_label = "Niftools Object Property"
+    bl_idname = "NIFTOOLS_PT_ObjectPanel"
 
     # noinspection PyUnusedLocal
     @classmethod
@@ -56,31 +61,33 @@ class ObjectPanel(Panel):
         return True
 
     def draw(self, context):
-        ob = context.object
-        nif_obj_props = ob.niftools
+        b_obj = context.object
+        nif_obj_props = b_obj.niftools
 
         layout = self.layout
         row = layout.column()
-        row.prop(nif_obj_props, "rootnode")
-        row.prop(nif_obj_props, "prn_location")
-        row.prop(nif_obj_props, "upb")
-        row.prop(nif_obj_props, "bsxflags")
-        row.prop(nif_obj_props, "consistency_flags")
+        if self.is_root_object(b_obj):
+            if b_obj.type == "EMPTY":
+                row.prop(nif_obj_props, "nodetype")
+            if b_obj.type != "ARMATURE":
+                # prn nistringextradata is only useful as replacement for rigging data
+                row.prop(nif_obj_props, "prn_location")
+            row.prop(nif_obj_props, "upb")
+            row.prop(nif_obj_props, "bsxflags")
+        if b_obj.type == "MESH":
+            # consistency flags only exist for NiGeometry
+            row.prop(nif_obj_props, "consistency_flags")
         row.prop(nif_obj_props, "flags")
         row.prop(nif_obj_props, "longname")
 
-        parent = ob.parent
+        parent = b_obj.parent
         if parent and parent.type == 'ARMATURE':
             row.prop_search(nif_obj_props, "skeleton_root", parent.data, "bones")
 
 
-class ObjectExtraData(Panel):
+class ObjectExtraData(ObjectButtonsPanel):
     bl_label = "Niftools Object Extra Data"
     bl_idname = "NIFTOOLS_PT_ObjectExtraDataPanel"
-
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
 
     # noinspection PyUnusedLocal
     @classmethod
@@ -139,43 +146,38 @@ class ObjectExtraDataList(UIList):
         split.prop(item, "data", text="", emboss=False, translate=False, icon='BORDERMOVE')
 
 
-class ObjectBSInvMarkerPanel(Panel):
+class ObjectBSInvMarkerPanel(ObjectButtonsPanel):
     bl_label = "Niftools BS Inv Marker"
     bl_idname = "NIFTOOLS_PT_ObjectBSInvMarker"
-
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
+    bl_parent_id = "NIFTOOLS_PT_ObjectPanel"
 
     # noinspection PyUnusedLocal
     @classmethod
     def poll(cls, context):
-        return True
+        return cls.is_root_object(context.object)
 
     def draw(self, context):
         layout = self.layout
-        nif_bsinv_props = context.object.niftools_bs_invmarker
-
         row = layout.row()
-        if not context.object.niftools_bs_invmarker:
-            row.operator("object.niftools_bs_invmarker_add", icon='ZOOM_IN', text="")
-        if context.object.niftools_bs_invmarker:
-            row.operator("object.niftools_bs_invmarker_remove", icon='ZOOM_OUT', text="")
-
+        bs_inv = context.object.niftools.bs_inv
+        if not bs_inv:
+            row.operator("object.bs_inv_marker_add", icon='ZOOM_IN', text="")
+        else:
+            row.operator("object.bs_inv_marker_remove", icon='ZOOM_OUT', text="")
         col = row.column(align=True)
-        for i, x in enumerate(nif_bsinv_props):
-            col.prop(nif_bsinv_props[i], "bs_inv_x", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_y", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_z", index=i)
-            col.prop(nif_bsinv_props[i], "bs_inv_zoom", index=i)
+        for i, x in enumerate(bs_inv):
+            col.prop(bs_inv[i], "x", index=i)
+            col.prop(bs_inv[i], "y", index=i)
+            col.prop(bs_inv[i], "z", index=i)
+            col.prop(bs_inv[i], "zoom", index=i)
 
 
 classes = [
-    ObjectBSInvMarkerPanel,
     ObjectExtraDataList,
     ObjectExtraDataType,
     ObjectExtraData,
-    ObjectPanel
+    ObjectPanel,
+    ObjectBSInvMarkerPanel,
 ]
 
 

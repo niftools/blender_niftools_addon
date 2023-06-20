@@ -39,16 +39,57 @@
 
 import bpy
 import mathutils
+import time
 
 from functools import singledispatch
 from bisect import bisect_left
-from pyffi.formats.nif import NifFormat
+from generated.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.modules.nif_import.object import block_registry
 from io_scene_niftools.utils import math
-from io_scene_niftools.utils.blocks import safe_decode
 from io_scene_niftools.utils.logging import NifLog
+from io_scene_niftools.utils.consts import QUAT, EULER, LOC, SCALE
+
+
+def as_b_quat(n_val):
+    return mathutils.Quaternion([n_val.w, n_val.x, n_val.y, n_val.z])
+
+
+def as_b_loc(n_val):
+    return mathutils.Vector([n_val.x, n_val.y, n_val.z])
+
+
+def as_b_scale(n_val):
+    return n_val, n_val, n_val
+
+
+def as_b_euler(n_val):
+    return mathutils.Euler(n_val)
+
+
+def correct_loc(key, n_bind_rot_inv, n_bind_trans):
+    return math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
+
+
+def correct_quat(key, n_bind_rot_inv, n_bind_trans):
+    return math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
+
+
+def correct_euler(key, n_bind_rot_inv, n_bind_trans):
+    return math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
+
+
+def correct_scale(key, n_bind_rot_inv, n_bind_trans):
+    return key
+
+
+key_lut = {
+    QUAT: (as_b_quat, correct_quat, 4),
+    EULER: (as_b_euler, correct_euler, 3),
+    LOC: (as_b_loc, correct_loc, 3),
+    SCALE: (as_b_scale, correct_scale, 3),
+}
 
 
 def interpolate(x_out, x_in, y_in):
@@ -74,9 +115,9 @@ class TransformAnimation(Animation):
     def __init__(self):
         super().__init__()
         self.import_kf_root = singledispatch(self.import_kf_root)
-        self.import_kf_root.register(NifFormat.NiControllerSequence, self.import_controller_sequence)
-        self.import_kf_root.register(NifFormat.NiSequenceStreamHelper, self.import_sequence_stream_helper)
-        self.import_kf_root.register(NifFormat.NiSequenceData, self.import_sequence_data)
+        self.import_kf_root.register(NifClasses.NiControllerSequence, self.import_controller_sequence)
+        self.import_kf_root.register(NifClasses.NiSequenceStreamHelper, self.import_sequence_stream_helper)
+        self.import_kf_root.register(NifClasses.NiSequenceData, self.import_sequence_data)
 
     def get_bind_data(self, b_armature):
         """Get the required bind data of an armature. Used by standalone KF import and export. """
@@ -100,12 +141,12 @@ class TransformAnimation(Animation):
 
     def import_kf_root(self, kf_root, b_armature_obj):
         """Base method to warn user that this root type is not supported"""
-        NifLog.warn(f"Unknown KF root block found : {safe_decode(kf_root.name)}")
+        NifLog.warn(f"Unknown KF root block found : {kf_root.name}")
         NifLog.warn(f"This type isn't currently supported: {type(kf_root)}")
 
     def import_generic_kf_root(self, kf_root):
         NifLog.debug(f'Importing {type(kf_root)}...')
-        return safe_decode(kf_root.name)
+        return kf_root.name
 
     def import_sequence_data(self, kf_root, b_armature_obj):
         b_action_name = self.import_generic_kf_root(kf_root)
@@ -129,12 +170,12 @@ class TransformAnimation(Animation):
         textkeys = None
         while extra and controller:
             # textkeys in the stack do not specify node names, import as markers
-            while isinstance(extra, NifFormat.NiTextKeyExtraData):
+            while isinstance(extra, NifClasses.NiTextKeyExtraData):
                 textkeys = extra
                 extra = extra.next_extra_data
 
             # grabe the node name from string data
-            if isinstance(extra, NifFormat.NiStringExtraData):
+            if isinstance(extra, NifClasses.NiStringExtraData):
                 b_target = self.get_target(b_armature_obj, extra.string_data)
                 actions.add(self.import_keyframe_controller(controller, b_armature_obj, b_target, b_action_name))
             # grab next pair of extra and controller
@@ -187,83 +228,10 @@ class TransformAnimation(Animation):
             return
         NifLog.debug(f'Importing keyframe controller for {b_target.name}')
 
-        translations = []
-        scales = []
-        rotations = []
-        eulers = []
         n_kfd = None
-
-        # transform controllers (dartgun.nif)
-        if isinstance(n_kfc, NifFormat.NiTransformController):
-            if n_kfc.interpolator:
-                n_kfd = n_kfc.interpolator.data
-        # B-spline curve import
-        elif isinstance(n_kfc, NifFormat.NiBSplineInterpolator):
-            # used by WLP2 (tiger.kf), but only for non-LocRotScale data
-            # eg. bone stretching - see controlledblock.get_variable_1()
-            # do not support this for now, no good representation in Blender
-            if isinstance(n_kfc, NifFormat.NiBSplineCompFloatInterpolator):
-                # pyffi lacks support for this, but the following gets float keys
-                # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
-                return
-            times = list(n_kfc.get_times())
-            # just do these temp steps to avoid generating empty fcurves down the line
-            trans_temp = [mathutils.Vector(tup) for tup in n_kfc.get_translations()]
-            if trans_temp:
-                translations = zip(times, trans_temp)
-            rot_temp = [mathutils.Quaternion(tup) for tup in n_kfc.get_rotations()]
-            if rot_temp:
-                rotations = zip(times, rot_temp)
-            scale_temp = list(n_kfc.get_scales())
-            if scale_temp:
-                scales = zip(times, scale_temp)
-            # Bsplines are Bezier curves
-            interp_rot = interp_loc = interp_scale = "BEZIER"
-        elif isinstance(n_kfc, NifFormat.NiMultiTargetTransformController):
-            # not sure what this is used for
-            return
-        else:
-            # ZT2 & Fallout
-            n_kfd = n_kfc.data
-        if isinstance(n_kfd, NifFormat.NiKeyframeData):
-            interp_rot = self.get_b_interp_from_n_interp(n_kfd.rotation_type)
-            interp_loc = self.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
-            interp_scale = self.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
-            if n_kfd.rotation_type == 4:
-                b_target.rotation_mode = "XYZ"
-                # uses xyz rotation
-                if n_kfd.xyz_rotations[0].keys:
-                    # euler keys need not be sampled at the same time in KFs
-                    # but we need complete key sets to do the space conversion
-                    # so perform linear interpolation to import all keys properly
-
-                    # get all the keys' times
-                    times_x = [key.time for key in n_kfd.xyz_rotations[0].keys]
-                    times_y = [key.time for key in n_kfd.xyz_rotations[1].keys]
-                    times_z = [key.time for key in n_kfd.xyz_rotations[2].keys]
-                    # the unique time stamps we have to sample all curves at
-                    times_all = sorted(set(times_x + times_y + times_z))
-                    # the actual resampling
-                    x_r = interpolate(times_all, times_x, [key.value for key in n_kfd.xyz_rotations[0].keys])
-                    y_r = interpolate(times_all, times_y, [key.value for key in n_kfd.xyz_rotations[1].keys])
-                    z_r = interpolate(times_all, times_z, [key.value for key in n_kfd.xyz_rotations[2].keys])
-                eulers = zip(times_all, zip(x_r, y_r, z_r))
-            else:
-                b_target.rotation_mode = "QUATERNION"
-                rotations = [(key.time, key.value) for key in n_kfd.quaternion_keys]
-
-            if n_kfd.scales.keys:
-                scales = [(key.time, key.value) for key in n_kfd.scales.keys]
-
-            if n_kfd.translations.keys:
-                translations = [(key.time, key.value) for key in n_kfd.translations.keys]
-
-        # ZT2 - get extrapolation for every kfc
-        if isinstance(n_kfc, NifFormat.NiKeyframeController):
-            flags = n_kfc.flags
         # fallout, Loki - we set extrapolation according to the root NiControllerSequence.cycle_type
-        else:
-            flags = None
+        flags = None
+        n_bind_rot_inv = n_bind_trans = None
 
         # create or get the action
         if b_armature and isinstance(b_target, bpy.types.PoseBone):
@@ -277,42 +245,82 @@ class TransformAnimation(Animation):
             b_action = self.create_action(b_target, f"{b_action_name}_{b_target.name}")
             bone_name = None
 
-        if eulers:
-            NifLog.debug('Rotation keys..(euler)')
-            fcurves = self.create_fcurves(b_action, "rotation_euler", range(3), flags, bone_name)
-            for t, val in eulers:
-                key = mathutils.Euler(val)
-                if bone_name:
-                    key = math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_euler()
-                self.add_key(fcurves, t, key, interp_rot)
-        elif rotations:
-            NifLog.debug('Rotation keys...(quaternions)')
-            fcurves = self.create_fcurves(b_action, "rotation_quaternion", range(4), flags, bone_name)
-            for t, val in rotations:
-                key = mathutils.Quaternion([val.w, val.x, val.y, val.z])
-                if bone_name:
-                    key = math.import_keymat(n_bind_rot_inv, key.to_matrix().to_4x4()).to_quaternion()
-                self.add_key(fcurves, t, key, interp_rot)
-        if translations:
-            NifLog.debug('Translation keys...')
-            fcurves = self.create_fcurves(b_action, "location", range(3), flags, bone_name)
-            for t, val in translations:
-                key = mathutils.Vector([val.x, val.y, val.z])
-                if bone_name:
-                    key = math.import_keymat(n_bind_rot_inv, mathutils.Matrix.Translation(key - n_bind_trans)).to_translation()
-                self.add_key(fcurves, t, key, interp_loc)
-        if scales:
-            NifLog.debug('Scale keys...')
-            fcurves = self.create_fcurves(b_action, "scale", range(3), flags, bone_name)
-            for t, val in scales:
-                key = (val, val, val)
-                self.add_key(fcurves, t, key, interp_scale)
+        # B-spline curve import
+        if isinstance(n_kfc, NifClasses.NiBSplineInterpolator):
+            # Bsplines are Bezier curves
+            interp = "BEZIER"
+            if isinstance(n_kfc, NifClasses.NiBSplineCompFloatInterpolator):
+                # used by WLP2 (tiger.kf), but only for non-LocRotScale data
+                # eg. bone stretching - see controlledblock.get_variable_1()
+                # do not support this for now, no good representation in Blender
+                # pyffi lacks support for this, but the following gets float keys
+                # keys = list(kfc._getCompKeys(kfc.offset, 1, kfc.bias, kfc.multiplier))
+                return
+            times = list(n_kfc.get_times())
+            keys = [NifClasses.Vector3.from_value(tuple_key) for tuple_key in n_kfc.get_translations()]
+            self.import_keys(LOC, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+            keys = [NifClasses.Quaternion.from_value(tuple_key) for tuple_key in n_kfc.get_rotations()]
+            self.import_keys(QUAT, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+            keys = list(n_kfc.get_scales())
+            self.import_keys(SCALE, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+            return b_action
+        elif isinstance(n_kfc, NifClasses.NiMultiTargetTransformController):
+            # not sure what this is used for
+            return
+        n_kfd = self.get_controller_data(n_kfc)
+        # ZT2 - get extrapolation for every kfc
+        if isinstance(n_kfc, NifClasses.NiKeyframeController):
+            flags = n_kfc.flags
+        if isinstance(n_kfd, NifClasses.NiKeyframeData):
+            if n_kfd.rotation_type == 4:
+                b_target.rotation_mode = "XYZ"
+                # euler keys need not be sampled at the same time in KFs
+                # but we need complete key sets to do the space conversion
+                # so perform linear interpolation to import all keys properly
+
+                # get all the times and keys for each coordinate
+                times_keys = [self.get_keys_values(euler.keys) for euler in n_kfd.xyz_rotations]
+                # the unique time stamps we have to sample all curves at
+                times_all = sorted(set(times_keys[0][0] + times_keys[1][0] + times_keys[2][0]))
+                # todo - this assumes that all three channels are keyframed, but it seems like this need not be the case
+                # resample each coordinate for all times
+                keys_res = [interpolate(times_all, times, keys) for times, keys in times_keys]
+                # for eulers, the actual interpolation type is apparently stored per channel
+                interp = self.get_b_interp_from_n_interp(n_kfd.xyz_rotations[0].interpolation)
+                self.import_keys(EULER, b_action, bone_name, times_all, zip(*keys_res), flags, interp, n_bind_rot_inv, n_bind_trans)
+            else:
+                b_target.rotation_mode = "QUATERNION"
+                times, keys = self.get_keys_values(n_kfd.quaternion_keys)
+                interp = self.get_b_interp_from_n_interp(n_kfd.rotation_type)
+                self.import_keys(QUAT, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+            times, keys = self.get_keys_values(n_kfd.scales.keys)
+            interp = self.get_b_interp_from_n_interp(n_kfd.scales.interpolation)
+            self.import_keys(SCALE, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+
+            times, keys = self.get_keys_values(n_kfd.translations.keys)
+            interp = self.get_b_interp_from_n_interp(n_kfd.translations.interpolation)
+            self.import_keys(LOC, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans)
+
         return b_action
+
+    def import_keys(self, key_type, b_action, bone_name, times, keys, flags, interp, n_bind_rot_inv, n_bind_trans):
+        """Imports key frames according to the specified key_type"""
+        if not keys:
+            return
+        # look up conventions by key type
+        key_func, key_corrector, key_dim = key_lut[key_type]
+        NifLog.debug(f'{key_type} keys...')
+        # convert nif keys to proper key type for blender
+        keys = [key_func(val) for val in keys]
+        # correct for bone space if target is an armature bone
+        if bone_name:
+            keys = [key_corrector(key, n_bind_rot_inv, n_bind_trans) for key in keys]
+        self.add_keys(b_action, key_type, range(key_dim), flags, times, keys, interp, bone_name=bone_name)
 
     def import_transforms(self, n_block, b_obj, bone_name=None):
         """Loads an animation attached to a nif block."""
         # find keyframe controller
-        n_kfc = math.find_controller(n_block, (NifFormat.NiKeyframeController, NifFormat.NiTransformController))
+        n_kfc = math.find_controller(n_block, (NifClasses.NiKeyframeController, NifClasses.NiTransformController))
         if n_kfc:
             # skeletal animation
             if bone_name:
@@ -324,7 +332,7 @@ class TransformAnimation(Animation):
 
     def import_controller_manager(self, n_block, b_obj, b_armature):
         ctrlm = n_block.controller
-        if ctrlm and isinstance(ctrlm, NifFormat.NiControllerManager):
+        if ctrlm and isinstance(ctrlm, NifClasses.NiControllerManager):
             NifLog.debug(f'Importing NiControllerManager')
             if b_armature:
                 self.get_bind_data(b_armature)
