@@ -123,12 +123,12 @@ class Mesh:
                     vertex_colors = [NifClasses.Color4.from_value(color) for color in vertex_colors]
                 normals = n_block.geomdata_by_name("NORMAL", sep_datastreams=False)
                 normals.extend(n_block.geomdata_by_name("NORMAL_BP", sep_datastreams=False))
-                if len(normals) == 0:
-                    normals = None
-                else:
-                    # for some reason, normals can be four-component structs instead of 3, discard the 4th.
-                    if len(normals[0]) > 3:
-                        normals = [(n[0], n[1], n[2]) for n in normals]
+            if len(normals) == 0:
+                normals = None
+            else:
+                # for some reason, normals can be four-component structs instead of 3, discard the 4th.
+                if len(normals[0]) > 3:
+                    normals = [(n[0], n[1], n[2]) for n in normals]
         elif isinstance(n_block, NifClasses.NiTriBasedGeom):
 
             # shortcut for mesh geometry data
