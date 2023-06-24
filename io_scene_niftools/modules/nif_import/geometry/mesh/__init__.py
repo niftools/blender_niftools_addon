@@ -105,17 +105,13 @@ class Mesh:
                 vertices = vertices_info[0]
                 normals = vertices_info[1]
                 vertex_colors = [NifClasses.Color4.from_value(color) for color in vertices_info[2]]
-                uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in vertices_info[3]]]
+                uvs = vertices_info[3]
             else:
                 # get the data from the associated nidatastreams based on the description in the component semantics
                 vertices.extend(n_block.geomdata_by_name("POSITION", sep_datastreams=False))
                 vertices.extend(n_block.geomdata_by_name("POSITION_BP", sep_datastreams=False))
                 triangles = n_block.get_triangles()
                 uvs = n_block.geomdata_by_name("TEXCOORD")
-                if len(uvs) == 0:
-                    uvs = None
-                else:
-                    uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
                 vertex_colors = n_block.geomdata_by_name("COLOR", sep_datastreams=False)
                 if len(vertex_colors) == 0:
                     vertex_colors = None
@@ -123,6 +119,10 @@ class Mesh:
                     vertex_colors = [NifClasses.Color4.from_value(color) for color in vertex_colors]
                 normals = n_block.geomdata_by_name("NORMAL", sep_datastreams=False)
                 normals.extend(n_block.geomdata_by_name("NORMAL_BP", sep_datastreams=False))
+            if len(uvs) == 0:
+                uvs = None
+            else:
+                uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
             if len(normals) == 0:
                 normals = None
             else:
