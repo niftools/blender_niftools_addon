@@ -97,11 +97,11 @@ class Mesh:
             if vertex_attributes.normals:
                 normals = [vertex.normal for vertex in vertex_data]
         elif isinstance(n_block, NifClasses.NiMesh):
-            # if it has a displaylist then we don't know how to process this NiMesh
+            # if it has a displaylist then the vertex data is encoded differently
             displaylist_data = n_block.geomdata_by_name("DISPLAYLIST", False, False)
             if len(displaylist_data) > 0:
                 displaylist = DisplayList(displaylist_data)
-                vertices_info, triangles = displaylist.create_mesh_data(n_block)
+                vertices_info, triangles, weights = displaylist.create_mesh_data(n_block)
                 vertices = vertices_info[0]
                 normals = vertices_info[1]
                 vertex_colors = [NifClasses.Color4.from_value(color) for color in vertices_info[2]]

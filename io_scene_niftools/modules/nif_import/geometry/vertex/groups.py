@@ -41,6 +41,7 @@ import numpy as np
 from itertools import chain
 
 from generated.formats.nif import classes as NifClasses
+from generated.formats.nif.nimesh.structs.DisplayList import DisplayList
 
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store, get_bone_name_for_blender
 from io_scene_niftools.utils.logging import NifLog
@@ -133,7 +134,14 @@ class VertexGroup:
                 bone_indices = np.zeros((len(b_obj.data.vertices), 3), dtype=int)
                 bone_weights = np.zeros((len(b_obj.data.vertices), 3), dtype=float)
                 bone_weights_set = ni_block.extra_em_data.weights
-                for i, set_index in enumerate(ni_block.extra_em_data.vertex_to_weight_map):
+                # if it has a displaylist then the vertex data is encoded differently
+                displaylist_data = ni_block.geomdata_by_name("DISPLAYLIST", False, False)
+                if len(displaylist_data) > 0:
+                    displaylist = DisplayList(displaylist_data)
+                    weight_indices = displaylist.create_mesh_data(ni_block)[2]
+                else:
+                    weight_indices = ni_block.extra_em_data.vertex_to_weight_map
+                for i, set_index in enumerate(weight_indices):
                     weight = bone_weights_set[set_index]
                     bone_indices[i] = weight.bone_indices
                     bone_weights[i] = weight.weights
