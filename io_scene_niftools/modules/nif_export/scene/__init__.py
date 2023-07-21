@@ -50,7 +50,7 @@ def get_version_data():
     NifLog.info(f"Writing NIF version 0x{version:08X}")
 
     # get user version and user version 2 for export
-    user_version = b_scene.user_version if b_scene.user_version else b_scene.USER_VERSION.get(game, 0)
-    user_version_2 = b_scene.user_version_2 if b_scene.user_version_2 else b_scene.USER_VERSION_2.get(game, 0)
+    user_version = b_scene.user_version
+    user_version_2 = b_scene.user_version_2
 
     return version, NifFormat.NifFile.from_version(version, user_version, user_version_2)
