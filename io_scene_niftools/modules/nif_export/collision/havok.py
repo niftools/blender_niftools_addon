@@ -244,9 +244,9 @@ class BhkCollision(Collision):
         n_col_shape = block_store.create_block("bhkPackedNiTriStripsShape", b_obj)
         # TODO [collision] radius has default of 0.1, but maybe let depend on margin
         scale = n_col_shape.scale
-        scale.x = 0
-        scale.y = 0
-        scale.z = 0
+        scale.x = 1.0
+        scale.y = 1.0
+        scale.z = 1.0
         scale.w = 0
         n_col_shape.scale_copy = scale
         n_col_mopp.shape = n_col_shape
