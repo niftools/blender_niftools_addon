@@ -211,13 +211,13 @@ class Mesh:
 
             use_tangents = False
             if b_uv_layers and mesh_hasnormals:
-                if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                if game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
                     eval_mesh.calc_tangents(uvmap=b_uv_layers[0].name)
                     tangents = []
                     bitangent_signs = []
 
-            if game in ('FALLOUT_3', 'SKYRIM'):
+            if game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
                 if len(b_uv_layers) > 1:
                     raise NifError(f"{game} does not support multiple UV layers.")
 
@@ -305,7 +305,7 @@ class Mesh:
                     triangles.append(f_indexed)
 
                     # add body part number
-                    if game not in ('FALLOUT_3', 'SKYRIM') or not polygon_parts:
+                    if game not in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') or not polygon_parts:
                         # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
@@ -483,7 +483,7 @@ class Mesh:
                         "Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
 
             # Skyrim Special Edition has a limit of 80 bones per partition, but export is not yet supported
-            bones_per_partition_lut = {"OBLIVION": 18, "FALLOUT_3": 18, "SKYRIM": 24}
+            bones_per_partition_lut = {"OBLIVION": 18, "FALLOUT_3": 18, 'FALLOUT_NV': 18, "SKYRIM": 24}
             rec_bones = bones_per_partition_lut.get(game, None)
             if rec_bones is not None:
                 if NifOp.props.max_bones_per_partition < rec_bones:
@@ -505,7 +505,7 @@ class Mesh:
                 padbones=NifOp.props.pad_bones,
                 triangles=triangles,
                 trianglepartmap=bodypartfacemap,
-                maximize_bone_sharing=(game in ('FALLOUT_3', 'SKYRIM')),
+                maximize_bone_sharing=(game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM')),
                 part_sort_order=part_order)
 
             if lostweight > NifOp.props.epsilon:
@@ -579,7 +579,7 @@ class Mesh:
         return polygon_parts
 
     def create_skin_inst_data(self, b_obj, b_obj_armature, polygon_parts):
-        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'SKYRIM') and polygon_parts:
+        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') and polygon_parts:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
             skininst = block_store.create_block("NiSkinInstance", b_obj)
@@ -615,7 +615,7 @@ class Mesh:
             trishape.flags = b_obj.niftools.flags
         # fall back to defaults
         else:
-            if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
                 trishape.flags = 0x000E
 
             elif bpy.context.scene.niftools_scene.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):

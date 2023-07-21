@@ -73,7 +73,7 @@ class Constraint:
         for b_constr in b_obj.constraints:
             # rigid body joints
             if b_constr.type == 'RIGID_BODY_JOINT':
-                if bpy.context.scene.niftools_scene.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                if bpy.context.scene.niftools_scene.game not in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
                     NifLog.warn(f"Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {b_constr}.")
                     continue
                 # check that the object is a rigid body
@@ -126,7 +126,7 @@ class Constraint:
                         max_friction = 0
                     else:
                         # non-malleable typically have 10
-                        if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
+                        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'FALLOUT_NV'):
                             max_friction = 100
                         else:  # oblivion
                             max_friction = 10

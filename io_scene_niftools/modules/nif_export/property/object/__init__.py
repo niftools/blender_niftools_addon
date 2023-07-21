@@ -75,7 +75,7 @@ class ObjectProperty:
 
             # todo [property] refactor this
             # add textures
-            if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
+            if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'FALLOUT_NV'):
                 bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
                 block_store.register_block(bsshader)
@@ -201,7 +201,7 @@ class ObjectProperty:
         # no stencil property
         if b_mat.use_backface_culling:
             return
-        if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
+        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'FALLOUT_NV'):
             flags = 19840
         # search for duplicate
         return self.get_matching_block("NiStencilProperty", flags=flags)
@@ -237,7 +237,7 @@ class ObjectDataProperty:
     def export_weapon_location(self, n_root, root_obj):
         # export weapon location
         game = bpy.context.scene.niftools_scene.game
-        if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
             loc = root_obj.niftools.prn_location
             if loc:
                 prn = block_store.create_block("NiStringExtraData")
@@ -250,7 +250,7 @@ class ObjectDataProperty:
         # TODO [object][property] Fixme
         NifLog.info("Checking collision")
         # activate oblivion/Fallout 3 collision and physics
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
             b_obj = self.has_collision()
             if b_obj:
                 # enable collision

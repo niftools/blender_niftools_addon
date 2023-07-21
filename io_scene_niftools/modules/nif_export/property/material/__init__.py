@@ -69,7 +69,7 @@ class MaterialProp:
         specialnames = ("EnvMap2", "EnvMap", "skin", "Hair", "dynalpha", "HideSecret", "Lava")
 
         # hack to preserve EnvMap2, skinm, ... named blocks (even if they got renamed to EnvMap2.xxx or skin.xxx on import)
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
             for specialname in specialnames:
                 if name.lower() == specialname.lower() or name.lower().startswith(specialname.lower() + "."):
                     if name != specialname:

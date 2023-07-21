@@ -73,7 +73,7 @@ class TransformAnimation(Animation):
         if game in ('MORROWIND', 'FREEDOM_FORCE'):
             kf_root = block_store.create_block("NiSequenceStreamHelper")
         elif game in (
-                'SKYRIM', 'OBLIVION', 'FALLOUT_3', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH',
+                'SKYRIM', 'OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH',
                 'MEGAMI_TENSEI_IMAGINE'):
             kf_root = block_store.create_block("NiControllerSequence")
         else:

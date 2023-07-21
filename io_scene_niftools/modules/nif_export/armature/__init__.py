@@ -89,7 +89,7 @@ class Armature:
             n_node.flags = b_bone.niftools.flags
         else:
             game = bpy.context.scene.niftools_scene.game
-            if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            if game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
                 n_node.flags = 0x000E
