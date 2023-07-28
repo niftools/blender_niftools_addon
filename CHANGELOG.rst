@@ -1,3 +1,14 @@
+Version v0.1.01
+===============
+
+- #591 Expansion of DisplayList processing and small fixes.
+    - Rigged meshes with DisplayLists will now have functional weights.
+    - 4-component normals are now handled correctly for DisplayLists.
+    - Added multiple UV layer support for DisplayLists.
+    - Rudimentary support for Fallout NV (Fallout New Vegas) by treating it the same as Fallout 3.
+    - Fixes #582
+    - Fixes #589
+
 Version v0.1.00
 ===============
 
