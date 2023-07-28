@@ -74,7 +74,7 @@ class TransformAnimation(Animation):
             kf_root = block_store.create_block("NiSequenceStreamHelper")
         elif game in (
                 'SKYRIM', 'OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH',
-                'MEGAMI_TENSEI_IMAGINE'):
+                'SHIN_MEGAMI_TENSEI_IMAGINE'):
             kf_root = block_store.create_block("NiControllerSequence")
         else:
             raise NifError(f"Keyframe export for '{game}' is not supported.")

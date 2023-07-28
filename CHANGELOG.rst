@@ -8,6 +8,7 @@ Version v0.1.01
     - Rudimentary support for Fallout NV (Fallout New Vegas) by treating it the same as Fallout 3.
     - Fixes #582
     - Fixes #589
+    - Fix for animation support for Shin Megami Tensei: Imagine.
 
 Version v0.1.00
 ===============
