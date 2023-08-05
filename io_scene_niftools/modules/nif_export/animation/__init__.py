@@ -53,8 +53,11 @@ class Animation(ABC):
 
     def set_flags_and_timing(self, kfc, exp_fcurves, start_frame=None, stop_frame=None):
         # fill in the non-trivial values
-        kfc.flags = 8  # active
+        kfc.flags._value = 8  # active
         kfc.flags |= self.get_flags_from_fcurves(exp_fcurves)
+        if bpy.context.scene.niftools_scene.game == 'SID_MEIER_S_PIRATES':
+            # Sid Meier's Pirates! want the manager_controlled flag set
+            kfc.flags.manager_controlled = True
         kfc.frequency = 1.0
         kfc.phase = 0.0
         if not start_frame and not stop_frame:
