@@ -39,4 +39,6 @@ Fork
 
 .. code-block:: shell
   
-  git clone --recursive git://github.com/niftools/blender_niftools_addon.git
+  git clone --recursive https://github.com/niftools/blender_niftools_addon.git
+
+Please check `this temporary guide <https://github.com/niftools/blender_niftools_addon/issues/566#issuecomment-1566743313>`_ for building the ``generated`` module.
