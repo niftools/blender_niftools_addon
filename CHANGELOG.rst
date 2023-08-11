@@ -9,6 +9,9 @@ Version v0.1.01
     - Fixes #582
     - Fixes #589
     - Fix for animation support for Shin Megami Tensei: Imagine.
+    - Fixes #584
+- #592 Update to documentation
+- #593 Supported export for Sid Meier's Pirates!.
 
 Version v0.1.00
 ===============
