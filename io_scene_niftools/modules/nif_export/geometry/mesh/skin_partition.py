@@ -202,7 +202,7 @@ def update_skin_partition(self,
     logger.info("Creating partitions")
     parts = []
     # keep creating partitions as long as there are triangles left
-    while triangles:
+    while len(triangles) > 0:
         # create a partition
         part = [set(), [], None] # bones, triangles, partition index
         usedverts = set()

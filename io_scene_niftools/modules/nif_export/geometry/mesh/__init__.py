@@ -80,8 +80,7 @@ class Mesh:
 
         # get mesh from b_obj, and evaluate the mesh with modifiers applied, too
         b_mesh = b_obj.data
-        eval_mesh = self.get_triangulated_mesh(b_obj)
-        eval_mesh.calc_normals_split()
+        eval_mesh = self.get_evaluated_mesh(b_obj)
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
@@ -171,34 +170,7 @@ class Mesh:
 
             self.object_property.export_properties(b_obj, b_mat, n_geom)
 
-            # -> now comes the real export
-
-            '''
-                NIF has one uv vertex and one normal per vertex,
-                per vert, vertex coloring.
-
-                NIF uses the normal table for lighting.
-                Smooth faces should use Blender's vertex normals,
-                solid faces should use Blender's face normals.
-
-                Blender's uv vertices and normals per face.
-                Blender supports per face vertex coloring,
-            '''
-
-            # We now extract vertices, uv-vertices, normals, and
-            # vertex colors from the mesh's face list. Some vertices must be duplicated.
-
-            # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
-            # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
-
             b_uv_layers = eval_mesh.uv_layers
-            vertquad_list = []  # (vertex, uv coordinate, normal, vertex color) list
-            vertex_map = [None for _ in range(len(eval_mesh.vertices))]  # blender vertex -> nif vertices
-            vertex_positions = []
-            normals = []
-            vertex_colors = []
-            uv_coords = []
-            triangles = []
             # for each face in triangles, a body part index
             bodypartfacemap = []
             polygons_without_bodypart = []
@@ -214,108 +186,36 @@ class Mesh:
                 if game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
                     eval_mesh.calc_tangents(uvmap=b_uv_layers[0].name)
-                    tangents = []
-                    bitangent_signs = []
 
             if game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
                 if len(b_uv_layers) > 1:
                     raise NifError(f"{game} does not support multiple UV layers.")
 
-            for poly in eval_mesh.polygons:
+            triangles, t_nif_to_blend, vertex_information, v_nif_to_blend = self.get_geom_data(b_mesh=eval_mesh,
+                                                                             color=mesh_hasvcol,
+                                                                             normal=mesh_hasnormals,
+                                                                             uv=len(b_uv_layers) > 0,
+                                                                             tangent=use_tangents,
+                                                                             b_mat_index=b_mat_index)
 
-                # does the face belong to this n_geom?
-                if b_mat is not None and poly.material_index != b_mat_index:
-                    # we have a material but this face has another material, so skip
-                    continue
+            vertex_map = [None for _ in range(len(eval_mesh.vertices))]
+            for i, vertex_index in enumerate(v_nif_to_blend):
+                if vertex_map[vertex_index] is None:
+                    vertex_map[vertex_index] = [i]
+                else:
+                    vertex_map[vertex_index].append(i)
 
-                f_numverts = len(poly.vertices)
-                if f_numverts < 3:
-                    continue  # ignore degenerate polygons
-                assert ((f_numverts == 3) or (f_numverts == 4))  # debug
+            if len(vertex_information['POSITION']) > 65535:
+                raise NifError("Too many vertices. Decimate your mesh and try again.")
 
-                # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
-                f_index = [-1] * f_numverts
-                for i, loop_index in enumerate(poly.loop_indices):
-
-                    fv_index = eval_mesh.loops[loop_index].vertex_index
-                    vertex = eval_mesh.vertices[fv_index]
-                    vertex_index = vertex.index
-                    fv = vertex.co
-
-                    # smooth = vertex normal, non-smooth = face normal)
-                    if mesh_hasnormals:
-                        if poly.use_smooth:
-                            fn = eval_mesh.loops[loop_index].normal
-                        else:
-                            fn = poly.normal
-                    else:
-                        fn = None
-
-                    fuv = [uv_layer.data[loop_index].uv for uv_layer in eval_mesh.uv_layers]
-
-                    # TODO [geometry][mesh] Need to map b_verts -> n_verts
-                    if mesh_hasvcol:
-                        f_col = list(eval_mesh.vertex_colors[0].data[loop_index].color)
-                    else:
-                        f_col = None
-
-                    vertquad = (fv, fuv, fn, f_col)
-
-                    # check for duplicate vertquad?
-                    f_index[i] = len(vertquad_list)
-                    if vertex_map[vertex_index] is not None:
-                        # iterate only over vertices with the same vertex index
-                        for j in vertex_map[vertex_index]:
-                            # check if they have the same uvs, normals and colors
-                            if self.is_new_face_corner_data(vertquad, vertquad_list[j]):
-                                continue
-                            # all tests passed: so yes, we already have a vert with the same face corner data!
-                            f_index[i] = j
-                            break
-
-                    if f_index[i] > 65535:
-                        raise NifError("Too many vertices. Decimate your mesh and try again.")
-
-                    if f_index[i] == len(vertquad_list):
-                        # first: add it to the vertex map
-                        if not vertex_map[vertex_index]:
-                            vertex_map[vertex_index] = []
-                        vertex_map[vertex_index].append(len(vertquad_list))
-                        # new (vert, uv-vert, normal, vcol) quad: add it
-                        vertquad_list.append(vertquad)
-
-                        # add the vertex
-                        vertex_positions.append(vertquad[0])
-                        if mesh_hasnormals:
-                            normals.append(vertquad[2])
-                        if use_tangents:
-                            tangents.append(eval_mesh.loops[loop_index].tangent)
-                            bitangent_signs.append([eval_mesh.loops[loop_index].bitangent_sign])
-                        if mesh_hasvcol:
-                            vertex_colors.append(vertquad[3])
-                        if b_uv_layers:
-                            uv_coords.append(vertquad[1])
-
-                # now add the (hopefully, convex) face, in triangles
-                for i in range(f_numverts - 2):
-                    if (b_obj.scale.x + b_obj.scale.y + b_obj.scale.z) > 0:
-                        f_indexed = (f_index[0], f_index[1 + i], f_index[2 + i])
-                    else:
-                        f_indexed = (f_index[0], f_index[2 + i], f_index[1 + i])
-                    triangles.append(f_indexed)
-
-                    # add body part number
-                    if game not in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') or not polygon_parts:
-                        # TODO: or not self.EXPORT_FO3_BODYPARTS):
-                        bodypartfacemap.append(0)
-                    else:
-                        # add the polygon's body part
-                        part_index = polygon_parts[poly.index]
-                        if part_index >= 0:
-                            bodypartfacemap.append(part_index)
-                        else:
-                            # this signals an error
-                            polygons_without_bodypart.append(poly)
+            # add body part number
+            if game not in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') or len(polygon_parts) == 0:
+                # TODO: or not self.EXPORT_FO3_BODYPARTS):
+                bodypartfacemap = np.zeros(len(triangles), dtype=int)
+            else:
+                bodypartfacemap = polygon_parts[t_nif_to_blend]
+                polygon_indices_without_bodypart = np.arange(len(polygon_parts))[polygon_parts < 0]
+                polygons_without_bodypart = [eval_mesh.polygons[i] for i in polygon_indices_without_bodypart]
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
@@ -323,10 +223,14 @@ class Mesh:
 
             if len(triangles) > 65535:
                 raise NifError("Too many polygons. Decimate your mesh and try again.")
-            if len(vertex_positions) == 0:
+            if len(vertex_information['POSITION']) == 0:
                 continue  # m_4444x: skip 'empty' material indices
 
-            self.set_geom_data(n_geom, vertex_positions, normals, vertex_colors, uv_coords, b_uv_layers)
+            self.set_geom_data(n_geom,
+                               vertex_information['POSITION'],
+                               vertex_information.get('NORMAL', []),
+                               vertex_information.get('COLOR', []),
+                               vertex_information.get('UV', []), b_uv_layers)
 
             # set triangles stitch strips for civ4
             n_geom.data.set_triangles(triangles, stitchstrips=NifOp.props.stitch_strips)
@@ -337,8 +241,8 @@ class Mesh:
             if use_tangents:
                 if game == 'SKYRIM':
                     n_geom.data.bs_data_flags.has_tangents = True
-                # calculate the bitangents using the normals, tangent list and bitangent sign
-                bitangents = bitangent_signs * np.cross(normals, tangents)
+                tangents = vertex_information['TANGENT']
+                bitangents = vertex_information['BITANGENT']
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
                 # moreover, N_v = 1 - B_v, so d(B_v) = - d(N_v), therefore N_tan = -B_bit and N_bit = B_tan
                 self.add_defined_tangents(n_geom,
@@ -431,6 +335,195 @@ class Mesh:
             self.morph_anim.export_morph(b_mesh, n_geom, vertex_map)
         return n_geom
 
+    def get_geom_data(self, b_mesh, color, normal, uv, tangent, b_mat_index):
+        """Converts the blender information in b_mesh to a triangles, a dictionary with vertex information and a
+        mapping of the blender vertices to nif vertices.
+
+        :param b_mesh: Blender Mesh object
+        :type b_mesh: class:`bpy.types.Mesh`
+        :param color: Whether to consider vertex colors
+        :type color: bool
+        :param normal: Whether to consider vertex normals
+        :type normal: bool
+        :param uv: Whether to consider UV coordinates
+        :type uv: bool
+        :param tangent: Whether to consider tangents and bitangents
+        :type tangent: bool
+        :param b_mat_index: Material index to filter on. -1 means no filtering
+        :type b_mat_index: int
+
+        :return: the triangles, triangle to polygon array, dict of vertex information and nif vertex to blender vertex array
+        :rtype: tuple(np.ndarray, np.ndarray, dict(str, np.ndarray), np.ndarray)
+        The dictionary can contain the following information:
+        POSITION: position
+        COLOR: vertex colors
+        NORMAL: normal vectors per vertex
+        UV: list of  UV coordinates per vertex per layer. vertex_dict['UV'][0][1] gives UV coordinates for the first vertex, second layer
+        TANGENT: tangent vector per vertex
+        BITANGENT: bitangent per vertex, always present if TANGENT is present
+
+        NIF has one uv vertex, one normal, one color etc per vertex
+        NIF uses the normal table for lighting.
+        Smooth faces should use Blender's vertex normals,
+        solid faces should use Blender's face normals.
+
+        Blender's uv vertices and normals are per face.
+        Blender supports per face vertex coloring.
+        Blender loops, on the other hand, are much like nif vertices, and refer to one vertex associated with a polygon
+        
+        The algorithm merges loops with the same information (as long as they have the same original vertex) and
+        triangulates the mesh without needing a triangulation modifier.
+        """
+        n_loops = len(b_mesh.loops)
+        n_verts = len(b_mesh.vertices)
+        n_tris = len(b_mesh.loop_triangles)
+
+        if b_mat_index >= 0:
+            loop_mat_indices = np.ones(n_loops, dtype=int) * -1
+            for poly in b_mesh.polygons:
+                loop_mat_indices[poly.loop_indices] = poly.material_index
+            matl_to_loop = np.arange(n_loops, dtype=int)[loop_mat_indices == b_mat_index]
+            del loop_mat_indices
+        else:
+            matl_to_loop = np.arange(n_loops, dtype=int)
+        # for the loops without matl equivalent, use len(matl_to_loop) to exceed the length of the matl array
+        loop_to_matl = np.ones(n_loops, dtype=int) * len(matl_to_loop)
+        loop_to_matl[matl_to_loop] = np.arange(len(matl_to_loop), dtype=int)
+
+        loop_hashes = np.zeros((len(matl_to_loop), 0), dtype=float)
+
+        loop_to_vert = np.zeros(n_loops, dtype=int)
+        b_mesh.loops.foreach_get('vertex_index', loop_to_vert)
+        matl_to_vert = loop_to_vert[matl_to_loop]
+        loop_hashes = np.concatenate((loop_hashes, matl_to_vert.reshape((-1,1))), axis=1)
+
+        vert_positions = np.zeros((n_verts, 3), dtype=float)
+        b_mesh.vertices.foreach_get('co', vert_positions.reshape((-1, 1)))
+        loop_positions = vert_positions[matl_to_vert]
+        del vert_positions
+        loop_hashes = np.concatenate((loop_hashes, loop_positions), axis=1)
+
+        if color:
+            loop_colors = np.zeros((n_loops, 4), dtype=float)
+            if b_mesh.vertex_colors:
+                b_mesh.vertex_colors[0].data.foreach_get('color', loop_colors.reshape((-1, 1)))
+            else:
+                # vertex information of face corner (loop) information
+                # byte or float color, but both will give float values
+                color_attr = b_mesh.color_attributes[0]
+                if color_attr.domain == 'CORNER':
+                    color_attr.data.foreach_get('color', loop_colors.reshape((-1, 1)))
+                else:
+                    vert_colors = np.zeros((n_verts, 4), dtype=float)
+                    color_attr.data.foreach_get('color', vert_colors.reshape((-1, 1)))
+                    loop_colors[:] = vert_colors[loop_to_vert]
+                    del vert_colors
+            loop_colors = loop_colors[matl_to_loop]
+            loop_hashes = np.concatenate((loop_hashes, loop_colors), axis=1)
+
+        if normal:
+            # calculate normals
+            b_mesh.calc_normals_split()
+            loop_normals = np.zeros((n_loops, 3), dtype=float)
+            b_mesh.loops.foreach_get('normal', loop_normals.reshape((-1, 1)))
+            # smooth = vertex normal, non-smooth = face normal)
+            for poly in b_mesh.polygons:
+                if not poly.use_smooth:
+                    loop_normals[poly.loop_indices] = poly.normal
+            loop_normals = loop_normals[matl_to_loop]
+            loop_hashes = np.concatenate((loop_hashes, loop_normals), axis=1)
+
+        if uv:
+            uv_layers = []
+            for layer in b_mesh.uv_layers:
+                loop_uv = np.zeros((n_loops, 2), dtype=float)
+                layer.data.foreach_get('uv', loop_uv.reshape((-1, 1)))
+                loop_uv = loop_uv[matl_to_loop]
+                uv_layers.append(loop_uv)
+                loop_hashes = np.concatenate((loop_hashes, loop_uv), axis=1)
+            loop_uvs = np.swapaxes(uv_layers, 0, 1)
+            del uv_layers
+
+        if tangent:
+            b_mesh.calc_tangents(uvmap=b_mesh.uv_layers[0].name)
+            loop_tangents = np.zeros((n_loops, 3), dtype=float)
+            b_mesh.loops.foreach_get('tangent', loop_tangents.reshape((-1, 1)))
+            loop_tangents = loop_tangents[matl_to_loop]
+            loop_hashes = np.concatenate((loop_hashes, loop_tangents), axis=1)
+
+            bitangent_signs = np.zeros((n_loops, 1), dtype=float)
+            b_mesh.loops.foreach_get('bitangent_sign', bitangent_signs)
+            bitangent_signs = bitangent_signs[matl_to_loop]
+            loop_bitangents = bitangent_signs * np.cross(loop_normals, loop_tangents)
+            del bitangent_signs
+            loop_hashes = np.concatenate((loop_hashes, loop_bitangents), axis=1)
+
+        # now remove duplicates
+        # first exact (also sorts by blender vertex)
+        loop_hashes, hash_to_matl, matl_to_hash = np.unique(loop_hashes, return_index=True, return_inverse=True, axis=0)
+        hash_to_same_hash = np.arange(len(loop_hashes), dtype=int)
+        hash_to_nif_vert = np.arange(len(loop_hashes), dtype=int)
+        # then inexact (if epsilon is not 0)
+        if NifOp.props.epsilon > 0:
+
+            current_vert = -1
+            max_nif_vert = -1
+            for hash_index, loop_hash in enumerate(loop_hashes):
+                if loop_hash[0] != current_vert:
+                    current_vert = loop_hash[0]
+                    current_hash_start = hash_index
+
+                nif_vert_index = max_nif_vert + 1
+                for comp_index in range(current_hash_start, hash_index):
+                    comp_loop_hash = loop_hashes[comp_index]
+                    if any(np.abs(comp_loop_hash - loop_hash) > NifOp.props.epsilon):
+                        # this hash is different, but others may be the same
+                        continue
+                    else:
+                        nif_vert_index = hash_to_nif_vert[comp_index]
+                        hash_to_same_hash[hash_index] = comp_index
+                        break
+                hash_to_nif_vert[hash_index] = nif_vert_index
+                max_nif_vert = max((nif_vert_index, max_nif_vert))
+
+        # finally, use the mapping from blender to nif to create the triangles
+        # first get the actual triangles in an array
+        blend_triangles = np.zeros((n_tris, 3), dtype=int)
+        b_mesh.loop_triangles.foreach_get('loops', blend_triangles.reshape((-1, 1)))
+        tri_to_poly = np.zeros(n_tris, dtype=int)
+        b_mesh.loop_triangles.foreach_get('polygon_index', tri_to_poly)
+        # filter out the ones not in the specified material
+        triangle_mats = np.zeros(n_tris, dtype=int)
+        b_mesh.loop_triangles.foreach_get('material_index', triangle_mats)
+        mattri_to_looptri = np.arange(n_tris, dtype=int)
+        if b_mat_index >= 0:
+            mattri_to_looptri = mattri_to_looptri[triangle_mats == b_mat_index]
+        blend_triangles = blend_triangles[mattri_to_looptri]
+        tri_to_poly = tri_to_poly[mattri_to_looptri]
+        # go from loop indices to nif vertices
+        # [TODO] possibly optimize later
+        for i in range(len(blend_triangles)):
+            blend_triangles[i] = hash_to_nif_vert[matl_to_hash[loop_to_matl[blend_triangles[i]]]]
+
+        # make the vertex data from the hash map
+        nif_to_hash = np.unique(hash_to_same_hash, return_index=True)[1]
+        nif_to_matl = hash_to_matl[nif_to_hash]
+        data_dict = {
+            'POSITION': loop_positions[nif_to_matl]
+            }
+
+        if color:
+            data_dict['COLOR'] = loop_colors[nif_to_matl]
+        if normal:
+            data_dict['NORMAL'] = loop_normals[nif_to_matl]
+        if uv:
+            data_dict['UV'] = loop_uvs[nif_to_matl]
+        if tangent:
+            data_dict['TANGENT'] = loop_tangents[nif_to_matl]
+            data_dict['BITANGENT'] = loop_bitangents[nif_to_matl]
+
+        return blend_triangles, tri_to_poly, data_dict, loop_to_vert[matl_to_loop[nif_to_matl]]
+
     def set_geom_data(self, n_geom, vertex_positions, normals, vertex_colors, uv_coords, b_uv_layers):
         """Sets flat lists of per-vertex data to n_geom"""
         # coords
@@ -441,12 +534,12 @@ class Mesh:
             n_v.x, n_v.y, n_v.z = b_v
         n_geom.data.update_center_radius()
         # normals
-        n_geom.data.has_normals = bool(normals)
+        n_geom.data.has_normals = len(normals) > 0
         n_geom.data.reset_field("normals")
         for n_v, b_v in zip(n_geom.data.normals, normals):
             n_v.x, n_v.y, n_v.z = b_v
         # vertex_colors
-        n_geom.data.has_vertex_colors = bool(vertex_colors)
+        n_geom.data.has_vertex_colors = len(vertex_colors) > 0
         n_geom.data.reset_field("vertex_colors")
         for n_v, b_v in zip(n_geom.data.vertex_colors, vertex_colors):
             n_v.r, n_v.g, n_v.b, n_v.a = b_v
@@ -455,7 +548,7 @@ class Mesh:
             data_flags = n_geom.data.bs_data_flags
         else:
             data_flags = n_geom.data.data_flags
-        data_flags.has_uv = bool(b_uv_layers)
+        data_flags.has_uv = len(b_uv_layers) > 0
         if hasattr(data_flags, "num_uv_sets"):
             data_flags.num_uv_sets = len(b_uv_layers)
         else:
@@ -569,17 +662,17 @@ class Mesh:
                 index_group_map[face_map.index] = NifClasses.BSDismemberBodyPartType[bodypartgroupname]
         if len(index_group_map) <= 1:
             # there were no valid face maps
-            return []
+            return np.array([])
         bm = bmesh.new()
         bm.from_mesh(b_mesh)
         bm.faces.ensure_lookup_table()
         fm = bm.faces.layers.face_map.verify()
-        polygon_parts = [index_group_map.get(face[fm], -1) for face in bm.faces]
+        polygon_parts = np.array([index_group_map.get(face[fm], -1) for face in bm.faces], dtype=int)
         bm.free()
         return polygon_parts
 
     def create_skin_inst_data(self, b_obj, b_obj_armature, polygon_parts):
-        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') and polygon_parts:
+        if bpy.context.scene.niftools_scene.game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') and len(polygon_parts) > 0:
             skininst = block_store.create_block("BSDismemberSkinInstance", b_obj)
         else:
             skininst = block_store.create_block("NiSkinInstance", b_obj)
@@ -703,25 +796,6 @@ class Mesh:
         raise NifError(f"Some polygons of {b_obj.name} not assigned to any body part."
                        f"The unassigned polygons have been selected in the mesh so they can easily be identified.")
 
-    def is_new_face_corner_data(self, vertquad, v_quad_old):
-        """Compares vert info to old vert info if relevant data is present"""
-        # uvs
-        if v_quad_old[1]:
-            for i in range(2):
-                if max(abs(vertquad[1][uv_index][i] - v_quad_old[1][uv_index][i]) for uv_index in
-                       range(len(v_quad_old[1]))) > NifOp.props.epsilon:
-                    return True
-        # normals
-        if v_quad_old[2]:
-            for i in range(3):
-                if abs(vertquad[2][i] - v_quad_old[2][i]) > NifOp.props.epsilon:
-                    return True
-        # vcols
-        if v_quad_old[3]:
-            for i in range(4):
-                if abs(vertquad[3][i] - v_quad_old[3][i]) > NifOp.props.epsilon:
-                    return True
-
     def export_texture_effect(self, n_block, b_mat):
         # todo [texture] detect effect
         ref_mtex = False
@@ -740,16 +814,12 @@ class Mesh:
             return extra_node
         return n_block
 
-    def get_triangulated_mesh(self, b_obj):
-        # TODO [geometry][mesh] triangulation could also be done using loop_triangles, without a modifier
+    def get_evaluated_mesh(self, b_obj):
         # get the armature influencing this mesh, if it exists
         b_armature_obj = b_obj.find_armature()
         if b_armature_obj:
             old_position = b_armature_obj.data.pose_position
             b_armature_obj.data.pose_position = 'REST'
-
-        # make sure the model has a triangulation modifier
-        self.ensure_tri_modifier(b_obj)
 
         # make a copy with all modifiers applied
         dg = bpy.context.evaluated_depsgraph_get()
@@ -758,14 +828,6 @@ class Mesh:
         if b_armature_obj:
             b_armature_obj.data.pose_position = old_position
         return eval_mesh
-
-    def ensure_tri_modifier(self, b_obj):
-        """Makes sure that ob has a triangulation modifier in its stack."""
-        for mod in b_obj.modifiers:
-            if mod.type in ('TRIANGULATE',):
-                break
-        else:
-            b_obj.modifiers.new('Triangulate', 'TRIANGULATE')
 
     def add_defined_tangents(self, n_geom, tangents, bitangents, as_extra_data):
         # check if size of tangents and bitangents is equal to num_vertices
