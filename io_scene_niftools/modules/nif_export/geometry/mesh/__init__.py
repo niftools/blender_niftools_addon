@@ -504,6 +504,10 @@ class Mesh:
         # [TODO] possibly optimize later
         for i in range(len(blend_triangles)):
             blend_triangles[i] = hash_to_nif_vert[matl_to_hash[loop_to_matl[blend_triangles[i]]]]
+        # sort the triangles on polygon index to keep the original order
+        tri_sort = np.argsort(tri_to_poly, axis=0)
+        tri_to_poly = tri_to_poly[tri_sort]
+        blend_triangles = blend_triangles[tri_sort]
 
         # make the vertex data from the hash map
         nif_to_hash = np.unique(hash_to_same_hash, return_index=True)[1]
