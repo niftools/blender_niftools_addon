@@ -93,7 +93,7 @@ class Mesh:
             if vertex_attributes.u_vs:
                 uvs = [[vertex.uv for vertex in vertex_data]]
             if vertex_attributes.vertex_colors:
-                vertex_colors = [vertex.vertex_colors for vertex in vertex_data]
+                vertex_colors = [NifClasses.Color4.from_value(tuple(c / 255.0 for c in vertex.vertex_colors)) for vertex in vertex_data]
             if vertex_attributes.normals:
                 normals = [vertex.normal for vertex in vertex_data]
         elif isinstance(n_block, NifClasses.NiMesh):
