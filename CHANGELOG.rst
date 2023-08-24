@@ -12,6 +12,7 @@ Version v0.1.01
     - Fixes #584
     - Fixes #554 and overhauls/isolates the way the nif geometry data is obtained during export.
     - Warn rather than silent fail during egm import.
+    - Fixes #599
 - #592 Update to documentation
 - #593 Supported export for Sid Meier's Pirates!.
 

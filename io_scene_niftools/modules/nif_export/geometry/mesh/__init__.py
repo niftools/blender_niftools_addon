@@ -185,7 +185,6 @@ class Mesh:
             if b_uv_layers and mesh_hasnormals:
                 if game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
-                    eval_mesh.calc_tangents(uvmap=b_uv_layers[0].name)
 
             if game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
                 if len(b_uv_layers) > 1:
@@ -239,8 +238,6 @@ class Mesh:
             # for extra shader texture games, only export it if those textures are actually exported
             # (civ4 seems to be consistent with not using tangent space on non shadered nifs)
             if use_tangents:
-                if game == 'SKYRIM':
-                    n_geom.data.bs_data_flags.has_tangents = True
                 tangents = vertex_information['TANGENT']
                 bitangents = vertex_information['BITANGENT']
                 # B_tan: +d(B_u), B_bit: +d(B_v) and N_tan: +d(N_v), N_bit: +d(N_u)
@@ -455,8 +452,8 @@ class Mesh:
             b_mesh.loops.foreach_get('bitangent_sign', bitangent_signs)
             bitangent_signs = bitangent_signs[matl_to_loop]
             loop_bitangents = bitangent_signs * np.cross(loop_normals, loop_tangents)
+            loop_hashes = np.concatenate((loop_hashes, bitangent_signs), axis=1)
             del bitangent_signs
-            loop_hashes = np.concatenate((loop_hashes, loop_bitangents), axis=1)
 
         # now remove duplicates
         # first exact (also sorts by blender vertex)
@@ -855,7 +852,7 @@ class Mesh:
             extra.binary_data = np.concatenate((tangents, bitangents), axis=0).astype('<f').tobytes()
         else:
             # set tangent space flag
-            n_geom.data.extra_vectors_flags = 16
+            n_geom.data.bs_data_flags.has_tangents = True
             # XXX used to be 61440
             # XXX from Sid Meier's Railroad
             n_geom.data.reset_field("tangents")

@@ -440,7 +440,7 @@ def update_skin_partition(self,
         bones = sorted(list(part[0]))
         triangles = part[1]
         logger.info("Optimizing triangle ordering in partition %i"
-                    % parts.index(part))
+                    % [i for i, check_part in enumerate(parts) if id(check_part) == id(part)][0])
         # optimize triangles for vertex cache and calculate strips
         triangles = get_cache_optimized_triangles(
             triangles)
