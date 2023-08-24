@@ -130,8 +130,8 @@ class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonNif, Co
 
     # Use tangent space in separating vertices.
     sep_tangent_space: bpy.props.BoolProperty(
-        name="Separate on tangent space",
-        description="Include tangent space in the consideration on whether to split vertices (not used by Oblivion head nifs)",
+        name="Split on tangents",
+        description="Split vertices if tangents differ (not used by oblivion head nifs)",
         default=True)
 
     def draw(self, context):
