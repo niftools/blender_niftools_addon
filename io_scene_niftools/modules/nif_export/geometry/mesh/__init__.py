@@ -446,13 +446,15 @@ class Mesh:
             loop_tangents = np.zeros((n_loops, 3), dtype=float)
             b_mesh.loops.foreach_get('tangent', loop_tangents.reshape((-1, 1)))
             loop_tangents = loop_tangents[matl_to_loop]
-            loop_hashes = np.concatenate((loop_hashes, loop_tangents), axis=1)
+            if NifOp.props.sep_tangent_space:
+                loop_hashes = np.concatenate((loop_hashes, loop_tangents), axis=1)
 
             bitangent_signs = np.zeros((n_loops, 1), dtype=float)
             b_mesh.loops.foreach_get('bitangent_sign', bitangent_signs)
             bitangent_signs = bitangent_signs[matl_to_loop]
             loop_bitangents = bitangent_signs * np.cross(loop_normals, loop_tangents)
-            loop_hashes = np.concatenate((loop_hashes, bitangent_signs), axis=1)
+            if NifOp.props.sep_tangent_space:
+                loop_hashes = np.concatenate((loop_hashes, loop_bitangents), axis=1)
             del bitangent_signs
 
         # now remove duplicates

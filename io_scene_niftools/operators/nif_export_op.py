@@ -128,6 +128,12 @@ class NifExportOperator(Operator, ExportHelper, CommonDevOperator, CommonNif, Co
         description="Remove duplicate materials",
         default=True)
 
+    # Use tangent space in separating vertices.
+    sep_tangent_space: bpy.props.BoolProperty(
+        name="Separate on tangent space",
+        description="Include tangent space in the consideration on whether to split vertices (not used by Oblivion head nifs)",
+        default=True)
+
     def draw(self, context):
         pass
 
