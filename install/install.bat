@@ -9,7 +9,8 @@ for %%I in ("%DIR%\..") do set "ROOT=%%~fI"
 set "NAME=blender_niftools_addon"
 set /p VERSION=<%ROOT%\io_scene_niftools\VERSION.txt
 for /f %%i in ('git rev-parse --short HEAD') do set HASH=%%i
-for /f %%i in ('echo %date%') do set DATE=%%i
+:: Use PowerShell to get current date in YYYY-MM-DD format independent of local format
+for /f %%i in ('powershell -executionpolicy bypass -Command Get-Date -Format "yyyy-MM-dd"') do set DATE=%%i
 set "ZIP_NAME=%NAME%-%VERSION%-%DATE%-%HASH%"
 
 if "%BLENDER_ADDONS_DIR%" == "" if not exist "%BLENDER_ADDONS_DIR%" (
