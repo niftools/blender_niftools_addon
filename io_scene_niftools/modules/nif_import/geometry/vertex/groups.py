@@ -178,8 +178,26 @@ class VertexGroup:
             if skininst:
                 skindata = skininst.data
                 bones = skininst.bones
+                if isinstance(skininst, NifClasses.BSSkinInstance):
+                    bone_names = [None for _ in bones]
+                    for idx, n_bone in enumerate(bones):
+                        if not n_bone:
+                            continue
+
+                        group_name = block_store.import_name(n_bone)
+                        if group_name not in b_obj.vertex_groups:
+                            b_obj.vertex_groups.new(name=group_name)
+                        bone_names[idx] = group_name
+
+                    for i, (weights, indices) in enumerate([(vert.bone_weights, vert.bone_indices) for vert in ni_block.vertex_data]):
+                        for w, b_i in zip(weights, indices):
+                            if b_i  >= 0 and w > 0:
+                                group_name = bone_names[b_i]
+                                v_group = b_obj.vertex_groups[group_name]
+                                v_group.add([int(i)], w, 'REPLACE')
+
                 # the usual case
-                if skindata.has_vertex_weights:
+                elif skindata.has_vertex_weights:
                     bone_weights = skindata.bone_list
                     for idx, n_bone in enumerate(bones):
                         # skip empty bones (see pyffi issue #3114079)

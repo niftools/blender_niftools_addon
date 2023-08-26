@@ -139,14 +139,16 @@ class Armature:
                                 bonedata.set_transform(diff.get_inverse(fast=False) * bonedata.get_transform())
                         # transforming verts helps with nifs where the skins differ, eg MW vampire or WLP2 Gastornis
                         if isinstance(geom, NifClasses.BSTriShape):
+                            vertex_data = geom.get_vertex_data()
                             if isinstance(geom, NifClasses.BSDynamicTriShape):
                                 # BSDynamicTriShape uses Vector4 to store vertices with a 0 W component, which would
                                 # nullify translation when multiplied by a Matrix44. Hence, first conversion to Vector3
                                 # and assign the position values back later.
                                 vertices = [NifClasses.Vector3.from_value((vertex.x, vertex.y, vertex.z)) for vertex in geom.vertices]
                             else:
-                                vertices = [vert_data.vertex for vert_data in geom.skin.skin_partition.vertex_data]
-                            normals = [vert_data.normal for vert_data in geom.skin.skin_partition.vertex_data]
+                                vertices = [vert_data.vertex for vert_data in vertex_data]
+
+                            normals = [vert_data.normal for vert_data in vertex_data]
                         else:
                             vertices = geom.data.vertices
                             normals = geom.data.normals

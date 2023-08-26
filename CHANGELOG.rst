@@ -11,8 +11,11 @@ Version v0.1.01
     - Fix for animation support for Shin Megami Tensei: Imagine.
     - Fixes #584
     - Fixes #554 and overhauls/isolates the way the nif geometry data is obtained during export.
+    - Added option for splitting on tangents (did not happen before). Needs to be disabled for Oblivion head meshes.
     - Warn rather than silent fail during egm import.
+    - Added support for weighted Fallout 4 meshes, fixing #598
     - Fixes #599
+    - Fixes #600
 - #592 Update to documentation
 - #593 Supported export for Sid Meier's Pirates!.
 
