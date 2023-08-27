@@ -226,8 +226,8 @@ class NifExport(NifCommon):
             # apply scale
             data.roots = [root_block]
             scale_correction = bpy.context.scene.niftools_scene.scale_correction
-            if abs(scale_correction) > NifOp.props.epsilon:
-                self.apply_scale(data, round(1 / NifOp.props.scale_correction))
+            if abs(1 - scale_correction) > NifOp.props.epsilon:
+                self.apply_scale(data, 1 / scale_correction)
                 # also scale egm
                 if EGMData.data:
                     EGMData.data.apply_scale(1 / scale_correction)
