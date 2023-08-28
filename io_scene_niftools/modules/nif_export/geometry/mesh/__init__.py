@@ -207,6 +207,18 @@ class Mesh:
             if len(vertex_information['POSITION']) > 65535:
                 raise NifError("Too many vertices. Decimate your mesh and try again.")
 
+            if len(b_uv_layers) > 0:
+                # adjustment of UV coordinates because of imprecision at larger sizes
+                uv_array = vertex_information['UV']
+                for layer_idx in range(uv_array.shape[1]):
+                    for coord_idx in range(uv_array.shape[2]):
+                        coord_min = np.min(uv_array[:, layer_idx, coord_idx])
+                        coord_max = np.max(uv_array[:, layer_idx, coord_idx])
+                        min_floor = np.floor(coord_min)
+                        # UV coordinates must not be in the 0th UV square and must fit in one UV square
+                        if min_floor != 0 and np.floor(coord_max) == min_floor:
+                            uv_array[:, layer_idx, coord_idx] -= min_floor
+
             # add body part number
             if game not in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') or len(polygon_parts) == 0:
                 # TODO: or not self.EXPORT_FO3_BODYPARTS):
