@@ -183,7 +183,13 @@ class Mesh:
 
             use_tangents = False
             if b_uv_layers and mesh_hasnormals:
-                if game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM') or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                default_use_tangents = ('OBLIVION',
+                                        'FALLOUT_3',
+                                        'FALLOUT_NV',
+                                        'SKYRIM',
+                                        'BULLY_SE',
+                                        )
+                if game in default_use_tangents or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
 
             if game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
@@ -867,6 +873,7 @@ class Mesh:
         else:
             # set tangent space flag
             n_geom.data.bs_data_flags.has_tangents = True
+            n_geom.data.data_flags.nbt_method |= 1
             # XXX used to be 61440
             # XXX from Sid Meier's Railroad
             n_geom.data.reset_field("tangents")
