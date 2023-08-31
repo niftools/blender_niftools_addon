@@ -79,6 +79,7 @@ class NiPropertyProcessor:
         processor.register(NifFormat.NiSpecularProperty, self.process_nispecular_property)
         processor.register(NifFormat.NiWireframeProperty, self.process_niwireframe_property)
         processor.register(NifFormat.NiVertexColorProperty, self.process_nivertexcolor_property)
+        processor.register(NifFormat.NiDitherProperty, self.process_nidither_property)
 
     @property
     def b_mesh(self):
@@ -146,5 +147,7 @@ class NiPropertyProcessor:
         # this should influence the structure of the node tree, how the vcol and diffuse passes are blended
         NifLog.debug("NiVertexColorProperty property processed")
 
-
+    def process_nidither_property(self, prop):
+        """Import a NiDitherProperty """
+        NifLog.debug("NiDitherProperty property processed")
 
