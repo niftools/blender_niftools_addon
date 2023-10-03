@@ -78,7 +78,7 @@ class BhkCollision(Collision):
 
         # Set Havok Scale ratio
         b_scene = bpy.context.scene.niftools_scene
-        if b_scene.user_version == 12 and b_scene.user_version_2 == 83:
+        if b_scene.user_version == 12 and b_scene.user_version_2 >= 83:
             self.HAVOK_SCALE = consts.HAVOK_SCALE * 10
 
         # find physics properties/defaults
@@ -175,6 +175,7 @@ class BhkCollision(Collision):
         col_filter = b_obj.nifcollision.col_filter
 
         n_col_obj = block_store.create_block("bhkCollisionObject", b_obj)
+        n_col_obj.flags._value = 0
         if layer == NifClasses.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
             # animated collision requires flags = 41
             # unless it is a constrainted but not keyframed object
@@ -203,7 +204,7 @@ class BhkCollision(Collision):
 
     # TODO [collision] Move to collision
     def update_rigid_bodies(self):
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM', 'SKYRIM_SE'):
             n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifClasses.BhkRigidBody)]
 
             # update rigid body center of gravity and mass

@@ -80,7 +80,7 @@ class ObjectProperty:
 
                 block_store.register_block(bsshader)
                 n_block.add_property(bsshader)
-            elif bpy.context.scene.niftools_scene.game == 'SKYRIM':
+            elif bpy.context.scene.niftools_scene.game in ('SKYRIM', 'SKYRIM_SE'):
                 bsshader = self.bss_helper.export_bs_shader_property(b_mat)
 
                 block_store.register_block(bsshader)
@@ -223,7 +223,7 @@ class ObjectDataProperty:
         """Attaches a BSInvMarker to n_root if desired and fill in its values"""
         niftools_scene = bpy.context.scene.niftools_scene
         bs_inv_store = b_obj.niftools.bs_inv
-        if niftools_scene.game in ('SKYRIM',) and bs_inv_store:
+        if niftools_scene.game in ('SKYRIM', 'SKYRIM_SE',) and bs_inv_store:
             bs_inv = bs_inv_store[0]
             n_bs_inv_marker = NifClasses.BSInvMarker(n_root.context)
             n_bs_inv_marker.name = bs_inv.name
@@ -237,7 +237,7 @@ class ObjectDataProperty:
     def export_weapon_location(self, n_root, root_obj):
         # export weapon location
         game = bpy.context.scene.niftools_scene.game
-        if game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
+        if game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM', 'SKYRIM_SE',):
             loc = root_obj.niftools.prn_location
             if loc:
                 prn = block_store.create_block("NiStringExtraData")
@@ -250,7 +250,7 @@ class ObjectDataProperty:
         # TODO [object][property] Fixme
         NifLog.info("Checking collision")
         # activate oblivion/Fallout 3 collision and physics
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM', 'SKYRIM_SE',):
             b_obj = self.has_collision()
             if b_obj:
                 # enable collision

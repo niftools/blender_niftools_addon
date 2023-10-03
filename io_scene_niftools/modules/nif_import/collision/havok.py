@@ -62,7 +62,7 @@ class BhkCollision(Collision):
         collision.DICT_HAVOK_OBJECTS = {}
 
         # TODO [collision][havok][property] Need better way to set this, maybe user property
-        if bpy.context.scene.niftools_scene.user_version == 12 and bpy.context.scene.niftools_scene.user_version_2 == 83:
+        if bpy.context.scene.niftools_scene.user_version == 12 and bpy.context.scene.niftools_scene.user_version_2 >= 83:
             self.HAVOK_SCALE = consts.HAVOK_SCALE * 10
         else:
             self.HAVOK_SCALE = consts.HAVOK_SCALE
