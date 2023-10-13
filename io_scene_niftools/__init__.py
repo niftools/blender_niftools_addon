@@ -72,7 +72,7 @@ def locate_dependencies():
 
     with open(os.path.join(current_dir, "VERSION.txt")) as version:
         NifLog.info(f"Loading: Blender Niftools Addon: {version.read()}")
-        import generated.formats.nif as NifFormat
+        import nifgen.formats.nif as NifFormat
         NifLog.info(f"Loading: NifFormat: {NifFormat.__xml_version__}") # todo [generated] update this and library to have actual versioning
 
 

@@ -42,7 +42,7 @@ import os
 import bpy
 from bpy_extras.io_utils import orientation_helper
 import mathutils
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 
 import io_scene_niftools.utils.logging

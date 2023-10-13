@@ -39,7 +39,7 @@
 
 import os.path as path
 
-import generated.formats.nif as NifFormat
+import nifgen.formats.nif as NifFormat
 
 from io_scene_niftools.utils.logging import NifLog, NifError
 

@@ -39,7 +39,7 @@
 
 import bpy
 import mathutils
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import import animation
 from io_scene_niftools.modules.nif_import.animation import Animation

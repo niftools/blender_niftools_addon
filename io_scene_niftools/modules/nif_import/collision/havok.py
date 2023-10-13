@@ -43,8 +43,8 @@ import mathutils
 import operator
 from functools import reduce, singledispatch
 
-from generated.formats.nif import classes as NifClasses
-from generated.utils.quickhull import qhull3d
+from nifgen.formats.nif import classes as NifClasses
+from nifgen.utils.quickhull import qhull3d
 
 from io_scene_niftools.modules.nif_import import collision
 from io_scene_niftools.modules.nif_import.collision import Collision

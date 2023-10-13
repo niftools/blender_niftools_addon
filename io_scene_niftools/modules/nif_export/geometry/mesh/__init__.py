@@ -42,7 +42,7 @@ import mathutils
 import numpy as np
 import struct
 
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.geometry import mesh

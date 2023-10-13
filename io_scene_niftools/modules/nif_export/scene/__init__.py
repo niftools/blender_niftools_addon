@@ -40,7 +40,7 @@
 import bpy
 from io_scene_niftools.utils.singleton import NifOp
 from io_scene_niftools.utils.logging import NifLog
-import generated.formats.nif as NifFormat
+import nifgen.formats.nif as NifFormat
 
 def get_version_data():
     """ Returns NifFormat.NifFile of the correct version and user versions """

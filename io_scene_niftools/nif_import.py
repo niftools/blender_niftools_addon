@@ -39,8 +39,8 @@
 
 
 import bpy
-import generated.spells.nif.fix
-from generated.formats.nif import classes as NifClasses
+import nifgen.spells.nif.fix
+from nifgen.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.file_io.nif import NifFile
@@ -99,11 +99,11 @@ class NifImport(NifCommon):
 
             # merge skeleton roots and transform geometry into the rest pose
             if NifOp.props.merge_skeleton_roots:
-                generated.spells.nif.fix.SpellMergeSkeletonRoots(data=NifData.data).recurse()
+                nifgen.spells.nif.fix.SpellMergeSkeletonRoots(data=NifData.data).recurse()
             if NifOp.props.send_geoms_to_bind_pos:
-                generated.spells.nif.fix.SpellSendGeometriesToBindPosition(data=NifData.data).recurse()
+                nifgen.spells.nif.fix.SpellSendGeometriesToBindPosition(data=NifData.data).recurse()
             if NifOp.props.send_detached_geoms_to_node_pos:
-                generated.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=NifData.data).recurse()
+                nifgen.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=NifData.data).recurse()
             if NifOp.props.apply_skin_deformation:
                 VertexGroup.apply_skin_deformation(NifData.data)
 

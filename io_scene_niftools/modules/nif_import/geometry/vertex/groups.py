@@ -40,8 +40,8 @@
 import numpy as np
 from itertools import chain
 
-from generated.formats.nif import classes as NifClasses
-from generated.formats.nif.nimesh.structs.DisplayList import DisplayList
+from nifgen.formats.nif import classes as NifClasses
+from nifgen.formats.nif.nimesh.structs.DisplayList import DisplayList
 
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store, get_bone_name_for_blender
 from io_scene_niftools.utils.logging import NifLog

@@ -36,8 +36,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from generated.formats.nif import classes as NifClasses
-from generated.formats.nif.nimesh.structs.DisplayList import DisplayList
+from nifgen.formats.nif import classes as NifClasses
+from nifgen.formats.nif.nimesh.structs.DisplayList import DisplayList
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_import.animation.morph import MorphAnimation

@@ -39,7 +39,7 @@
 import bpy
 from itertools import chain
 
-from generated.formats.nif.versions import available_versions
+from nifgen.formats.nif.versions import available_versions
 
 
 nif_extensions = list(set(chain.from_iterable([version.ext for version in available_versions if version.supported])))

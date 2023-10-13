@@ -39,7 +39,7 @@
 import bpy
 from bpy_extras.io_utils import axis_conversion
 import mathutils
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.logging import NifLog
 

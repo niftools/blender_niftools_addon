@@ -38,8 +38,8 @@
 
 from itertools import repeat
 import logging
-from generated.utils.vertex_cache import get_cache_optimized_triangles, stable_stripify
-from generated.formats.nif import classes as NifClasses
+from nifgen.utils.vertex_cache import get_cache_optimized_triangles, stable_stripify
+from nifgen.formats.nif import classes as NifClasses
 
 def update_skin_partition(self,
                         maxbonesperpartition=4, maxbonespervertex=4,
@@ -80,7 +80,7 @@ def update_skin_partition(self,
         maximize_bone_sharing is true, sorts the parts within the shared bones,
         and sorts the shared bone lists based on its first body part.
     """
-    logger = logging.getLogger("generated.nif.nitribasedgeom")
+    logger = logging.getLogger("nifgen.nif.nitribasedgeom")
 
     # if trianglepartmap not specified, map everything to index 0
     if trianglepartmap is None:

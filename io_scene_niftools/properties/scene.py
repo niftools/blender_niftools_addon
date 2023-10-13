@@ -43,7 +43,7 @@ from bpy.props import PointerProperty, IntProperty, EnumProperty, StringProperty
 from bpy.types import PropertyGroup
 from itertools import chain
 
-from generated.formats.nif.versions import available_versions, set_game
+from nifgen.formats.nif.versions import available_versions, set_game
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
