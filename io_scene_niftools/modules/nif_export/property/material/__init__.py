@@ -58,7 +58,7 @@ class MaterialProp:
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
         # don't export material properties for these games
-        if bpy.context.scene.niftools_scene.game in ('SKYRIM', ):
+        if bpy.context.scene.niftools_scene.game in ('SKYRIM', 'SKYRIM_SE',):
             return
         name = block_store.get_full_name(b_mat)
         # create n_block
