@@ -19,6 +19,8 @@ Version v0.1.01
     - Fixes #600
     - Add exported tangents to Bully SE.
     - Always return copy for get_object_bind to prevent accidental modification.
+    - Added support for basic (unweighted) Skyrim SE export.
+    - Change generated module name from generated to nifgen to prevent collision with cobra-tools.
 - #592 Update to documentation
 - #593 Supported export for Sid Meier's Pirates!.
 
