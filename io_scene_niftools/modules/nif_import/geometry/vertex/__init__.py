@@ -68,7 +68,7 @@ class Vertex:
         assert len(b_mesh.vertices) == len(normals)
         # set normals
         if NifOp.props.use_custom_normals:
-            no_array = np.array(normals)
+            no_array = normals
             # the normals need to be pre-normalized or blender will do it inconsistely, leading to marked sharp edges
             no_array = Vertex.normalize(no_array)
             # use normals_split_custom_set_from_vertices to set the loop custom normals from the per-vertex normals

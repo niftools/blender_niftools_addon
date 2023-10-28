@@ -49,11 +49,7 @@ from io_scene_niftools.utils.logging import NifLog
 class Constraint:
 
     def __init__(self):
-        # TODO [collision][havok][property] Need better way to set this, maybe user property
-        if bpy.context.scene.niftools_scene.user_version == 12 and bpy.context.scene.niftools_scene.user_version_2 >= 83:
-            self.HAVOK_SCALE = collision.HAVOK_SCALE * 10
-        else:
-            self.HAVOK_SCALE = collision.HAVOK_SCALE
+        self.HAVOK_SCALE = NifData.data.havok_scale
 
     def import_bhk_constraints(self):
         for hkbody in collision.DICT_HAVOK_OBJECTS:

@@ -44,15 +44,15 @@ from nifgen.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import math, consts
+from io_scene_niftools.utils import math
 from io_scene_niftools.utils.logging import NifLog
-from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.singleton import NifOp, NifData
 
 
 class Constraint:
 
     def __init__(self):
-        self.HAVOK_SCALE = consts.HAVOK_SCALE
+        self.HAVOK_SCALE = NifData.data.havok_scale
 
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.

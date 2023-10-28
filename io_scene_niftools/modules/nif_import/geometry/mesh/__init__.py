@@ -127,9 +127,6 @@ class Mesh:
                 uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
             if len(normals) == 0:
                 normals = None
-            else:
-                # for some reason, normals can be four-component structs instead of 3, discard the 4th.
-                normals = np.array(normals)[:, :3]
         elif isinstance(n_block, NifClasses.NiTriBasedGeom):
 
             # shortcut for mesh geometry data
@@ -158,7 +155,8 @@ class Mesh:
         if vertex_colors is not None:
             Vertex.map_vertex_colors(b_mesh, vertex_colors)
         if normals is not None:
-            Vertex.map_normals(b_mesh, normals)
+            # for some cases, normals can be four-component structs instead of 3, discard the 4th.
+            Vertex.map_normals(b_mesh, np.array(normals)[:, :3])
 
         self.mesh_prop_processor.process_property_list(n_block, b_obj)
 
