@@ -37,8 +37,9 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from io_scene_niftools.utils.singleton import NifOp
 import numpy as np
+
+from io_scene_niftools.utils.singleton import NifOp
 
 
 class Vertex:

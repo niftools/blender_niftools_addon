@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import os
+import numpy as np
 
 import bpy
 from bpy_extras.io_utils import orientation_helper
@@ -141,10 +142,7 @@ class Armature:
                         if isinstance(geom, NifClasses.BSTriShape):
                             vertex_data = geom.get_vertex_data()
                             if isinstance(geom, NifClasses.BSDynamicTriShape):
-                                # BSDynamicTriShape uses Vector4 to store vertices with a 0 W component, which would
-                                # nullify translation when multiplied by a Matrix44. Hence, first conversion to Vector3
-                                # and assign the position values back later.
-                                vertices = [NifClasses.Vector3.from_value((vertex.x, vertex.y, vertex.z)) for vertex in geom.vertices]
+                                vertices = geom.vertices
                             else:
                                 vertices = [vert_data.vertex for vert_data in vertex_data]
 
@@ -152,22 +150,21 @@ class Armature:
                         else:
                             vertices = geom.data.vertices
                             normals = geom.data.normals
-                        for vert in vertices:
-                            newvert = vert * diff
-                            vert.x = newvert.x
-                            vert.y = newvert.y
-                            vert.z = newvert.z
-                        diff33 = diff.get_matrix_33()
-                        for norm in normals:
-                            newnorm = norm * diff33
-                            norm.x = newnorm.x
-                            norm.y = newnorm.y
-                            norm.z = newnorm.z
-                        if isinstance(geom, NifClasses.BSDynamicTriShape):
-                            for vertex, t_vertex in zip(geom.vertices, vertices):
-                                vertex.x = t_vertex.x
-                                vertex.y = t_vertex.y
-                                vertex.z = t_vertex.z
+                        # BSDynamicTriShape uses Vector4 to store vertices with a 0 W component, which would
+                        # nullify translation when multiplied by a Matrix44. Hence, first conversion to three-component
+                        # vector
+                        np_vertices = np.array(vertices, dtype=float)[:,:3]
+                        np_vertices = np.concatenate((np_vertices, np.ones((len(np_vertices), 1), dtype=float)), axis=1)
+                        np_diff = np.array(diff.as_list())
+                        np_vertices = np_vertices @ np_diff
+                        np_normals = np.array(normals, dtype=float)
+                        np_diff33 = np.array(diff.get_matrix_33().as_list())
+                        np_normals = np_normals @ np_diff33
+                        # assign the transformed values back
+                        for vertex, t_vertex in zip(vertices, np_vertices[:, :3]):
+                            vertex.x, vertex.y, vertex.z = t_vertex
+                        for normal, t_normal in zip(normals, np_normals):
+                            normal.x, normal.y, normal.z = t_normal
                         break
                 # store bind pose
                 for bonenode, bonedata in self.bones_iter(skininst):

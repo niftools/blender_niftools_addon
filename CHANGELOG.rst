@@ -1,4 +1,4 @@
-Version v0.1.01
+Version v0.1.1
 ===============
 
 - #591 Expansion of DisplayList processing and small fixes.
@@ -24,7 +24,7 @@ Version v0.1.01
 - #592 Update to documentation
 - #593 Supported export for Sid Meier's Pirates!.
 
-Version v0.1.00
+Version v0.1.0
 ===============
 
 - #576 Updates to documentation, changelog and makezip.bat (copies over generated folder from cobra-tools).

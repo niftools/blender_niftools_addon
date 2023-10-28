@@ -246,7 +246,6 @@ class VertexGroup:
                             for w, b_i in zip(vertex_weights, bone_indices):
                                 if w > 0:
                                     group_name = bone_names[b_i]
-                                    # conversion from numpy.uint16 to int necessary because Blender doesn't accept them
                                     bone_weights_map[group_name].append((vert, w))
         return bone_weights_map
 
@@ -268,6 +267,7 @@ class VertexGroup:
             else:
                 v_group = b_obj.vertex_groups[bone_name]
             for (v_index, weight) in index_weights:
+                # conversion from numpy.uint16 to int necessary because Blender doesn't accept them
                 v_group.add([int(v_index)], weight, 'REPLACE')
 
     @staticmethod
