@@ -154,7 +154,7 @@ class Armature:
                         # nullify translation when multiplied by a Matrix44. Hence, first conversion to three-component
                         # vector
                         np_vertices = np.array(vertices, dtype=float)[:,:3]
-                        np_vertices = np.concatenate((np_vertices, np.ones((len(np_vertices), 1), dtype=float)), axis=1)
+                        np_vertices = np.pad(np_vertices, (0, 1), constant_values=1.0)
                         np_diff = np.array(diff.as_list())
                         np_vertices = np_vertices @ np_diff
                         np_normals = np.array(normals, dtype=float)
