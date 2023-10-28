@@ -102,7 +102,7 @@ class Mesh:
             mesh_materials = [None]
 
         # vertex color check
-        mesh_hasvcol = eval_mesh.vertex_colors
+        mesh_hasvcol = len(eval_mesh.vertex_colors) > 0 or len(eval_mesh.color_attributes) > 0
         # list of body part (name, index, vertices) in this mesh
         polygon_parts = self.get_polygon_parts(b_obj, eval_mesh)
         game = bpy.context.scene.niftools_scene.game

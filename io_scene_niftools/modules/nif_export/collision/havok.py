@@ -57,7 +57,8 @@ class BhkCollision(Collision):
     EXPORT_OB_SOLID = True
 
     def __init__(self):
-        self.HAVOK_SCALE = NifData.data.havok_scale
+        # to be filled during the export process:
+        self.HAVOK_SCALE = None
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -77,7 +78,6 @@ class BhkCollision(Collision):
         coll_ispacked = (rigid_body.collision_shape == 'MESH')
 
         # Set Havok Scale ratio
-        b_scene = bpy.context.scene.niftools_scene
         self.HAVOK_SCALE = NifData.data.havok_scale
 
         # find physics properties/defaults

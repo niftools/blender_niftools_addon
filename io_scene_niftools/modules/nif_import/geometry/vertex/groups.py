@@ -152,7 +152,7 @@ class VertexGroup:
                 displaylist_data = ni_block.geomdata_by_name("DISPLAYLIST", False, False)
                 if len(displaylist_data) > 0:
                     displaylist = DisplayList(displaylist_data)
-                    weight_indices = displaylist.create_mesh_data(ni_block)[2]
+                    weight_indices = displaylist.extract_mesh_data(ni_block)[2]
                 else:
                     weight_indices = ni_block.extra_em_data.vertex_to_weight_map
                 bone_indices = np.zeros((len(weight_indices), 3), dtype=int)

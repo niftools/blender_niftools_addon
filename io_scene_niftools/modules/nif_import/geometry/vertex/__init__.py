@@ -39,6 +39,8 @@
 
 import numpy as np
 
+import bpy
+
 from io_scene_niftools.utils.singleton import NifOp
 
 
@@ -46,10 +48,14 @@ class Vertex:
 
     @staticmethod
     def map_vertex_colors(b_mesh, vertex_colors):
-        # [TODO] in Blender 3.2, vertex_colors was deprecated (https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API)
+        # in Blender 3.2, vertex_colors was deprecated (https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API)
         # so use Color attribute instead when 3.2 or greater
-        b_mesh.vertex_colors.new(name=f"RGBA")
-        b_mesh.vertex_colors[-1].data.foreach_set("color", [channel for col in [vertex_colors[loop.vertex_index] for loop in b_mesh.loops] for channel in (col.r, col.g, col.b, col.a)])
+        if bpy.app.version >= (3, 2, 0):
+            b_mesh.color_attributes.new(name="RGBA",type="FLOAT_COLOR",domain="POINT")
+            b_mesh.color_attributes[-1].data.foreach_set("color", [channel for color in vertex_colors for channel in color])
+        else:
+            b_mesh.vertex_colors.new(name="RGBA")
+            b_mesh.vertex_colors[-1].data.foreach_set("color", [channel for col in [vertex_colors[loop.vertex_index] for loop in b_mesh.loops] for channel in (col.r, col.g, col.b, col.a)])
 
     @staticmethod
     def map_uv_layer(b_mesh, uv_sets):

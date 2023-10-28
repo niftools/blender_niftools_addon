@@ -103,7 +103,7 @@ class Mesh:
             displaylist_data = n_block.geomdata_by_name("DISPLAYLIST", False, False)
             if len(displaylist_data) > 0:
                 displaylist = DisplayList(displaylist_data)
-                vertices_info, triangles, weights = displaylist.create_mesh_data(n_block)
+                vertices_info, triangles, weights = displaylist.extract_mesh_data(n_block)
                 vertices = vertices_info[0]
                 normals = vertices_info[1]
                 vertex_colors = [NifClasses.Color4.from_value(color) for color in vertices_info[2]]

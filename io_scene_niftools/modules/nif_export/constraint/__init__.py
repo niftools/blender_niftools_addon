@@ -52,7 +52,8 @@ from io_scene_niftools.utils.singleton import NifOp, NifData
 class Constraint:
 
     def __init__(self):
-        self.HAVOK_SCALE = NifData.data.havok_scale
+        # to be filled during the export process:
+        self.HAVOK_SCALE = None
 
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
@@ -69,6 +70,9 @@ class Constraint:
         if not hasattr(b_obj, "constraints"):
             # skip text buffers etc
             return
+
+        # Set Havok Scale ratio
+        self.HAVOK_SCALE = NifData.data.havok_scale
 
         for b_constr in b_obj.constraints:
             # rigid body joints
