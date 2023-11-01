@@ -105,7 +105,8 @@ class Mesh:
         mesh_hasvcol = len(eval_mesh.vertex_colors) > 0 or len(eval_mesh.color_attributes) > 0
         # list of body part (name, index, vertices) in this mesh
         polygon_parts = self.get_polygon_parts(b_obj, eval_mesh)
-        game = bpy.context.scene.niftools_scene.game
+        nif_scene = bpy.context.scene.niftools_scene
+        game = nif_scene.game
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
@@ -117,7 +118,7 @@ class Mesh:
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True  # for proper lighting
-                if (game in ('SKYRIM', 'SKYRIM_SE')) and b_mat.niftools_shader.model_space_normals:
+                if nif_scene.is_skyrim() and b_mat.niftools_shader.model_space_normals:
                     mesh_hasnormals = False  # for proper lighting
 
             # create a n_geom block
@@ -185,17 +186,12 @@ class Mesh:
 
             use_tangents = False
             if b_uv_layers and mesh_hasnormals:
-                default_use_tangents = ('OBLIVION',
-                                        'FALLOUT_3',
-                                        'FALLOUT_NV',
-                                        'SKYRIM',
-                                        'SKYRIM_SE',
-                                        'BULLY_SE',
+                default_use_tangents = ('BULLY_SE',
                                         )
-                if game in default_use_tangents or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
+                if game in default_use_tangents or nif_scene.is_bs() or (game in self.texture_helper.USED_EXTRA_SHADER_TEXTURES):
                     use_tangents = True
 
-            if game in ('FALLOUT_3', 'FALLOUT_NV', 'SKYRIM', 'SKYRIM_SE'):
+            if nif_scene.is_fo3() or nif_scene.is_skyrim():
                 if len(b_uv_layers) > 1:
                     raise NifError(f"{game} does not support multiple UV layers.")
 
@@ -794,7 +790,7 @@ class Mesh:
             trishape.flags = b_obj.niftools.flags
         # fall back to defaults
         else:
-            if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
+            if bpy.context.scene.niftools_scene.is_bs():
                 trishape.flags = 0x000E
 
             elif bpy.context.scene.niftools_scene.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):

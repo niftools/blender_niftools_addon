@@ -58,7 +58,7 @@ class MaterialProp:
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
         # don't export material properties for these games
-        if bpy.context.scene.niftools_scene.game in ('SKYRIM', 'SKYRIM_SE',):
+        if bpy.context.scene.niftools_scene.is_skyrim():
             return
         name = block_store.get_full_name(b_mat)
         # create n_block
@@ -69,7 +69,7 @@ class MaterialProp:
         specialnames = ("EnvMap2", "EnvMap", "skin", "Hair", "dynalpha", "HideSecret", "Lava")
 
         # hack to preserve EnvMap2, skinm, ... named blocks (even if they got renamed to EnvMap2.xxx or skin.xxx on import)
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.is_bs():
             for specialname in specialnames:
                 if name.lower() == specialname.lower() or name.lower().startswith(specialname.lower() + "."):
                     if name != specialname:

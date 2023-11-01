@@ -108,6 +108,20 @@ class Scene(PropertyGroup):
         default='UNKNOWN',
         update=update_version_from_game)
 
+    def is_bs(self):
+        return self.game in ('OBLIVION',
+                            'FALLOUT_3',
+                            'FALLOUT_NV',
+                            'SKYRIM',
+                            'SKYRIM_SE',
+                            )
+
+    def is_fo3(self):
+        return self.game in ('FALLOUT_3', 'FALLOUT_NV')
+
+    def is_skyrim(self):
+        return self.game in ('SKYRIM', 'SKYRIM_SE')
+
     scale_correction: bpy.props.FloatProperty(
         name="Scale Correction",
         description="Changes size of mesh to fit onto Blender's default grid",

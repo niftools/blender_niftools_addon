@@ -69,11 +69,12 @@ class TransformAnimation(Animation):
     def export_kf_root(self, b_armature=None):
         """Creates and returns a KF root block and exports controllers for objects and bones"""
         scene = bpy.context.scene
-        game = scene.niftools_scene.game
+        nif_scene = scene.niftools_scene
+        game = nif_scene.game
         if game in ('MORROWIND', 'FREEDOM_FORCE'):
             kf_root = block_store.create_block("NiSequenceStreamHelper")
-        elif game in (
-                'SKYRIM', 'OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH',
+        elif nif_scene.is_bs() or game in (
+                'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH',
                 'SHIN_MEGAMI_TENSEI_IMAGINE'):
             kf_root = block_store.create_block("NiControllerSequence")
         else:
@@ -87,7 +88,7 @@ class TransformAnimation(Animation):
             b_action = self.get_active_action(b_armature)
             for b_bone in b_armature.data.bones:
                 self.export_transforms(kf_root, b_armature, b_action, b_bone)
-            if game in ('SKYRIM',):
+            if nif_scene.is_skyrim():
                 targetname = "NPC Root [Root]"
             else:
                 # quick hack to set correct target name

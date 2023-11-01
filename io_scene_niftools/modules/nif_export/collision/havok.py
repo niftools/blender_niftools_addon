@@ -203,7 +203,7 @@ class BhkCollision(Collision):
 
     # TODO [collision] Move to collision
     def update_rigid_bodies(self):
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'FALLOUT_NV', 'SKYRIM', 'SKYRIM_SE'):
+        if bpy.context.scene.niftools_scene.is_bs():
             n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifClasses.BhkRigidBody)]
 
             # update rigid body center of gravity and mass
