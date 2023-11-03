@@ -1,0 +1,7 @@
+version: "3.9"
+
+services:
+  codegen:
+    build: .
+    volumes:
+      - ./temp/io_scene_niftools/dependencies:/output

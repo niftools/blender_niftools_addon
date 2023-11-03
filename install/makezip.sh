@@ -32,6 +32,7 @@ cp -r "${ADDON_IN}" "${ADDON_OUT}"
 echo "Creating dependencies folder ${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 #python -m pip install -i https://test.pypi.org/simple/ PyFFI==2.2.4.dev5 --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 python -m pip install "PyFFI==${PYFFI_VERSION}" --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
+docker compose up || exit 1
 
 echo "Copying loose files"
 cp -r "$GENERATED_FOLDER" "${DEPS_OUT:-${BUILD_DIR}/dependencies}/nifgen"
