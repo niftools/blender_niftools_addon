@@ -39,7 +39,7 @@
 import bpy
 import mathutils
 
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
@@ -57,7 +57,8 @@ class BhkCollision(Collision):
     EXPORT_OB_SOLID = True
 
     def __init__(self):
-        self.HAVOK_SCALE = consts.HAVOK_SCALE
+        # to be filled during the export process:
+        self.HAVOK_SCALE = None
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -77,9 +78,7 @@ class BhkCollision(Collision):
         coll_ispacked = (rigid_body.collision_shape == 'MESH')
 
         # Set Havok Scale ratio
-        b_scene = bpy.context.scene.niftools_scene
-        if b_scene.user_version == 12 and b_scene.user_version_2 == 83:
-            self.HAVOK_SCALE = consts.HAVOK_SCALE * 10
+        self.HAVOK_SCALE = NifData.data.havok_scale
 
         # find physics properties/defaults
         # get havok material name from material name
@@ -175,6 +174,7 @@ class BhkCollision(Collision):
         col_filter = b_obj.nifcollision.col_filter
 
         n_col_obj = block_store.create_block("bhkCollisionObject", b_obj)
+        n_col_obj.flags._value = 0
         if layer == NifClasses.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
             # animated collision requires flags = 41
             # unless it is a constrainted but not keyframed object
@@ -203,7 +203,7 @@ class BhkCollision(Collision):
 
     # TODO [collision] Move to collision
     def update_rigid_bodies(self):
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.is_bs():
             n_rigid_bodies = [n_rigid_body for n_rigid_body in block_store.block_to_obj if isinstance(n_rigid_body, NifClasses.BhkRigidBody)]
 
             # update rigid body center of gravity and mass
@@ -244,9 +244,9 @@ class BhkCollision(Collision):
         n_col_shape = block_store.create_block("bhkPackedNiTriStripsShape", b_obj)
         # TODO [collision] radius has default of 0.1, but maybe let depend on margin
         scale = n_col_shape.scale
-        scale.x = 0
-        scale.y = 0
-        scale.z = 0
+        scale.x = 1.0
+        scale.y = 1.0
+        scale.z = 1.0
         scale.w = 0
         n_col_shape.scale_copy = scale
         n_col_mopp.shape = n_col_shape

@@ -41,7 +41,7 @@
 import os.path
 
 import bpy
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.animation.transform import TransformAnimation
 from io_scene_niftools.modules.nif_export.constraint import Constraint
@@ -164,7 +164,7 @@ class NifExport(NifCommon):
                                     root_block = new_block
 
             # oblivion skeleton export: check that all bones have a transform controller and transform interpolator
-            if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
+            if bpy.context.scene.niftools_scene.is_bs() and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 self.transform_anim.add_dummy_controllers()
 
             # bhkConvexVerticesShape of children of bhkListShapes need an extra bhkConvexTransformShape (see issue #3308638, reported by Koniption)
@@ -226,14 +226,14 @@ class NifExport(NifCommon):
             # apply scale
             data.roots = [root_block]
             scale_correction = bpy.context.scene.niftools_scene.scale_correction
-            if abs(scale_correction) > NifOp.props.epsilon:
-                self.apply_scale(data, round(1 / NifOp.props.scale_correction))
+            if abs(1 - scale_correction) > NifOp.props.epsilon:
+                self.apply_scale(data, 1 / scale_correction)
                 # also scale egm
                 if EGMData.data:
                     EGMData.data.apply_scale(1 / scale_correction)
 
             # generate mopps (must be done after applying scale!)
-            if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            if bpy.context.scene.niftools_scene.is_bs():
                 for block in block_store.block_to_obj:
                     if isinstance(block, NifClasses.BhkMoppBvTreeShape):
                         NifLog.info("Generating mopp...")

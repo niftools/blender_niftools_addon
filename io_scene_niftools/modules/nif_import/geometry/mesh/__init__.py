@@ -36,8 +36,10 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from generated.formats.nif import classes as NifClasses
-from generated.formats.nif.nimesh.structs.DisplayList import DisplayList
+import numpy as np
+
+from nifgen.formats.nif import classes as NifClasses
+from nifgen.formats.nif.nimesh.structs.DisplayList import DisplayList
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_import.animation.morph import MorphAnimation
@@ -93,29 +95,25 @@ class Mesh:
             if vertex_attributes.u_vs:
                 uvs = [[vertex.uv for vertex in vertex_data]]
             if vertex_attributes.vertex_colors:
-                vertex_colors = [vertex.vertex_colors for vertex in vertex_data]
+                vertex_colors = [NifClasses.Color4.from_value(tuple(c / 255.0 for c in vertex.vertex_colors)) for vertex in vertex_data]
             if vertex_attributes.normals:
                 normals = [vertex.normal for vertex in vertex_data]
         elif isinstance(n_block, NifClasses.NiMesh):
-            # if it has a displaylist then we don't know how to process this NiMesh
+            # if it has a displaylist then the vertex data is encoded differently
             displaylist_data = n_block.geomdata_by_name("DISPLAYLIST", False, False)
             if len(displaylist_data) > 0:
                 displaylist = DisplayList(displaylist_data)
-                vertices_info, triangles = displaylist.create_mesh_data(n_block)
+                vertices_info, triangles, weights = displaylist.extract_mesh_data(n_block)
                 vertices = vertices_info[0]
                 normals = vertices_info[1]
                 vertex_colors = [NifClasses.Color4.from_value(color) for color in vertices_info[2]]
-                uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in vertices_info[3]]]
+                uvs = vertices_info[3]
             else:
                 # get the data from the associated nidatastreams based on the description in the component semantics
                 vertices.extend(n_block.geomdata_by_name("POSITION", sep_datastreams=False))
                 vertices.extend(n_block.geomdata_by_name("POSITION_BP", sep_datastreams=False))
                 triangles = n_block.get_triangles()
                 uvs = n_block.geomdata_by_name("TEXCOORD")
-                if len(uvs) == 0:
-                    uvs = None
-                else:
-                    uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
                 vertex_colors = n_block.geomdata_by_name("COLOR", sep_datastreams=False)
                 if len(vertex_colors) == 0:
                     vertex_colors = None
@@ -123,12 +121,12 @@ class Mesh:
                     vertex_colors = [NifClasses.Color4.from_value(color) for color in vertex_colors]
                 normals = n_block.geomdata_by_name("NORMAL", sep_datastreams=False)
                 normals.extend(n_block.geomdata_by_name("NORMAL_BP", sep_datastreams=False))
-                if len(normals) == 0:
-                    normals = None
-                else:
-                    # for some reason, normals can be four-component structs instead of 3, discard the 4th.
-                    if len(normals[0]) > 3:
-                        normals = [(n[0], n[1], n[2]) for n in normals]
+            if len(uvs) == 0:
+                uvs = None
+            else:
+                uvs = [[NifClasses.TexCoord.from_value(tex_coord) for tex_coord in uv_coords] for uv_coords in uvs]
+            if len(normals) == 0:
+                normals = None
         elif isinstance(n_block, NifClasses.NiTriBasedGeom):
 
             # shortcut for mesh geometry data
@@ -157,7 +155,8 @@ class Mesh:
         if vertex_colors is not None:
             Vertex.map_vertex_colors(b_mesh, vertex_colors)
         if normals is not None:
-            Vertex.map_normals(b_mesh, normals)
+            # for some cases, normals can be four-component structs instead of 3, discard the 4th.
+            Vertex.map_normals(b_mesh, np.array(normals)[:, :3])
 
         self.mesh_prop_processor.process_property_list(n_block, b_obj)
 

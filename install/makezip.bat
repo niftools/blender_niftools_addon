@@ -26,7 +26,7 @@ mkdir "%DEPS%"
 
 python -m pip install "PyFFI==%PYFFI_VERSION%" --target="%DEPS%"
 
-xcopy "%GENERATED_FOLDER%" "%DEPS%\generated" /s /q /i
+xcopy "%GENERATED_FOLDER%" "%DEPS%\nifgen" /s /q /i
 
 xcopy "%ROOT%"\AUTHORS.rst io_scene_niftools
 xcopy "%ROOT%"\CHANGELOG.rst io_scene_niftools

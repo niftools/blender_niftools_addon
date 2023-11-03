@@ -82,7 +82,7 @@ class BlockRegistry:
         """Get name of n_block, ready for blender but not necessarily unique.
 
         :param n_block: A named nif block.
-        :type n_block: :class:`~generated.formats.nif.nimain.niobjects.NiObjectNET`
+        :type n_block: :class:`~nifgen.formats.nif.nimain.niobjects.NiObjectNET`
         """
         if n_block is None:
             return ""

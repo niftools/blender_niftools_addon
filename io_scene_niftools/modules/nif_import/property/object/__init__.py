@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 import bpy
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from math import pi
 

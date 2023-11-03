@@ -47,7 +47,7 @@ from bpy.props import (PointerProperty,
                        )
 from bpy.types import PropertyGroup, Object
 
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -75,6 +75,7 @@ prn_map = {"OBLIVION":   [("SideWeapon", ""),
                           ("NPC Head [Head]", "Used for helmets"),
                           ("NPC R Finger10 [RF10]", "Used for rings")]
            }
+prn_map["FALLOUT_NV"] = prn_map["FALLOUT_3"]
 prn_map["SKYRIM_SE"] = prn_map["SKYRIM"]
 
 

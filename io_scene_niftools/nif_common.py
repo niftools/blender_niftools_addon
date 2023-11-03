@@ -38,9 +38,9 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import generated.formats.nif as NifFormat
-from generated.spells.nif import NifToaster
-from generated.spells.nif.fix import SpellScale
+import nifgen.formats.nif as NifFormat
+from nifgen.spells.nif import NifToaster
+from nifgen.spells.nif.fix import SpellScale
 
 from io_scene_niftools.utils import debugging
 from io_scene_niftools.utils.singleton import NifOp

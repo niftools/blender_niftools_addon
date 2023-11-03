@@ -46,7 +46,7 @@ from bpy.props import (PointerProperty,
                        )
 from bpy.types import PropertyGroup
 
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -60,7 +60,7 @@ def game_specific_col_layer_items(self, context):
     col_layer_format = None
     if current_game in ("OBLIVION", "OBLIVION_KF"):
         col_layer_format = NifClasses.OblivionLayer
-    elif current_game == "FALLOUT_3":
+    elif current_game in ("FALLOUT_3", 'FALLOUT_NV'):
         col_layer_format = NifClasses.Fallout3Layer
     elif current_game in ("SKYRIM" , "SKYRIM_SE", "FALLOUT_4"):
         col_layer_format = NifClasses.SkyrimLayer

@@ -40,19 +40,20 @@
 import bpy
 import mathutils
 
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.modules.nif_export.block_registry import block_store
-from io_scene_niftools.utils import math, consts
+from io_scene_niftools.utils import math
 from io_scene_niftools.utils.logging import NifLog
-from io_scene_niftools.utils.singleton import NifOp
+from io_scene_niftools.utils.singleton import NifOp, NifData
 
 
 class Constraint:
 
     def __init__(self):
-        self.HAVOK_SCALE = consts.HAVOK_SCALE
+        # to be filled during the export process:
+        self.HAVOK_SCALE = None
 
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
@@ -70,10 +71,13 @@ class Constraint:
             # skip text buffers etc
             return
 
+        # Set Havok Scale ratio
+        self.HAVOK_SCALE = NifData.data.havok_scale
+
         for b_constr in b_obj.constraints:
             # rigid body joints
             if b_constr.type == 'RIGID_BODY_JOINT':
-                if bpy.context.scene.niftools_scene.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+                if bpy.context.scene.niftools_scene.is_bs():
                     NifLog.warn(f"Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {b_constr}.")
                     continue
                 # check that the object is a rigid body
@@ -126,7 +130,7 @@ class Constraint:
                         max_friction = 0
                     else:
                         # non-malleable typically have 10
-                        if bpy.context.scene.niftools_scene.game == 'FALLOUT_3':
+                        if bpy.context.scene.niftools_scene.is_fo3():
                             max_friction = 100
                         else:  # oblivion
                             max_friction = 10

@@ -43,8 +43,8 @@ import mathutils
 import operator
 from functools import reduce, singledispatch
 
-from generated.formats.nif import classes as NifClasses
-from generated.utils.quickhull import qhull3d
+from nifgen.formats.nif import classes as NifClasses
+from nifgen.utils.quickhull import qhull3d
 
 from io_scene_niftools.modules.nif_import import collision
 from io_scene_niftools.modules.nif_import.collision import Collision
@@ -61,11 +61,7 @@ class BhkCollision(Collision):
         # we use this dictionary to set the physics constraints (ragdoll etc)
         collision.DICT_HAVOK_OBJECTS = {}
 
-        # TODO [collision][havok][property] Need better way to set this, maybe user property
-        if bpy.context.scene.niftools_scene.user_version == 12 and bpy.context.scene.niftools_scene.user_version_2 == 83:
-            self.HAVOK_SCALE = consts.HAVOK_SCALE * 10
-        else:
-            self.HAVOK_SCALE = consts.HAVOK_SCALE
+        self.HAVOK_SCALE = NifData.data.havok_scale
 
         self.process_bhk = singledispatch(self.process_bhk)
         self.process_bhk.register(NifClasses.BhkTransformShape, self.import_bhktransform)

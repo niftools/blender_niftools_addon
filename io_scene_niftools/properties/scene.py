@@ -43,7 +43,7 @@ from bpy.props import PointerProperty, IntProperty, EnumProperty, StringProperty
 from bpy.types import PropertyGroup
 from itertools import chain
 
-from generated.formats.nif.versions import available_versions, set_game
+from nifgen.formats.nif.versions import available_versions, set_game
 
 from io_scene_niftools.utils.decorators import register_classes, unregister_classes
 
@@ -107,6 +107,20 @@ class Scene(PropertyGroup):
         description="For which game to export",
         default='UNKNOWN',
         update=update_version_from_game)
+
+    def is_bs(self):
+        return self.game in ('OBLIVION',
+                            'FALLOUT_3',
+                            'FALLOUT_NV',
+                            'SKYRIM',
+                            'SKYRIM_SE',
+                            )
+
+    def is_fo3(self):
+        return self.game in ('FALLOUT_3', 'FALLOUT_NV')
+
+    def is_skyrim(self):
+        return self.game in ('SKYRIM', 'SKYRIM_SE')
 
     scale_correction: bpy.props.FloatProperty(
         name="Scale Correction",

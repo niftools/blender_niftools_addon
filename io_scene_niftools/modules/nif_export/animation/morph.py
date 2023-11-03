@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 from pyffi.formats.egm import EgmFormat
 
 from io_scene_niftools.modules.nif_export.animation import Animation

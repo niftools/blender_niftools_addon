@@ -43,7 +43,7 @@ import time
 
 from functools import singledispatch
 from bisect import bisect_left
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.animation import Animation
 from io_scene_niftools.modules.nif_import.object import block_registry

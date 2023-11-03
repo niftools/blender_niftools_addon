@@ -39,7 +39,7 @@
 import bpy
 from bpy_extras.io_utils import axis_conversion
 import mathutils
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.utils.logging import NifLog
 
@@ -169,7 +169,7 @@ def get_object_bind(b_obj):
             return mpi.inverted() @ b_obj.matrix_basis
         # just get the local matrix
         else:
-            return b_obj.matrix_local
+            return b_obj.matrix_local.copy()
     # Nonetype, maybe other weird stuff
     return mathutils.Matrix()
 

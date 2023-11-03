@@ -39,7 +39,7 @@
 from abc import ABC
 
 import bpy
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.block_registry import block_store
 from io_scene_niftools.utils.singleton import NifOp, NifData
