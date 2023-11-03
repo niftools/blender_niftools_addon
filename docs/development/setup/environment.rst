@@ -68,6 +68,10 @@ Environment Variables
     set -X BLENDER_ADDONS_DIR=<path_to_blender_addons>
     BLENDER_HOME="<path_to_blender_executable>"
 
+.. note::
+
+    If you've installed Blender from the package manager, just set it to ``/usr/bin``.
+
 **Mac**
 
 .. code-block:: shell

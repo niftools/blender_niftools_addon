@@ -75,7 +75,7 @@ class TransformAnimation(Animation):
             kf_root = block_store.create_block("NiSequenceStreamHelper")
         elif nif_scene.is_bs() or game in (
                 'CIVILIZATION_IV', 'ZOO_TYCOON_2', 'FREEDOM_FORCE_VS_THE_3RD_REICH',
-                'SHIN_MEGAMI_TENSEI_IMAGINE'):
+                'SHIN_MEGAMI_TENSEI_IMAGINE', 'SID_MEIER_S_PIRATES'):
             kf_root = block_store.create_block("NiControllerSequence")
         else:
             raise NifError(f"Keyframe export for '{game}' is not supported.")
@@ -110,6 +110,8 @@ class TransformAnimation(Animation):
         kf_root.weight = 1.0
         kf_root.cycle_type = NifClasses.CycleType.CYCLE_CLAMP
         kf_root.frequency = 1.0
+        if game in ('SID_MEIER_S_PIRATES',):
+            kf_root.accum_root_name = targetname
 
         if anim_textextra.num_text_keys > 0:
             kf_root.start_time = anim_textextra.text_keys[0].time
