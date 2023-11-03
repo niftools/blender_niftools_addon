@@ -34,7 +34,7 @@ echo "Creating dependencies folder ${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 python -m pip install "PyFFI==${PYFFI_VERSION}" --target="${DEPS_OUT:-${BUILD_DIR}/dependencies}"
 
 echo "Copying loose files"
-cp -r "$GENERATED_FOLDER" "${DEPS_OUT:-${BUILD_DIR}/dependencies}/generated"
+cp -r "$GENERATED_FOLDER" "${DEPS_OUT:-${BUILD_DIR}/dependencies}/nifgen"
 cp "${ROOT}"/AUTHORS.rst "${ADDON_OUT}"
 cp "${ROOT}"/CHANGELOG.rst "${ADDON_OUT}"
 cp "${ROOT}"/LICENSE.rst "${ADDON_OUT}"
