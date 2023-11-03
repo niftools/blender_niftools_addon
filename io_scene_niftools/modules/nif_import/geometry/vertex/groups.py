@@ -40,7 +40,8 @@
 import numpy as np
 from itertools import chain
 
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
+from nifgen.formats.nif.nimesh.structs.DisplayList import DisplayList
 
 from io_scene_niftools.modules.nif_import.object.block_registry import block_store, get_bone_name_for_blender
 from io_scene_niftools.utils.logging import NifLog
@@ -123,17 +124,40 @@ class VertexGroup:
                 vold.y = vnew.y
                 vold.z = vnew.z
 
-    @staticmethod
-    def import_skin(ni_block, b_obj):
+    @classmethod
+    def import_skin(cls, ni_block, b_obj):
         """Import a NiSkinInstance and its contents as vertex groups"""
+        bone_weights_map = cls.get_bone_weights(ni_block)
+        cls.set_bone_weights(bone_weights_map, b_obj)
+        face_maps = cls.get_face_maps(ni_block)
+        cls.set_face_maps(face_maps, b_obj)
+
+    @staticmethod
+    def get_bone_weights(ni_block):
+        """Retrieve the vertex weights per bone per vertex
+
+        :param ni_block: NiObject from which to take the weights
+        :type ni_block: NifClasses.NiAVObject
+        :return: dictionary mapping bone name to vertex indices and weights
+        :rtype: dict(str, list(tuple(int, float)))
+
+        """
+        bone_weights_map = {}
         if isinstance(ni_block, NifClasses.NiMesh):
             if ni_block.has_extra_em_data:
                 # only for Epic Mickey nifs for now
                 # get all the weights and the corresponding bone (indices)
-                bone_indices = np.zeros((len(b_obj.data.vertices), 3), dtype=int)
-                bone_weights = np.zeros((len(b_obj.data.vertices), 3), dtype=float)
                 bone_weights_set = ni_block.extra_em_data.weights
-                for i, set_index in enumerate(ni_block.extra_em_data.vertex_to_weight_map):
+                # if it has a displaylist then the vertex data is encoded differently
+                displaylist_data = ni_block.geomdata_by_name("DISPLAYLIST", False, False)
+                if len(displaylist_data) > 0:
+                    displaylist = DisplayList(displaylist_data)
+                    weight_indices = displaylist.extract_mesh_data(ni_block)[2]
+                else:
+                    weight_indices = ni_block.extra_em_data.vertex_to_weight_map
+                bone_indices = np.zeros((len(weight_indices), 3), dtype=int)
+                bone_weights = np.zeros((len(weight_indices), 3), dtype=float)
+                for i, set_index in enumerate(weight_indices):
                     weight = bone_weights_set[set_index]
                     bone_indices[i] = weight.bone_indices
                     bone_weights[i] = weight.weights
@@ -152,9 +176,8 @@ class VertexGroup:
                 for palette, index_datas in zip(bone_palettes, bone_index_datas):
                     bone_indices.extend([[palette[i] for i in indices] for indices in index_datas])
 
-            # create all vgroups for this block's bones
-            for group_name in bone_names:
-                b_obj.vertex_groups.new(name=group_name)
+            for name in bone_names:
+                bone_weights_map[name] = []
 
             # add every vertex to the corresponding groups
             for i, (weights, indices) in enumerate(zip(bone_weights, bone_indices)):
@@ -162,16 +185,35 @@ class VertexGroup:
                     # weights and indices is not necessarily equally long - luckily zip limits to the shortest
                     if b_i >= 0 and w > 0:
                         group_name = bone_names[b_i]
-                        v_group = b_obj.vertex_groups[group_name]
-                        v_group.add([int(i)], w, 'REPLACE')
+                        bone_weights_map[group_name].append((i, w))
 
         else:
             skininst = ni_block.skin_instance
             if skininst:
                 skindata = skininst.data
                 bones = skininst.bones
+                if isinstance(skininst, NifClasses.BSSkinInstance):
+                    bone_names = [None for _ in bones]
+                    for idx, n_bone in enumerate(bones):
+                        if not n_bone:
+                            continue
+
+                        group_name = block_store.import_name(n_bone)
+                        if group_name not in bone_weights_map:
+                            bone_weights_map[group_name] = []
+                        bone_names[idx] = group_name
+                    for name in bone_names:
+                        if name:
+                            bone_weights_map[name] = []
+
+                    for i, (weights, indices) in enumerate([(vert.bone_weights, vert.bone_indices) for vert in ni_block.vertex_data]):
+                        for w, b_i in zip(weights, indices):
+                            if b_i  >= 0 and w > 0:
+                                group_name = bone_names[b_i]
+                                bone_weights_map[group_name].append((i, w))
+
                 # the usual case
-                if skindata.has_vertex_weights:
+                elif skindata.has_vertex_weights:
                     bone_weights = skindata.bone_list
                     for idx, n_bone in enumerate(bones):
                         # skip empty bones (see pyffi issue #3114079)
@@ -180,22 +222,22 @@ class VertexGroup:
 
                         vertex_weights = bone_weights[idx].vertex_weights
                         group_name = block_store.import_name(n_bone)
-                        if group_name not in b_obj.vertex_groups:
-                            v_group = b_obj.vertex_groups.new(name=group_name)
+                        if group_name not in bone_weights_map:
+                            bone_weights_map[group_name] = []
     
                         for skinWeight in vertex_weights:
                             vert = skinWeight.index
                             weight = skinWeight.weight
-                            v_group.add([vert], weight, 'REPLACE')
+                            bone_weights_map[group_name].append((vert, weight))
 
                 # WLP2 - hides the weights in the partition
                 else:
                     skin_partition = skininst.skin_partition
                     for block in skin_partition.partitions:
                         # create all vgroups for this block's bones
-                        block_bone_names = [block_store.import_name(bones[i]) for i in block.bones]
-                        for group_name in block_bone_names:
-                            b_obj.vertex_groups.new(name=group_name)
+                        bone_names = [block_store.import_name(bones[i]) for i in block.bones]
+                        for group_name in bone_names:
+                            bone_weights_map[group_name] = []
     
                         # go over each vert in this block
                         for vert, vertex_weights, bone_indices in zip(block.vertex_map, block.vertex_weights, block.bone_indices):
@@ -203,21 +245,71 @@ class VertexGroup:
                             # assign this vert's 4 weights to its 4 vgroups (at max)
                             for w, b_i in zip(vertex_weights, bone_indices):
                                 if w > 0:
-                                    group_name = block_bone_names[b_i]
-                                    v_group = b_obj.vertex_groups[group_name]
-                                    # conversion from numpy.uint16 to int necessary because Blender doesn't accept them
-                                    v_group.add([int(vert)], w, 'REPLACE')
+                                    group_name = bone_names[b_i]
+                                    bone_weights_map[group_name].append((vert, w))
+        return bone_weights_map
 
+    @staticmethod
+    def set_bone_weights(bone_weights, b_obj):
+        """Set the bone weights on the object
+
+        :param bone_weights: dictionary mapping bone name to vertex indices and weights
+        :type bone_weights: dict(str, list(tuple(int, float)))
+        :param b_obj: Blender object to which to add the vertex groups
+        :type b_obj: bpy.types.Object
+        :return: None
+        :rtype: NoneType
+
+        """
+        for bone_name, index_weights in bone_weights.items():
+            if bone_name not in b_obj.vertex_groups:
+                v_group = b_obj.vertex_groups.new(name=bone_name)
+            else:
+                v_group = b_obj.vertex_groups[bone_name]
+            for (v_index, weight) in index_weights:
+                # conversion from numpy.uint16 to int necessary because Blender doesn't accept them
+                v_group.add([int(v_index)], weight, 'REPLACE')
+
+    @staticmethod
+    def get_face_maps(ni_block):
+        """Retrieve the triangle indices per body part
+
+        :param ni_block: NiObject from which to take the face body parts
+        :type ni_block: NifClasses.NiAVObject
+        :return: dictionary mapping body part name to triangle indices
+        :rtype: dict(str, list(int))
+
+        """
+        face_maps = {}
+        if hasattr(ni_block, 'skin_instance'):
+            skininst = ni_block.skin_instance
             if isinstance(skininst, NifClasses.BSDismemberSkinInstance):
                 for bodypart in skininst.partitions:
                     group_name = bodypart.body_part.name
 
                     # create face map if it did not exist yet
-                    if group_name not in b_obj.face_maps:
-                        f_group = b_obj.face_maps.new(name=group_name)
-                    else:
-                        f_group = b_obj.face_maps[group_name]
+                    if group_name not in face_maps:
+                        face_maps[group_name] = []
                 triangles, bodyparts = skininst.get_dismember_partitions()
                 for i, bodypart in enumerate(bodyparts):
-                    f_group = b_obj.face_maps[bodypart.name]
-                    f_group.add([i])
+                    face_maps[bodypart.name].append(i)
+        return face_maps
+
+    @staticmethod
+    def set_face_maps(face_maps, b_obj):
+        """
+
+        :param face_maps: dictionary mapping body part name to triangle indices
+        :type face_maps: dict(str, list(int))
+        :param b_obj: Blender object to which to add the body parts
+        :type b_obj: bpy.types.Object
+        :return: None
+        :rtype: NoneType
+
+        """
+        for group_name, tri_indices in face_maps.items():
+            if group_name not in b_obj.face_maps:
+                f_group = b_obj.face_maps.new(name=group_name)
+            else:
+                f_group = b_obj.face_maps[group_name]
+            f_group.add(tri_indices)

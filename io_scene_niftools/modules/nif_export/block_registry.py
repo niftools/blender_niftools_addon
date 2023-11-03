@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import generated.formats.nif as NifFormat
+import nifgen.formats.nif as NifFormat
 
 import io_scene_niftools.utils.logging
 from io_scene_niftools.utils import math

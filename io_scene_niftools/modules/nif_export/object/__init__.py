@@ -125,7 +125,7 @@ class Object:
         if b_obj.niftools.flags != 0:
             n_node.flags = b_obj.niftools.flags
         else:
-            if game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            if bpy.context.scene.niftools_scene.is_bs():
                 n_node.flags = 0x000E
             elif game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
                 n_node.flags = 0x0010
@@ -234,7 +234,7 @@ class Object:
         elif b_obj.name.lower().startswith("bounding box"):
             # Morrowind bounding box
             self.bs_helper.export_bounds(b_obj, n_parent, bsbound=False)
-        if bpy.context.scene.niftools_scene.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if bpy.context.scene.niftools_scene.is_bs():
 
             nodes = [n_parent]
             nodes.extend([block for block in n_parent.children if block.name[:14] == 'collisiondummy'])

@@ -38,8 +38,8 @@
 
 from itertools import repeat
 import logging
-from generated.utils.vertex_cache import get_cache_optimized_triangles, stable_stripify
-from generated.formats.nif import classes as NifClasses
+from nifgen.utils.vertex_cache import get_cache_optimized_triangles, stable_stripify
+from nifgen.formats.nif import classes as NifClasses
 
 def update_skin_partition(self,
                         maxbonesperpartition=4, maxbonespervertex=4,
@@ -80,7 +80,7 @@ def update_skin_partition(self,
         maximize_bone_sharing is true, sorts the parts within the shared bones,
         and sorts the shared bone lists based on its first body part.
     """
-    logger = logging.getLogger("generated.nif.nitribasedgeom")
+    logger = logging.getLogger("nifgen.nif.nitribasedgeom")
 
     # if trianglepartmap not specified, map everything to index 0
     if trianglepartmap is None:
@@ -202,7 +202,7 @@ def update_skin_partition(self,
     logger.info("Creating partitions")
     parts = []
     # keep creating partitions as long as there are triangles left
-    while triangles:
+    while len(triangles) > 0:
         # create a partition
         part = [set(), [], None] # bones, triangles, partition index
         usedverts = set()
@@ -440,7 +440,7 @@ def update_skin_partition(self,
         bones = sorted(list(part[0]))
         triangles = part[1]
         logger.info("Optimizing triangle ordering in partition %i"
-                    % parts.index(part))
+                    % [i for i, check_part in enumerate(parts) if id(check_part) == id(part)][0])
         # optimize triangles for vertex cache and calculate strips
         triangles = get_cache_optimized_triangles(
             triangles)

@@ -38,11 +38,12 @@
 # ***** END LICENSE BLOCK *****
 
 import os
+import numpy as np
 
 import bpy
 from bpy_extras.io_utils import orientation_helper
 import mathutils
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 
 import io_scene_niftools.utils.logging
@@ -139,33 +140,31 @@ class Armature:
                                 bonedata.set_transform(diff.get_inverse(fast=False) * bonedata.get_transform())
                         # transforming verts helps with nifs where the skins differ, eg MW vampire or WLP2 Gastornis
                         if isinstance(geom, NifClasses.BSTriShape):
+                            vertex_data = geom.get_vertex_data()
                             if isinstance(geom, NifClasses.BSDynamicTriShape):
-                                # BSDynamicTriShape uses Vector4 to store vertices with a 0 W component, which would
-                                # nullify translation when multiplied by a Matrix44. Hence, first conversion to Vector3
-                                # and assign the position values back later.
-                                vertices = [NifClasses.Vector3.from_value((vertex.x, vertex.y, vertex.z)) for vertex in geom.vertices]
+                                vertices = geom.vertices
                             else:
-                                vertices = [vert_data.vertex for vert_data in geom.skin.skin_partition.vertex_data]
-                            normals = [vert_data.normal for vert_data in geom.skin.skin_partition.vertex_data]
+                                vertices = [vert_data.vertex for vert_data in vertex_data]
+
+                            normals = [vert_data.normal for vert_data in vertex_data]
                         else:
                             vertices = geom.data.vertices
                             normals = geom.data.normals
-                        for vert in vertices:
-                            newvert = vert * diff
-                            vert.x = newvert.x
-                            vert.y = newvert.y
-                            vert.z = newvert.z
-                        diff33 = diff.get_matrix_33()
-                        for norm in normals:
-                            newnorm = norm * diff33
-                            norm.x = newnorm.x
-                            norm.y = newnorm.y
-                            norm.z = newnorm.z
-                        if isinstance(geom, NifClasses.BSDynamicTriShape):
-                            for vertex, t_vertex in zip(geom.vertices, vertices):
-                                vertex.x = t_vertex.x
-                                vertex.y = t_vertex.y
-                                vertex.z = t_vertex.z
+                        # BSDynamicTriShape uses Vector4 to store vertices with a 0 W component, which would
+                        # nullify translation when multiplied by a Matrix44. Hence, first conversion to three-component
+                        # vector
+                        np_vertices = np.array(vertices, dtype=float)[:,:3]
+                        np_vertices = np.pad(np_vertices, (0, 1), constant_values=1.0)
+                        np_diff = np.array(diff.as_list())
+                        np_vertices = np_vertices @ np_diff
+                        np_normals = np.array(normals, dtype=float)
+                        np_diff33 = np.array(diff.get_matrix_33().as_list())
+                        np_normals = np_normals @ np_diff33
+                        # assign the transformed values back
+                        for vertex, t_vertex in zip(vertices, np_vertices[:, :3]):
+                            vertex.x, vertex.y, vertex.z = t_vertex
+                        for normal, t_normal in zip(normals, np_normals):
+                            normal.x, normal.y, normal.z = t_normal
                         break
                 # store bind pose
                 for bonenode, bonedata in self.bones_iter(skininst):

@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_import.property.material import Material
 from io_scene_niftools.modules.nif_import.property.shader import BSShader

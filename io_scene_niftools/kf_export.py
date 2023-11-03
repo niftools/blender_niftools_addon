@@ -89,7 +89,7 @@ class KfExport(NifCommon):
         data.neosteam = (bpy.context.scene.niftools_scene.game == 'NEOSTEAM')
 
         # scale correction for the skeleton
-        self.apply_scale(data, round(1 / NifOp.props.scale_correction))
+        self.apply_scale(data, 1 / NifOp.props.scale_correction)
 
         data.validate()
 

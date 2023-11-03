@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-from generated.formats.nif import classes as NifClasses
+from nifgen.formats.nif import classes as NifClasses
 
 from io_scene_niftools.modules.nif_export.property.texture import TextureWriter, TextureSlotManager
 from io_scene_niftools.utils.consts import TEX_SLOTS

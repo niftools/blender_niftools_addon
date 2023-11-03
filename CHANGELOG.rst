@@ -1,4 +1,30 @@
-Version v0.1.00
+Version v0.1.1
+===============
+
+- #591 Expansion of DisplayList processing and small fixes.
+    - Rigged meshes with DisplayLists will now have functional weights.
+    - 4-component normals are now handled correctly for DisplayLists.
+    - Added multiple UV layer support for DisplayLists.
+    - Rudimentary support for Fallout NV (Fallout New Vegas) by treating it the same as Fallout 3.
+    - Fixes #582
+    - Fixes #589
+    - Fix for animation support for Shin Megami Tensei: Imagine.
+    - Fixes #584
+    - Fixes #554 and overhauls/isolates the way the nif geometry data is obtained during export.
+    - Added option for splitting on tangents (did not happen before). Needs to be disabled for Oblivion head meshes.
+    - Warn rather than silent fail during egm import.
+    - Export: Move UV coordinates that are completely in another UV tile to the 0-1 tile.
+    - Added support for weighted Fallout 4 meshes, fixing #598
+    - Fixes #599
+    - Fixes #600
+    - Add exported tangents to Bully SE.
+    - Always return copy for get_object_bind to prevent accidental modification.
+    - Added support for basic (unweighted) Skyrim SE export.
+    - Change generated module name from generated to nifgen to prevent collision with cobra-tools.
+- #592 Update to documentation
+- #593 Supported export for Sid Meier's Pirates!.
+
+Version v0.1.0
 ===============
 
 - #576 Updates to documentation, changelog and makezip.bat (copies over generated folder from cobra-tools).

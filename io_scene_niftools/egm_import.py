@@ -69,6 +69,8 @@ class EgmImport(NifCommon):
                 b_obj = bpy.context.view_layer.objects.active
                 if b_obj and b_obj.type == "MESH":
                     self.morph_anim.import_egm_morphs(b_obj)
+                else:
+                    NifLog.warn(f'Selected object {b_obj.name} is not a mesh object, nothing will be imported.')
         except NifError:
             return {'CANCELLED'}
 
