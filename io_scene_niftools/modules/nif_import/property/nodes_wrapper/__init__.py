@@ -299,10 +299,16 @@ class NodesWrapper:
             node_group = bpy.data.node_groups.new(group_name, "ShaderNodeTree")
             group_nodes = node_group.nodes
             # add the in/output nodes
-            input_node = group_nodes.new('NodeGroupInput')
-            node_group.inputs.new('NodeSocketColor', "Input")
-            output_node = group_nodes.new('NodeGroupOutput')
-            node_group.outputs.new('NodeSocketColor', "Output")
+            if bpy.app.version < (4,0,0):
+                input_node = group_nodes.new('NodeGroupInput')
+                node_group.inputs.new('NodeSocketColor', "Input")
+                output_node = group_nodes.new('NodeGroupOutput')
+                node_group.outputs.new('NodeSocketColor', "Output")
+            else:
+                input_node = group_nodes.new('NodeGroupInput')
+                node_group.interface.new_socket(name='NodeSocketColor', in_out="INPUT")
+                output_node = group_nodes.new('NodeGroupOutput')
+                node_group.interface.new_socket(name='NodeSocketColor', in_out="OUTPUT")
             # create the converting nodes
             separate_node = group_nodes.new("ShaderNodeSeparateRGB")
             invert_node = group_nodes.new("ShaderNodeInvert")
