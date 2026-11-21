@@ -25,6 +25,6 @@ The Blender Niftools Addon outputs the progress of Import/Export execution via t
 There are 3 logging levels:
 
 - **Information**: General progress information
-- **Warning**: An issue occured that did not cause the execution to fail, but probably something the user needs to
+- **Warning**: An issue occurred that did not cause the execution to fail, but probably something the user needs to
   resolve. The full set of warnings will appear at the end in a pop-up window.
 - **Error**: There was an issue encountered that caused the execution to fail.
